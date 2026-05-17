@@ -32,4 +32,24 @@ build/
 ### VS Code ###
 .vscode/
 
-.idea/
+### Custom Project Ignores ###
+# Agent Framework local cache (contains local absolute paths)
+.atl/
+
+# Python Virtual Env & Cache (for the extraction scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Node & Angular (to double-protect root level)
+node_modules/
+.angular/
+dist/
+/tmp
+/out-tsc
+
+# OS files
+.DS_Store
+Thumbs.db
