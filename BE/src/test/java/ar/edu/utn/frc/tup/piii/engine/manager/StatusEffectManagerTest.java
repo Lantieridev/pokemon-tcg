@@ -1,0 +1,330 @@
+package ar.edu.utn.frc.tup.piii.engine.manager;
+
+import ar.edu.utn.frc.tup.piii.engine.FakeActivePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.exception.InvalidStatusEffectException;
+import ar.edu.utn.frc.tup.piii.engine.exception.PokemonAsleepException;
+import ar.edu.utn.frc.tup.piii.engine.exception.PokemonParalyzedException;
+import ar.edu.utn.frc.tup.piii.engine.model.AttackModifierResult;
+import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
+import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Tests for StatusEffectManager — all sub-batches in one file. FR-011 through FR-017.
+ */
+class StatusEffectManagerTest {
+
+    private CoinFlipper coinFlipper;
+    private StatusEffectManager manager;
+    private FakeActivePokemonState fakeState;
+
+    @BeforeEach
+    void setUp() {
+        coinFlipper = Mockito.mock(CoinFlipper.class);
+        manager = new StatusEffectManager(coinFlipper);
+        fakeState = new FakeActivePokemonState();
+    }
+
+    // -------------------------------------------------------------------------
+    // Sub-batch 5.1 — apply / hasEffect / activeEffects / clearAll / remove
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldApplySingleEffectSuccessfully() {
+        manager.apply(StatusEffectType.DORMIDO);
+        assertTrue(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldRemoveExistingRotationSlotEffectWhenApplyingNewRotationSlotEffect() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.apply(StatusEffectType.PARALIZADO);
+        assertTrue(manager.has(StatusEffectType.PARALIZADO));
+        assertFalse(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldRemoveConfusedWhenApplyingAsleep() {
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        manager.apply(StatusEffectType.DORMIDO);
+        assertTrue(manager.has(StatusEffectType.DORMIDO));
+        assertFalse(manager.has(StatusEffectType.CONFUNDIDO));
+    }
+
+    @Test
+    void shouldKeepBothMarkersWhenApplyingBurnedOnTopOfPoisoned() {
+        manager.apply(StatusEffectType.ENVENENADO);
+        manager.apply(StatusEffectType.QUEMADO);
+        assertTrue(manager.has(StatusEffectType.ENVENENADO));
+        assertTrue(manager.has(StatusEffectType.QUEMADO));
+    }
+
+    @Test
+    void shouldKeepBothMarkersWhenApplyingPoisonedOnTopOfBurned() {
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertTrue(manager.has(StatusEffectType.QUEMADO));
+        assertTrue(manager.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldKeepRotationSlotEffectWhenApplyingMarkerEffect() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertTrue(manager.has(StatusEffectType.DORMIDO));
+        assertTrue(manager.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldBeIdempotentWhenReapplyingBurned() {
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.apply(StatusEffectType.QUEMADO);
+        assertTrue(manager.has(StatusEffectType.QUEMADO));
+        assertEquals(1, manager.activeEffects().size());
+    }
+
+    @Test
+    void shouldThrowInvalidStatusEffectExceptionWhenApplyingNull() {
+        assertThrows(InvalidStatusEffectException.class, () -> manager.apply(null));
+    }
+
+    @Test
+    void shouldRemoveSpecificEffectWhenPresent() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.remove(StatusEffectType.DORMIDO);
+        assertFalse(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldBeNoOpWhenRemovingAbsentEffect() {
+        assertDoesNotThrow(() -> manager.remove(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldClearAllEffectsWhenClearAllIsCalled() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.clearAll();
+        assertTrue(manager.activeEffects().isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptySetWhenNoEffectsActive() {
+        assertTrue(manager.activeEffects().isEmpty());
+    }
+
+    @Test
+    void shouldReturnCorrectSetWhenMultipleEffectsActive() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertTrue(manager.activeEffects().contains(StatusEffectType.DORMIDO));
+        assertTrue(manager.activeEffects().contains(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldReturnImmutableSetFromActiveEffects() {
+        manager.apply(StatusEffectType.DORMIDO);
+        assertThrows(UnsupportedOperationException.class,
+                () -> manager.activeEffects().add(StatusEffectType.QUEMADO));
+    }
+
+    @Test
+    void shouldAcceptNewEffectsAfterClearAll() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.clearAll();
+        manager.apply(StatusEffectType.QUEMADO);
+        assertTrue(manager.has(StatusEffectType.QUEMADO));
+    }
+
+    @Test
+    void shouldHoldOnlyLastAppliedRotationSlotEffectAfterSequentialApplication() {
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        manager.apply(StatusEffectType.PARALIZADO);
+        assertTrue(manager.has(StatusEffectType.PARALIZADO));
+        assertFalse(manager.has(StatusEffectType.DORMIDO));
+        assertFalse(manager.has(StatusEffectType.CONFUNDIDO));
+    }
+
+    // -------------------------------------------------------------------------
+    // Sub-batch 5.2 — canAttack / canRetreat
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldAllowAttackWhenNoEffectsAreActive() {
+        assertTrue(manager.canAttack());
+    }
+
+    @Test
+    void shouldAllowRetreatWhenNoEffectsAreActive() {
+        assertTrue(manager.canRetreat());
+    }
+
+    @Test
+    void shouldBlockAttackWhenDormidoIsActive() {
+        manager.apply(StatusEffectType.DORMIDO);
+        assertFalse(manager.canAttack());
+    }
+
+    @Test
+    void shouldBlockRetreatWhenDormidoIsActive() {
+        manager.apply(StatusEffectType.DORMIDO);
+        assertFalse(manager.canRetreat());
+    }
+
+    @Test
+    void shouldBlockAttackWhenParalizadoIsActive() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        assertFalse(manager.canAttack());
+    }
+
+    @Test
+    void shouldAllowAttackWhenOnlyBurnedAndPoisonedAreActive() {
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertTrue(manager.canAttack());
+    }
+
+    @Test
+    void shouldAllowRetreatWhenOnlyConfusedIsActive() {
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        assertTrue(manager.canRetreat());
+    }
+
+    // -------------------------------------------------------------------------
+    // Sub-batch 5.3 — onAttackAttempt / applyConfusionCheck
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldThrowPokemonAsleepExceptionWhenAttackingWhileAsleep() {
+        manager.apply(StatusEffectType.DORMIDO);
+        assertThrows(PokemonAsleepException.class, () -> manager.onAttackAttempt(fakeState));
+    }
+
+    @Test
+    void shouldThrowPokemonParalyzedExceptionWhenAttackingWhileParalyzed() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        assertThrows(PokemonParalyzedException.class, () -> manager.onAttackAttempt(fakeState));
+    }
+
+    @Test
+    void shouldReturnProceedWhenConfusedCoinIsHeads() {
+        when(coinFlipper.flip()).thenReturn(true);
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.Proceed.class, result);
+    }
+
+    @Test
+    void shouldReturnConfusionFailedWithThreeCountersWhenConfusedCoinIsTails() {
+        when(coinFlipper.flip()).thenReturn(false);
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.ConfusionFailed.class, result);
+        assertEquals(3, ((AttackModifierResult.ConfusionFailed) result).selfDamageCounters());
+    }
+
+    @Test
+    void shouldReturnProceedWithoutFlippingWhenNoEffectsActive() {
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.Proceed.class, result);
+        verify(coinFlipper, never()).flip();
+    }
+
+    @Test
+    void shouldReturnProceedWhenOnlyMarkerEffectsAreActive() {
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.apply(StatusEffectType.ENVENENADO);
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.Proceed.class, result);
+    }
+
+    @Test
+    void shouldFlipCoinExactlyOncePerAttackAttemptWhenConfused() {
+        when(coinFlipper.flip()).thenReturn(true);
+        manager.apply(StatusEffectType.CONFUNDIDO);
+        manager.onAttackAttempt(fakeState);
+        verify(coinFlipper, times(1)).flip();
+    }
+
+    // -------------------------------------------------------------------------
+    // Sub-batch 5.4 — processBetweenTurns
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldProcessPoisonBeforeBurnInBetweenTurnsOrder() {
+        // ENVENENADO: always +1 counter; QUEMADO: heads = no damage
+        when(coinFlipper.flip()).thenReturn(true);
+        manager.apply(StatusEffectType.ENVENENADO);
+        manager.apply(StatusEffectType.QUEMADO);
+        manager.processBetweenTurns(fakeState);
+        // Poison adds 1, Burn (heads) adds 0 → total = 1
+        assertEquals(1, fakeState.getDamageCounters());
+    }
+
+    @Test
+    void shouldRemoveParalysisAfterBetweenTurnsProcessing() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        manager.processBetweenTurns(fakeState);
+        assertFalse(manager.has(StatusEffectType.PARALIZADO));
+    }
+
+    @Test
+    void shouldRetainPoisonAfterBetweenTurnsProcessing() {
+        manager.apply(StatusEffectType.ENVENENADO);
+        manager.processBetweenTurns(fakeState);
+        assertTrue(manager.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldRemoveDormidoAfterBetweenTurnsWhenCoinIsHeads() {
+        when(coinFlipper.flip()).thenReturn(true);
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.processBetweenTurns(fakeState);
+        assertFalse(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldRetainDormidoAfterBetweenTurnsWhenCoinIsTails() {
+        when(coinFlipper.flip()).thenReturn(false);
+        manager.apply(StatusEffectType.DORMIDO);
+        manager.processBetweenTurns(fakeState);
+        assertTrue(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldNotProcessAbsentEffectsInBetweenTurns() {
+        manager.apply(StatusEffectType.ENVENENADO);
+        manager.processBetweenTurns(fakeState);
+        // QUEMADO and DORMIDO absent → coinFlipper.flip() should never be called
+        verify(coinFlipper, never()).flip();
+    }
+
+    @Test
+    void shouldBeNoOpWhenProcessingBetweenTurnsWithNoActiveEffects() {
+        assertDoesNotThrow(() -> manager.processBetweenTurns(fakeState));
+        assertEquals(0, fakeState.getDamageCounters());
+    }
+
+    @Test
+    void shouldRemoveParalysisAtomicallyAfterBetweenTurnsIteration() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        // Must not throw ConcurrentModificationException
+        assertDoesNotThrow(() -> manager.processBetweenTurns(fakeState));
+        assertFalse(manager.has(StatusEffectType.PARALIZADO));
+    }
+}

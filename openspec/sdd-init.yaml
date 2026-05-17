@@ -1,0 +1,68 @@
+project: tpi-pokemon-2w1-15
+initialized_at: 2026-05-17
+artifact_store: hybrid
+
+stack:
+  backend: Java 21 + Spring Boot 4.0.0
+  build: Maven
+  build_file: BE/pom.xml
+  testing: JUnit 5 + Mockito (via spring-boot-starter-test)
+  frontend: Angular 21+
+  language: Java
+  db: H2 (runtime), JPA/Hibernate
+  migrations: Flyway or Liquibase
+  extras:
+    - Lombok 1.18.30
+    - ModelMapper 3.1.1
+    - Checkstyle (.code_quality/checkstyle_rules.xml)
+    - PMD (.code_quality/pmd_rules.xml)
+    - SpringDoc OpenAPI 2.8.0
+
+strict_tdd: true
+test_command: mvn test
+coverage_target: 90%
+
+architecture:
+  engine_isolation: true
+  fail_fast: true
+  patterns:
+    - Strategy
+    - State
+    - Chain of Responsibility
+    - Template Method
+    - Command
+  layers:
+    - domain/model
+    - service/engine
+    - ui/console
+  engine_components:
+    - TurnManager       # State Pattern (DRAW, MAIN, ATTACK, BETWEEN_TURNS)
+    - RuleValidator     # isValidAction(Action, GameState)
+    - DamageCalculator  # Chain of Responsibility — 7 steps
+    - StatusEffectManager  # mutually exclusive: Dormido/Confundido/Paralizado; coexist: Quemado+Envenenado
+    - VictoryConditionChecker  # prize cards, no bench, empty deck
+
+conventions:
+  commits: Conventional Commits (feat/fix/test/docs/refactor/style/chore)
+  branching: Feature Branch Workflow
+  branch_prefixes: [feature/BE-*, fix/BE-*, docs/*, test/*]
+  pr_policy: minimum 1 reviewer (ideally 2), no self-merge, target develop not main
+  naming:
+    classes: PascalCase
+    methods: camelCase
+    constants: UPPER_SNAKE_CASE
+  collections: declared as interfaces (List<T>, Map<K,V>, Set<T>)
+  domain_exceptions:
+    - NotEnoughEnergyException
+    - InvalidTurnPhaseException
+    - PokemonAsleepException
+  no_null_returns: true
+  db_migrations: no manual schema changes
+
+testing_constraints:
+  - no Spring context in engine tests (pure POJOs only)
+  - test method naming: shouldVerbWhenCondition()
+  - prefer pure state objects over mocks
+  - Mockito allowed for Scanner and external components
+  - JUnit 5 required for all tests
+  - code_quality_gates: Checkstyle + PMD on mvn compile/verify
