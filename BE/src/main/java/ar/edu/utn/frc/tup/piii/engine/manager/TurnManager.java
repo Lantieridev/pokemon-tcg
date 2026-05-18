@@ -1,0 +1,307 @@
+package ar.edu.utn.frc.tup.piii.engine.manager;
+
+import ar.edu.utn.frc.tup.piii.engine.exception.FirstTurnAttackException;
+import ar.edu.utn.frc.tup.piii.engine.exception.InvalidPhaseTransitionException;
+import ar.edu.utn.frc.tup.piii.engine.exception.InvalidTurnPhaseException;
+import ar.edu.utn.frc.tup.piii.engine.listener.PhaseEvent;
+import ar.edu.utn.frc.tup.piii.engine.listener.PhaseListener;
+import ar.edu.utn.frc.tup.piii.engine.model.AttackPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.DrawPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.TurnPhase;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Manages the turn lifecycle for a two-player Pokémon TCG game session.
+ *
+ * <p>A turn progresses through: DrawPhase → MainPhase → (AttackPhase | BetweenTurnsPhase),
+ * then into BetweenTurnsPhase → next player's DrawPhase. Each transition fires PhaseEvents
+ * to all registered PhaseListeners. FR-002 through FR-014.
+ */
+public final class TurnManager {
+
+    private static final int UNSTARTED_PLAYER_INDEX = -1;
+    private static final int PLAYER_COUNT = 2;
+    private static final int FIRST_PLAYER_INDEX = 0;
+
+    private TurnPhase currentPhase;
+    private int activePlayerIndex = UNSTARTED_PLAYER_INDEX;
+    private final boolean[] firstTurnCompleted = new boolean[PLAYER_COUNT];
+    private final List<PhaseListener> listeners = new ArrayList<>();
+
+    // -------------------------------------------------------------------------
+    // Observer API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Registers a listener to receive PhaseEvents fired by this manager.
+     *
+     * @param listener the listener to add; must not be null
+     * @throws IllegalArgumentException if listener is null
+     */
+    public void registerListener(final PhaseListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener must not be null");
+        }
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes a previously registered listener.
+     * No-op if the listener is not currently registered.
+     *
+     * @param listener the listener to remove
+     */
+    public void unregisterListener(final PhaseListener listener) {
+        listeners.remove(listener);
+    }
+
+    // -------------------------------------------------------------------------
+    // State getters
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the current turn phase, or {@code null} before the first turn starts.
+     *
+     * @return current phase
+     */
+    public TurnPhase currentPhase() {
+        return currentPhase;
+    }
+
+    /**
+     * Returns the zero-based index of the active player,
+     * or {@code -1} before the first turn has been started.
+     *
+     * @return active player index
+     */
+    public int activePlayerIndex() {
+        return activePlayerIndex;
+    }
+
+    /**
+     * Returns whether the specified player is still in their first turn
+     * (i.e., has not yet completed a full turn cycle).
+     *
+     * @param playerIndex the zero-based player index
+     * @return {@code true} while this is still the player's first turn
+     */
+    public boolean isFirstTurnOfPlayer(final int playerIndex) {
+        return !firstTurnCompleted[playerIndex];
+    }
+
+    // -------------------------------------------------------------------------
+    // Turn transitions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Begins a new turn for the specified player.
+     * Sets the phase to DrawPhase and fires TurnStarted then PhaseEntered.
+     *
+     * @param playerIndex the zero-based index of the player whose turn is starting
+     * @throws InvalidPhaseTransitionException if a turn is already in progress
+     * @throws InvalidTurnPhaseException       if playerIndex is out of range [0, PLAYER_COUNT)
+     */
+    public void startTurn(final int playerIndex) {
+        if (currentPhase != null) {
+            throw new InvalidPhaseTransitionException(
+                    "Cannot start a new turn while a turn is already in progress (phase: "
+                            + currentPhase.name() + ")");
+        }
+        if (playerIndex < 0 || playerIndex >= PLAYER_COUNT) {
+            throw new InvalidTurnPhaseException(
+                    "Invalid player index: " + playerIndex + ". Must be in [0, " + PLAYER_COUNT + ")");
+        }
+        activePlayerIndex = playerIndex;
+        currentPhase = new DrawPhase();
+        fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+    }
+
+    /**
+     * Transitions from DrawPhase to MainPhase.
+     * Fires PhaseExited (Draw) then PhaseEntered (Main).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in DrawPhase or no turn in progress
+     */
+    public void endDraw() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        switch (currentPhase) {
+            case DrawPhase d -> {
+                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+                currentPhase = new MainPhase();
+                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+            }
+            case MainPhase m -> throw new InvalidPhaseTransitionException(
+                    "endDraw() called during MainPhase");
+            case AttackPhase a -> throw new InvalidPhaseTransitionException(
+                    "endDraw() called during AttackPhase");
+            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
+                    "endDraw() called during BetweenTurnsPhase");
+        }
+    }
+
+    /**
+     * Returns the current phase cast to MainPhase.
+     *
+     * @return the current MainPhase instance
+     * @throws InvalidTurnPhaseException if the current phase is not MainPhase or no turn in progress
+     */
+    public MainPhase requireMainPhase() {
+        if (currentPhase == null) {
+            throw new InvalidTurnPhaseException("No turn in progress — call startTurn() first");
+        }
+        if (!(currentPhase instanceof MainPhase main)) {
+            throw new InvalidTurnPhaseException(
+                    "Expected MainPhase but was: " + phaseName(currentPhase));
+        }
+        return main;
+    }
+
+    /**
+     * Transitions from MainPhase to AttackPhase.
+     * Fires PhaseExited (Main) then PhaseEntered (Attack).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in MainPhase or no turn in progress
+     * @throws FirstTurnAttackException        if player 0 attempts to attack on their first turn
+     */
+    public void declareAttack() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        switch (currentPhase) {
+            case MainPhase m -> {
+                if (activePlayerIndex == FIRST_PLAYER_INDEX
+                        && !firstTurnCompleted[FIRST_PLAYER_INDEX]) {
+                    throw new FirstTurnAttackException(
+                            "Player 0 cannot attack on their first turn");
+                }
+                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+                currentPhase = new AttackPhase();
+                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+            }
+            case DrawPhase d -> throw new InvalidPhaseTransitionException(
+                    "declareAttack() called during DrawPhase");
+            case AttackPhase a -> throw new InvalidPhaseTransitionException(
+                    "declareAttack() called during AttackPhase");
+            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
+                    "declareAttack() called during BetweenTurnsPhase");
+        }
+    }
+
+    /**
+     * Transitions from MainPhase to BetweenTurnsPhase (pass without attacking).
+     * Fires PhaseExited (Main) then PhaseEntered (BetweenTurns).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in MainPhase or no turn in progress
+     */
+    public void passTurn() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        switch (currentPhase) {
+            case MainPhase m -> {
+                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+                currentPhase = new BetweenTurnsPhase();
+                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+            }
+            case DrawPhase d -> throw new InvalidPhaseTransitionException(
+                    "passTurn() called during DrawPhase");
+            case AttackPhase a -> throw new InvalidPhaseTransitionException(
+                    "passTurn() called during AttackPhase");
+            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
+                    "passTurn() called during BetweenTurnsPhase");
+        }
+    }
+
+    /**
+     * Transitions from AttackPhase to BetweenTurnsPhase.
+     * Fires PhaseExited (Attack) then PhaseEntered (BetweenTurns).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in AttackPhase or no turn in progress
+     */
+    public void endAttack() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        switch (currentPhase) {
+            case AttackPhase a -> {
+                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+                currentPhase = new BetweenTurnsPhase();
+                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+            }
+            case DrawPhase d -> throw new InvalidPhaseTransitionException(
+                    "endAttack() called during DrawPhase");
+            case MainPhase m -> throw new InvalidPhaseTransitionException(
+                    "endAttack() called during MainPhase");
+            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
+                    "endAttack() called during BetweenTurnsPhase");
+        }
+    }
+
+    /**
+     * Ends the between-turns phase, flips the active player, and starts the next turn.
+     *
+     * <p>Event order: PhaseExited → TurnEnded (ending player) → TurnStarted (next player)
+     * → PhaseEntered (next player's DrawPhase).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in BetweenTurnsPhase or no turn in progress
+     */
+    public void endBetweenTurns() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        switch (currentPhase) {
+            case BetweenTurnsPhase b -> {
+                int endingPlayer = activePlayerIndex;
+                TurnPhase endingPhase = currentPhase;
+
+                fire(new PhaseEvent.PhaseExited(endingPlayer, endingPhase));
+                fire(new PhaseEvent.TurnEnded(endingPlayer, endingPhase));
+
+                firstTurnCompleted[endingPlayer] = true;
+                activePlayerIndex = PLAYER_COUNT - 1 - endingPlayer;
+                currentPhase = new DrawPhase();
+
+                fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));
+                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+            }
+            case DrawPhase d -> throw new InvalidPhaseTransitionException(
+                    "endBetweenTurns() called during DrawPhase");
+            case MainPhase m -> throw new InvalidPhaseTransitionException(
+                    "endBetweenTurns() called during MainPhase");
+            case AttackPhase a -> throw new InvalidPhaseTransitionException(
+                    "endBetweenTurns() called during AttackPhase");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Delivers the event to a snapshot copy of the listener list.
+     * Using a snapshot prevents ConcurrentModificationException when a listener
+     * adds or removes listeners during delivery. Exceptions propagate to the caller.
+     *
+     * @param event the event to deliver
+     */
+    private void fire(final PhaseEvent event) {
+        List.copyOf(listeners).forEach(l -> l.on(event));
+    }
+
+    /**
+     * Returns a human-readable name for the given phase, handling {@code null}.
+     *
+     * @param phase the phase (may be null)
+     * @return phase name or "null"
+     */
+    private String phaseName(final TurnPhase phase) {
+        return phase == null ? "null" : phase.name();
+    }
+}
