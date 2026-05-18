@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Test double for DeckStateProvider backed by a HashMap.
  */
-final class FakeDeckStateProvider implements DeckStateProvider {
+public final class FakeDeckStateProvider implements DeckStateProvider {
 
     private static final int DEFAULT_DECK_SIZE = 60;
 

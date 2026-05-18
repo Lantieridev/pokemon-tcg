@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Test double for PrizeStateProvider backed by a HashMap.
  */
-final class FakePrizeStateProvider implements PrizeStateProvider {
+public final class FakePrizeStateProvider implements PrizeStateProvider {
 
     private static final int DEFAULT_PRIZES = 6;
 

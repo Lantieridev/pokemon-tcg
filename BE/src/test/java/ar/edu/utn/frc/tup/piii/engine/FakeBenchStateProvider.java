@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Test double for BenchStateProvider backed by a HashMap.
  */
-final class FakeBenchStateProvider implements BenchStateProvider {
+public final class FakeBenchStateProvider implements BenchStateProvider {
 
     private static final int DEFAULT_BENCH_SIZE = 5;
 
