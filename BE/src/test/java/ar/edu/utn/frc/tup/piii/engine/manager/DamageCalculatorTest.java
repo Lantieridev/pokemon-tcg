@@ -207,7 +207,7 @@ class DamageCalculatorTest {
     // ─── Full pipeline ────────────────────────────────────────────────────────
 
     @Test
-    void shouldApplyFullPipelineWithWeaknessAndResistanceAndModifiers() {
+    void shouldApplyFullPipelineWithWeaknessAndResistanceAndModifiersWhenAllStepsAreActive() {
         // base=60, attMod=+10 → 70, ×2=140, -20=120, defMod=-10 → 110; 110/10=11 counters
         FakeBattlePokemonState attacker = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.FIRE, null, null, false);
