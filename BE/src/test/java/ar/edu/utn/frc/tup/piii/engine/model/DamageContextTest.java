@@ -26,7 +26,7 @@ class DamageContextTest {
     }
 
     private Attack attack() {
-        return new Attack(ATTACK_NAME, BASE_DAMAGE);
+        return new Attack(ATTACK_NAME, BASE_DAMAGE, List.of());
     }
 
     @Test
