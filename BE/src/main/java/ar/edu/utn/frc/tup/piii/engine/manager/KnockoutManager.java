@@ -7,6 +7,8 @@ import ar.edu.utn.frc.tup.piii.engine.listener.PhaseListener;
 import ar.edu.utn.frc.tup.piii.engine.model.AttackPhase;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.DrawPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
 
 import java.util.Objects;
 
@@ -57,9 +59,24 @@ public final class KnockoutManager implements PhaseListener {
     @Override
     public void on(final PhaseEvent event) {
         switch (event) {
-            case PhaseEvent.PhaseExited e when e.phase() instanceof AttackPhase -> checkBothPlayers();
-            case PhaseEvent.PhaseExited e when e.phase() instanceof BetweenTurnsPhase -> checkBothPlayers();
-            default -> { /* no-op */ }
+            case PhaseEvent.PhaseExited e -> handlePhaseExited(e);
+            case PhaseEvent.PhaseEntered e -> { /* no-op */ }
+            case PhaseEvent.TurnStarted e -> { /* no-op */ }
+            case PhaseEvent.TurnEnded e -> { /* no-op */ }
+        }
+    }
+
+    /**
+     * Handles a PhaseExited event; triggers knockout check only for relevant phases.
+     *
+     * @param event the PhaseExited event
+     */
+    private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
+        switch (event.phase()) {
+            case AttackPhase a -> checkBothPlayers();
+            case BetweenTurnsPhase b -> checkBothPlayers();
+            case DrawPhase d -> { /* no-op */ }
+            case MainPhase m -> { /* no-op */ }
         }
     }
 
