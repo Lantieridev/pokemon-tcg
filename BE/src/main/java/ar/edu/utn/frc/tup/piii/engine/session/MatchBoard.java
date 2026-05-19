@@ -1,0 +1,80 @@
+package ar.edu.utn.frc.tup.piii.engine.session;
+
+import ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.PrizeStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Runtime snapshot of the match board implementing all engine provider interfaces.
+ * Pure POJO — zero Spring imports. FR-008, FR-013.
+ */
+public final class MatchBoard
+        implements BattlefieldStateProvider,
+                   BenchStateProvider,
+                   DeckStateProvider,
+                   PrizeStateProvider,
+                   PokemonTurnInPlayProvider {
+
+    private static final int REQUIRED_PLAYER_COUNT = 2;
+
+    private final List<PlayerState> players;
+
+    /**
+     * Constructs a MatchBoard from exactly two PlayerState objects.
+     *
+     * @param players list of two PlayerState instances (one per player)
+     * @throws NullPointerException     if players is null
+     * @throws IllegalArgumentException if the list does not contain exactly two players
+     */
+    public MatchBoard(final List<PlayerState> players) {
+        Objects.requireNonNull(players, "players must not be null");
+        if (players.size() != REQUIRED_PLAYER_COUNT) {
+            throw new IllegalArgumentException(
+                    "MatchBoard requires exactly 2 players, got: " + players.size());
+        }
+        this.players = List.copyOf(players);
+    }
+
+    @Override
+    public BattlePokemonState getActivePokemon(final int playerIndex) {
+        return players.get(playerIndex).getActivePokemon();
+    }
+
+    @Override
+    public int getBenchSize(final int playerIndex) {
+        return players.get(playerIndex).getBench().size();
+    }
+
+    @Override
+    public List<BattlePokemonState> getBenchedPokemon(final int playerIndex) {
+        return players.get(playerIndex).getBench();
+    }
+
+    @Override
+    public int getDeckSize(final int playerIndex) {
+        return players.get(playerIndex).getDeckSize();
+    }
+
+    @Override
+    public int getRemainingPrizes(final int playerIndex) {
+        return players.get(playerIndex).getPrizeCount();
+    }
+
+    @Override
+    public int getTurnsInPlay(final BattlePokemonState pokemon) {
+        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        for (final PlayerState player : players) {
+            final int turns = player.getTurnsInPlay(pokemon);
+            if (turns > 0) {
+                return turns;
+            }
+        }
+        return 0;
+    }
+}
