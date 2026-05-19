@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -159,6 +160,24 @@ class MatchServiceAbandonTest {
         }
         assertNotNull(session.getTimeoutFuture(PLAYER_A_ID),
                 "timeout future must be stored after disconnect completes");
+    }
+
+    @Test
+    void shouldNotScheduleAbandonmentTimerWhenSessionIsNotActive() {
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(
+                100, PokemonType.FIRE, null, null, false);
+        final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final MatchBoard waitingBoard = new MatchBoard(List.of(player0, player1));
+        final MatchSession waitingSession = new MatchSession(
+                "match-waiting", List.of(PLAYER_A_ID, PLAYER_B_ID), waitingBoard);
+        // deliberately NOT calling setup() or start() — session stays in WAITING
+
+        when(registry.find("match-waiting")).thenReturn(Optional.of(waitingSession));
+
+        matchService.onPlayerDisconnect("match-waiting", PLAYER_A_ID);
+
+        verify(scheduler, never()).schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
