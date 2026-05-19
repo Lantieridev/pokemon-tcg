@@ -102,8 +102,15 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
             fireVictory(new VictoryResult.PrizeVictory(attacker));
             return;
         }
-        if (benchProvider.getBenchSize(defender) == 0) {
+        boolean defenderBenchEmpty = benchProvider.getBenchSize(defender) == 0;
+        boolean attackerBenchEmpty = benchProvider.getBenchSize(attacker) == 0;
+
+        if (defenderBenchEmpty && attackerBenchEmpty) {
+            fireVictory(new VictoryResult.SuddenDeath());
+        } else if (defenderBenchEmpty) {
             fireVictory(new VictoryResult.BenchOutVictory(attacker));
+        } else if (attackerBenchEmpty) {
+            fireVictory(new VictoryResult.BenchOutVictory(defender));
         }
     }
 

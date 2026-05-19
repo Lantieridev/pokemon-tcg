@@ -285,6 +285,18 @@ class RuleValidatorTest {
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
 
+    @Test
+    void shouldReturnInvalidWhenPokemonToolTargetIsNull() {
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+
+        ValidationResult result = validator.validate(new PlayTrainerAction(TrainerType.POKEMON_TOOL, null));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "pokemon_tool_requires_target");
+    }
+
     // ─── AttachEnergyAction ───────────────────────────────────────────────────
 
     @Test

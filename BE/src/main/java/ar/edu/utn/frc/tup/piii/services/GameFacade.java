@@ -11,6 +11,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,6 +20,20 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public final class GameFacade {
+
+    /**
+     * Applies a validated action to the session state.
+     *
+     * <p>This is a stub implementation for Phase 2. Full engine pipeline wiring
+     * (retreat, evolve, attack execution) is deferred to Phase 3. The method
+     * exists here to satisfy the lock contract: persist must be called AFTER apply.</p>
+     *
+     * @param session the active match session (never null)
+     * @param action  the validated engine action to apply (never null)
+     */
+    public void apply(final MatchSession session, final Action action) {
+        // Phase 2 stub — full engine application wired in Phase 3
+    }
 
     /**
      * Converts a DTO action into the appropriate sealed engine {@link Action}.
@@ -36,8 +51,9 @@ public final class GameFacade {
             case RETREAT             -> new RetreatAction(board.getActivePokemon(playerIndex));
             case PLAY_TRAINER        -> new PlayTrainerAction(dto.trainerType(),
                                             resolveTarget(board, playerIndex, dto));
-            case ATTACH_ENERGY       -> new AttachEnergyAction(PokemonType.COLORLESS);
-            case EVOLVE              -> new EvolveAction(board.getActivePokemon(playerIndex));
+            case ATTACH_ENERGY       -> new AttachEnergyAction(
+                                            dto.energyType() != null ? dto.energyType() : PokemonType.COLORLESS);
+            case EVOLVE              -> new EvolveAction(resolveEvolveTarget(board, playerIndex, dto));
             case PLACE_BASIC_POKEMON -> new PlaceBasicPokemonAction(dto.cardId());
             case USE_ABILITY         -> new UseAbilityAction(
                                             board.getActivePokemon(playerIndex),
@@ -52,6 +68,16 @@ public final class GameFacade {
         return new DeclareAttackAction(
                 board.getActivePokemon(playerIndex),
                 board.getActiveAttacks(playerIndex).get(attackIndex));
+    }
+
+    private ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState resolveEvolveTarget(
+            final MatchBoard board,
+            final int playerIndex,
+            final ActionRequestDTO dto) {
+        if (dto.targetIndex() != null) {
+            return board.getBenchedPokemon(playerIndex).get(dto.targetIndex());
+        }
+        return board.getActivePokemon(playerIndex);
     }
 
     private ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState resolveTarget(

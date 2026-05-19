@@ -110,6 +110,17 @@ class GameFacadeTest {
     }
 
     @Test
+    void shouldUseEnergyTypeFromDtoWhenBuildingAttachEnergyAction() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE);
+
+        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+
+        assertThat(action).isInstanceOf(AttachEnergyAction.class);
+        assertThat(((AttachEnergyAction) action).energyType()).isEqualTo(PokemonType.FIRE);
+    }
+
+    @Test
     void shouldProduceEvolveActionWhenTypeIsEvolve() {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.EVOLVE, null, TARGET_ID, null, null, null);
@@ -118,6 +129,18 @@ class GameFacadeTest {
 
         assertThat(action).isInstanceOf(EvolveAction.class);
         assertThat(((EvolveAction) action).target()).isEqualTo(activePokemon);
+    }
+
+    @Test
+    void shouldResolveBenchPokemonAsEvolveTargetWhenTargetIndexIsProvided() {
+        // targetIndex=0 → bench slot 0 → targetPokemon
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.EVOLVE, null, null, 0, null, null);
+
+        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+
+        assertThat(action).isInstanceOf(EvolveAction.class);
+        assertThat(((EvolveAction) action).target()).isEqualTo(targetPokemon);
     }
 
     @Test

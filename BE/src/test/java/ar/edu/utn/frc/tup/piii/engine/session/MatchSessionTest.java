@@ -40,13 +40,26 @@ class MatchSessionTest {
     }
 
     @Test
-    void shouldTransitionToActiveWhenStarted() {
+    void shouldTransitionFromWaitingToSetupWhenSetupCalled() {
+        session.setup();
+        assertEquals(MatchSessionState.SETUP, session.getState());
+    }
+
+    @Test
+    void shouldTransitionFromSetupToActiveWhenStartCalled() {
+        session.setup();
         session.start();
         assertEquals(MatchSessionState.ACTIVE, session.getState());
     }
 
     @Test
+    void shouldThrowWhenStartCalledDirectlyFromWaiting() {
+        assertThrows(IllegalMatchStateTransitionException.class, session::start);
+    }
+
+    @Test
     void shouldTransitionToFinishedWhenFinished() {
+        session.setup();
         session.start();
         session.finish();
         assertEquals(MatchSessionState.FINISHED, session.getState());
@@ -54,12 +67,14 @@ class MatchSessionTest {
 
     @Test
     void shouldThrowWhenStartCalledOnActiveSession() {
+        session.setup();
         session.start();
         assertThrows(IllegalMatchStateTransitionException.class, session::start);
     }
 
     @Test
     void shouldThrowWhenStartCalledOnFinishedSession() {
+        session.setup();
         session.start();
         session.finish();
         assertThrows(IllegalMatchStateTransitionException.class, session::start);

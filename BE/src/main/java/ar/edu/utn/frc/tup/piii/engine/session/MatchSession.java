@@ -43,14 +43,27 @@ public final class MatchSession {
     }
 
     /**
-     * Transitions the session from WAITING to ACTIVE.
+     * Transitions the session from WAITING to SETUP.
      *
      * @throws IllegalMatchStateTransitionException if the session is not in WAITING state
      */
-    public void start() {
+    public void setup() {
         if (state != MatchSessionState.WAITING) {
             throw new IllegalMatchStateTransitionException(
-                    "Cannot start a match that is in state: " + state);
+                    "Cannot enter setup for a match that is in state: " + state);
+        }
+        state = MatchSessionState.SETUP;
+    }
+
+    /**
+     * Transitions the session from SETUP to ACTIVE.
+     *
+     * @throws IllegalMatchStateTransitionException if the session is not in SETUP state
+     */
+    public void start() {
+        if (state != MatchSessionState.SETUP) {
+            throw new IllegalMatchStateTransitionException(
+                    "Cannot start a match that is in state: " + state + " (must be in SETUP first)");
         }
         state = MatchSessionState.ACTIVE;
     }

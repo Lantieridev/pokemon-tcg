@@ -71,6 +71,7 @@ class MatchServiceTest {
         final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
         board = new MatchBoard(List.of(player0, player1));
         session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board);
+        session.setup();
         session.start();
 
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
@@ -103,6 +104,23 @@ class MatchServiceTest {
         // broadcast sends to both players — verify at least the first send comes after persist
         order.verify(messaging, org.mockito.Mockito.atLeastOnce())
                 .convertAndSend(anyString(), any(Object.class));
+    }
+
+    @Test
+    void shouldApplyActionToBoardBeforePersisting() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        final ar.edu.utn.frc.tup.piii.engine.model.Action action =
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0));
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(action);
+        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        final InOrder order = inOrder(facade, persistence);
+        order.verify(facade).apply(any(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class),
+                any(ar.edu.utn.frc.tup.piii.engine.model.Action.class));
+        order.verify(persistence).save(any(GameStateSnapshot.class));
     }
 
     @Test

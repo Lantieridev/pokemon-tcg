@@ -270,6 +270,44 @@ class VictoryConditionCheckerTest {
         assertEquals(PLAYER_1, ((VictoryResult.DeckOutVictory) captured.get(0)).winnerPlayerIndex());
     }
 
+    // --- 6.7 Bilateral bench-out (Bug-5) ---
+
+    @Test
+    void shouldEmitSuddenDeathWhenBothPlayersHaveEmptyBenchAfterSimultaneousKO() {
+        // No prize victory for attacker; both benches are empty
+        prizeProvider.set(PLAYER_0, PRIZES_TWO);
+        prizeProvider.set(PLAYER_1, PRIZES_TWO);
+        benchProvider.set(PLAYER_0, BENCH_ZERO);
+        benchProvider.set(PLAYER_1, BENCH_ZERO);
+        checker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        final FakeBattlePokemonState knocked =
+                new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        checker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.SuddenDeath.class, captured.get(0));
+    }
+
+    @Test
+    void shouldDetectBenchOutVictoryForOpponentWhenAttackerDiesFromPoisonWithEmptyBench() {
+        // Player 1 is the "attacker" (active player) — but Player 0 (the defender/owner
+        // of the knocked-out Pokémon) has an empty bench; Player 1 wins
+        prizeProvider.set(PLAYER_1, PRIZES_TWO); // no prize victory
+        benchProvider.set(PLAYER_0, BENCH_ZERO); // KO'd player has no bench left
+        benchProvider.set(PLAYER_1, PRIZES_TWO); // attacker has bench (not a SuddenDeath)
+        checker.on(new PhaseEvent.TurnStarted(PLAYER_1, new DrawPhase()));
+
+        final FakeBattlePokemonState knocked =
+                new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        checker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.BenchOutVictory.class, captured.get(0));
+        // Player 1 (the attacker) wins because Player 0's bench is empty
+        assertEquals(PLAYER_1, ((VictoryResult.BenchOutVictory) captured.get(0)).winnerPlayerIndex());
+    }
+
     // --- ignored events ---
 
     @Test

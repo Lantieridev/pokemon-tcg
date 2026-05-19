@@ -13,6 +13,20 @@ import java.util.List;
 public interface BattlePokemonState extends ActivePokemonState {
 
     /**
+     * Returns the display name of this Pokémon (e.g. "Charmander").
+     *
+     * @return name, or null if not set
+     */
+    String getName();
+
+    /**
+     * Returns the card identifier for this Pokémon (e.g. "xy1-46").
+     *
+     * @return cardId, or null if not set
+     */
+    String getCardId();
+
+    /**
      * Returns the maximum HP of this Pokémon. Always positive.
      *
      * @return max HP
@@ -68,4 +82,13 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @return true if a Pokémon Tool is currently attached
      */
     boolean hasToolAttached();
+
+    /**
+     * Removes the specified number of energy cards from this Pokémon's attached energies.
+     * Any energy type counts toward the cost (as per XY1 retreat rules).
+     * If {@code count} is 0, this is a no-op.
+     *
+     * @param count number of energy cards to remove (must be &gt;= 0)
+     */
+    void removeEnergies(int count);
 }
