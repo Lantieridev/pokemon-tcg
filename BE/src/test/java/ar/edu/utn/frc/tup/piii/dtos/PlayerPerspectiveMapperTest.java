@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.dtos;
 
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
@@ -133,6 +134,39 @@ class PlayerPerspectiveMapperTest {
         assertThat(dto.retreatCost()).isEqualTo(1);
         assertThat(dto.attachedEnergies()).hasSize(2);
         assertThat(dto.hasToolAttached()).isTrue();
+    }
+
+    @Test
+    void shouldMapAttacksFromActivePokemonToBattlePokemonDto() {
+        final FakeBattlePokemonState pokemon =
+                new FakeBattlePokemonState(70, PokemonType.FIRE, null, null, false);
+        pokemon.setName("Charmander");
+        pokemon.setCardId("xy1-46");
+        pokemon.addAttack(new Attack("Ember", 20, List.of(PokemonType.FIRE)));
+
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerState ps =
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerState(
+                        pokemon, List.of(), List.of(), 45, 6, Map.of());
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerState ps1 =
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerState(
+                        new FakeBattlePokemonState(100, PokemonType.WATER, null, null, false),
+                        List.of(), List.of(), 45, 6, Map.of());
+
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchBoard b =
+                new ar.edu.utn.frc.tup.piii.engine.session.MatchBoard(List.of(ps, ps1));
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession s =
+                new ar.edu.utn.frc.tup.piii.engine.session.MatchSession(
+                        "m-attacks", List.of("playerX", "playerY"), b);
+        s.setup();
+        s.start();
+
+        final GameStateResponseDTO response = mapper.toResponse(s, 0);
+
+        final BattlePokemonDTO dto = response.self().active();
+        assertThat(dto.attacks()).isNotNull();
+        assertThat(dto.attacks()).hasSize(1);
+        assertThat(dto.attacks().get(0).name()).isEqualTo("Ember");
+        assertThat(dto.attacks().get(0).baseDamage()).isEqualTo(20);
     }
 
     @Test

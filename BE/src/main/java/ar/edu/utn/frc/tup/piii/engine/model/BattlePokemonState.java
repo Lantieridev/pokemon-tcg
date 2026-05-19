@@ -91,4 +91,26 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @param count number of energy cards to remove (must be &gt;= 0)
      */
     void removeEnergies(int count);
+
+    /**
+     * Returns the list of attacks available to this Pokémon.
+     *
+     * @return attacks (never null; may be empty)
+     */
+    List<Attack> getAttacks();
+
+    /**
+     * Returns the evolution stage of this Pokémon card.
+     *
+     * @return evolution stage (never null)
+     */
+    EvolutionStage getEvolutionStage();
+
+    /**
+     * Returns the species name this card evolves FROM, or {@code null} if this is a BASIC Pokémon.
+     * Used to validate that the evolution target matches the card's pre-evolution.
+     *
+     * @return pre-evolution species name, or null for BASIC Pokémon
+     */
+    String getEvolvesFrom();
 }

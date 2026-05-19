@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
+import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
@@ -83,11 +84,12 @@ class RuleValidatorTest {
     @Test
     void shouldReturnInvalidWhenEvolveActionIsCalledOnPlayerFirstTurn() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
         turnInPlayProvider.set(target, 5);
         when(turnManager.activePlayerIndex()).thenReturn(0);
         when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(true);
 
-        ValidationResult result = validator.validate(new EvolveAction(target));
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
 
         assertInstanceOf(ValidationResult.Invalid.class, result);
         assertInvalidReason(result, "cannot_evolve_first_turn");
@@ -96,24 +98,51 @@ class RuleValidatorTest {
     @Test
     void shouldReturnInvalidWhenTargetPokemonEnteredPlayThisTurn() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        evolution.setEvolutionStage(EvolutionStage.STAGE_1);
+        evolution.setEvolvesFrom("Charmander");
+        target.setName("Charmander");
         turnInPlayProvider.set(target, 0);
         when(turnManager.activePlayerIndex()).thenReturn(0);
         when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
 
-        ValidationResult result = validator.validate(new EvolveAction(target));
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
 
         assertInstanceOf(ValidationResult.Invalid.class, result);
         assertInvalidReason(result, "pokemon_entered_this_turn");
     }
 
     @Test
-    void shouldReturnValidWhenTargetHasBeenInPlayAtLeastOneTurn() {
+    void shouldReturnValidWhenEvolvingBasicToStageOne() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setName("Charmander");
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        evolution.setEvolutionStage(EvolutionStage.STAGE_1);
+        evolution.setEvolvesFrom("Charmander");
         turnInPlayProvider.set(target, 1);
         when(turnManager.activePlayerIndex()).thenReturn(0);
         when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
 
-        ValidationResult result = validator.validate(new EvolveAction(target));
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
+
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
+    void shouldReturnValidWhenTargetHasBeenInPlayAtLeastOneTurn() {
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setName("Charmander");
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        evolution.setEvolutionStage(EvolutionStage.STAGE_1);
+        evolution.setEvolvesFrom("Charmander");
+        turnInPlayProvider.set(target, 1);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
+
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
@@ -121,14 +150,67 @@ class RuleValidatorTest {
     @Test
     void shouldReturnFirstTurnInvalidWhenBothFirstTurnAndEnteredThisTurnAreTrue() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
         turnInPlayProvider.set(target, 0);
         when(turnManager.activePlayerIndex()).thenReturn(0);
         when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(true);
 
-        ValidationResult result = validator.validate(new EvolveAction(target));
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
 
         assertInstanceOf(ValidationResult.Invalid.class, result);
         assertInvalidReason(result, "cannot_evolve_first_turn");
+    }
+
+    // ─── EvolveAction — evolution chain validation (BLOCKER-6) ──────────────
+
+    @Test
+    void shouldReturnInvalidWhenEvolvingBasicToStageTwo() {
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        evolution.setEvolutionStage(EvolutionStage.STAGE_2);
+        turnInPlayProvider.set(target, 2);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
+
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "invalid_evolution_stage");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenEvolvingStageOneToBasic() {
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setEvolutionStage(EvolutionStage.STAGE_1);
+        evolution.setEvolutionStage(EvolutionStage.BASIC);
+        turnInPlayProvider.set(target, 2);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
+
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "invalid_evolution_stage");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenEvolutionCardEvolvesFromDifferentSpecies() {
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState evolution = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setName("Charmander");
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        evolution.setEvolutionStage(EvolutionStage.STAGE_1);
+        evolution.setEvolvesFrom("Squirtle");
+        turnInPlayProvider.set(target, 2);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
+
+        ValidationResult result = validator.validate(new EvolveAction(target, evolution));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "wrong_evolution_target");
     }
 
     // ─── RetreatAction ────────────────────────────────────────────────────────

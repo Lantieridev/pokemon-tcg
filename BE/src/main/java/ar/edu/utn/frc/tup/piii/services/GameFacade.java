@@ -53,7 +53,7 @@ public final class GameFacade {
                                             resolveTarget(board, playerIndex, dto));
             case ATTACH_ENERGY       -> new AttachEnergyAction(
                                             dto.energyType() != null ? dto.energyType() : PokemonType.COLORLESS);
-            case EVOLVE              -> new EvolveAction(resolveEvolveTarget(board, playerIndex, dto));
+            case EVOLVE              -> new EvolveAction(resolveEvolveTarget(board, playerIndex, dto), null);
             case PLACE_BASIC_POKEMON -> new PlaceBasicPokemonAction(dto.cardId());
             case USE_ABILITY         -> new UseAbilityAction(
                                             board.getActivePokemon(playerIndex),

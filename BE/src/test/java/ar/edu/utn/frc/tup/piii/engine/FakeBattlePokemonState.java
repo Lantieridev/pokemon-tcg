@@ -1,6 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine;
 
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 
 import java.util.ArrayList;
@@ -23,6 +25,9 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private int retreatCost = 0;
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private boolean toolAttached = false;
+    private final List<Attack> attacks = new ArrayList<>();
+    private EvolutionStage evolutionStage = EvolutionStage.BASIC;
+    private String evolvesFrom = null;
 
     public FakeBattlePokemonState(final int maxHp, final PokemonType type,
                                   final PokemonType weaknessType,
@@ -120,5 +125,32 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
             attachedEnergies.remove(attachedEnergies.size() - 1);
         }
+    }
+
+    public void addAttack(final Attack attack) {
+        attacks.add(attack);
+    }
+
+    @Override
+    public List<Attack> getAttacks() {
+        return List.copyOf(attacks);
+    }
+
+    public void setEvolutionStage(final EvolutionStage stage) {
+        this.evolutionStage = stage;
+    }
+
+    @Override
+    public EvolutionStage getEvolutionStage() {
+        return evolutionStage;
+    }
+
+    public void setEvolvesFrom(final String species) {
+        this.evolvesFrom = species;
+    }
+
+    @Override
+    public String getEvolvesFrom() {
+        return evolvesFrom;
     }
 }
