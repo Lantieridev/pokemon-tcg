@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 /**
  * STOMP WebSocket configuration.
- * Clients connect to /ws, publish actions to /app/game.action,
+ * Clients connect to /ws, publish actions to /app/match/{matchId}/action,
  * and subscribe to per-player topics at /topic/match/{matchId}/player/{playerId}.
  */
 @Configuration

@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
 import org.springframework.beans.factory.annotation.Value;
@@ -129,6 +130,9 @@ public final class MatchService {
      */
     public void onPlayerDisconnect(final String matchId, final String playerId) {
         registry.find(matchId).ifPresent(session -> {
+            if (session.getState() != MatchSessionState.ACTIVE) {
+                return;
+            }
             final Runnable task = () -> abandonMatch(matchId, playerId);
             final ScheduledFuture<?> future = abandonmentScheduler.schedule(
                     task, abandonTimeoutSeconds, TimeUnit.SECONDS);
