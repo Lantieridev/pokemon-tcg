@@ -32,6 +32,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
@@ -180,7 +184,7 @@
                                 <rule>
                                     <element>PACKAGE</element>
                                     <includes>
-                                        <include>ar/edu/utn/frc/tup/piii/engine/*</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/**</include>
                                     </includes>
                                     <limits>
                                         <limit>
@@ -192,6 +196,31 @@
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
                                             <minimum>0.85</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                                <rule>
+                                    <element>CLASS</element>
+                                    <includes>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/RuleValidator</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/DamageCalculator</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/StatusEffectManager</include>
+                                    </includes>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

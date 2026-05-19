@@ -44,7 +44,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.WATER, null, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Ember", BASE_DAMAGE_40), List.of(), List.of());
+                attacker, defender, new Attack("Ember", BASE_DAMAGE_40, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -63,7 +63,7 @@ class DamageCalculatorTest {
                 BASE_HP, PokemonType.GRASS, PokemonType.FIRE, null, false);
         DamageContext ctx = new DamageContext(
                 attacker, defender,
-                new Attack("Ember", BASE_DAMAGE_30),
+                new Attack("Ember", BASE_DAMAGE_30, List.of()),
                 List.of(dmg -> dmg + ADD_TEN),
                 List.of());
 
@@ -82,7 +82,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.GRASS, PokemonType.FIRE, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Flamethrower", BASE_DAMAGE_60), List.of(), List.of());
+                attacker, defender, new Attack("Flamethrower", BASE_DAMAGE_60, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -98,7 +98,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.WATER, PokemonType.LIGHTNING, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Flamethrower", BASE_DAMAGE_60), List.of(), List.of());
+                attacker, defender, new Attack("Flamethrower", BASE_DAMAGE_60, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -112,7 +112,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.DRAGON, null, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Ember", BASE_DAMAGE_60), List.of(), List.of());
+                attacker, defender, new Attack("Ember", BASE_DAMAGE_60, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -129,7 +129,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.FIRE, null, PokemonType.WATER, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Bubble", BASE_DAMAGE_50), List.of(), List.of());
+                attacker, defender, new Attack("Bubble", BASE_DAMAGE_50, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -144,7 +144,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.GRASS, null, PokemonType.WATER, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Ember", BASE_DAMAGE_50), List.of(), List.of());
+                attacker, defender, new Attack("Ember", BASE_DAMAGE_50, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -158,7 +158,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.GRASS, null, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Ember", BASE_DAMAGE_50), List.of(), List.of());
+                attacker, defender, new Attack("Ember", BASE_DAMAGE_50, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -175,7 +175,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.FIRE, null, PokemonType.WATER, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Bubble", BASE_DAMAGE_10), List.of(), List.of());
+                attacker, defender, new Attack("Bubble", BASE_DAMAGE_10, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 
@@ -194,7 +194,7 @@ class DamageCalculatorTest {
                 BASE_HP, PokemonType.FIRE, null, PokemonType.WATER, false);
         DamageContext ctx = new DamageContext(
                 attacker, defender,
-                new Attack("Bubble", BASE_DAMAGE_50),
+                new Attack("Bubble", BASE_DAMAGE_50, List.of()),
                 List.of(),
                 List.of(dmg -> dmg + SUBTRACT_TEN));
 
@@ -207,7 +207,7 @@ class DamageCalculatorTest {
     // ─── Full pipeline ────────────────────────────────────────────────────────
 
     @Test
-    void shouldApplyFullPipelineWithWeaknessAndResistanceAndModifiers() {
+    void shouldApplyFullPipelineWithWeaknessAndResistanceAndModifiersWhenAllStepsAreActive() {
         // base=60, attMod=+10 → 70, ×2=140, -20=120, defMod=-10 → 110; 110/10=11 counters
         FakeBattlePokemonState attacker = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.FIRE, null, null, false);
@@ -215,7 +215,7 @@ class DamageCalculatorTest {
                 BASE_HP, PokemonType.GRASS, PokemonType.FIRE, PokemonType.FIRE, false);
         DamageContext ctx = new DamageContext(
                 attacker, defender,
-                new Attack("Flamethrower", BASE_DAMAGE_60),
+                new Attack("Flamethrower", BASE_DAMAGE_60, List.of()),
                 List.of(dmg -> dmg + ADD_TEN),
                 List.of(dmg -> dmg + SUBTRACT_TEN));
 
@@ -235,7 +235,7 @@ class DamageCalculatorTest {
         FakeBattlePokemonState defender = new FakeBattlePokemonState(
                 BASE_HP, PokemonType.COLORLESS, null, null, false);
         DamageContext ctx = new DamageContext(
-                attacker, defender, new Attack("Punch", BASE_DAMAGE_35), List.of(), List.of());
+                attacker, defender, new Attack("Punch", BASE_DAMAGE_35, List.of()), List.of(), List.of());
 
         DamageResult result = calculator.calculate(ctx);
 

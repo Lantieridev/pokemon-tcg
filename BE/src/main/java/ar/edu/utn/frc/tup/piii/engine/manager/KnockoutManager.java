@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.engine.manager;
 
 import ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
 import ar.edu.utn.frc.tup.piii.engine.listener.PhaseEvent;
 import ar.edu.utn.frc.tup.piii.engine.listener.PhaseListener;
@@ -36,18 +37,22 @@ public final class KnockoutManager implements PhaseListener {
     private static final int PLAYER_COUNT = 2;
 
     private final BattlefieldStateProvider provider;
+    private final BenchStateProvider benchProvider;
     private final KnockoutHandler handler;
 
     /**
      * Creates a new KnockoutManager.
      *
-     * @param provider source of active Pokémon states per player (must not be null)
-     * @param handler  callback invoked when a knockout is detected (must not be null)
-     * @throws NullPointerException if either argument is null
+     * @param provider      source of active Pokémon states per player (must not be null)
+     * @param benchProvider source of benched Pokémon states per player (must not be null)
+     * @param handler       callback invoked when a knockout is detected (must not be null)
+     * @throws NullPointerException if any argument is null
      */
     public KnockoutManager(final BattlefieldStateProvider provider,
+                           final BenchStateProvider benchProvider,
                            final KnockoutHandler handler) {
         this.provider = Objects.requireNonNull(provider, "provider must not be null");
+        this.benchProvider = Objects.requireNonNull(benchProvider, "benchProvider must not be null");
         this.handler = Objects.requireNonNull(handler, "handler must not be null");
     }
 
@@ -81,16 +86,18 @@ public final class KnockoutManager implements PhaseListener {
     }
 
     /**
-     * Checks both players' active Pokémon for a knockout condition.
+     * Checks both players' active and benched Pokémon for a knockout condition.
      */
     private void checkBothPlayers() {
         for (int i = 0; i < PLAYER_COUNT; i++) {
-            BattlePokemonState state = provider.getActivePokemon(i);
-            if (state == null) {
-                continue;
+            BattlePokemonState active = provider.getActivePokemon(i);
+            if (active != null && isKnockedOut(active)) {
+                handler.onKnockout(active, prizesFor(active));
             }
-            if (isKnockedOut(state)) {
-                handler.onKnockout(state, prizesFor(state));
+            for (BattlePokemonState benched : benchProvider.getBenchedPokemon(i)) {
+                if (isKnockedOut(benched)) {
+                    handler.onKnockout(benched, prizesFor(benched));
+                }
             }
         }
     }

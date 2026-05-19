@@ -653,4 +653,32 @@ class TurnManagerTest {
     void shouldThrowIllegalArgumentExceptionWhenRegisteringNullListener() {
         assertThrows(IllegalArgumentException.class, () -> turnManager.registerListener(null));
     }
+
+    // -------------------------------------------------------------------------
+    // Bug-3: first-turn block must respect configured starting player
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldBlockFirstTurnAttackWhenStartingPlayerIsPlayer1() {
+        turnManager.setStartingPlayer(1);
+        turnManager.startTurn(1);
+        turnManager.endDraw();
+        assertThrows(FirstTurnAttackException.class, () -> turnManager.declareAttack());
+    }
+
+    @Test
+    void shouldAllowAttackForNonStartingPlayerOnTheirFirstTurn() {
+        // Player 1 is the starting player; Player 0 is second and should be
+        // able to attack on their first move (they are not the starting player)
+        turnManager.setStartingPlayer(1);
+        // Player 1 goes first and passes
+        turnManager.startTurn(1);
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns(); // switches to player 0
+
+        // Player 0 is on their first turn but is NOT the starting player
+        turnManager.endDraw();
+        assertDoesNotThrow(() -> turnManager.declareAttack());
+    }
 }
