@@ -6,5 +6,6 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  * FR-004.
  */
 public sealed interface Action
-        permits EvolveAction, RetreatAction, PlayTrainerAction, AttachEnergyAction, DeclareAttackAction {
+        permits EvolveAction, RetreatAction, PlayTrainerAction, AttachEnergyAction, DeclareAttackAction,
+                PlaceBasicPokemonAction, UseAbilityAction {
 }

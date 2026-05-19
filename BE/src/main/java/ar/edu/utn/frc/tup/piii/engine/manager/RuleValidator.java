@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.engine.manager;
 
+import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
@@ -8,10 +9,12 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
+import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
+import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
 
 import java.util.HashMap;
@@ -30,9 +33,11 @@ public final class RuleValidator {
     private static final String POKEMON_ENTERED_THIS_TURN = "pokemon_entered_this_turn";
     private static final String RETREAT_BLOCKED_BY_STATUS = "retreat_blocked_by_status";
     private static final String RETREAT_ALREADY_USED = "retreat_already_used";
+    private static final String EMPTY_BENCH_FOR_RETREAT = "empty_bench_for_retreat";
     private static final String INSUFFICIENT_ENERGY_FOR_RETREAT = "insufficient_energy_for_retreat";
     private static final String SUPPORTER_ALREADY_PLAYED = "supporter_already_played";
     private static final String STADIUM_ALREADY_PLAYED = "stadium_already_played";
+    private static final String POKEMON_TOOL_ALREADY_ATTACHED = "pokemon_tool_already_attached";
     private static final String ENERGY_ALREADY_ATTACHED = "energy_already_attached";
     private static final String ATTACK_BLOCKED_BY_STATUS = "attack_blocked_by_status";
     private static final String INSUFFICIENT_ENERGY_FOR_ATTACK = "insufficient_energy_for_attack";
@@ -42,6 +47,7 @@ public final class RuleValidator {
     private final TurnManager turnManager;
     private final StatusEffectManager statusEffectManager;
     private final PokemonTurnInPlayProvider turnInPlayProvider;
+    private final BenchStateProvider benchStateProvider;
 
     /**
      * Constructs a RuleValidator with the required collaborators.
@@ -49,13 +55,16 @@ public final class RuleValidator {
      * @param turnManager         manages turn phases and player state (must not be null)
      * @param statusEffectManager manages active status effects on the current Pokémon (must not be null)
      * @param turnInPlayProvider  reports how many turns a Pokémon has been in play (must not be null)
+     * @param benchStateProvider  provides bench size per player (must not be null)
      */
     public RuleValidator(final TurnManager turnManager,
                          final StatusEffectManager statusEffectManager,
-                         final PokemonTurnInPlayProvider turnInPlayProvider) {
+                         final PokemonTurnInPlayProvider turnInPlayProvider,
+                         final BenchStateProvider benchStateProvider) {
         this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
         this.statusEffectManager = Objects.requireNonNull(statusEffectManager, "statusEffectManager");
         this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
+        this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
     }
 
     /**
@@ -66,11 +75,13 @@ public final class RuleValidator {
      */
     public ValidationResult validate(final Action action) {
         return switch (action) {
-            case EvolveAction a        -> validateEvolve(a);
-            case RetreatAction a       -> validateRetreat(a);
-            case PlayTrainerAction a   -> validatePlayTrainer(a);
-            case AttachEnergyAction a  -> validateAttachEnergy();
-            case DeclareAttackAction a -> validateDeclareAttack(a);
+            case EvolveAction a             -> validateEvolve(a);
+            case RetreatAction a            -> validateRetreat(a);
+            case PlayTrainerAction a        -> validatePlayTrainer(a);
+            case AttachEnergyAction a       -> validateAttachEnergy();
+            case DeclareAttackAction a      -> validateDeclareAttack(a);
+            case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon();
+            case UseAbilityAction a         -> validateUseAbility();
         };
     }
 
@@ -89,6 +100,9 @@ public final class RuleValidator {
         if (!statusEffectManager.canRetreat()) {
             return new ValidationResult.Invalid(RETREAT_BLOCKED_BY_STATUS);
         }
+        if (benchStateProvider.getBenchSize(turnManager.activePlayerIndex()) == 0) {
+            return new ValidationResult.Invalid(EMPTY_BENCH_FOR_RETREAT);
+        }
         MainPhase mainPhase = turnManager.requireMainPhase();
         if (mainPhase.isRetreatUsed()) {
             return new ValidationResult.Invalid(RETREAT_ALREADY_USED);
@@ -102,9 +116,10 @@ public final class RuleValidator {
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action) {
         MainPhase mainPhase = turnManager.requireMainPhase();
         return switch (action.trainerType()) {
-            case SUPPORTER -> validateSupporter(mainPhase);
-            case STADIUM   -> validateStadium(mainPhase);
-            case ITEM      -> new ValidationResult.Valid();
+            case SUPPORTER    -> validateSupporter(mainPhase);
+            case STADIUM      -> validateStadium(mainPhase);
+            case ITEM         -> new ValidationResult.Valid();
+            case POKEMON_TOOL -> validatePokemonTool(action.target());
         };
     }
 
@@ -118,6 +133,13 @@ public final class RuleValidator {
     private ValidationResult validateStadium(final MainPhase mainPhase) {
         if (mainPhase.isStadiumPlayed()) {
             return new ValidationResult.Invalid(STADIUM_ALREADY_PLAYED);
+        }
+        return new ValidationResult.Valid();
+    }
+
+    private ValidationResult validatePokemonTool(final BattlePokemonState target) {
+        if (target != null && target.hasToolAttached()) {
+            return new ValidationResult.Invalid(POKEMON_TOOL_ALREADY_ATTACHED);
         }
         return new ValidationResult.Valid();
     }
@@ -137,6 +159,16 @@ public final class RuleValidator {
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_ATTACK);
         }
+        return new ValidationResult.Valid();
+    }
+
+    private ValidationResult validatePlaceBasicPokemon() {
+        turnManager.requireMainPhase();
+        return new ValidationResult.Valid();
+    }
+
+    private ValidationResult validateUseAbility() {
+        turnManager.requireMainPhase();
         return new ValidationResult.Valid();
     }
 

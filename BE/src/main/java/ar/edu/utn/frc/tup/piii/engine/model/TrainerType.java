@@ -13,5 +13,8 @@ public enum TrainerType {
     SUPPORTER,
 
     /** Stadium cards; at most one may be played per turn. */
-    STADIUM
+    STADIUM,
+
+    /** Pokémon Tool cards; attach to a Pokémon — only one tool per Pokémon allowed. */
+    POKEMON_TOOL
 }

@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.engine.manager;
 
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.FakeBenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.FakePokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
@@ -34,6 +35,7 @@ class RuleValidatorTest {
     private TurnManager turnManager;
     private StatusEffectManager statusEffectManager;
     private FakePokemonTurnInPlayProvider turnInPlayProvider;
+    private FakeBenchStateProvider benchProvider;
     private RuleValidator validator;
 
     @BeforeEach
@@ -41,7 +43,8 @@ class RuleValidatorTest {
         turnManager = Mockito.mock(TurnManager.class);
         statusEffectManager = Mockito.mock(StatusEffectManager.class);
         turnInPlayProvider = new FakePokemonTurnInPlayProvider();
-        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider);
+        benchProvider = new FakeBenchStateProvider();
+        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider);
     }
 
     // ─── Constructor null-guards ───────────────────────────────────────────────
@@ -49,24 +52,30 @@ class RuleValidatorTest {
     @Test
     void shouldThrowNullPointerExceptionWhenTurnManagerIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(null, statusEffectManager, turnInPlayProvider));
+                () -> new RuleValidator(null, statusEffectManager, turnInPlayProvider, benchProvider));
     }
 
     @Test
     void shouldThrowNullPointerExceptionWhenStatusEffectManagerIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, null, turnInPlayProvider));
+                () -> new RuleValidator(turnManager, null, turnInPlayProvider, benchProvider));
     }
 
     @Test
     void shouldThrowNullPointerExceptionWhenTurnInPlayProviderIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, statusEffectManager, null));
+                () -> new RuleValidator(turnManager, statusEffectManager, null, benchProvider));
+    }
+
+    @Test
+    void shouldThrowNullPointerExceptionWhenBenchStateProviderIsNull() {
+        assertThrows(NullPointerException.class,
+                () -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, null));
     }
 
     @Test
     void shouldNotThrowWhenAllDependenciesAreValid() {
-        assertDoesNotThrow(() -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider));
+        assertDoesNotThrow(() -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider));
     }
 
     // ─── EvolveAction ─────────────────────────────────────────────────────────
@@ -123,6 +132,19 @@ class RuleValidatorTest {
     }
 
     // ─── RetreatAction ────────────────────────────────────────────────────────
+
+    @Test
+    void shouldReturnInvalidWhenBenchIsEmptyDuringRetreat() {
+        FakeBattlePokemonState active = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        benchProvider.set(0, 0);
+        when(statusEffectManager.canRetreat()).thenReturn(true);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        ValidationResult result = validator.validate(new RetreatAction(active));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "empty_bench_for_retreat");
+    }
 
     @Test
     void shouldReturnInvalidWhenRetreatIsBlockedByStatus() {

@@ -90,7 +90,15 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
         }
         int attacker = activePlayerIndex;
         int defender = PLAYER_COUNT - 1 - attacker;
-        if (prizeProvider.getRemainingPrizes(attacker) == 0) {
+
+        boolean attackerWins = prizeProvider.getRemainingPrizes(attacker) == 0;
+        boolean defenderWins = prizeProvider.getRemainingPrizes(defender) == 0;
+
+        if (attackerWins && defenderWins) {
+            fireVictory(new VictoryResult.SuddenDeath());
+            return;
+        }
+        if (attackerWins) {
             fireVictory(new VictoryResult.PrizeVictory(attacker));
             return;
         }
