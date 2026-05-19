@@ -29,6 +29,7 @@ public final class TurnManager {
 
     private TurnPhase currentPhase;
     private int activePlayerIndex = UNSTARTED_PLAYER_INDEX;
+    private int startingPlayerIndex = FIRST_PLAYER_INDEX;
     private final boolean[] firstTurnCompleted = new boolean[PLAYER_COUNT];
     private final List<PhaseListener> listeners = new ArrayList<>();
 
@@ -57,6 +58,17 @@ public final class TurnManager {
      */
     public void unregisterListener(final PhaseListener listener) {
         listeners.remove(listener);
+    }
+
+    /**
+     * Sets the starting player index used for the first-turn attack restriction.
+     * Call this before {@link #startTurn(int)} to configure which player cannot
+     * attack on their very first turn (as per XY1 coin-flip rules).
+     *
+     * @param playerIndex 0 or 1
+     */
+    public void setStartingPlayer(final int playerIndex) {
+        this.startingPlayerIndex = playerIndex;
     }
 
     // -------------------------------------------------------------------------
@@ -176,10 +188,10 @@ public final class TurnManager {
         }
         switch (currentPhase) {
             case MainPhase m -> {
-                if (activePlayerIndex == FIRST_PLAYER_INDEX
-                        && !firstTurnCompleted[FIRST_PLAYER_INDEX]) {
+                if (activePlayerIndex == startingPlayerIndex
+                        && !firstTurnCompleted[startingPlayerIndex]) {
                     throw new FirstTurnAttackException(
-                            "Player 0 cannot attack on their first turn");
+                            "Player " + startingPlayerIndex + " cannot attack on their first turn");
                 }
                 fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
                 currentPhase = new AttackPhase();

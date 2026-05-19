@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.engine.manager;
 
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlefieldStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.FakeBenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
 import ar.edu.utn.frc.tup.piii.engine.model.AttackPhase;
 import ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase;
@@ -35,6 +36,7 @@ class KnockoutManagerTest {
     private List<FakeBattlePokemonState> knockedOut;
     private List<Integer> prizes;
     private KnockoutHandler handler;
+    private FakeBenchStateProvider benchProvider;
 
     @BeforeEach
     void setUp() {
@@ -44,6 +46,7 @@ class KnockoutManagerTest {
             knockedOut.add((FakeBattlePokemonState) knocked);
             prizes.add(p);
         };
+        benchProvider = new FakeBenchStateProvider();
     }
 
     // --- constructor null-guard ---
@@ -51,7 +54,14 @@ class KnockoutManagerTest {
     @Test
     void shouldThrowNullPointerExceptionWhenProviderIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new KnockoutManager(null, handler));
+                () -> new KnockoutManager(null, benchProvider, handler));
+    }
+
+    @Test
+    void shouldThrowNullPointerExceptionWhenBenchStateProviderIsNull() {
+        FakeBattlefieldStateProvider provider = new FakeBattlefieldStateProvider(null, null);
+        assertThrows(NullPointerException.class,
+                () -> new KnockoutManager(provider, null, handler));
     }
 
     @Test
@@ -59,7 +69,7 @@ class KnockoutManagerTest {
         FakeBattlefieldStateProvider provider =
                 new FakeBattlefieldStateProvider(null, null);
         assertThrows(NullPointerException.class,
-                () -> new KnockoutManager(provider, null));
+                () -> new KnockoutManager(provider, benchProvider, null));
     }
 
     // --- AttackPhase exited ---
@@ -251,11 +261,26 @@ class KnockoutManagerTest {
     @Test
     void shouldSkipPlayerWhenActivePokemonIsNullWhenCheckingBothPlayers() {
         FakeBattlefieldStateProvider provider = new FakeBattlefieldStateProvider(null, null);
-        KnockoutManager km = new KnockoutManager(provider, handler);
+        KnockoutManager km = new KnockoutManager(provider, benchProvider, handler);
 
         km.on(new PhaseEvent.PhaseExited(PLAYER_INDEX_0, new AttackPhase()));
 
         assertTrue(knockedOut.isEmpty());
+    }
+
+    @Test
+    void shouldDetectKoForBenchedPokemonWhenAttackPhaseExitedAndBenchedPokemonIsKnockedOut() {
+        FakeBattlePokemonState p0Active = aliveState(MAX_HP_100, false);
+        FakeBattlePokemonState p1Active = aliveState(MAX_HP_100, false);
+        FakeBattlePokemonState benchedKo = koState(MAX_HP_100, false);
+        benchProvider.setBenched(0, List.of(benchedKo));
+        KnockoutManager km = managerWith(p0Active, p1Active);
+
+        km.on(new PhaseEvent.PhaseExited(PLAYER_INDEX_0, new AttackPhase()));
+
+        assertEquals(1, knockedOut.size());
+        assertEquals(benchedKo, knockedOut.get(0));
+        assertEquals(1, prizes.get(0));
     }
 
     // --- helpers ---
@@ -263,7 +288,7 @@ class KnockoutManagerTest {
     private KnockoutManager managerWith(final FakeBattlePokemonState p0,
                                          final FakeBattlePokemonState p1) {
         FakeBattlefieldStateProvider provider = new FakeBattlefieldStateProvider(p0, p1);
-        return new KnockoutManager(provider, handler);
+        return new KnockoutManager(provider, benchProvider, handler);
     }
 
     private FakeBattlePokemonState koState(final int maxHp, final boolean ex) {

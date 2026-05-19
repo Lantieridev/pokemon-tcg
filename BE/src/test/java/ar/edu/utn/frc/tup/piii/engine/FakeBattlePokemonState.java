@@ -1,7 +1,12 @@
 package ar.edu.utn.frc.tup.piii.engine;
 
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test helper — in-memory implementation of BattlePokemonState.
@@ -12,9 +17,17 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private int damageCounters;
     private final int maxHp;
     private final PokemonType type;
+    private String name;
+    private String cardId;
     private final PokemonType weaknessType;
     private final PokemonType resistanceType;
     private final boolean ex;
+    private int retreatCost = 0;
+    private final List<PokemonType> attachedEnergies = new ArrayList<>();
+    private boolean toolAttached = false;
+    private final List<Attack> attacks = new ArrayList<>();
+    private EvolutionStage evolutionStage = EvolutionStage.BASIC;
+    private String evolvesFrom = null;
 
     public FakeBattlePokemonState(final int maxHp, final PokemonType type,
                                   final PokemonType weaknessType,
@@ -25,6 +38,24 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         this.weaknessType = weaknessType;
         this.resistanceType = resistanceType;
         this.ex = ex;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public void setCardId(final String cardId) {
+        this.cardId = cardId;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getCardId() {
+        return cardId;
     }
 
     @Override
@@ -60,5 +91,66 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public boolean isEx() {
         return ex;
+    }
+
+    public void setRetreatCost(final int cost) {
+        this.retreatCost = cost;
+    }
+
+    public void addAttachedEnergy(final PokemonType pokemonType) {
+        attachedEnergies.add(pokemonType);
+    }
+
+    @Override
+    public int getRetreatCost() {
+        return retreatCost;
+    }
+
+    @Override
+    public List<PokemonType> getAttachedEnergies() {
+        return List.copyOf(attachedEnergies);
+    }
+
+    public void setToolAttached(final boolean attached) {
+        this.toolAttached = attached;
+    }
+
+    @Override
+    public boolean hasToolAttached() {
+        return toolAttached;
+    }
+
+    @Override
+    public void removeEnergies(final int count) {
+        for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
+            attachedEnergies.remove(attachedEnergies.size() - 1);
+        }
+    }
+
+    public void addAttack(final Attack attack) {
+        attacks.add(attack);
+    }
+
+    @Override
+    public List<Attack> getAttacks() {
+        return List.copyOf(attacks);
+    }
+
+    public void setEvolutionStage(final EvolutionStage stage) {
+        this.evolutionStage = stage;
+    }
+
+    @Override
+    public EvolutionStage getEvolutionStage() {
+        return evolutionStage;
+    }
+
+    public void setEvolvesFrom(final String species) {
+        this.evolvesFrom = species;
+    }
+
+    @Override
+    public String getEvolvesFrom() {
+        return evolvesFrom;
     }
 }
