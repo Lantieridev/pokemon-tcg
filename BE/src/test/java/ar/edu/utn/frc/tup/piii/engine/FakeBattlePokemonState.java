@@ -15,6 +15,8 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private int damageCounters;
     private final int maxHp;
     private final PokemonType type;
+    private String name;
+    private String cardId;
     private final PokemonType weaknessType;
     private final PokemonType resistanceType;
     private final boolean ex;
@@ -31,6 +33,24 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         this.weaknessType = weaknessType;
         this.resistanceType = resistanceType;
         this.ex = ex;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public void setCardId(final String cardId) {
+        this.cardId = cardId;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getCardId() {
+        return cardId;
     }
 
     @Override
@@ -93,5 +113,12 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public boolean hasToolAttached() {
         return toolAttached;
+    }
+
+    @Override
+    public void removeEnergies(final int count) {
+        for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
+            attachedEnergies.remove(attachedEnergies.size() - 1);
+        }
     }
 }

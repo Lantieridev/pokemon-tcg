@@ -78,11 +78,16 @@ public final class PlayerPerspectiveMapper {
 
     private BattlePokemonDTO toPokemonDto(final BattlePokemonState pokemon) {
         return new BattlePokemonDTO(
+                pokemon.getCardId(),
+                pokemon.getName(),
                 pokemon.getPokemonType(),
                 pokemon.getMaxHp(),
                 pokemon.getDamageCounters(),
                 pokemon.isEx(),
                 pokemon.getWeaknessType(),
-                pokemon.getResistanceType());
+                pokemon.getResistanceType(),
+                pokemon.getAttachedEnergies(),
+                pokemon.getRetreatCost(),
+                pokemon.hasToolAttached());
     }
 }

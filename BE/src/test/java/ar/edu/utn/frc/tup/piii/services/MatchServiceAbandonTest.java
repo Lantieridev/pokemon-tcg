@@ -22,6 +22,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -65,6 +67,7 @@ class MatchServiceAbandonTest {
         final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
         final MatchBoard board = new MatchBoard(List.of(player0, player1));
         session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board);
+        session.setup();
         session.start();
 
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
@@ -111,6 +114,51 @@ class MatchServiceAbandonTest {
         // the session must have cleared the stored future reference
         final Object clearedFuture = session.getTimeoutFuture(PLAYER_A_ID);
         assertThat(clearedFuture).isNull();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void shouldHoldLockWhenSettingDisconnectTimeout() {
+        // Verify the timeout is set while the lock is held by checking that no
+        // concurrent reconnect can cancel a future that hasn't been stored yet.
+        // We do this by running disconnect and then immediately reconnect — without
+        // the lock, the cancel in reconnect would race with the store in disconnect.
+        // With the lock, disconnect stores first, reconnect cancels after.
+        final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
+        when(scheduler.schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
+                .thenReturn(mockFuture);
+
+        // Acquire the lock ourselves before calling disconnect — if disconnect also
+        // tries to acquire the lock, it will block until we release it.
+        session.getLock().lock();
+        try {
+            // Spawn disconnect in a separate thread that must wait for our lock
+            final Thread disconnectThread = new Thread(
+                    () -> matchService.onPlayerDisconnect(MATCH_ID, PLAYER_A_ID));
+            disconnectThread.start();
+
+            // Sleep briefly to let the thread reach the lock acquisition point
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            // While we hold the lock, the timeout future must NOT be stored yet
+            assertNull(session.getTimeoutFuture(PLAYER_A_ID),
+                    "timeout must not be stored until the lock is released");
+        } finally {
+            session.getLock().unlock();
+        }
+
+        // After releasing, the disconnect thread completes — future is now stored
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        assertNotNull(session.getTimeoutFuture(PLAYER_A_ID),
+                "timeout future must be stored after disconnect completes");
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

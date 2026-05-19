@@ -41,6 +41,7 @@ class PlayerPerspectiveMapperTest {
 
         final MatchBoard board = new MatchBoard(List.of(player0, player1));
         session = new MatchSession("match-001", List.of("playerA", "playerB"), board);
+        session.setup();
         session.start();
     }
 
@@ -95,6 +96,43 @@ class PlayerPerspectiveMapperTest {
         assertThat(opponentActive.pokemonType()).isEqualTo(PokemonType.WATER);
         assertThat(opponentActive.maxHp()).isEqualTo(120);
         assertThat(opponentActive.isEx()).isTrue();
+    }
+
+    @Test
+    void shouldMapAllBattlePokemonFieldsIncludingNameAndCardId() {
+        final FakeBattlePokemonState pokemon =
+                new FakeBattlePokemonState(70, PokemonType.FIRE, PokemonType.WATER, null, false);
+        pokemon.setName("Charmander");
+        pokemon.setCardId("xy1-46");
+        pokemon.setRetreatCost(1);
+        pokemon.addAttachedEnergy(PokemonType.FIRE);
+        pokemon.addAttachedEnergy(PokemonType.FIRE);
+        pokemon.setToolAttached(true);
+
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerState ps =
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerState(
+                        pokemon, java.util.List.of(), java.util.List.of(), 45, 6, java.util.Map.of());
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerState ps1 =
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerState(
+                        new FakeBattlePokemonState(100, PokemonType.WATER, null, null, false),
+                        java.util.List.of(), java.util.List.of(), 45, 6, java.util.Map.of());
+
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchBoard b =
+                new ar.edu.utn.frc.tup.piii.engine.session.MatchBoard(java.util.List.of(ps, ps1));
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession s =
+                new ar.edu.utn.frc.tup.piii.engine.session.MatchSession(
+                        "m-test", java.util.List.of("playerX", "playerY"), b);
+        s.setup();
+        s.start();
+
+        final GameStateResponseDTO response = mapper.toResponse(s, 0);
+
+        final BattlePokemonDTO dto = response.self().active();
+        assertThat(dto.name()).isEqualTo("Charmander");
+        assertThat(dto.cardId()).isEqualTo("xy1-46");
+        assertThat(dto.retreatCost()).isEqualTo(1);
+        assertThat(dto.attachedEnergies()).hasSize(2);
+        assertThat(dto.hasToolAttached()).isTrue();
     }
 
     @Test

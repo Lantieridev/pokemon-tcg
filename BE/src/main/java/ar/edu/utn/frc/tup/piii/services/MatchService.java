@@ -107,6 +107,8 @@ public final class MatchService {
                 throw new InvalidActionException(invalid.reason());
             }
 
+            facade.apply(session, action);
+
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, FIRST_ROUND, session.getPlayerIds());
             persistence.save(snapshot);
@@ -130,7 +132,13 @@ public final class MatchService {
             final Runnable task = () -> abandonMatch(matchId, playerId);
             final ScheduledFuture<?> future = abandonmentScheduler.schedule(
                     task, abandonTimeoutSeconds, TimeUnit.SECONDS);
-            session.setDisconnectTimeout(playerId, future);
+            final ReentrantLock lock = session.getLock();
+            lock.lock();
+            try {
+                session.setDisconnectTimeout(playerId, future);
+            } finally {
+                lock.unlock();
+            }
         });
     }
 

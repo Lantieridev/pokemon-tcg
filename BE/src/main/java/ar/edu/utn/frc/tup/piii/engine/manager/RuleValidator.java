@@ -38,6 +38,7 @@ public final class RuleValidator {
     private static final String SUPPORTER_ALREADY_PLAYED = "supporter_already_played";
     private static final String STADIUM_ALREADY_PLAYED = "stadium_already_played";
     private static final String POKEMON_TOOL_ALREADY_ATTACHED = "pokemon_tool_already_attached";
+    private static final String POKEMON_TOOL_REQUIRES_TARGET = "pokemon_tool_requires_target";
     private static final String ENERGY_ALREADY_ATTACHED = "energy_already_attached";
     private static final String ATTACK_BLOCKED_BY_STATUS = "attack_blocked_by_status";
     private static final String INSUFFICIENT_ENERGY_FOR_ATTACK = "insufficient_energy_for_attack";
@@ -138,7 +139,10 @@ public final class RuleValidator {
     }
 
     private ValidationResult validatePokemonTool(final BattlePokemonState target) {
-        if (target != null && target.hasToolAttached()) {
+        if (target == null) {
+            return new ValidationResult.Invalid(POKEMON_TOOL_REQUIRES_TARGET);
+        }
+        if (target.hasToolAttached()) {
             return new ValidationResult.Invalid(POKEMON_TOOL_ALREADY_ATTACHED);
         }
         return new ValidationResult.Valid();
