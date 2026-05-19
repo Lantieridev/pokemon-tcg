@@ -77,6 +77,10 @@ public final class PlayerPerspectiveMapper {
     }
 
     private BattlePokemonDTO toPokemonDto(final BattlePokemonState pokemon) {
+        final List<AttackDTO> attackDtos = pokemon.getAttacks() == null ? List.of() :
+                pokemon.getAttacks().stream()
+                        .map(a -> new AttackDTO(a.name(), a.baseDamage(), a.requiredEnergies()))
+                        .toList();
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -88,6 +92,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.getResistanceType(),
                 pokemon.getAttachedEnergies(),
                 pokemon.getRetreatCost(),
-                pokemon.hasToolAttached());
+                pokemon.hasToolAttached(),
+                attackDtos);
     }
 }

@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
+import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
@@ -31,6 +32,8 @@ public final class RuleValidator {
 
     private static final String CANNOT_EVOLVE_FIRST_TURN = "cannot_evolve_first_turn";
     private static final String POKEMON_ENTERED_THIS_TURN = "pokemon_entered_this_turn";
+    private static final String INVALID_EVOLUTION_STAGE = "invalid_evolution_stage";
+    private static final String WRONG_EVOLUTION_TARGET = "wrong_evolution_target";
     private static final String RETREAT_BLOCKED_BY_STATUS = "retreat_blocked_by_status";
     private static final String RETREAT_ALREADY_USED = "retreat_already_used";
     private static final String EMPTY_BENCH_FOR_RETREAT = "empty_bench_for_retreat";
@@ -87,13 +90,39 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateEvolve(final EvolveAction action) {
-        int playerIndex = turnManager.activePlayerIndex();
+        final int playerIndex = turnManager.activePlayerIndex();
         if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
             return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
         }
         if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
             return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
         }
+        if (action.evolution() != null) {
+            final ValidationResult stageResult = validateEvolutionStage(action);
+            if (stageResult instanceof ValidationResult.Invalid) {
+                return stageResult;
+            }
+        }
+        return new ValidationResult.Valid();
+    }
+
+    private ValidationResult validateEvolutionStage(final EvolveAction action) {
+        final EvolutionStage targetStage = action.target().getEvolutionStage();
+        final EvolutionStage evolutionStage = action.evolution().getEvolutionStage();
+
+        final boolean validProgression =
+                (targetStage == EvolutionStage.BASIC     && evolutionStage == EvolutionStage.STAGE_1)
+             || (targetStage == EvolutionStage.STAGE_1   && evolutionStage == EvolutionStage.STAGE_2);
+
+        if (!validProgression) {
+            return new ValidationResult.Invalid(INVALID_EVOLUTION_STAGE);
+        }
+
+        final String evolvesFrom = action.evolution().getEvolvesFrom();
+        if (evolvesFrom != null && !evolvesFrom.equals(action.target().getName())) {
+            return new ValidationResult.Invalid(WRONG_EVOLUTION_TARGET);
+        }
+
         return new ValidationResult.Valid();
     }
 

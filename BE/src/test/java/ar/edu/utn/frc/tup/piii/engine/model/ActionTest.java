@@ -22,7 +22,7 @@ class ActionTest {
     @Test
     void shouldHaveTargetComponentWhenEvolveActionIsCreated() {
         FakeBattlePokemonState target = fakePokemon();
-        EvolveAction action = new EvolveAction(target);
+        EvolveAction action = new EvolveAction(target, null);
 
         assertEquals(target, action.target());
     }
@@ -66,7 +66,7 @@ class ActionTest {
         FakeBattlePokemonState pokemon = fakePokemon();
         Attack attack = new Attack("Splash", 0, List.of());
         Action[] actions = {
-            new EvolveAction(pokemon),
+            new EvolveAction(pokemon, null),
             new RetreatAction(pokemon),
             new PlayTrainerAction(TrainerType.ITEM),
             new AttachEnergyAction(PokemonType.WATER),

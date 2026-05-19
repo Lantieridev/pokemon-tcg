@@ -308,6 +308,42 @@ class VictoryConditionCheckerTest {
         assertEquals(PLAYER_1, ((VictoryResult.BenchOutVictory) captured.get(0)).winnerPlayerIndex());
     }
 
+    // --- 6.8 Defender prize victory (BLOCKER-1) ---
+
+    @Test
+    void shouldFirePrizeVictoryForDefenderWhenDefenderReachesZeroPrizesAlone() {
+        // attacker (player 0) still has prizes; defender (player 1) has 0 prizes remaining
+        prizeProvider.set(PLAYER_0, PRIZES_TWO);
+        prizeProvider.set(PLAYER_1, PRIZES_ZERO);
+        benchProvider.set(PLAYER_0, PRIZES_TWO);  // bench non-empty — no SuddenDeath via bench
+        checker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        final FakeBattlePokemonState knocked =
+                new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        checker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.PrizeVictory.class, captured.get(0));
+        assertEquals(PLAYER_1, ((VictoryResult.PrizeVictory) captured.get(0)).winnerPlayerIndex());
+    }
+
+    @Test
+    void shouldNotFireSuddenDeathWhenOnlyDefenderReachesZeroPrizes() {
+        // Only defender has 0 prizes — must NOT be SuddenDeath
+        prizeProvider.set(PLAYER_0, PRIZES_TWO);
+        prizeProvider.set(PLAYER_1, PRIZES_ZERO);
+        checker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        final FakeBattlePokemonState knocked =
+                new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        checker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        org.junit.jupiter.api.Assertions.assertFalse(
+                captured.get(0) instanceof VictoryResult.SuddenDeath,
+                "Should be PrizeVictory for defender, not SuddenDeath");
+    }
+
     // --- ignored events ---
 
     @Test

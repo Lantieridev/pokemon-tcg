@@ -199,6 +199,31 @@
                                         </limit>
                                     </limits>
                                 </rule>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                                <rule>
+                                    <element>CLASS</element>
+                                    <includes>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/RuleValidator</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/DamageCalculator</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/manager/StatusEffectManager</include>
+                                    </includes>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
                             </rules>
                         </configuration>
                     </execution>
