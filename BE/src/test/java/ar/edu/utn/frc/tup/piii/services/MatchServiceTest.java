@@ -1,0 +1,124 @@
+package ar.edu.utn.frc.tup.piii.services;
+
+import ar.edu.utn.frc.tup.piii.dtos.ActionRequestDTO;
+import ar.edu.utn.frc.tup.piii.dtos.ActionType;
+import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
+import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
+import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
+import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
+import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
+import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Tests for MatchService.processAction() — lock contract and validation.
+ */
+class MatchServiceTest {
+
+    private static final String MATCH_ID = "match-abc";
+    private static final String PLAYER_A_ID = "playerA";
+    private static final String PLAYER_B_ID = "playerB";
+    private static final long TIMEOUT_SECONDS = 60L;
+
+    private MatchSessionRegistry registry;
+    private GameFacade facade;
+    private RuleValidator ruleValidator;
+    private GameStatePersistence persistence;
+    private SimpMessagingTemplate messaging;
+    private PlayerPerspectiveMapper mapper;
+    private ScheduledExecutorService scheduler;
+
+    private MatchService matchService;
+    private MatchSession session;
+    private MatchBoard board;
+
+    @BeforeEach
+    void setUp() {
+        registry = mock(MatchSessionRegistry.class);
+        facade = mock(GameFacade.class);
+        ruleValidator = mock(RuleValidator.class);
+        persistence = mock(GameStatePersistence.class);
+        messaging = mock(SimpMessagingTemplate.class);
+        mapper = mock(PlayerPerspectiveMapper.class);
+        scheduler = mock(ScheduledExecutorService.class);
+
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(
+                100, PokemonType.FIRE, null, null, false);
+        final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        board = new MatchBoard(List.of(player0, player1));
+        session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board);
+        session.start();
+
+        when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
+
+        final GameStateResponseDTO fakeView = new GameStateResponseDTO(
+                MATCH_ID, 1L, 0, "ACTIVE",
+                new GameStateResponseDTO.PlayerView(PLAYER_A_ID, null, List.of(), List.of(), 45, 6),
+                new GameStateResponseDTO.OpponentView(PLAYER_B_ID, null, List.of(), 0, 45, 6));
+        when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
+
+        matchService = new MatchService(
+                registry, facade, ruleValidator, persistence, mapper, messaging,
+                scheduler, TIMEOUT_SECONDS);
+    }
+
+    @Test
+    void shouldCallPersistInsideLockAndBroadcastAfterUnlock() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(
+                        board.getActivePokemon(0)));
+        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        // verify persist happened before either broadcast call
+        final InOrder order = inOrder(persistence, messaging);
+        order.verify(persistence).save(any(GameStateSnapshot.class));
+        // broadcast sends to both players — verify at least the first send comes after persist
+        order.verify(messaging, org.mockito.Mockito.atLeastOnce())
+                .convertAndSend(anyString(), any(Object.class));
+    }
+
+    @Test
+    void shouldThrowAndNotPersistWhenActionIsInvalid() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(
+                        board.getActivePokemon(0)));
+        when(ruleValidator.validate(any())).thenReturn(
+                new ValidationResult.Invalid("retreat_blocked_by_status"));
+
+        assertThatThrownBy(() -> matchService.processAction(MATCH_ID, PLAYER_A_ID, dto))
+                .isInstanceOf(InvalidActionException.class);
+
+        verify(persistence, never()).save(any());
+        verify(messaging, never()).convertAndSend(anyString(), any(Object.class));
+    }
+}

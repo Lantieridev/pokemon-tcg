@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.engine.session;
 
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 
 import java.util.Collections;
@@ -15,12 +16,61 @@ public final class PlayerState {
 
     private final BattlePokemonState activePokemon;
     private final List<BattlePokemonState> bench;
+    private final List<String> hand;
+    private final List<Attack> activeAttacks;
     private final int deckSize;
     private final int prizeCount;
     private final Map<BattlePokemonState, Integer> turnsInPlay;
 
     /**
-     * Constructs a PlayerState with all required fields.
+     * Constructs a PlayerState with all fields including hand and active attacks.
+     *
+     * @param activePokemon the active Pokémon slot (may be null between KO and replacement)
+     * @param bench         non-null list of benched Pokémon
+     * @param hand          non-null list of card IDs in this player's hand
+     * @param activeAttacks non-null list of attacks available to the active Pokémon
+     * @param deckSize      number of cards remaining in this player's deck
+     * @param prizeCount    number of prize cards remaining
+     * @param turnsInPlay   map of Pokémon to how many full turns they have been in play
+     */
+    public PlayerState(final BattlePokemonState activePokemon,
+                       final List<BattlePokemonState> bench,
+                       final List<String> hand,
+                       final List<Attack> activeAttacks,
+                       final int deckSize,
+                       final int prizeCount,
+                       final Map<BattlePokemonState, Integer> turnsInPlay) {
+        this.activePokemon = activePokemon;
+        this.bench = Objects.requireNonNull(bench, "bench must not be null");
+        this.hand = Objects.requireNonNull(hand, "hand must not be null");
+        this.activeAttacks = Objects.requireNonNull(activeAttacks, "activeAttacks must not be null");
+        this.deckSize = deckSize;
+        this.prizeCount = prizeCount;
+        this.turnsInPlay = Objects.requireNonNull(turnsInPlay, "turnsInPlay must not be null");
+    }
+
+    /**
+     * Constructs a PlayerState with hand but no active attacks (backward-compatible).
+     *
+     * @param activePokemon the active Pokémon slot (may be null between KO and replacement)
+     * @param bench         non-null list of benched Pokémon
+     * @param hand          non-null list of card IDs in this player's hand
+     * @param deckSize      number of cards remaining in this player's deck
+     * @param prizeCount    number of prize cards remaining
+     * @param turnsInPlay   map of Pokémon to how many full turns they have been in play
+     */
+    public PlayerState(final BattlePokemonState activePokemon,
+                       final List<BattlePokemonState> bench,
+                       final List<String> hand,
+                       final int deckSize,
+                       final int prizeCount,
+                       final Map<BattlePokemonState, Integer> turnsInPlay) {
+        this(activePokemon, bench, hand, List.of(), deckSize, prizeCount, turnsInPlay);
+    }
+
+    /**
+     * Constructs a PlayerState without a hand or attacks (backward-compatible constructor).
+     * Hand defaults to an empty list; activeAttacks defaults to an empty list.
      *
      * @param activePokemon the active Pokémon slot (may be null between KO and replacement)
      * @param bench         non-null list of benched Pokémon
@@ -33,11 +83,7 @@ public final class PlayerState {
                        final int deckSize,
                        final int prizeCount,
                        final Map<BattlePokemonState, Integer> turnsInPlay) {
-        this.activePokemon = activePokemon;
-        this.bench = Objects.requireNonNull(bench, "bench must not be null");
-        this.deckSize = deckSize;
-        this.prizeCount = prizeCount;
-        this.turnsInPlay = Objects.requireNonNull(turnsInPlay, "turnsInPlay must not be null");
+        this(activePokemon, bench, List.of(), List.of(), deckSize, prizeCount, turnsInPlay);
     }
 
     /**
@@ -74,6 +120,24 @@ public final class PlayerState {
      */
     public int getPrizeCount() {
         return prizeCount;
+    }
+
+    /**
+     * Returns an unmodifiable view of this player's hand (list of card IDs).
+     *
+     * @return hand card IDs (never null; may be empty)
+     */
+    public List<String> getHand() {
+        return Collections.unmodifiableList(hand);
+    }
+
+    /**
+     * Returns an unmodifiable list of attacks available to the active Pokémon.
+     *
+     * @return attacks (never null; may be empty)
+     */
+    public List<Attack> getActiveAttacks() {
+        return Collections.unmodifiableList(activeAttacks);
     }
 
     /**
