@@ -5,6 +5,7 @@ import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PrizeStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 
 import java.util.List;
@@ -76,5 +77,35 @@ public final class MatchBoard
             }
         }
         return 0;
+    }
+
+    /**
+     * Returns the hand (card ID list) for the specified player.
+     *
+     * @param playerIndex 0 or 1
+     * @return hand list (never null)
+     */
+    public List<String> getHandOf(final int playerIndex) {
+        return players.get(playerIndex).getHand();
+    }
+
+    /**
+     * Returns the PlayerState for the specified player.
+     *
+     * @param playerIndex 0 or 1
+     * @return PlayerState (never null)
+     */
+    public PlayerState getPlayerState(final int playerIndex) {
+        return players.get(playerIndex);
+    }
+
+    /**
+     * Returns the attacks available to the active Pokémon of the specified player.
+     *
+     * @param playerIndex 0 or 1
+     * @return attacks list (never null; may be empty)
+     */
+    public List<Attack> getActiveAttacks(final int playerIndex) {
+        return players.get(playerIndex).getActiveAttacks();
     }
 }
