@@ -29,7 +29,12 @@ public final class RetreatExecutor {
     }
 
     /**
-     * Applies the retreat: clears all status effects from the active Pokémon.
+     * Applies the retreat: removes energy cards equal to the retreat cost from the
+     * active Pokémon, then clears all status effects.
+     *
+     * <p>Per the Pokémon TCG XY1 ruleset, the player must discard Energy cards attached to
+     * the retreating Pokémon equal to its retreat cost. Any energy type counts toward the
+     * cost. After discarding, all special conditions are cleared. FR-011.</p>
      *
      * <p>Callers are responsible for ensuring the retreat action has already been validated
      * (e.g., via {@link RuleValidator}) before invoking this method.</p>
@@ -38,6 +43,8 @@ public final class RetreatExecutor {
      */
     public void executeRetreat(final RetreatAction action) {
         Objects.requireNonNull(action, "action");
+        final int retreatCost = action.active().getRetreatCost();
+        action.active().removeEnergies(retreatCost);
         statusEffectManager.clearAll();
     }
 }
