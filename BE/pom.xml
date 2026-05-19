@@ -184,7 +184,7 @@
                                 <rule>
                                     <element>PACKAGE</element>
                                     <includes>
-                                        <include>ar/edu/utn/frc/tup/piii/engine/*</include>
+                                        <include>ar/edu/utn/frc/tup/piii/engine/**</include>
                                     </includes>
                                     <limits>
                                         <limit>
