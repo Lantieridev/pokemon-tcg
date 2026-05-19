@@ -60,9 +60,9 @@ class ActionTest {
     }
 
     @Test
-    void shouldCoverAllFivePermitsWhenSwitchIsExhaustiveWhenActionIsDispatched() {
+    void shouldCoverAllSevenPermitsWhenSwitchIsExhaustiveWhenActionIsDispatched() {
         // This test verifies sealed exhaustiveness at compile time — if Action gains
-        // a sixth permit without updating this switch, compilation will fail.
+        // a new permit without updating this switch, compilation will fail.
         FakeBattlePokemonState pokemon = fakePokemon();
         Attack attack = new Attack("Splash", 0, List.of());
         Action[] actions = {
@@ -70,16 +70,20 @@ class ActionTest {
             new RetreatAction(pokemon),
             new PlayTrainerAction(TrainerType.ITEM),
             new AttachEnergyAction(PokemonType.WATER),
-            new DeclareAttackAction(pokemon, attack)
+            new DeclareAttackAction(pokemon, attack),
+            new PlaceBasicPokemonAction("pikachu-xy1-42"),
+            new UseAbilityAction(pokemon, "ability-1")
         };
 
         for (Action action : actions) {
             String label = switch (action) {
-                case EvolveAction a        -> "evolve";
-                case RetreatAction a       -> "retreat";
-                case PlayTrainerAction a   -> "trainer";
-                case AttachEnergyAction a  -> "energy";
-                case DeclareAttackAction a -> "attack";
+                case EvolveAction a            -> "evolve";
+                case RetreatAction a           -> "retreat";
+                case PlayTrainerAction a       -> "trainer";
+                case AttachEnergyAction a      -> "energy";
+                case DeclareAttackAction a     -> "attack";
+                case PlaceBasicPokemonAction a -> "place";
+                case UseAbilityAction a        -> "ability";
             };
             assertNotNull(label);
         }

@@ -20,6 +20,7 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private final boolean ex;
     private int retreatCost = 0;
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
+    private boolean toolAttached = false;
 
     public FakeBattlePokemonState(final int maxHp, final PokemonType type,
                                   final PokemonType weaknessType,
@@ -83,5 +84,14 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public List<PokemonType> getAttachedEnergies() {
         return List.copyOf(attachedEnergies);
+    }
+
+    public void setToolAttached(final boolean attached) {
+        this.toolAttached = attached;
+    }
+
+    @Override
+    public boolean hasToolAttached() {
+        return toolAttached;
     }
 }

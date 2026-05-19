@@ -8,7 +8,8 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  */
 public sealed interface VictoryResult
         permits VictoryResult.NoVictory, VictoryResult.PrizeVictory,
-                VictoryResult.BenchOutVictory, VictoryResult.DeckOutVictory {
+                VictoryResult.BenchOutVictory, VictoryResult.DeckOutVictory,
+                VictoryResult.SuddenDeath {
 
     /**
      * No victory condition has been met yet.
@@ -38,5 +39,12 @@ public sealed interface VictoryResult
      * @param winnerPlayerIndex zero-based index of the winning player
      */
     record DeckOutVictory(int winnerPlayerIndex) implements VictoryResult {
+    }
+
+    /**
+     * Both players simultaneously met a victory condition (e.g. both took their last prize
+     * on the same knockout event). A Sudden Death mini-game resolves the tie. FR-020.
+     */
+    record SuddenDeath() implements VictoryResult {
     }
 }

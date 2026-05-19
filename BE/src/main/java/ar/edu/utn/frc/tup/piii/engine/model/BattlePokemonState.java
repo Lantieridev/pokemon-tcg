@@ -60,4 +60,12 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @return attached energies (never null; may be empty)
      */
     List<PokemonType> getAttachedEnergies();
+
+    /**
+     * Returns {@code true} if this Pokémon already has a Pokémon Tool card attached.
+     * Used to enforce the one-tool-per-Pokémon rule (FR-003).
+     *
+     * @return true if a Pokémon Tool is currently attached
+     */
+    boolean hasToolAttached();
 }

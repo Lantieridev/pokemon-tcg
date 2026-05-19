@@ -1,8 +1,12 @@
 package ar.edu.utn.frc.tup.piii.engine.listener;
 
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+
+import java.util.List;
+
 /**
- * Provides bench-size state for a player (excludes the active slot).
- * A return value of {@code 0} means the player has no Pokémon on the bench.
+ * Provides bench state for a player (excludes the active slot).
+ * A return value of {@code 0} for getBenchSize means the player has no Pokémon on the bench.
  * FR-008.
  */
 public interface BenchStateProvider {
@@ -15,4 +19,12 @@ public interface BenchStateProvider {
      * @return bench size (>= 0)
      */
     int getBenchSize(int playerIndex);
+
+    /**
+     * Returns all Pokémon currently on the given player's bench.
+     *
+     * @param playerIndex zero-based player index
+     * @return non-null, possibly empty list
+     */
+    List<BattlePokemonState> getBenchedPokemon(int playerIndex);
 }
