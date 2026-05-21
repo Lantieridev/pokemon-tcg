@@ -1,0 +1,167 @@
+package ar.edu.utn.frc.tup.piii.engine.model;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class InPlayPokemonTest {
+
+    private PokemonCard pikachu() {
+        return new PokemonCard.Builder("xy1-42", "Pikachu", 60, PokemonType.LIGHTNING)
+                .weaknessType(PokemonType.FIGHTING)
+                .resistanceType(PokemonType.METAL)
+                .retreatCost(1)
+                .ex(false)
+                .evolutionStage(EvolutionStage.BASIC)
+                .attacks(List.of(new Attack("Nuzzle", 0, List.of(PokemonType.COLORLESS))))
+                .build();
+    }
+
+    private PokemonCard venusaurEx() {
+        return new PokemonCard.Builder("xy1-1", "Venusaur-EX", 180, PokemonType.GRASS)
+                .weaknessType(PokemonType.FIRE)
+                .ex(true)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+    }
+
+    private PokemonCard raichu() {
+        return new PokemonCard.Builder("xy1-43", "Raichu", 90, PokemonType.LIGHTNING)
+                .weaknessType(PokemonType.FIGHTING)
+                .retreatCost(0)
+                .evolutionStage(EvolutionStage.STAGE_1)
+                .evolvesFrom("Pikachu")
+                .attacks(List.of(new Attack("Thunderbolt", 100,
+                        List.of(PokemonType.LIGHTNING, PokemonType.LIGHTNING, PokemonType.COLORLESS))))
+                .build();
+    }
+
+    @Test
+    void shouldThrowWhenCardIsNull() {
+        assertThrows(NullPointerException.class, () -> new InPlayPokemon(null));
+    }
+
+    @Test
+    void shouldDelegateCardId() {
+        assertEquals("xy1-42", new InPlayPokemon(pikachu()).getCardId());
+    }
+
+    @Test
+    void shouldDelegateName() {
+        assertEquals("Pikachu", new InPlayPokemon(pikachu()).getName());
+    }
+
+    @Test
+    void shouldReturnCardTypePokemon() {
+        assertEquals(CardType.POKEMON, new InPlayPokemon(pikachu()).getCardType());
+    }
+
+    @Test
+    void shouldDelegateMaxHp() {
+        assertEquals(60, new InPlayPokemon(pikachu()).getMaxHp());
+    }
+
+    @Test
+    void shouldDelegatePokemonType() {
+        assertEquals(PokemonType.LIGHTNING, new InPlayPokemon(pikachu()).getPokemonType());
+    }
+
+    @Test
+    void shouldDelegateWeaknessType() {
+        assertEquals(PokemonType.FIGHTING, new InPlayPokemon(pikachu()).getWeaknessType());
+    }
+
+    @Test
+    void shouldDelegateResistanceType() {
+        assertEquals(PokemonType.METAL, new InPlayPokemon(pikachu()).getResistanceType());
+    }
+
+    @Test
+    void shouldReturnNullResistanceWhenNotSet() {
+        assertNull(new InPlayPokemon(venusaurEx()).getResistanceType());
+    }
+
+    @Test
+    void shouldDelegateRetreatCost() {
+        assertEquals(1, new InPlayPokemon(pikachu()).getRetreatCost());
+    }
+
+    @Test
+    void shouldDelegateIsEx() {
+        assertTrue(new InPlayPokemon(venusaurEx()).isEx());
+        assertFalse(new InPlayPokemon(pikachu()).isEx());
+    }
+
+    @Test
+    void shouldDelegateEvolutionStage() {
+        assertEquals(EvolutionStage.BASIC, new InPlayPokemon(pikachu()).getEvolutionStage());
+        assertEquals(EvolutionStage.STAGE_1, new InPlayPokemon(raichu()).getEvolutionStage());
+    }
+
+    @Test
+    void shouldDelegateEvolvesFrom() {
+        assertNull(new InPlayPokemon(pikachu()).getEvolvesFrom());
+        assertEquals("Pikachu", new InPlayPokemon(raichu()).getEvolvesFrom());
+    }
+
+    @Test
+    void shouldDelegateAttacks() {
+        assertEquals(1, new InPlayPokemon(pikachu()).getAttacks().size());
+        assertEquals("Nuzzle", new InPlayPokemon(pikachu()).getAttacks().get(0).name());
+    }
+
+    @Test
+    void shouldStartWithZeroDamageCounters() {
+        assertEquals(0, new InPlayPokemon(pikachu()).getDamageCounters());
+    }
+
+    @Test
+    void addDamageCountersShouldAccumulate() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.addDamageCounters(10);
+        p.addDamageCounters(20);
+        assertEquals(30, p.getDamageCounters());
+    }
+
+    @Test
+    void shouldStartWithNoAttachedEnergies() {
+        assertTrue(new InPlayPokemon(pikachu()).getAttachedEnergies().isEmpty());
+    }
+
+    @Test
+    void attachedEnergiesListShouldBeImmutable() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> new InPlayPokemon(pikachu()).getAttachedEnergies().add(PokemonType.LIGHTNING));
+    }
+
+    @Test
+    void removeEnergiesShouldReduceAttachedList() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.attachEnergy(PokemonType.LIGHTNING);
+        p.attachEnergy(PokemonType.COLORLESS);
+        p.removeEnergies(1);
+        assertEquals(1, p.getAttachedEnergies().size());
+    }
+
+    @Test
+    void removeEnergiesMoreThanAttachedShouldClearAll() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.attachEnergy(PokemonType.LIGHTNING);
+        p.removeEnergies(5);
+        assertTrue(p.getAttachedEnergies().isEmpty());
+    }
+
+    @Test
+    void shouldStartWithNoToolAttached() {
+        assertFalse(new InPlayPokemon(pikachu()).hasToolAttached());
+    }
+
+    @Test
+    void setToolAttachedShouldPersist() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.setToolAttached(true);
+        assertTrue(p.hasToolAttached());
+    }
+}

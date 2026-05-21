@@ -88,6 +88,17 @@ public final class Deck {
         return cards.get(0);
     }
 
+    /**
+     * Appends cards to the bottom of the deck.
+     * Used during a Mulligan to return a player's hand before reshuffling.
+     *
+     * @param toReturn non-null list of cards to append
+     */
+    public void addCards(final List<Card> toReturn) {
+        Objects.requireNonNull(toReturn, "cards list must not be null");
+        cards.addAll(toReturn);
+    }
+
     public boolean isEmpty() {
         return cards.isEmpty();
     }
