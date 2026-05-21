@@ -108,6 +108,20 @@ class HandTest {
     }
 
     @Test
+    void removeAllShouldReturnAllCardsAndClearHand() {
+        final Hand hand = new Hand();
+        hand.addCards(List.of(basicPokemon("a"), basicPokemon("b"), stage1Pokemon("c")));
+        final List<Card> removed = hand.removeAll();
+        assertEquals(3, removed.size());
+        assertEquals(0, hand.size());
+    }
+
+    @Test
+    void removeAllOnEmptyHandShouldReturnEmptyList() {
+        assertTrue(new Hand().removeAll().isEmpty());
+    }
+
+    @Test
     void shouldSupportMultipleCardsWithDifferentIds() {
         final Hand hand = new Hand();
         hand.addCards(List.of(basicPokemon("a"), basicPokemon("b"), stage1Pokemon("c")));

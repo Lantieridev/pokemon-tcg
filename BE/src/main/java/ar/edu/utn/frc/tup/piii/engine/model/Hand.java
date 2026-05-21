@@ -53,6 +53,18 @@ public final class Hand {
         return false;
     }
 
+    /**
+     * Removes and returns all cards, leaving the hand empty.
+     * Used during a Mulligan to return the hand to the deck before reshuffling.
+     *
+     * @return all cards that were in the hand (never null; may be empty)
+     */
+    public List<Card> removeAll() {
+        final List<Card> all = new ArrayList<>(cards);
+        cards.clear();
+        return all;
+    }
+
     /** Returns a defensive copy of the hand. */
     public List<Card> getCards() {
         return Collections.unmodifiableList(new ArrayList<>(cards));

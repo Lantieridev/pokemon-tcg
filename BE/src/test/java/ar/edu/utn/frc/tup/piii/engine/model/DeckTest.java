@@ -129,6 +129,24 @@ class DeckTest {
     }
 
     @Test
+    void addCardsShouldAppendToEnd() {
+        final Deck deck = new Deck(buildCards(3));
+        final List<Card> extras = buildCards(2);
+        extras.get(0).getCardId(); // just reference
+        deck.addCards(extras);
+        assertEquals(5, deck.size());
+        // first 3 remain at top
+        assertEquals("id-0", deck.draw().getCardId());
+        assertEquals("id-1", deck.draw().getCardId());
+        assertEquals("id-2", deck.draw().getCardId());
+    }
+
+    @Test
+    void addCardsShouldThrowWhenNull() {
+        assertThrows(NullPointerException.class, () -> new Deck(buildCards(3)).addCards(null));
+    }
+
+    @Test
     void drawMultipleShouldReturnCardsInDrawOrder() {
         final List<Card> cards = buildCards(5);
         final Deck deck = new Deck(cards);
