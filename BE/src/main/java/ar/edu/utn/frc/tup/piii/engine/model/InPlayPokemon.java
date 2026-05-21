@@ -14,6 +14,8 @@ import java.util.Objects;
  */
 public final class InPlayPokemon implements BattlePokemonState {
 
+    private static final int DAMAGE_PER_COUNTER = 10;
+
     private final PokemonCard card;
     private int damageCounters;
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
@@ -117,9 +119,15 @@ public final class InPlayPokemon implements BattlePokemonState {
      *
      * @param type the energy type to attach (never null)
      */
+    @Override
     public void attachEnergy(final PokemonType type) {
         Objects.requireNonNull(type, "energy type must not be null");
         attachedEnergies.add(type);
+    }
+
+    @Override
+    public void heal(final int amount) {
+        damageCounters = Math.max(0, damageCounters - amount / DAMAGE_PER_COUNTER);
     }
 
     @Override
@@ -140,6 +148,7 @@ public final class InPlayPokemon implements BattlePokemonState {
      *
      * @param attached true to mark a tool as attached, false to remove it
      */
+    @Override
     public void setToolAttached(final boolean attached) {
         this.toolAttached = attached;
     }

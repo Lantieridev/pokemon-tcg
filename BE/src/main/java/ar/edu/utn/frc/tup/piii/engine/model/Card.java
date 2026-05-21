@@ -19,4 +19,12 @@ public interface Card {
     default boolean isBasicPokemon() {
         return false;
     }
+
+    /**
+     * Returns true only for ACE SPEC Trainer cards. Used to enforce the 1-per-deck limit
+     * without requiring instanceof checks. RF-02b.
+     */
+    default boolean isAceSpec() {
+        return false;
+    }
 }

@@ -93,6 +93,28 @@ public interface BattlePokemonState extends ActivePokemonState {
     void removeEnergies(int count);
 
     /**
+     * Heals this Pokémon by reducing damage counters. One counter equals 10 HP.
+     * Healing cannot drop counters below zero.
+     *
+     * @param amount HP to restore (in HP units, not counter units)
+     */
+    void heal(int amount);
+
+    /**
+     * Attaches an energy of the given type to this Pokémon.
+     *
+     * @param type the energy type to attach (never null)
+     */
+    void attachEnergy(PokemonType type);
+
+    /**
+     * Sets whether a Pokémon Tool card is attached.
+     *
+     * @param attached true to mark a tool as attached, false to remove it
+     */
+    void setToolAttached(boolean attached);
+
+    /**
      * Returns the list of attacks available to this Pokémon.
      *
      * @return attacks (never null; may be empty)

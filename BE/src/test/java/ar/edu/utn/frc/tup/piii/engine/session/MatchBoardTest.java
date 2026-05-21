@@ -95,4 +95,31 @@ class MatchBoardTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new MatchBoard(List.of(playerState0)));
     }
+
+    // --- Stadium slot (RF-02d) ---
+
+    @Test
+    void shouldHaveNullActiveStadiumInitially() {
+        assertNull(board.getActiveStadiumCardId());
+    }
+
+    @Test
+    void shouldReturnNullWhenReplacingFirstStadium() {
+        final String previous = board.replaceStadium("xy1-117");
+        assertNull(previous);
+        assertEquals("xy1-117", board.getActiveStadiumCardId());
+    }
+
+    @Test
+    void shouldReturnPreviousStadiumWhenReplaced() {
+        board.replaceStadium("xy1-117");
+        final String previous = board.replaceStadium("xy1-123");
+        assertEquals("xy1-117", previous);
+        assertEquals("xy1-123", board.getActiveStadiumCardId());
+    }
+
+    @Test
+    void shouldThrowWhenReplacingWithNullCardId() {
+        assertThrows(NullPointerException.class, () -> board.replaceStadium(null));
+    }
 }

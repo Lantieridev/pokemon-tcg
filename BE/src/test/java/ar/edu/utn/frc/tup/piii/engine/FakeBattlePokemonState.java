@@ -102,6 +102,11 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     }
 
     @Override
+    public void attachEnergy(final PokemonType type) {
+        attachedEnergies.add(type);
+    }
+
+    @Override
     public int getRetreatCost() {
         return retreatCost;
     }
@@ -111,6 +116,7 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         return List.copyOf(attachedEnergies);
     }
 
+    @Override
     public void setToolAttached(final boolean attached) {
         this.toolAttached = attached;
     }
@@ -118,6 +124,11 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public boolean hasToolAttached() {
         return toolAttached;
+    }
+
+    @Override
+    public void heal(final int amount) {
+        damageCounters = Math.max(0, damageCounters - amount / 10);
     }
 
     @Override
