@@ -72,6 +72,15 @@ public final class RuleValidator {
     }
 
     /**
+     * Returns the turn manager associated with this validator.
+     *
+     * @return the TurnManager instance (never null)
+     */
+    public TurnManager getTurnManager() {
+        return turnManager;
+    }
+
+    /**
      * Validates the given action against the current game state rules.
      *
      * @param action the action to validate (must not be null)

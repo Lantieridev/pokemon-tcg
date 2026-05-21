@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.engine.session;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.IllegalMatchStateTransitionException;
+import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
 
 import java.util.List;
 import java.util.Objects;
@@ -9,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Runtime state of a single match between two players.
- * Pure POJO — zero Spring imports. Manages the WAITING → ACTIVE → FINISHED state machine.
+ * Pure POJO — zero Spring imports. Manages the WAITING → SETUP → ACTIVE → FINISHED state machine.
  *
  * <p>Thread-safety: critical sections (state transitions, timeout management) are guarded
  * by the internal {@link ReentrantLock} exposed via {@link #getLock()}. Callers that need
@@ -17,16 +18,41 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public final class MatchSession {
 
+    private static final int UNSET_PLAYER_INDEX = -1;
+
     private final String matchId;
     private final List<String> playerIds;
     private final MatchBoard board;
     private final ReentrantLock lock;
+    private final List<PlayerRuntime> playerRuntimes;
     private MatchSessionState state;
     private ScheduledFuture<?> playerATimeout;
     private ScheduledFuture<?> playerBTimeout;
+    private int activePlayerIndex = UNSET_PLAYER_INDEX;
+    private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
 
     /**
      * Constructs a MatchSession in the WAITING state.
+     *
+     * @param matchId        unique identifier for this match (never null)
+     * @param playerIds      list of player identifiers — exactly 2 (never null)
+     * @param board          the match board holding both players' state (never null)
+     * @param playerRuntimes live mutable state per player; null for legacy callers
+     */
+    public MatchSession(final String matchId,
+                        final List<String> playerIds,
+                        final MatchBoard board,
+                        final List<PlayerRuntime> playerRuntimes) {
+        this.matchId = Objects.requireNonNull(matchId, "matchId must not be null");
+        this.playerIds = Objects.requireNonNull(playerIds, "playerIds must not be null");
+        this.board = Objects.requireNonNull(board, "board must not be null");
+        this.playerRuntimes = playerRuntimes != null ? List.copyOf(playerRuntimes) : null;
+        this.state = MatchSessionState.WAITING;
+        this.lock = new ReentrantLock();
+    }
+
+    /**
+     * Constructs a MatchSession without player runtimes (backward-compatible).
      *
      * @param matchId   unique identifier for this match (never null)
      * @param playerIds list of player identifiers — exactly 2 (never null)
@@ -35,11 +61,7 @@ public final class MatchSession {
     public MatchSession(final String matchId,
                         final List<String> playerIds,
                         final MatchBoard board) {
-        this.matchId = Objects.requireNonNull(matchId, "matchId must not be null");
-        this.playerIds = Objects.requireNonNull(playerIds, "playerIds must not be null");
-        this.board = Objects.requireNonNull(board, "board must not be null");
-        this.state = MatchSessionState.WAITING;
-        this.lock = new ReentrantLock();
+        this(matchId, playerIds, board, null);
     }
 
     /**
@@ -208,6 +230,58 @@ public final class MatchSession {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Returns the live runtime state for the specified player.
+     *
+     * @param playerIndex 0 or 1
+     * @return the player's runtime (never null)
+     * @throws IllegalStateException if player runtimes were not provided at construction
+     */
+    public PlayerRuntime getPlayerRuntime(final int playerIndex) {
+        if (playerRuntimes == null) {
+            throw new IllegalStateException("PlayerRuntime not initialized for this session");
+        }
+        return playerRuntimes.get(playerIndex);
+    }
+
+    /**
+     * Returns the zero-based index of the player whose turn is currently being processed.
+     * Returns {@code -1} if not yet set.
+     *
+     * @return active player index, or -1
+     */
+    public int getActivePlayerIndex() {
+        return activePlayerIndex;
+    }
+
+    /**
+     * Sets the zero-based index of the player whose action is being applied.
+     * Must be called before {@link ar.edu.utn.frc.tup.piii.services.GameFacade#apply}.
+     *
+     * @param playerIndex 0 or 1
+     */
+    public void setActivePlayerIndex(final int playerIndex) {
+        this.activePlayerIndex = playerIndex;
+    }
+
+    /**
+     * Returns the knockout handler used by the attack pipeline. Defaults to a no-op.
+     *
+     * @return knockout handler (never null)
+     */
+    public KnockoutHandler getKnockoutHandler() {
+        return knockoutHandler;
+    }
+
+    /**
+     * Overrides the knockout handler (e.g. with a real VictoryConditionChecker).
+     *
+     * @param handler the handler to use (never null)
+     */
+    public void setKnockoutHandler(final KnockoutHandler handler) {
+        this.knockoutHandler = Objects.requireNonNull(handler, "handler must not be null");
     }
 
     /**

@@ -108,7 +108,12 @@ public final class MatchService {
                 throw new InvalidActionException(invalid.reason());
             }
 
-            facade.apply(session, action);
+            session.setActivePlayerIndex(playerIndex);
+            if (ruleValidator.getTurnManager() != null) {
+                facade.apply(session, action, ruleValidator.getTurnManager());
+            } else {
+                facade.apply(session, action);
+            }
 
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, FIRST_ROUND, session.getPlayerIds());

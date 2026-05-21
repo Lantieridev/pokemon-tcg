@@ -9,16 +9,26 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  *
  * @param trainerType the category of the Trainer card being played
  * @param target      the Pokémon receiving the tool (non-null for POKEMON_TOOL, null otherwise)
+ * @param cardId      the ID of the trainer card being played from hand (may be null for legacy callers)
  */
-public record PlayTrainerAction(TrainerType trainerType, BattlePokemonState target) implements Action {
+public record PlayTrainerAction(TrainerType trainerType, BattlePokemonState target, String cardId) implements Action {
 
     /**
-     * Convenience constructor for Trainer cards that do not target a specific Pokémon
-     * (i.e., ITEM, SUPPORTER, STADIUM).
+     * Convenience constructor for Trainer cards that do not target a specific Pokémon.
+     *
+     * @param trainerType the category of the Trainer card being played
+     * @param target      the Pokémon receiving the tool (non-null for POKEMON_TOOL, null otherwise)
+     */
+    public PlayTrainerAction(final TrainerType trainerType, final BattlePokemonState target) {
+        this(trainerType, target, null);
+    }
+
+    /**
+     * Convenience constructor for Trainer cards with no target and no card ID.
      *
      * @param trainerType the category of the Trainer card being played
      */
     public PlayTrainerAction(final TrainerType trainerType) {
-        this(trainerType, null);
+        this(trainerType, null, null);
     }
 }

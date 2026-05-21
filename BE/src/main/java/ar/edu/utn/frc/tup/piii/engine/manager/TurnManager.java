@@ -71,6 +71,16 @@ public final class TurnManager {
         this.startingPlayerIndex = playerIndex;
     }
 
+    /**
+     * Returns the index of the player who goes first.
+     * Used by DrawPhaseExecutor to skip the starting player's first draw.
+     *
+     * @return starting player index (0 or 1)
+     */
+    public int getStartingPlayerIndex() {
+        return startingPlayerIndex;
+    }
+
     // -------------------------------------------------------------------------
     // State getters
     // -------------------------------------------------------------------------

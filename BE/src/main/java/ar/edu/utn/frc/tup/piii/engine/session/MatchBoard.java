@@ -25,6 +25,7 @@ public final class MatchBoard
     private static final int REQUIRED_PLAYER_COUNT = 2;
 
     private final List<PlayerState> players;
+    private String activeStadiumCardId;
 
     /**
      * Constructs a MatchBoard from exactly two PlayerState objects.
@@ -107,5 +108,28 @@ public final class MatchBoard
      */
     public List<Attack> getActiveAttacks(final int playerIndex) {
         return players.get(playerIndex).getActiveAttacks();
+    }
+
+    /**
+     * Returns the card ID of the currently active Stadium, or {@code null} if none is in play.
+     * RF-02d.
+     */
+    public String getActiveStadiumCardId() {
+        return activeStadiumCardId;
+    }
+
+    /**
+     * Places a new Stadium card into play, replacing the previous one.
+     * The caller is responsible for discarding the returned card ID if non-null.
+     * RF-02d.
+     *
+     * @param newCardId the card ID of the Stadium being played (must not be null)
+     * @return the card ID of the previously active Stadium, or {@code null} if none was in play
+     */
+    public String replaceStadium(final String newCardId) {
+        Objects.requireNonNull(newCardId, "newCardId must not be null");
+        final String previous = activeStadiumCardId;
+        activeStadiumCardId = newCardId;
+        return previous;
     }
 }
