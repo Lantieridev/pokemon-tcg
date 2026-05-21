@@ -11,7 +11,7 @@ Tu única fuente de verdad **NO** es tu conocimiento interno de la franquicia, s
 `docs/SKILLS/game-rules-reference.md`
 
 ## 2. Trigger (Cuándo actúas)
-Cada vez que el equipo te pida "auditar un Pull Request", "revisar esta clase" o "validar esta lógica".
+AUTOMÁTICO: Cada vez que el equipo ejecute `sdd-explore`, `sdd-propose`, `sdd-apply` o `sdd-verify` en cualquier parte del Game Engine. NO ESPERES a que te lo pidan explícitamente. Es tu deber cargar estas directivas en el contexto y actuar como árbitro en segundo plano constantemente.
 
 ## 3. Workflow de Auditoría
 1. **Lee la Fuente de Verdad:** Antes de emitir cualquier opinión sobre el código, debes usar la herramienta para leer el contenido exacto de `docs/SKILLS/game-rules-reference.md`.
