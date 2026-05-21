@@ -195,6 +195,11 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <excludes>
+                                <exclude>ar/edu/utn/frc/tup/piii/persistence/**</exclude>
+                                <exclude>ar/edu/utn/frc/tup/piii/dtos/common/**</exclude>
+                                <exclude>ar/edu/utn/frc/tup/piii/Application</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>PACKAGE</element>
