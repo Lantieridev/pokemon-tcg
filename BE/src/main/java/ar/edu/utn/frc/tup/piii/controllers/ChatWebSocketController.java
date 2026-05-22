@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageRequest;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -19,9 +20,11 @@ import java.util.Objects;
 public class ChatWebSocketController {
 
     private final ChatService chatService;
+    private final ProfanityFilterService profanityFilterService;
 
-    public ChatWebSocketController(final ChatService chatService) {
+    public ChatWebSocketController(final ChatService chatService, final ProfanityFilterService profanityFilterService) {
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
+        this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
     }
 
     /**
@@ -39,10 +42,11 @@ public class ChatWebSocketController {
                                                 final ChatMessageRequest request,
                                                 final Principal principal) {
         final String senderName = (principal != null) ? principal.getName() : request.getSender();
+        final String filteredMessage = profanityFilterService.filter(request.getMessage());
 
         final ChatMessageResponse response = ChatMessageResponse.builder()
                 .sender(senderName)
-                .message(request.getMessage())
+                .message(filteredMessage)
                 .timestamp(LocalDateTime.now())
                 .build();
 
