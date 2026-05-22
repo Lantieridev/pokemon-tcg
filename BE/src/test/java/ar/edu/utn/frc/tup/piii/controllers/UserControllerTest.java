@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 import ar.edu.utn.frc.tup.piii.dtos.HonorType;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
+import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,13 +36,16 @@ class UserControllerTest {
     private HonorService honorService;
 
     @Mock
+    private PenaltyService penaltyService;
+
+    @Mock
     private Principal principal;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        final UserController userController = new UserController(muteService, honorService);
+        final UserController userController = new UserController(muteService, honorService, penaltyService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 
@@ -104,5 +110,29 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users/{username}/honor", targetUser))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"GOOD_SPORTSMAN\":3,\"FRIENDLY\":5}"));
+    }
+
+    @Test
+    void shouldReturnActiveStatusWhenNotPenalized() throws Exception {
+        final String targetUser = "good_player";
+        when(penaltyService.isPenalized(targetUser)).thenReturn(false);
+
+        mockMvc.perform(get("/api/users/{username}/status", targetUser))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.penaltyExpiration").isEmpty());
+    }
+
+    @Test
+    void shouldReturnPenalizedStatusWhenPenalized() throws Exception {
+        final String targetUser = "toxic_player";
+        final LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(5);
+        when(penaltyService.isPenalized(targetUser)).thenReturn(true);
+        when(penaltyService.getPenaltyExpiration(targetUser)).thenReturn(expirationTime);
+
+        mockMvc.perform(get("/api/users/{username}/status", targetUser))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENALIZED"))
+                .andExpect(jsonPath("$.penaltyExpiration").isNotEmpty());
     }
 }
