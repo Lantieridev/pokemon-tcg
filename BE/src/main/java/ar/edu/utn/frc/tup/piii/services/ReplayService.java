@@ -1,9 +1,12 @@
 package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
+
+import java.util.List;
 
 /**
- * Service interface for match replays.
+ * Service interface for match replays and history.
  */
 public interface ReplayService {
 
@@ -14,4 +17,12 @@ public interface ReplayService {
      * @return the replay response DTO
      */
     ReplayResponseDTO getReplay(Long matchId);
+
+    /**
+     * Retrieves the list of matches in which the user participated.
+     *
+     * @param username the username of the player
+     * @return the list of match history DTOs
+     */
+    List<UserMatchHistoryDTO> getUserMatchHistory(String username);
 }

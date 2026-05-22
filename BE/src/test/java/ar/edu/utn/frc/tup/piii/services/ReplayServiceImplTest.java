@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
@@ -84,5 +85,37 @@ class ReplayServiceImplTest {
         when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class, () -> replayService.getReplay(matchId));
+    }
+
+    @Test
+    void shouldReturnUserMatchHistory() {
+        final String username = "testuser";
+        final UserEntity player1 = new UserEntity();
+        player1.setUsername("testuser");
+        final UserEntity player2 = new UserEntity();
+        player2.setUsername("otheruser");
+
+        final MatchEntity match = new MatchEntity();
+        match.setId(10L);
+        match.setPlayer1(player1);
+        match.setPlayer2(player2);
+        match.setWinner(player1);
+        match.setCreatedAt(LocalDateTime.now());
+
+        when(matchRepository.findMatchesByUsername(username)).thenReturn(List.of(match));
+
+        final List<UserMatchHistoryDTO> history = replayService.getUserMatchHistory(username);
+
+        assertNotNull(history);
+        assertEquals(1, history.size());
+        assertEquals(10L, history.get(0).getMatchId());
+        assertEquals("testuser", history.get(0).getPlayer1());
+        assertEquals("otheruser", history.get(0).getPlayer2());
+        assertEquals("testuser", history.get(0).getWinner());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUsernameIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> replayService.getUserMatchHistory(null));
     }
 }
