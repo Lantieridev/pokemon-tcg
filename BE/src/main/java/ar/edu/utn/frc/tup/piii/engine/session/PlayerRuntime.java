@@ -102,6 +102,10 @@ public final class PlayerRuntime {
         this.activePokemon = Objects.requireNonNull(pokemon, "pokemon must not be null");
     }
 
+    public void clearActivePokemon() {
+        this.activePokemon = null;
+    }
+
     /**
      * Returns an unmodifiable view of the prize pile.
      *

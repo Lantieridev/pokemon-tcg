@@ -169,4 +169,12 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     }
 
     @Override
-    public String getEv
+    public String getEvolvesFrom() {
+        return evolvesFrom;
+    }
+
+    @Override
+    public Card getBaseCard() {
+        return null;
+    }
+}

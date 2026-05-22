@@ -72,7 +72,8 @@ class ActionTest {
             new AttachEnergyAction(pokemon, PokemonType.WATER),
             new DeclareAttackAction(pokemon, attack),
             new PlaceBasicPokemonAction("pikachu-xy1-42"),
-            new UseAbilityAction(pokemon, "ability-1")
+            new UseAbilityAction(pokemon, "ability-1"),
+            new EndTurnAction()
         };
 
         for (Action action : actions) {
@@ -84,6 +85,7 @@ class ActionTest {
                 case DeclareAttackAction a     -> "attack";
                 case PlaceBasicPokemonAction a -> "place";
                 case UseAbilityAction a        -> "ability";
+                case EndTurnAction a           -> "endturn";
             };
             assertNotNull(label);
         }

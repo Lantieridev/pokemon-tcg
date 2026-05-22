@@ -136,4 +136,9 @@ class MatchServiceTest {
                 new ValidationResult.Invalid("retreat_blocked_by_status"));
 
         assertThatThrownBy(() -> matchService.processAction(MATCH_ID, PLAYER_A_ID, dto))
-                .isInstanceOf(InvalidActionException.cla
+                .isInstanceOf(InvalidActionException.class);
+
+        verify(persistence, never()).save(any());
+        verify(messaging, never()).convertAndSend(anyString(), any(Object.class));
+    }
+}

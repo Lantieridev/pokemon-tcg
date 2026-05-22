@@ -3,6 +3,8 @@ package ar.edu.utn.frc.tup.piii.engine.session;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -100,26 +102,29 @@ class MatchBoardTest {
 
     @Test
     void shouldHaveNullActiveStadiumInitially() {
-        assertNull(board.getActiveStadiumCardId());
+        assertNull(board.getActiveStadium());
     }
 
     @Test
     void shouldReturnNullWhenReplacingFirstStadium() {
-        final String previous = board.replaceStadium("xy1-117");
+        TrainerCard stadium1 = new TrainerCard.Builder("xy1-117", "Stadium 1", TrainerType.STADIUM).build();
+        final TrainerCard previous = board.replaceStadium(stadium1);
         assertNull(previous);
-        assertEquals("xy1-117", board.getActiveStadiumCardId());
+        assertEquals(stadium1, board.getActiveStadium());
     }
 
     @Test
     void shouldReturnPreviousStadiumWhenReplaced() {
-        board.replaceStadium("xy1-117");
-        final String previous = board.replaceStadium("xy1-123");
-        assertEquals("xy1-117", previous);
-        assertEquals("xy1-123", board.getActiveStadiumCardId());
+        TrainerCard stadium1 = new TrainerCard.Builder("xy1-117", "Stadium 1", TrainerType.STADIUM).build();
+        TrainerCard stadium2 = new TrainerCard.Builder("xy1-123", "Stadium 2", TrainerType.STADIUM).build();
+        board.replaceStadium(stadium1);
+        final TrainerCard previous = board.replaceStadium(stadium2);
+        assertEquals(stadium1, previous);
+        assertEquals(stadium2, board.getActiveStadium());
     }
 
     @Test
-    void shouldThrowWhenReplacingWithNullCardId() {
+    void shouldThrowWhenReplacingWithNullCard() {
         assertThrows(NullPointerException.class, () -> board.replaceStadium(null));
     }
 }

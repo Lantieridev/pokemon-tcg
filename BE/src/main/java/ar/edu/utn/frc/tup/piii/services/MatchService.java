@@ -212,11 +212,12 @@ public final class MatchService {
      * @param turnManager the active turn manager
      */
     private void processBetweenTurns(final MatchSession session, final TurnManager turnManager) {
-        final int activeIndex = turnManager.activePlayerIndex();
-        if (session.getPlayerRuntime(activeIndex).getActivePokemon() != null) {
-            final StatusEffectManager sem =
-                    session.getPlayerRuntime(activeIndex).getStatusEffectManager();
-            sem.processBetweenTurns(session.getPlayerRuntime(activeIndex).getActivePokemon());
+        for (int i = 0; i < 2; i++) {
+            if (session.getPlayerRuntime(i).getActivePokemon() != null) {
+                final StatusEffectManager sem =
+                        session.getPlayerRuntime(i).getStatusEffectManager();
+                sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon());
+            }
         }
     }
 

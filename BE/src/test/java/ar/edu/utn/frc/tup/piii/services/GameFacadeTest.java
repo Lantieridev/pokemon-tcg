@@ -84,6 +84,7 @@ class GameFacadeTest {
         PlayerRuntime runtime0 = new PlayerRuntime(deck, hand0, new Bench(), new DiscardPile(), new StatusEffectManager(() -> true), activePokemon);
         PlayerRuntime runtime1 = new PlayerRuntime(deck, new Hand(), new Bench(), new DiscardPile(), new StatusEffectManager(() -> true), targetPokemon);
         session = new MatchSession("test-match", List.of("p1", "p2"), board, List.of(runtime0, runtime1));
+        session.setCoinFlipper(() -> true);
     }
 
     @Test

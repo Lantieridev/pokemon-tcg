@@ -33,7 +33,7 @@ public final class MatchSession {
     private ScheduledFuture<?> playerBTimeout;
     private int activePlayerIndex = UNSET_PLAYER_INDEX;
     private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
-    private CoinFlipper coinFlipper = () -> Math.random() < 0.5;
+    private CoinFlipper coinFlipper;
     private TurnManager turnManager;
     private RuleValidator ruleValidator;
 
@@ -312,4 +312,41 @@ public final class MatchSession {
      *
      * @param manager the turn manager to use (never null)
      */
-    public void setTurnManager(fi
+    public void setTurnManager(final TurnManager manager) {
+        this.turnManager = Objects.requireNonNull(manager, "manager must not be null");
+    }
+
+    /**
+     * Returns the RuleValidator for this session, or {@code null} if not yet set.
+     *
+     * @return rule validator, or null
+     */
+    public RuleValidator getRuleValidator() {
+        return ruleValidator;
+    }
+
+    /**
+     * Binds the RuleValidator for this session (called once during match creation).
+     *
+     * @param validator the validator to use (never null)
+     */
+    public void setRuleValidator(final RuleValidator validator) {
+        this.ruleValidator = Objects.requireNonNull(validator, "validator must not be null");
+    }
+
+    /**
+     * Returns the zero-based index of the given player within this session.
+     *
+     * @param playerId the player to find (never null)
+     * @return 0 or 1
+     * @throws IllegalArgumentException if playerId is not a participant of this session
+     */
+    public int indexOf(final String playerId) {
+        Objects.requireNonNull(playerId, "playerId must not be null");
+        final int index = playerIds.indexOf(playerId);
+        if (index < 0) {
+            throw new IllegalArgumentException("Player '" + playerId + "' is not part of match " + matchId);
+        }
+        return index;
+    }
+}

@@ -60,6 +60,7 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         if (knocked.equals(defender.getActivePokemon())) {
             // Active slot is left empty — the player must promote a benched Pokémon
             // via a subsequent replacement action from the client
+            defender.clearActivePokemon();
         } else {
             removeFromBench(defender, knocked);
         }

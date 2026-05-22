@@ -15,6 +15,8 @@ public final class TrainerCard implements Card {
     private final String name;
     private final TrainerType trainerType;
     private final boolean aceSpec;
+    private final String effectText;
+    private final TrainerEffectId effectId;
     private final TrainerEffect effect;
 
     private TrainerCard(final Builder builder) {
@@ -22,6 +24,8 @@ public final class TrainerCard implements Card {
         this.name = builder.name;
         this.trainerType = builder.trainerType;
         this.aceSpec = builder.aceSpec;
+        this.effectText = builder.effectText;
+        this.effectId = builder.effectId;
         this.effect = builder.effect;
     }
 
@@ -49,6 +53,14 @@ public final class TrainerCard implements Card {
         return trainerType;
     }
 
+    public String getEffectText() {
+        return effectText;
+    }
+
+    public TrainerEffectId getEffectId() {
+        return effectId;
+    }
+
     /**
      * Returns the runtime effect of this Trainer card, or {@code null} if no effect is defined.
      * A {@code null} effect means the card's logic is not yet implemented.
@@ -64,6 +76,8 @@ public final class TrainerCard implements Card {
         private final String name;
         private final TrainerType trainerType;
         private boolean aceSpec = false;
+        private String effectText;
+        private TrainerEffectId effectId = TrainerEffectId.NONE;
         private TrainerEffect effect;
 
         public Builder(final String cardId, final String name, final TrainerType trainerType) {
@@ -74,6 +88,16 @@ public final class TrainerCard implements Card {
 
         public Builder aceSpec(final boolean isAceSpec) {
             this.aceSpec = isAceSpec;
+            return this;
+        }
+
+        public Builder effectText(final String effectText) {
+            this.effectText = effectText;
+            return this;
+        }
+
+        public Builder effectId(final TrainerEffectId effectId) {
+            this.effectId = effectId != null ? effectId : TrainerEffectId.NONE;
             return this;
         }
 

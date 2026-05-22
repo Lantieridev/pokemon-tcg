@@ -100,12 +100,15 @@ public final class SetupManager {
         placeBench(slot0, strategy0);
         placeBench(slot1, strategy1);
 
-        // Step 4 — bonus draws (after placement, per XY1 §1.3)
-        if (mulligan1 > 0 && strategy0.acceptBonusDraws(mulligan1)) {
-            slot0.getHand().addCards(slot0.getDeck().drawMultiple(mulligan1));
+        // Step 4 — bonus draws (after placement, per XY1 §1.3, canceling mulligans out)
+        final int netMulligans0 = Math.max(0, mulligan0 - mulligan1);
+        final int netMulligans1 = Math.max(0, mulligan1 - mulligan0);
+
+        if (netMulligans1 > 0 && strategy0.acceptBonusDraws(netMulligans1)) {
+            slot0.getHand().addCards(slot0.getDeck().drawMultiple(netMulligans1));
         }
-        if (mulligan0 > 0 && strategy1.acceptBonusDraws(mulligan0)) {
-            slot1.getHand().addCards(slot1.getDeck().drawMultiple(mulligan0));
+        if (netMulligans0 > 0 && strategy1.acceptBonusDraws(netMulligans0)) {
+            slot1.getHand().addCards(slot1.getDeck().drawMultiple(netMulligans0));
         }
 
         // Step 5 — set aside Prize cards

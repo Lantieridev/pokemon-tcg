@@ -197,4 +197,8 @@ class MatchServiceAbandonTest {
 
         // broadcast must have been called (for both players)
         verify(messaging, org.mockito.Mockito.atLeastOnce())
-                .conver
+                .convertAndSend(any(String.class), any(Object.class));
+        // registry must have removed the match
+        verify(registry).remove(MATCH_ID);
+    }
+}
