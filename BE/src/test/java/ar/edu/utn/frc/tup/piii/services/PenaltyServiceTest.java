@@ -29,7 +29,7 @@ class PenaltyServiceTest {
     @Test
     void shouldNotBePenalizedWithLessThanThreeReports() {
         final String username = "testuser";
-        when(chatReportRepository.countByReportedUsername(username)).thenReturn(2L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(2L);
 
         assertFalse(penaltyService.isPenalized(username));
         assertNull(penaltyService.getPenaltyExpiration(username));
@@ -38,7 +38,7 @@ class PenaltyServiceTest {
     @Test
     void shouldBePenalizedWithThreeOrMoreReports() {
         final String username = "toxicuser";
-        when(chatReportRepository.countByReportedUsername(username)).thenReturn(3L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
 
         assertTrue(penaltyService.isPenalized(username));
         final LocalDateTime expiration = penaltyService.getPenaltyExpiration(username);
@@ -50,11 +50,11 @@ class PenaltyServiceTest {
     @Test
     void shouldNotReapplyPenaltyIfExpiredAndCountDidNotIncrease() throws InterruptedException {
         final String username = "toxicuser";
-        when(chatReportRepository.countByReportedUsername(username)).thenReturn(3L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
 
         // Apply penalty
         assertTrue(penaltyService.isPenalized(username));
-        verify(chatReportRepository, times(1)).countByReportedUsername(username);
+        verify(chatReportRepository, times(1)).countByReportedUsernameAndIsValidatedTrue(username);
 
         // Simulate expiration by checking again after clearing from memory map or manually resetting
         // For testing we will construct a custom subclass or test the service state.
@@ -62,18 +62,18 @@ class PenaltyServiceTest {
         // If we call checkAndApplyPenalty again it shouldn't extend penalty if count is the same.
         penaltyService.checkAndApplyPenalty(username);
         // The check was called but count is still 3. Verify total invocations to repository.
-        verify(chatReportRepository, times(2)).countByReportedUsername(username);
+        verify(chatReportRepository, times(2)).countByReportedUsernameAndIsValidatedTrue(username);
     }
 
     @Test
     void shouldReapplyPenaltyIfCountIncreases() {
         final String username = "toxicuser";
-        when(chatReportRepository.countByReportedUsername(username)).thenReturn(3L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
 
         assertTrue(penaltyService.isPenalized(username));
 
         // Increase reports count
-        when(chatReportRepository.countByReportedUsername(username)).thenReturn(4L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(4L);
         penaltyService.checkAndApplyPenalty(username);
 
         assertTrue(penaltyService.isPenalized(username));

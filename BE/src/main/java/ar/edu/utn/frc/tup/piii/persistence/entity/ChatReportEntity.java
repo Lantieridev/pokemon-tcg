@@ -44,6 +44,9 @@ public class ChatReportEntity {
     @Column(name = "chat_history", nullable = false)
     private List<ChatMessageResponse> chatHistory;
 
+    @Column(name = "is_validated", nullable = false)
+    private Boolean isValidated;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

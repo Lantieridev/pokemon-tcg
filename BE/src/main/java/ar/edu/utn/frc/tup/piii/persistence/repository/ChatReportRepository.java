@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChatReportRepository extends JpaRepository<ChatReportEntity, Long> {
-    long countByReportedUsername(String username);
+    long countByReportedUsernameAndIsValidatedTrue(String username);
 }
