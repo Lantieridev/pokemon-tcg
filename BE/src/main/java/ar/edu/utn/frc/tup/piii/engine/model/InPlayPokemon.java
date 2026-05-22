@@ -18,6 +18,8 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     private PokemonCard card;
     private int damageCounters;
+    private final List<PokemonCard> underlyingCards = new ArrayList<>();
+    private final List<EnergyCard> attachedEnergyCards = new ArrayList<>();
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private boolean toolAttached;
 
@@ -111,7 +113,9 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     @Override
     public void evolveInto(final PokemonCard evolution) {
-        this.card = Objects.requireNonNull(evolution, "evolution card must not be null");
+        Objects.requireNonNull(evolution, "evolution card must not be null");
+        this.underlyingCards.add(this.card);
+        this.card = evolution;
     }
 
     /**
@@ -129,15 +133,26 @@ public final class InPlayPokemon implements BattlePokemonState {
         return Collections.unmodifiableList(attachedEnergies);
     }
 
+    @Override
+    public List<PokemonCard> getUnderlyingCards() {
+        return Collections.unmodifiableList(underlyingCards);
+    }
+
+    @Override
+    public List<EnergyCard> getAttachedEnergyCards() {
+        return Collections.unmodifiableList(attachedEnergyCards);
+    }
+
     /**
-     * Attaches an energy to this Pokémon.
+     * Attaches an energy card to this Pokémon.
      *
-     * @param type the energy type to attach (never null)
+     * @param energyCard the energy card to attach (never null)
      */
     @Override
-    public void attachEnergy(final PokemonType type) {
-        Objects.requireNonNull(type, "energy type must not be null");
-        attachedEnergies.add(type);
+    public void attachEnergy(final EnergyCard energyCard) {
+        Objects.requireNonNull(energyCard, "energy card must not be null");
+        attachedEnergyCards.add(energyCard);
+        attachedEnergies.add(energyCard.getEnergyType());
     }
 
     @Override
@@ -149,6 +164,19 @@ public final class InPlayPokemon implements BattlePokemonState {
     public void removeEnergies(final int count) {
         for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
             attachedEnergies.remove(attachedEnergies.size() - 1);
+            attachedEnergyCards.remove(attachedEnergyCards.size() - 1);
+        }
+    }
+
+    @Override
+    public void removeEnergies(final java.util.List<Integer> indices) {
+        java.util.List<Integer> sortedIndices = new java.util.ArrayList<>(indices);
+        sortedIndices.sort(java.util.Collections.reverseOrder());
+        for (int index : sortedIndices) {
+            if (index >= 0 && index < attachedEnergies.size()) {
+                attachedEnergies.remove(index);
+                attachedEnergyCards.remove(index);
+            }
         }
     }
 

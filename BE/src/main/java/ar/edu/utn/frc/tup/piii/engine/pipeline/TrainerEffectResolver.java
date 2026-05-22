@@ -27,10 +27,7 @@ public final class TrainerEffectResolver {
             case DRAW_CARDS_3:
                 return TrainerEffect.drawCards(3);
             case HEAL_30_DAMAGE:
-                // We don't have healDamage effect defined yet, assuming it would be created later.
-                // For now, return null or create a dummy effect if possible.
-                // Let's create a stub for it if TrainerEffect has it, or just return null.
-                return null;
+                return TrainerEffect.healDamage(30);
             case NONE:
             default:
                 return null;

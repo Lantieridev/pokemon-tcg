@@ -170,9 +170,26 @@ public final class RuleValidator {
         if (mainPhase.isRetreatUsed()) {
             return new ValidationResult.Invalid(RETREAT_ALREADY_USED);
         }
-        if (action.active().getAttachedEnergies().size() < action.active().getRetreatCost()) {
+        int retreatCost = action.active().getRetreatCost();
+        if (action.active().getAttachedEnergies().size() < retreatCost) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_RETREAT);
         }
+        
+        java.util.List<Integer> indices = action.energyIndicesToDiscard();
+        if (indices == null || indices.size() != retreatCost) {
+            return new ValidationResult.Invalid("Must specify exactly " + retreatCost + " energy indices to discard.");
+        }
+        
+        long uniqueIndices = indices.stream().distinct().count();
+        if (uniqueIndices != indices.size()) {
+            return new ValidationResult.Invalid("Duplicate energy indices are not allowed.");
+        }
+        
+        int attachedSize = action.active().getAttachedEnergies().size();
+        if (indices.stream().anyMatch(i -> i < 0 || i >= attachedSize)) {
+            return new ValidationResult.Invalid("Invalid energy index specified.");
+        }
+        
         return new ValidationResult.Valid();
     }
 

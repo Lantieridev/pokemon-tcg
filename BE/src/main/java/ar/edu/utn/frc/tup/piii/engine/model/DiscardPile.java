@@ -28,6 +28,17 @@ public final class DiscardPile {
         return Collections.unmodifiableList(cards);
     }
 
+    /**
+     * Removes all cards from the discard pile.
+     *
+     * @return the removed cards
+     */
+    public List<Card> removeAll() {
+        final List<Card> removed = new ArrayList<>(cards);
+        cards.clear();
+        return removed;
+    }
+
     public int size() {
         return cards.size();
     }

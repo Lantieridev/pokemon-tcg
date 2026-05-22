@@ -1,5 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine.model;
 
+import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
+import ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -29,13 +32,32 @@ class TrainerEffectTest {
         return new Deck(cards);
     }
 
+    private static PlayerRuntime buildRuntime(final Hand hand, final Deck deck, final DiscardPile discard) {
+        // Provide a dummy ActivePokemonState. Since we only test TrainerEffect logic, 
+        // passing null for the active pokemon might crash PlayerRuntime constructor.
+        // Let's use a mocked or anonymous class if we need to. Or wait, PlayerRuntime allows null activePokemon? 
+        // No, it doesn't. 
+        ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState dummyPokemon = new InPlayPokemon(
+            new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 100, ar.edu.utn.frc.tup.piii.engine.model.PokemonType.COLORLESS).build()
+        );
+        return new PlayerRuntime(
+                deck,
+                hand,
+                new Bench(),
+                discard,
+                new StatusEffectManager(new RandomCoinFlipper()),
+                dummyPokemon
+        );
+    }
+
     @Test
     void shouldDrawTwoCardsFromDeckWhenDrawCardsEffectApplied() {
         final Hand hand = new Hand();
         final Deck deck = buildDeck(DECK_SIZE);
         final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
 
-        TrainerEffect.drawCards(DRAW_TWO).apply(hand, deck, discard);
+        TrainerEffect.drawCards(DRAW_TWO).apply(runtime, null);
 
         assertEquals(DRAW_TWO, hand.size(), "Hand should contain the drawn cards");
         assertEquals(DECK_SIZE - DRAW_TWO, deck.size(), "Deck should have two fewer cards");
@@ -51,8 +73,9 @@ class TrainerEffectTest {
 
         final Deck deck = buildDeck(DECK_SIZE);
         final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
 
-        TrainerEffect.professorOak().apply(hand, deck, discard);
+        TrainerEffect.professorOak().apply(runtime, null);
 
         assertEquals(PROFESSOR_OAK_DRAW, hand.size(),
                 "Hand should contain exactly 7 cards after Professor Oak");
@@ -70,8 +93,9 @@ class TrainerEffectTest {
 
         final Deck deck = buildDeck(DECK_SIZE);
         final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
 
-        TrainerEffect.professorOak().apply(hand, deck, discard);
+        TrainerEffect.professorOak().apply(runtime, null);
 
         assertTrue(discard.getCards().contains(discardCandidate),
                 "Previously held card must be in discard after Professor Oak");
@@ -82,8 +106,9 @@ class TrainerEffectTest {
         final Hand hand = new Hand();
         final Deck deck = buildDeck(DECK_SIZE);
         final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
 
-        TrainerEffect.drawCards(1).apply(hand, deck, discard);
+        TrainerEffect.drawCards(1).apply(runtime, null);
 
         assertEquals(1, hand.size());
         assertEquals(DECK_SIZE - 1, deck.size());
@@ -100,8 +125,9 @@ class TrainerEffectTest {
         final Hand hand = new Hand();
         final Deck deck = buildDeck(DECK_SIZE);
         final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
 
-        card.getEffect().apply(hand, deck, discard);
+        card.getEffect().apply(runtime, null);
 
         assertEquals(DRAW_TWO, hand.size());
     }

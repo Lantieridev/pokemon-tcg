@@ -6,10 +6,18 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
+
+import ar.edu.utn.frc.tup.piii.engine.manager.AutoSetupStrategy;
+import ar.edu.utn.frc.tup.piii.engine.manager.PlayerSetupSlot;
+import ar.edu.utn.frc.tup.piii.engine.manager.SetupManager;
+import ar.edu.utn.frc.tup.piii.engine.manager.SetupResult;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 
 /**
  * Runtime state of a single match between two players.
@@ -107,6 +115,71 @@ public final class MatchSession {
                     "Cannot finish a match that is in state: " + state);
         }
         state = MatchSessionState.FINISHED;
+    }
+
+    /**
+     * Resets the match for a Sudden Death tiebreaker.
+     * Collects all cards back to the decks, runs the setup phase with 1 prize card,
+     * and sets the session back to ACTIVE with the new starting player.
+     *
+     * @throws IllegalMatchStateTransitionException if the match is not in FINISHED state
+     */
+    public void resetForSuddenDeath() {
+        if (state != MatchSessionState.FINISHED) {
+            throw new IllegalMatchStateTransitionException(
+                    "Cannot reset for sudden death from state: " + state + " (must be FINISHED)");
+        }
+        state = MatchSessionState.SETUP;
+
+        // Return all cards to the deck
+        for (int i = 0; i < 2; i++) {
+            final PlayerRuntime pr = getPlayerRuntime(i);
+            final List<Card> allCards = new ArrayList<>();
+            allCards.addAll(pr.getHand().removeAll());
+            allCards.addAll(pr.getDiscardPile().removeAll());
+            allCards.addAll(pr.clearPrizes());
+
+            for (final BattlePokemonState benchMon : pr.getBench().getAll()) {
+                allCards.add(benchMon.getBaseCard());
+                allCards.addAll(benchMon.getUnderlyingCards());
+                allCards.addAll(benchMon.getAttachedEnergyCards());
+                // In a full implementation, we'd also add attached tools, etc.
+            }
+            pr.getBench().removeAll();
+
+            if (pr.getActivePokemon() != null) {
+                allCards.add(pr.getActivePokemon().getBaseCard());
+                allCards.addAll(pr.getActivePokemon().getUnderlyingCards());
+                allCards.addAll(pr.getActivePokemon().getAttachedEnergyCards());
+                pr.clearActivePokemon();
+            }
+            
+            pr.getStatusEffectManager().clearAll();
+            pr.getDeck().addCards(allCards);
+        }
+
+        // Re-run setup phase with 1 prize
+        final SetupManager setupManager = new SetupManager(coinFlipper, 1);
+        final PlayerSetupSlot slot0 = new PlayerSetupSlot(getPlayerRuntime(0).getDeck(), getPlayerRuntime(0).getHand(), getPlayerRuntime(0).getBench());
+        final PlayerSetupSlot slot1 = new PlayerSetupSlot(getPlayerRuntime(1).getDeck(), getPlayerRuntime(1).getHand(), getPlayerRuntime(1).getBench());
+        final AutoSetupStrategy strategy = new AutoSetupStrategy();
+        
+        final SetupResult setupResult = setupManager.execute(slot0, strategy, slot1, strategy);
+
+        // Map setup results back to runtimes
+        getPlayerRuntime(0).addPrizes(slot0.getPrizes());
+        getPlayerRuntime(1).addPrizes(slot1.getPrizes());
+        getPlayerRuntime(0).setActivePokemon(slot0.getActivePokemon());
+        getPlayerRuntime(1).setActivePokemon(slot1.getActivePokemon());
+
+        // Restart TurnManager
+        if (turnManager != null) {
+            turnManager.setStartingPlayer(setupResult.firstPlayerIndex());
+            state = MatchSessionState.ACTIVE;
+            turnManager.startTurn(setupResult.firstPlayerIndex());
+        } else {
+            state = MatchSessionState.ACTIVE;
+        }
     }
 
     /**

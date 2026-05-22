@@ -135,7 +135,7 @@ class GameFacadeTest {
     @Test
     void shouldUseEnergyTypeFromDtoWhenBuildingAttachEnergyAction() {
         final ActionRequestDTO dto = new ActionRequestDTO(
-                ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE);
+                ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE, java.util.Collections.emptyList());
 
         final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 

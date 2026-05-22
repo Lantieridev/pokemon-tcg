@@ -145,13 +145,13 @@ class GameFacadeApplyTest {
     @Test
     void shouldSwapActivePokemonWithBenchOnRetreat() {
         // active0 has retreat cost 2, attach 2 energies
-        active0.attachEnergy(PokemonType.FIRE);
-        active0.attachEnergy(PokemonType.FIRE);
+        active0.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.FIRE, true));
+        active0.attachEnergy(new EnergyCard("e2", "Energy", PokemonType.FIRE, true));
 
         final InPlayPokemon benchPokemon = new InPlayPokemon(buildPokemon("xy1-046", "Charmander", 50, 1, EvolutionStage.BASIC));
         bench0.place(benchPokemon);
 
-        facade.apply(session, new RetreatAction(active0, 0));
+        facade.apply(session, new RetreatAction(active0, 0, java.util.List.of(0, 1)));
 
         assertSame(benchPokemon, runtime0.getActivePokemon(), "bench pokemon promoted to active");
         assertEquals(1, bench0.size(), "old active moved to bench");
@@ -163,8 +163,8 @@ class GameFacadeApplyTest {
     @Test
     void shouldApplyDamageToDefenderViaAttackPipeline() {
         final Attack flamethrower = new Attack("Flamethrower", 90, List.of(PokemonType.FIRE, PokemonType.FIRE));
-        active0.attachEnergy(PokemonType.FIRE);
-        active0.attachEnergy(PokemonType.FIRE);
+        active0.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.FIRE, true));
+        active0.attachEnergy(new EnergyCard("e2", "Energy", PokemonType.FIRE, true));
 
         session.setActivePlayerIndex(PLAYER_0);
         facade.apply(session, new DeclareAttackAction(active0, flamethrower));
@@ -217,12 +217,12 @@ class GameFacadeApplyTest {
         assertEquals(1, turnManager.requireMainPhase().getEnergyAttached(), "Energy attachment should be recorded in MainPhase");
 
         // 2. Retreat limit recording test
-        active0.attachEnergy(PokemonType.FIRE);
-        active0.attachEnergy(PokemonType.FIRE);
+        active0.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.FIRE, true));
+        active0.attachEnergy(new EnergyCard("e2", "Energy", PokemonType.FIRE, true));
         final InPlayPokemon benchPokemon = new InPlayPokemon(buildPokemon("xy1-046", "Charmander", 50, 1, EvolutionStage.BASIC));
         bench0.place(benchPokemon);
 
-        facade.apply(session, new RetreatAction(active0, 0), turnManager);
+        facade.apply(session, new RetreatAction(active0, 0, java.util.List.of(0, 1)), turnManager);
 
         assertTrue(turnManager.requireMainPhase().isRetreatUsed(), "Retreat should be recorded in MainPhase");
 

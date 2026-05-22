@@ -157,7 +157,7 @@ class SetupManagerTest {
 
     @Test
     void noMulligan_bothMulliganCountsAreZero() {
-        final SetupManager mgr = new SetupManager(HEADS, d -> { });
+        final SetupManager mgr = new SetupManager(HEADS, d -> { }, 6);
 
         final SetupResult result = mgr.execute(
                 slot(allBasicsDeck()), simpleStrategy(),
@@ -172,7 +172,7 @@ class SetupManagerTest {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, simpleStrategy(), s1, simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), s1, simpleStrategy());
 
         assertEquals(PRIZE_COUNT, s0.getPrizes().size());
         assertEquals(PRIZE_COUNT, s1.getPrizes().size());
@@ -183,7 +183,7 @@ class SetupManagerTest {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, simpleStrategy(), s1, simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), s1, simpleStrategy());
 
         // 60 - 7 (initial hand) - 6 (prizes) - 1 (active removed from hand, not deck)
         // Active is removed from hand so deck stays at 60-7-6 = 47
@@ -194,7 +194,7 @@ class SetupManagerTest {
     void noMulligan_activeIsPlacedInSlot() {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         assertNotNull(s0.getActivePokemon());
     }
@@ -203,7 +203,7 @@ class SetupManagerTest {
     void noMulligan_activeIsRemovedFromHand() {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         // Started with 7, active removed → 6 remain (no bench, no bonus)
         assertEquals(INITIAL_HAND - 1, s0.getHand().size());
@@ -213,7 +213,7 @@ class SetupManagerTest {
     void noMulligan_benchPokemonRemovedFromHand() {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, benchStrategy(2), slot(allBasicsDeck()), simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, benchStrategy(2), slot(allBasicsDeck()), simpleStrategy());
 
         // 7 drawn - 1 active - 2 benched = 4 remaining in hand
         assertEquals(INITIAL_HAND - 1 - 2, s0.getHand().size());
@@ -222,7 +222,7 @@ class SetupManagerTest {
 
     @Test
     void noMulligan_firstPlayerIsZeroWhenHeads() {
-        final SetupResult result = new SetupManager(HEADS, d -> { })
+        final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(allBasicsDeck()), simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         assertEquals(0, result.firstPlayerIndex());
@@ -230,7 +230,7 @@ class SetupManagerTest {
 
     @Test
     void noMulligan_firstPlayerIsOneWhenTails() {
-        final SetupResult result = new SetupManager(TAILS, d -> { })
+        final SetupResult result = new SetupManager(TAILS, d -> { }, 6)
                 .execute(slot(allBasicsDeck()), simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         assertEquals(1, result.firstPlayerIndex());
@@ -243,7 +243,7 @@ class SetupManagerTest {
     @Test
     void player0Mulligan_once_mulliganCountIsOne() {
         // P0 deck: first 7 non-basics → mulligan once, then draws basics
-        final SetupResult result = new SetupManager(HEADS, d -> { })
+        final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          slot(allBasicsDeck()),              simpleStrategy());
 
@@ -255,7 +255,7 @@ class SetupManagerTest {
     void player0Mulligan_once_player1DrawsOneBonusCard() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, simpleStrategy());
 
@@ -267,7 +267,7 @@ class SetupManagerTest {
     void player0Mulligan_once_player1DeclinesBonus_handUnchanged() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, declinesBonusStrategy());
 
@@ -279,7 +279,7 @@ class SetupManagerTest {
     void player0Mulligan_eventuallyGetsBasicInHand() {
         final PlayerSetupSlot s0 = slot(deckWithLeadingNonBasics(7));
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         assertNotNull(s0.getActivePokemon());
@@ -291,7 +291,7 @@ class SetupManagerTest {
 
     @Test
     void player1Mulligan_once_mulliganCountIsOne() {
-        final SetupResult result = new SetupManager(HEADS, d -> { })
+        final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(allBasicsDeck()),              simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
@@ -303,7 +303,7 @@ class SetupManagerTest {
     void player1Mulligan_once_player0DrawsOneBonusCard() {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
@@ -317,7 +317,7 @@ class SetupManagerTest {
     @Test
     void player0Mulligan_threeTimes_mulliganCountIsThree() {
         // 21 leading non-basics → 3 batches of 7 without basics
-        final SetupResult result = new SetupManager(HEADS, d -> { })
+        final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          slot(allBasicsDeck()),               simpleStrategy());
 
@@ -328,7 +328,7 @@ class SetupManagerTest {
     void player0Mulligan_threeTimes_player1DrawsThreeBonusCards() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          s1, simpleStrategy());
 
@@ -343,7 +343,7 @@ class SetupManagerTest {
     @Test
     void crossMulligan_correctCountsForBothPlayers() {
         // P0 mulligans twice (14 leading non-basics), P1 once (7 leading non-basics)
-        final SetupResult result = new SetupManager(HEADS, d -> { })
+        final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)),  simpleStrategy());
 
@@ -355,7 +355,7 @@ class SetupManagerTest {
     void crossMulligan_player0DrawsNoBonusCardsDueToCanceling() {
         final PlayerSetupSlot s0 = slot(deckWithLeadingNonBasics(14));
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
@@ -369,7 +369,7 @@ class SetupManagerTest {
     void crossMulligan_player1DrawsNetBonusCards() {
         final PlayerSetupSlot s1 = slot(deckWithLeadingNonBasics(7));
 
-        new SetupManager(HEADS, d -> { })
+        new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          s1, simpleStrategy());
 
@@ -388,7 +388,7 @@ class SetupManagerTest {
         // allBasicsDeck first card is "b-0"
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
-        new SetupManager(HEADS, d -> { }).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
+        new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
         assertEquals("b-0", s0.getActivePokemon().getCardId());
     }

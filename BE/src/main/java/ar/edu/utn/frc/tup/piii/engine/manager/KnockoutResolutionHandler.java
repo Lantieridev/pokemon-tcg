@@ -53,8 +53,10 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         final PlayerRuntime defender = playerRuntimes.get(defenderIndex);
         final PlayerRuntime attacker = playerRuntimes.get(attackerIndex);
 
-        // Discard the knocked Pokémon's base card
+        // Discard all cards associated with the knocked Pokémon
         defender.getDiscardPile().add(knocked.getBaseCard());
+        knocked.getUnderlyingCards().forEach(defender.getDiscardPile()::add);
+        knocked.getAttachedEnergyCards().forEach(defender.getDiscardPile()::add);
 
         // Remove from field: active slot or bench
         if (knocked.equals(defender.getActivePokemon())) {
