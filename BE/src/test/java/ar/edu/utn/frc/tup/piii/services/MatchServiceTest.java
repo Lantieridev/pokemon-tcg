@@ -74,6 +74,8 @@ class MatchServiceTest {
         session.setup();
         session.start();
 
+        // Wire the per-session RuleValidator (MatchService reads it from the session, not from its constructor)
+        session.setRuleValidator(ruleValidator);
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
@@ -83,7 +85,7 @@ class MatchServiceTest {
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
 
         matchService = new MatchService(
-                registry, facade, ruleValidator, persistence, mapper, messaging,
+                registry, facade, persistence, mapper, messaging,
                 scheduler, TIMEOUT_SECONDS);
     }
 
@@ -134,9 +136,4 @@ class MatchServiceTest {
                 new ValidationResult.Invalid("retreat_blocked_by_status"));
 
         assertThatThrownBy(() -> matchService.processAction(MATCH_ID, PLAYER_A_ID, dto))
-                .isInstanceOf(InvalidActionException.class);
-
-        verify(persistence, never()).save(any());
-        verify(messaging, never()).convertAndSend(anyString(), any(Object.class));
-    }
-}
+                .isInstanceOf(InvalidActionException.cla

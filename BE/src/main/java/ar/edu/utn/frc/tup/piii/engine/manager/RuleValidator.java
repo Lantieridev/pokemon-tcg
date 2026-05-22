@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
+import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
@@ -19,6 +20,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -49,12 +51,32 @@ public final class RuleValidator {
     private static final int MAX_ENERGY_PER_TURN = 1;
 
     private final TurnManager turnManager;
-    private final StatusEffectManager statusEffectManager;
+    private final List<StatusEffectManager> statusEffectManagers;
     private final PokemonTurnInPlayProvider turnInPlayProvider;
     private final BenchStateProvider benchStateProvider;
 
     /**
-     * Constructs a RuleValidator with the required collaborators.
+     * Multi-player constructor. Accepts one {@link StatusEffectManager} per player so that
+     * the validator always reads the active player's status state.
+     *
+     * @param turnManager          manages turn phases and player state (must not be null)
+     * @param statusEffectManagers one SEM per player, indexed by player index (must not be null)
+     * @param turnInPlayProvider   reports how many turns a Pokémon has been in play (must not be null)
+     * @param benchStateProvider   provides bench size per player (must not be null)
+     */
+    public RuleValidator(final TurnManager turnManager,
+                         final List<StatusEffectManager> statusEffectManagers,
+                         final PokemonTurnInPlayProvider turnInPlayProvider,
+                         final BenchStateProvider benchStateProvider) {
+        this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
+        this.statusEffectManagers = List.copyOf(
+                Objects.requireNonNull(statusEffectManagers, "statusEffectManagers"));
+        this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
+        this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
+    }
+
+    /**
+     * Single-player backward-compatible constructor (used in tests and legacy callers).
      *
      * @param turnManager         manages turn phases and player state (must not be null)
      * @param statusEffectManager manages active status effects on the current Pokémon (must not be null)
@@ -65,10 +87,7 @@ public final class RuleValidator {
                          final StatusEffectManager statusEffectManager,
                          final PokemonTurnInPlayProvider turnInPlayProvider,
                          final BenchStateProvider benchStateProvider) {
-        this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
-        this.statusEffectManager = Objects.requireNonNull(statusEffectManager, "statusEffectManager");
-        this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
-        this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
+        this(turnManager, List.of(statusEffectManager), turnInPlayProvider, benchStateProvider);
     }
 
     /**
@@ -95,6 +114,7 @@ public final class RuleValidator {
             case DeclareAttackAction a      -> validateDeclareAttack(a);
             case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon();
             case UseAbilityAction a         -> validateUseAbility();
+            case EndTurnAction a            -> new ValidationResult.Valid();
         };
     }
 
@@ -136,7 +156,7 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateRetreat(final RetreatAction action) {
-        if (!statusEffectManager.canRetreat()) {
+        if (!getActiveStatusEffectManager().canRetreat()) {
             return new ValidationResult.Invalid(RETREAT_BLOCKED_BY_STATUS);
         }
         if (benchStateProvider.getBenchSize(turnManager.activePlayerIndex()) == 0) {
@@ -195,7 +215,7 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateDeclareAttack(final DeclareAttackAction action) {
-        if (!statusEffectManager.canAttack()) {
+        if (!getActiveStatusEffectManager().canAttack()) {
             return new ValidationResult.Invalid(ATTACK_BLOCKED_BY_STATUS);
         }
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
@@ -212,6 +232,20 @@ public final class RuleValidator {
     private ValidationResult validateUseAbility() {
         turnManager.requireMainPhase();
         return new ValidationResult.Valid();
+    }
+
+    /**
+     * Returns the StatusEffectManager for the currently active player.
+     * Falls back to the first manager if only one is registered (legacy / test usage).
+     *
+     * @return the active player's SEM (never null)
+     */
+    private StatusEffectManager getActiveStatusEffectManager() {
+        final int idx = turnManager.activePlayerIndex();
+        if (idx < 0 || idx >= statusEffectManagers.size()) {
+            return statusEffectManagers.get(0);
+        }
+        return statusEffectManagers.get(idx);
     }
 
     private boolean hasEnoughEnergyForAttack(final BattlePokemonState attacker, final Attack attack) {

@@ -114,6 +114,16 @@ public final class InPlayPokemon implements BattlePokemonState {
         this.card = Objects.requireNonNull(evolution, "evolution card must not be null");
     }
 
+    /**
+     * Returns the current underlying Pokémon card (the topmost evolution).
+     *
+     * @return current card (never null)
+     */
+    @Override
+    public Card getBaseCard() {
+        return card;
+    }
+
     @Override
     public List<PokemonType> getAttachedEnergies() {
         return Collections.unmodifiableList(attachedEnergies);

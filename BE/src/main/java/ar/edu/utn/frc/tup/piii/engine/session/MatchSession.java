@@ -2,6 +2,8 @@ package ar.edu.utn.frc.tup.piii.engine.session;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.IllegalMatchStateTransitionException;
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
+import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 
 import java.util.List;
@@ -32,6 +34,8 @@ public final class MatchSession {
     private int activePlayerIndex = UNSET_PLAYER_INDEX;
     private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
     private CoinFlipper coinFlipper = () -> Math.random() < 0.5;
+    private TurnManager turnManager;
+    private RuleValidator ruleValidator;
 
     /**
      * Constructs a MatchSession in the WAITING state.
@@ -295,18 +299,17 @@ public final class MatchSession {
     }
 
     /**
-     * Returns the zero-based index of the given player within this session.
+     * Returns the TurnManager for this session, or {@code null} if not yet set.
      *
-     * @param playerId the player to find (never null)
-     * @return 0 or 1
-     * @throws IllegalArgumentException if playerId is not a participant of this session
+     * @return turn manager, or null
      */
-    public int indexOf(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
-        final int index = playerIds.indexOf(playerId);
-        if (index < 0) {
-            throw new IllegalArgumentException("Player '" + playerId + "' is not part of match " + matchId);
-        }
-        return index;
+    public TurnManager getTurnManager() {
+        return turnManager;
     }
-}
+
+    /**
+     * Binds the TurnManager for this session (called once during match creation).
+     *
+     * @param manager the turn manager to use (never null)
+     */
+    public void setTurnManager(fi

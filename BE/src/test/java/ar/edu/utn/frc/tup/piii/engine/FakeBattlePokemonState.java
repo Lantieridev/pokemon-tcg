@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.engine;
 
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 
@@ -168,7 +169,4 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     }
 
     @Override
-    public String getEvolvesFrom() {
-        return evolvesFrom;
-    }
-}
+    public String getEv

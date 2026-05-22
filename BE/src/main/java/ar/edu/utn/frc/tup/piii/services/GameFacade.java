@@ -11,6 +11,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
+import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
@@ -18,6 +19,8 @@ import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffect;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.AttackContext;
@@ -35,7 +38,6 @@ import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Random;
 
 /**
  * Translates incoming {@link ActionRequestDTO} objects into engine {@link Action} instances,
@@ -108,6 +110,7 @@ public final class GameFacade {
                 }
             }
             case UseAbilityAction ignored      -> { /* FR-TODO: ability effects not yet implemented */ }
+            case EndTurnAction ignored         -> { /* turn advancement handled by MatchService */ }
         }
     }
 
@@ -163,25 +166,44 @@ public final class GameFacade {
     private void applyPlayTrainer(final PlayTrainerAction action,
                                    final MatchSession session,
                                    final PlayerRuntime runtime) {
+        // Retrieve the card reference BEFORE removing from hand so we can invoke its effect.
+        TrainerCard trainerCard = null;
         if (action.cardId() != null) {
+            trainerCard = (TrainerCard) runtime.getHand().getCards().stream()
+                    .filter(c -> c.getCardId().equals(action.cardId()))
+                    .findFirst()
+                    .orElse(null);
             runtime.getHand().removeCard(action.cardId());
         }
 
         switch (action.trainerType()) {
             case STADIUM -> {
-                final String previous = session.getBoard().replaceStadium(action.cardId() != null
-                        ? action.cardId() : "");
-                if (previous != null && !previous.isEmpty()) {
-                    // Previous stadium goes to discard; card object not tracked by cardId here
-                    // — the board only holds the ID; the actual card was already discarded above
+                // Stadium replaces the current field stadium; previous one goes to discard.
+                final String previous = session.getBoard().replaceStadium(
+                        action.cardId() != null ? action.cardId() : "");
+                // Stadium cards do not go to discard themselves — they remain on the field.
+                // The previous stadium (if any) is tracked by ID; the card object may not be
+                // available here. This is handled when a new stadium is played.
+                if (previous != null) {
+                    // no-op — previous stadium's Card reference is not tracked in-memory
                 }
             }
             case POKEMON_TOOL -> {
+                // Tool stays attached to the Pokémon; not discarded until the Pokémon is KO'd.
                 if (action.target() != null) {
                     action.target().setToolAttached(true);
                 }
             }
-            default -> { /* ITEM and SUPPORTER effects are applied by RuleValidator/EffectResolver */ }
+            default -> {
+                // ITEM and SUPPORTER: card goes to discard after use (XY1 rulebook §4).
+                if (trainerCard != null) {
+                    runtime.getDiscardPile().add(trainerCard);
+                    final TrainerEffect effect = trainerCard.getEffect();
+                    if (effect != null) {
+                        effect.apply(runtime.getHand(), runtime.getDeck(), runtime.getDiscardPile());
+                    }
+                }
+            }
         }
     }
 
@@ -230,33 +252,4 @@ public final class GameFacade {
             case USE_ABILITY         -> new UseAbilityAction(
                                             board.getActivePokemon(playerIndex),
                                             dto.cardId());
-        };
-    }
-
-    private DeclareAttackAction buildDeclareAttack(final MatchBoard board,
-                                                    final int playerIndex,
-                                                    final ActionRequestDTO dto) {
-        final int attackIndex = dto.attackIndex() != null ? dto.attackIndex() : 0;
-        return new DeclareAttackAction(
-                board.getActivePokemon(playerIndex),
-                board.getActiveAttacks(playerIndex).get(attackIndex));
-    }
-
-    private BattlePokemonState resolveEvolveTarget(final MatchBoard board,
-                                                    final int playerIndex,
-                                                    final ActionRequestDTO dto) {
-        if (dto.targetIndex() != null) {
-            return board.getBenchedPokemon(playerIndex).get(dto.targetIndex());
-        }
-        return board.getActivePokemon(playerIndex);
-    }
-
-    private BattlePokemonState resolveTarget(final MatchBoard board,
-                                              final int playerIndex,
-                                              final ActionRequestDTO dto) {
-        if (dto.trainerType() == TrainerType.POKEMON_TOOL && dto.targetIndex() != null) {
-            return board.getBenchedPokemon(playerIndex).get(dto.targetIndex());
-        }
-        return null;
-    }
-}
+            case END_T

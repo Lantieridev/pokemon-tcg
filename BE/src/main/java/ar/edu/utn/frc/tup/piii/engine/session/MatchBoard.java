@@ -10,6 +10,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.ArrayList;
 
 /**
  * Runtime snapshot of the match board implementing all engine provider interfaces.
@@ -28,6 +29,13 @@ public final class MatchBoard
     private String activeStadiumCardId;
 
     /**
+     * Live runtime references; non-null once {@link #bindRuntimes(List)} is called.
+     * When bound, mutable data (prize count, deck size) is read from runtimes rather
+     * than from the immutable {@link PlayerState} snapshots.
+     */
+    private List<PlayerRuntime> boundRuntimes;
+
+    /**
      * Constructs a MatchBoard from exactly two PlayerState objects.
      *
      * @param players list of two PlayerState instances (one per player)
@@ -41,6 +49,22 @@ public final class MatchBoard
                     "MatchBoard requires exactly 2 players, got: " + players.size());
         }
         this.players = List.copyOf(players);
+    }
+
+    /**
+     * Binds live {@link PlayerRuntime} objects so that mutable game state
+     * (prize count, deck size) is read from the runtimes rather than the immutable
+     * {@link PlayerState} snapshots. Must be called once during match setup.
+     *
+     * @param runtimes list of exactly two PlayerRuntime instances (never null)
+     */
+    public void bindRuntimes(final List<PlayerRuntime> runtimes) {
+        Objects.requireNonNull(runtimes, "runtimes must not be null");
+        if (runtimes.size() != REQUIRED_PLAYER_COUNT) {
+            throw new IllegalArgumentException(
+                    "bindRuntimes requires exactly 2 runtimes, got: " + runtimes.size());
+        }
+        this.boundRuntimes = new ArrayList<>(runtimes);
     }
 
     @Override
@@ -60,11 +84,17 @@ public final class MatchBoard
 
     @Override
     public int getDeckSize(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getDeck().size();
+        }
         return players.get(playerIndex).getDeckSize();
     }
 
     @Override
     public int getRemainingPrizes(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getPrizeCount();
+        }
         return players.get(playerIndex).getPrizeCount();
     }
 

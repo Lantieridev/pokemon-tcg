@@ -71,6 +71,8 @@ class MatchServiceAbandonTest {
         session.setup();
         session.start();
 
+        // Wire the per-session RuleValidator (MatchService reads it from the session, not from its constructor)
+        session.setRuleValidator(ruleValidator);
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
@@ -80,7 +82,7 @@ class MatchServiceAbandonTest {
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
 
         matchService = new MatchService(
-                registry, facade, ruleValidator, persistence, mapper, messaging,
+                registry, facade, persistence, mapper, messaging,
                 scheduler, TIMEOUT_SECONDS);
     }
 
@@ -195,8 +197,4 @@ class MatchServiceAbandonTest {
 
         // broadcast must have been called (for both players)
         verify(messaging, org.mockito.Mockito.atLeastOnce())
-                .convertAndSend(any(String.class), any(Object.class));
-        // registry must have removed the match
-        verify(registry).remove(MATCH_ID);
-    }
-}
+                .conver
