@@ -101,7 +101,7 @@ public final class MatchService {
         lock.lock();
         try {
             final int playerIndex = session.indexOf(playerId);
-            final Action action = facade.toEngineAction(session.getBoard(), playerIndex, dto);
+            final Action action = facade.toEngineAction(session, playerIndex, dto);
             final ValidationResult result = ruleValidator.validate(action);
 
             if (result instanceof ValidationResult.Invalid invalid) {

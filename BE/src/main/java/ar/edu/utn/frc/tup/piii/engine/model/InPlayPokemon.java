@@ -16,7 +16,7 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     private static final int DAMAGE_PER_COUNTER = 10;
 
-    private final PokemonCard card;
+    private PokemonCard card;
     private int damageCounters;
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private boolean toolAttached;
@@ -108,6 +108,11 @@ public final class InPlayPokemon implements BattlePokemonState {
     // -------------------------------------------------------------------------
     // BattlePokemonState — mutable battle state
     // -------------------------------------------------------------------------
+
+    @Override
+    public void evolveInto(final PokemonCard evolution) {
+        this.card = Objects.requireNonNull(evolution, "evolution card must not be null");
+    }
 
     @Override
     public List<PokemonType> getAttachedEnergies() {

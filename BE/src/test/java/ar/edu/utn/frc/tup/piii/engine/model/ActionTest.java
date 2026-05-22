@@ -44,7 +44,7 @@ class ActionTest {
 
     @Test
     void shouldHaveEnergyTypeComponentWhenAttachEnergyActionIsCreated() {
-        AttachEnergyAction action = new AttachEnergyAction(PokemonType.FIRE);
+        AttachEnergyAction action = new AttachEnergyAction(fakePokemon(), PokemonType.FIRE);
 
         assertEquals(PokemonType.FIRE, action.energyType());
     }
@@ -69,7 +69,7 @@ class ActionTest {
             new EvolveAction(pokemon, null),
             new RetreatAction(pokemon),
             new PlayTrainerAction(TrainerType.ITEM),
-            new AttachEnergyAction(PokemonType.WATER),
+            new AttachEnergyAction(pokemon, PokemonType.WATER),
             new DeclareAttackAction(pokemon, attack),
             new PlaceBasicPokemonAction("pikachu-xy1-42"),
             new UseAbilityAction(pokemon, "ability-1")

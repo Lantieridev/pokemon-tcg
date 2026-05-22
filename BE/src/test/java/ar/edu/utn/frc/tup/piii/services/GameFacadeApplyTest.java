@@ -119,7 +119,7 @@ class GameFacadeApplyTest {
         final EnergyCard fireEnergy = new EnergyCard("xy1-133", "Fire Energy", PokemonType.FIRE, true);
         hand0.addCard(fireEnergy);
 
-        facade.apply(session, new AttachEnergyAction(PokemonType.FIRE));
+        facade.apply(session, new AttachEnergyAction(active0, PokemonType.FIRE));
 
         assertEquals(0, hand0.size(), "energy card removed from hand");
         assertEquals(1, active0.getAttachedEnergies().size(), "1 energy attached to active");
@@ -134,7 +134,7 @@ class GameFacadeApplyTest {
         final InPlayPokemon charmeleonInPlay = new InPlayPokemon(charmeleon);
         hand0.addCard(charmeleon);
 
-        facade.apply(session, new EvolveAction(active0, charmeleonInPlay));
+        facade.apply(session, new EvolveAction(active0, charmeleon));
 
         assertEquals(0, hand0.size(), "evolution card removed from hand");
     }
@@ -211,7 +211,7 @@ class GameFacadeApplyTest {
         final EnergyCard fireEnergy = new EnergyCard("xy1-133", "Fire Energy", PokemonType.FIRE, true);
         hand0.addCard(fireEnergy);
 
-        facade.apply(session, new AttachEnergyAction(PokemonType.FIRE), turnManager);
+        facade.apply(session, new AttachEnergyAction(active0, PokemonType.FIRE), turnManager);
 
         assertEquals(1, turnManager.requireMainPhase().getEnergyAttached(), "Energy attachment should be recorded in MainPhase");
 

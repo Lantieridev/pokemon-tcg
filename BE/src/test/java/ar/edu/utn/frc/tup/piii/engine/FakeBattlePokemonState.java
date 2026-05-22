@@ -59,6 +59,13 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     }
 
     @Override
+    public void evolveInto(ar.edu.utn.frc.tup.piii.engine.model.PokemonCard evolutionCard) {
+        this.evolutionStage = evolutionCard.getEvolutionStage();
+        this.evolvesFrom = evolutionCard.getEvolvesFrom();
+        this.name = evolutionCard.getName();
+    }
+
+    @Override
     public int getDamageCounters() {
         return damageCounters;
     }

@@ -135,4 +135,12 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @return pre-evolution species name, or null for BASIC Pokémon
      */
     String getEvolvesFrom();
+
+    /**
+     * Evolves this Pokémon into the new specified card. 
+     * Retains attached energies and damage counters, but replaces the underlying card stats.
+     *
+     * @param evolution the new evolution card
+     */
+    void evolveInto(PokemonCard evolution);
 }
