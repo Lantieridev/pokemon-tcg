@@ -118,6 +118,9 @@ public final class MatchService {
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, FIRST_ROUND, session.getPlayerIds());
             persistence.save(snapshot);
+            persistence.saveMatch(session);
+            String resultDetail = String.format("Executed action %s with cardId=%s, targetId=%s", dto.type(), dto.cardId(), dto.targetId());
+            persistence.logAction(matchId, 0, playerId, dto.type().name(), resultDetail);
         } finally {
             lock.unlock();
         }
@@ -170,6 +173,8 @@ public final class MatchService {
             try {
                 session.finish();
                 persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
+                persistence.saveMatch(session);
+                persistence.logAction(matchId, 0, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
             } finally {
                 lock.unlock();
             }

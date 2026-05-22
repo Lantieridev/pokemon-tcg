@@ -1,9 +1,12 @@
 package ar.edu.utn.frc.tup.piii.services.deck;
 
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Component
 public final class DeckBuilderValidator {
 
     private static final int REQUIRED_DECK_SIZE = 60;
