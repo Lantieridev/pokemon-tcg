@@ -28,6 +28,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import ar.edu.utn.frc.tup.piii.services.MuteService;
+import java.util.Collections;
+
 @ExtendWith(MockitoExtension.class)
 class ReplayControllerTest {
 
@@ -37,11 +40,14 @@ class ReplayControllerTest {
     @Mock
     private ReplayService replayService;
 
+    @Mock
+    private MuteService muteService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        final ReplayController replayController = new ReplayController(chatService, replayService);
+        final ReplayController replayController = new ReplayController(chatService, replayService, muteService);
         mockMvc = MockMvcBuilders.standaloneSetup(replayController).build();
     }
 
