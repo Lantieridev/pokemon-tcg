@@ -47,6 +47,7 @@ public final class RuleValidator {
     private static final String ENERGY_ALREADY_ATTACHED = "energy_already_attached";
     private static final String ATTACK_BLOCKED_BY_STATUS = "attack_blocked_by_status";
     private static final String INSUFFICIENT_ENERGY_FOR_ATTACK = "insufficient_energy_for_attack";
+    private static final String CANNOT_ATTACK_FIRST_TURN = "cannot_attack_first_turn";
     private static final int MIN_TURNS_TO_EVOLVE = 1;
     private static final int MAX_ENERGY_PER_TURN = 1;
 
@@ -110,7 +111,7 @@ public final class RuleValidator {
             case EvolveAction a             -> validateEvolve(a);
             case RetreatAction a            -> validateRetreat(a);
             case PlayTrainerAction a        -> validatePlayTrainer(a);
-            case AttachEnergyAction a       -> validateAttachEnergy();
+            case AttachEnergyAction a       -> validateAttachEnergy(a);
             case DeclareAttackAction a      -> validateDeclareAttack(a);
             case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon();
             case UseAbilityAction a         -> validateUseAbility();
@@ -119,6 +120,9 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateEvolve(final EvolveAction action) {
+        if (action.target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
         final int playerIndex = turnManager.activePlayerIndex();
         if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
             return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
@@ -206,7 +210,10 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateAttachEnergy() {
+    private ValidationResult validateAttachEnergy(final AttachEnergyAction action) {
+        if (action.target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
         MainPhase mainPhase = turnManager.requireMainPhase();
         if (mainPhase.getEnergyAttached() >= MAX_ENERGY_PER_TURN) {
             return new ValidationResult.Invalid(ENERGY_ALREADY_ATTACHED);
@@ -215,6 +222,10 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateDeclareAttack(final DeclareAttackAction action) {
+        final int activePlayerIndex = turnManager.activePlayerIndex();
+        if (turnManager.getStartingPlayerIndex() == activePlayerIndex && turnManager.isFirstTurnOfPlayer(activePlayerIndex)) {
+            return new ValidationResult.Invalid(CANNOT_ATTACK_FIRST_TURN);
+        }
         if (!getActiveStatusEffectManager().canAttack()) {
             return new ValidationResult.Invalid(ATTACK_BLOCKED_BY_STATUS);
         }

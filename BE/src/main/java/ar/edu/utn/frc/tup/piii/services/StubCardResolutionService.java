@@ -51,7 +51,7 @@ public final class StubCardResolutionService implements CardResolutionService {
                 .weaknessType(PokemonType.WATER)
                 .retreatCost(RETREAT_COST)
                 .attacks(List.of(
-                        new Attack("Scratch", List.of(PokemonType.COLORLESS), ATTACK_DAMAGE, "")))
+                        new Attack("Scratch", ATTACK_DAMAGE, List.of(PokemonType.COLORLESS))))
                 .build();
     }
 }

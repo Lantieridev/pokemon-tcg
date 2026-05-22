@@ -58,4 +58,59 @@ class MatchRestControllerTest {
         when(registry.find(matchId)).thenReturn(Optional.of(session));
 
         final GameStateResponseDTO expected = mock(GameStateResponseDTO.class);
-       
+        when(perspectiveMapper.toResponse(session, 0)).thenReturn(expected);
+
+        final GameStateResponseDTO result = controller.getState(matchId, playerId);
+
+        assertSame(expected, result);
+    }
+
+    @Test
+    void shouldThrowWhenMatchNotFound() {
+        final String matchId = "unknown-match";
+        final String playerId = "player-a";
+
+        when(registry.find(matchId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class,
+                () -> controller.getState(matchId, playerId));
+    }
+
+    @Test
+    void shouldReturnMatchIdWhenCreateMatchIsCalled() {
+        final String playerAId = "player-a";
+        final String playerBId = "player-b";
+        final Long deckAId = 1L;
+        final Long deckBId = 2L;
+        final String expectedMatchId = "new-match-id";
+
+        final List<Card> deckA = List.of();
+        final List<Card> deckB = List.of();
+
+        final CreateMatchRequestDTO request = new CreateMatchRequestDTO(
+                playerAId, playerBId, deckAId, deckBId);
+
+        when(cardResolutionService.resolveCards(deckAId)).thenReturn(deckA);
+        when(cardResolutionService.resolveCards(deckBId)).thenReturn(deckB);
+        when(matchCreationService.createMatch(playerAId, playerBId, deckA, deckB))
+                .thenReturn(expectedMatchId);
+
+        final Map<String, String> result = controller.createMatch(request);
+
+        assertEquals(expectedMatchId, result.get("matchId"));
+    }
+
+    @Test
+    void shouldThrowWhenNullRegistryIsPassedToConstructor() {
+        assertThrows(NullPointerException.class,
+                () -> new MatchRestController(
+                        null, perspectiveMapper, matchCreationService, cardResolutionService));
+    }
+
+    @Test
+    void shouldThrowWhenNullMatchCreationServiceIsPassedToConstructor() {
+        assertThrows(NullPointerException.class,
+                () -> new MatchRestController(
+                        registry, perspectiveMapper, null, cardResolutionService));
+    }
+}

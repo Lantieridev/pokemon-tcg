@@ -59,7 +59,7 @@ class RuleValidatorTest {
     @Test
     void shouldThrowNullPointerExceptionWhenStatusEffectManagerIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, null, turnInPlayProvider, benchProvider));
+                () -> new RuleValidator(turnManager, (StatusEffectManager) null, turnInPlayProvider, benchProvider));
     }
 
     @Test

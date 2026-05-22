@@ -27,7 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public final class DeckServiceImpl implements DeckService {
+public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;

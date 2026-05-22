@@ -88,11 +88,11 @@ public final class MatchCreationService {
         final Bench bench1 = new Bench();
         final DiscardPile dp0 = new DiscardPile();
         final DiscardPile dp1 = new DiscardPile();
-        final StatusEffectManager sem0 = new StatusEffectManager();
-        final StatusEffectManager sem1 = new StatusEffectManager();
+        final CoinFlipper coinFlipper = new RandomCoinFlipper();
+        final StatusEffectManager sem0 = new StatusEffectManager(coinFlipper);
+        final StatusEffectManager sem1 = new StatusEffectManager(coinFlipper);
 
         // --- Setup Phase ---
-        final CoinFlipper coinFlipper = new RandomCoinFlipper();
         final SetupManager setupManager = new SetupManager(coinFlipper);
         final PlayerSetupSlot slot0 = new PlayerSetupSlot(deck0, hand0, bench0);
         final PlayerSetupSlot slot1 = new PlayerSetupSlot(deck1, hand1, bench1);

@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PrizeStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +27,7 @@ public final class MatchBoard
     private static final int REQUIRED_PLAYER_COUNT = 2;
 
     private final List<PlayerState> players;
-    private String activeStadiumCardId;
+    private TrainerCard activeStadium;
 
     /**
      * Live runtime references; non-null once {@link #bindRuntimes(List)} is called.
@@ -141,25 +142,25 @@ public final class MatchBoard
     }
 
     /**
-     * Returns the card ID of the currently active Stadium, or {@code null} if none is in play.
+     * Returns the currently active Stadium, or {@code null} if none is in play.
      * RF-02d.
      */
-    public String getActiveStadiumCardId() {
-        return activeStadiumCardId;
+    public TrainerCard getActiveStadium() {
+        return activeStadium;
     }
 
     /**
      * Places a new Stadium card into play, replacing the previous one.
-     * The caller is responsible for discarding the returned card ID if non-null.
+     * The caller is responsible for discarding the returned card if non-null.
      * RF-02d.
      *
-     * @param newCardId the card ID of the Stadium being played (must not be null)
-     * @return the card ID of the previously active Stadium, or {@code null} if none was in play
+     * @param newStadium the Stadium card being played (must not be null)
+     * @return the previously active Stadium, or {@code null} if none was in play
      */
-    public String replaceStadium(final String newCardId) {
-        Objects.requireNonNull(newCardId, "newCardId must not be null");
-        final String previous = activeStadiumCardId;
-        activeStadiumCardId = newCardId;
+    public TrainerCard replaceStadium(final TrainerCard newStadium) {
+        Objects.requireNonNull(newStadium, "newStadium must not be null");
+        final TrainerCard previous = activeStadium;
+        activeStadium = newStadium;
         return previous;
     }
 }

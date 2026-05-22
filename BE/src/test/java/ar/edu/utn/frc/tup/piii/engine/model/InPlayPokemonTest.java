@@ -164,4 +164,19 @@ class InPlayPokemonTest {
         p.setToolAttached(true);
         assertTrue(p.hasToolAttached());
     }
+
+    @Test
+    void evolveIntoShouldPreserveDamageAndEnergies() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.addDamageCounters(30);
+        p.attachEnergy(PokemonType.LIGHTNING);
+
+        final PokemonCard evolution = raichu();
+        p.evolveInto(evolution);
+
+        assertEquals("xy1-43", p.getCardId()); // Raichu's ID
+        assertEquals(30, p.getDamageCounters()); // Damage is preserved
+        assertEquals(1, p.getAttachedEnergies().size()); // Energy is preserved
+        assertEquals(PokemonType.LIGHTNING, p.getAttachedEnergies().get(0));
+    }
 }

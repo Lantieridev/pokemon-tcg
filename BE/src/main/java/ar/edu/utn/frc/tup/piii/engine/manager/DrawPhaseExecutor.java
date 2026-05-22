@@ -68,9 +68,8 @@ public final class DrawPhaseExecutor implements PhaseListener {
         final boolean isStartingPlayer = turnManager.getStartingPlayerIndex() == playerIndex;
         final boolean isFirstTurn = turnManager.isFirstTurnOfPlayer(playerIndex);
 
-        if (isStartingPlayer && isFirstTurn) {
-            return;
-        }
+        // En XY1 §2, el jugador que va primero SÍ roba una carta en su primer turno.
+        // La restricción es que no puede atacar, pero sí puede robar.
 
         final PlayerRuntime runtime = playerRuntimes.get(playerIndex);
 

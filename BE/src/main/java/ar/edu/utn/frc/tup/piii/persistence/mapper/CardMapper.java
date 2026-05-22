@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.persistence.entity.CardEntity;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -121,9 +122,16 @@ public final class CardMapper {
         final List<Object> rules = toList(entity.getRules());
         final boolean aceSpec = rules.stream()
                 .anyMatch(r -> r instanceof String s && s.contains("ACE SPEC"));
+        
+        final String effectText = String.join("\n", rules.stream()
+                .map(String::valueOf)
+                .filter(s -> !s.contains("ACE SPEC"))
+                .toList());
 
         return new TrainerCard.Builder(entity.getId(), entity.getName(), trainerType)
                 .aceSpec(aceSpec)
+                .effectText(effectText)
+                .effectId(inferTrainerEffectId(entity.getId(), effectText))
                 .build();
     }
 
@@ -182,6 +190,32 @@ public final class CardMapper {
                 .filter(t -> t != PokemonType.COLORLESS)
                 .findFirst()
                 .orElse(PokemonType.COLORLESS);
+    }
+
+    private TrainerEffectId inferTrainerEffectId(final String cardId, final String text) {
+        if (text == null || text.isBlank()) {
+            return TrainerEffectId.NONE;
+        }
+        final String lower = text.toLowerCase();
+        
+        // Exact mappings by card ID (XY1 specific)
+        if ("xy1-118".equals(cardId)) { // Professor's Letter
+            // Actually Professor's letter is different. Professor Sycamore is xy1-122
+        }
+        
+        if (lower.contains("discard your hand and draw 7 cards")) {
+            return TrainerEffectId.PROFESSOR_OAK; // e.g. Professor Sycamore
+        }
+        if (lower.contains("heal 30 damage")) {
+            return TrainerEffectId.HEAL_30_DAMAGE; // e.g. Potion
+        }
+        if (lower.contains("draw 3 cards")) {
+            return TrainerEffectId.DRAW_CARDS_3; // e.g. Tierno, Hau
+        }
+        if (lower.contains("draw 2 cards")) {
+            return TrainerEffectId.DRAW_CARDS_2; // e.g. Cheren
+        }
+        return TrainerEffectId.NONE;
     }
 
     private static String subtype(final CardEntity entity) {

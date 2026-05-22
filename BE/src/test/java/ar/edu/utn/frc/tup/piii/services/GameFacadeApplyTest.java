@@ -96,6 +96,7 @@ class GameFacadeApplyTest {
         final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
 
         session = new MatchSession(MATCH_ID, List.of("alice", "bob"), board, List.of(runtime0, runtime1));
+        session.setCoinFlipper(() -> true);
         session.setActivePlayerIndex(PLAYER_0);
     }
 
@@ -182,7 +183,7 @@ class GameFacadeApplyTest {
 
         facade.apply(session, new PlayTrainerAction(TrainerType.STADIUM, null, "xy1-117"));
 
-        assertEquals("xy1-117", session.getBoard().getActiveStadiumCardId());
+        assertEquals("xy1-117", session.getBoard().getActiveStadium().getCardId());
         assertEquals(0, hand0.size(), "stadium card removed from hand");
     }
 

@@ -352,27 +352,31 @@ class SetupManagerTest {
     }
 
     @Test
-    void crossMulligan_player0DrawsP1CountAsBonusCards() {
+    void crossMulligan_player0DrawsNoBonusCardsDueToCanceling() {
         final PlayerSetupSlot s0 = slot(deckWithLeadingNonBasics(14));
 
         new SetupManager(HEADS, d -> { })
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        // P0: 7 drawn - 1 active + 1 bonus (P1 mulligan once) = 7
-        assertEquals(INITIAL_HAND - 1 + 1, s0.getHand().size());
+        // P0 mulliganed twice, P1 mulliganed once.
+        // Net mulligan for P0 against P1 = 0.
+        // P0: 7 drawn - 1 active + 0 bonus = 6
+        assertEquals(INITIAL_HAND - 1 + 0, s0.getHand().size());
     }
 
     @Test
-    void crossMulligan_player1DrawsP0CountAsBonusCards() {
+    void crossMulligan_player1DrawsNetBonusCards() {
         final PlayerSetupSlot s1 = slot(deckWithLeadingNonBasics(7));
 
         new SetupManager(HEADS, d -> { })
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        // P1: 7 drawn - 1 active + 2 bonus (P0 mulligan twice) = 8
-        assertEquals(INITIAL_HAND - 1 + 2, s1.getHand().size());
+        // P0 mulliganed twice, P1 mulliganed once.
+        // Net mulligan for P1 against P0 = 1.
+        // P1: 7 drawn - 1 active + 1 bonus (net difference) = 7
+        assertEquals(INITIAL_HAND - 1 + 1, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
