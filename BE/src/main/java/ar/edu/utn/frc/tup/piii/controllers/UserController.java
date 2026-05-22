@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -118,14 +119,28 @@ public class UserController {
      */
     @GetMapping("/{username}/status")
     public ResponseEntity<UserStatusResponse> getUserStatus(@PathVariable final String username) {
-        if (penaltyService.isPenalized(username)) {
-            return ResponseEntity.ok(UserStatusResponse.builder()
-                    .status("PENALIZED")
-                    .penaltyExpiration(penaltyService.getPenaltyExpiration(username))
-                    .build());
+        final boolean isPerma = penaltyService.isPermanentlyBanned(username);
+        final boolean isPenalized = penaltyService.isPenalized(username);
+        final String status = isPerma ? "PERMA_BANNED" : (isPenalized ? "PENALIZED" : "ACTIVE");
+        final String penaltyType = penaltyService.getPenaltyType(username);
+        final Integer matchesRemaining = penaltyService.getMatchesPenalizedRemaining(username);
+        final LocalDateTime expiration = penaltyService.getPenaltyExpiration(username);
+
+        final java.util.List<String> notifications = new java.util.ArrayList<>(penaltyService.getPendingNotifications(username));
+        penaltyService.clearPendingNotifications(username);
+
+        final boolean showWarning = penaltyService.shouldShowRecidivismWarning(username);
+        if (showWarning) {
+            penaltyService.clearRecidivismWarning(username);
         }
+
         return ResponseEntity.ok(UserStatusResponse.builder()
-                .status("ACTIVE")
+                .status(status)
+                .penaltyType(penaltyType)
+                .matchesPenalizedRemaining(matchesRemaining)
+                .penaltyExpiration(expiration)
+                .pendingNotifications(notifications)
+                .showRecidivismWarning(showWarning)
                 .build());
     }
 }
