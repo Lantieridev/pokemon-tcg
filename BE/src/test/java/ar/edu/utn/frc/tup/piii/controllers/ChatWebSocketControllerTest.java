@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageRequest;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,13 +24,16 @@ class ChatWebSocketControllerTest {
     private ChatService chatService;
 
     @Mock
+    private ProfanityFilterService profanityFilterService;
+
+    @Mock
     private Principal principal;
 
     private ChatWebSocketController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new ChatWebSocketController(chatService);
+        controller = new ChatWebSocketController(chatService, profanityFilterService);
     }
 
     @Test
@@ -37,6 +41,7 @@ class ChatWebSocketControllerTest {
         final String matchId = "match-456";
         final ChatMessageRequest request = new ChatMessageRequest("fake_sender", "Hello World");
         when(principal.getName()).thenReturn("authenticated_user");
+        when(profanityFilterService.filter("Hello World")).thenReturn("Hello World");
 
         final ChatMessageResponse response = controller.broadcastMessage(matchId, request, principal);
 
@@ -55,6 +60,7 @@ class ChatWebSocketControllerTest {
     void shouldFallbackToRequestSenderWhenPrincipalIsNull() {
         final String matchId = "match-789";
         final ChatMessageRequest request = new ChatMessageRequest("anon_user", "Hello anonymous");
+        when(profanityFilterService.filter("Hello anonymous")).thenReturn("Hello anonymous");
 
         final ChatMessageResponse response = controller.broadcastMessage(matchId, request, null);
 
