@@ -115,11 +115,19 @@ class UserControllerTest {
     @Test
     void shouldReturnActiveStatusWhenNotPenalized() throws Exception {
         final String targetUser = "good_player";
+        when(penaltyService.isPermanentlyBanned(targetUser)).thenReturn(false);
         when(penaltyService.isPenalized(targetUser)).thenReturn(false);
+        when(penaltyService.getPenaltyType(targetUser)).thenReturn("NONE");
+        when(penaltyService.getMatchesPenalizedRemaining(targetUser)).thenReturn(0);
+        when(penaltyService.getPenaltyExpiration(targetUser)).thenReturn(null);
+        when(penaltyService.getPendingNotifications(targetUser)).thenReturn(java.util.List.of());
+        when(penaltyService.shouldShowRecidivismWarning(targetUser)).thenReturn(false);
 
         mockMvc.perform(get("/api/users/{username}/status", targetUser))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.penaltyType").value("NONE"))
+                .andExpect(jsonPath("$.matchesPenalizedRemaining").value(0))
                 .andExpect(jsonPath("$.penaltyExpiration").isEmpty());
     }
 
@@ -127,12 +135,22 @@ class UserControllerTest {
     void shouldReturnPenalizedStatusWhenPenalized() throws Exception {
         final String targetUser = "toxic_player";
         final LocalDateTime expirationTime = LocalDateTime.now().plusMinutes(5);
+        when(penaltyService.isPermanentlyBanned(targetUser)).thenReturn(false);
         when(penaltyService.isPenalized(targetUser)).thenReturn(true);
+        when(penaltyService.getPenaltyType(targetUser)).thenReturn("BAN");
+        when(penaltyService.getMatchesPenalizedRemaining(targetUser)).thenReturn(0);
         when(penaltyService.getPenaltyExpiration(targetUser)).thenReturn(expirationTime);
+        when(penaltyService.getPendingNotifications(targetUser)).thenReturn(java.util.List.of("Warning message"));
+        when(penaltyService.shouldShowRecidivismWarning(targetUser)).thenReturn(true);
 
         mockMvc.perform(get("/api/users/{username}/status", targetUser))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENALIZED"))
-                .andExpect(jsonPath("$.penaltyExpiration").isNotEmpty());
+                .andExpect(jsonPath("$.penaltyType").value("BAN"))
+                .andExpect(jsonPath("$.pendingNotifications[0]").value("Warning message"))
+                .andExpect(jsonPath("$.showRecidivismWarning").value(true));
+
+        verify(penaltyService).clearPendingNotifications(targetUser);
+        verify(penaltyService).clearRecidivismWarning(targetUser);
     }
 }

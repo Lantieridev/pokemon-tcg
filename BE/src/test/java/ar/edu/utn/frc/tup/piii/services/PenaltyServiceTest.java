@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,51 +32,86 @@ class PenaltyServiceTest {
         final String username = "testuser";
         when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(2L);
 
+        penaltyService.checkAndApplyPenalty(username);
+        penaltyService.registerMatchFinished(username, true);
+
         assertFalse(penaltyService.isPenalized(username));
-        assertNull(penaltyService.getPenaltyExpiration(username));
+        assertEquals("NONE", penaltyService.getPenaltyType(username));
     }
 
     @Test
-    void shouldBePenalizedWithThreeOrMoreReports() {
+    void shouldBeMutedForOneMatchWithThreeReports() {
         final String username = "toxicuser";
         when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
 
-        assertTrue(penaltyService.isPenalized(username));
-        final LocalDateTime expiration = penaltyService.getPenaltyExpiration(username);
-        assertNotNull(expiration);
-        assertTrue(expiration.isAfter(LocalDateTime.now()));
-        assertTrue(expiration.isBefore(LocalDateTime.now().plusMinutes(6)));
-    }
-
-    @Test
-    void shouldNotReapplyPenaltyIfExpiredAndCountDidNotIncrease() throws InterruptedException {
-        final String username = "toxicuser";
-        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
-
-        // Apply penalty
-        assertTrue(penaltyService.isPenalized(username));
-        verify(chatReportRepository, times(1)).countByReportedUsernameAndIsValidatedTrue(username);
-
-        // Simulate expiration by checking again after clearing from memory map or manually resetting
-        // For testing we will construct a custom subclass or test the service state.
-        // Let's test the state by calling isPenalized.
-        // If we call checkAndApplyPenalty again it shouldn't extend penalty if count is the same.
+        // Before match finishes, penalty is pending, so not active
         penaltyService.checkAndApplyPenalty(username);
-        // The check was called but count is still 3. Verify total invocations to repository.
-        verify(chatReportRepository, times(2)).countByReportedUsernameAndIsValidatedTrue(username);
+        assertFalse(penaltyService.isPenalized(username));
+
+        // After match finishes, penalty is consolidated
+        penaltyService.registerMatchFinished(username, true);
+        assertTrue(penaltyService.isPenalized(username));
+        assertEquals("MUTE", penaltyService.getPenaltyType(username));
+        assertEquals(1, penaltyService.getMatchesPenalizedRemaining(username));
+
+        // Notification is pending
+        final List<String> notifications = penaltyService.getPendingNotifications(username);
+        assertEquals(1, notifications.size());
+        assertTrue(notifications.get(0).contains("silenciado del chat por las próximas 1 partidas"));
+
+        // Play and finish another match legitimately to clear the mute
+        penaltyService.registerMatchFinished(username, true);
+        assertFalse(penaltyService.isPenalized(username));
+        assertEquals(0, penaltyService.getMatchesPenalizedRemaining(username));
+        assertTrue(penaltyService.shouldShowRecidivismWarning(username));
     }
 
     @Test
-    void shouldReapplyPenaltyIfCountIncreases() {
+    void shouldBeSuspendedForThreeDaysWithEightReports() {
         final String username = "toxicuser";
-        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(3L);
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(8L);
 
-        assertTrue(penaltyService.isPenalized(username));
-
-        // Increase reports count
-        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(4L);
         penaltyService.checkAndApplyPenalty(username);
+        penaltyService.registerMatchFinished(username, true);
 
         assertTrue(penaltyService.isPenalized(username));
+        assertEquals("BAN", penaltyService.getPenaltyType(username));
+        assertNotNull(penaltyService.getPenaltyExpiration(username));
+
+        final List<String> notifications = penaltyService.getPendingNotifications(username);
+        assertEquals(1, notifications.size());
+        assertTrue(notifications.get(0).contains("suspendida temporalmente por comportamiento antideportivo"));
+    }
+
+    @Test
+    void shouldBePermaBannedWithTwentyReports() {
+        final String username = "toxicuser";
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(20L);
+
+        penaltyService.checkAndApplyPenalty(username);
+        penaltyService.registerMatchFinished(username, true);
+
+        assertTrue(penaltyService.isPenalized(username));
+        assertTrue(penaltyService.isPermanentlyBanned(username));
+        assertEquals("BAN", penaltyService.getPenaltyType(username));
+
+        final List<String> notifications = penaltyService.getPendingNotifications(username);
+        assertEquals(1, notifications.size());
+        assertTrue(notifications.get(0).contains("Baneo Permanente"));
+    }
+
+    @Test
+    void shouldNotDecrementMuteIfMatchNotCompletedLegitimately() {
+        final String username = "toxicuser";
+        when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(5L); // 3 matches mute
+
+        penaltyService.checkAndApplyPenalty(username);
+        penaltyService.registerMatchFinished(username, true);
+
+        assertEquals(3, penaltyService.getMatchesPenalizedRemaining(username));
+
+        // Match finishes but NOT completed legitimately (e.g. penalized user forfeited)
+        penaltyService.registerMatchFinished(username, false);
+        assertEquals(3, penaltyService.getMatchesPenalizedRemaining(username)); // stays at 3
     }
 }
