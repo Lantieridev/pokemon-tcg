@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayEventDTO;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
 import ar.edu.utn.frc.tup.piii.services.ReplayService;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,5 +116,29 @@ class ReplayControllerTest {
                 .andExpect(jsonPath("$.events", hasSize(1)))
                 .andExpect(jsonPath("$.events[0].player").value("player1"))
                 .andExpect(jsonPath("$.events[0].action").value("DRAW_CARD"));
+    }
+
+    @Test
+    void shouldReturnUserReplays() throws Exception {
+        final String username = "testuser";
+        final List<UserMatchHistoryDTO> history = List.of(
+                UserMatchHistoryDTO.builder()
+                        .matchId(1L)
+                        .player1("testuser")
+                        .player2("otheruser")
+                        .winner("testuser")
+                        .createdAt(LocalDateTime.now())
+                        .build()
+        );
+
+        when(replayService.getUserMatchHistory(username)).thenReturn(history);
+
+        mockMvc.perform(get("/api/users/{username}/replays", username))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].matchId").value(1))
+                .andExpect(jsonPath("$[0].player1").value("testuser"))
+                .andExpect(jsonPath("$[0].player2").value("otheruser"))
+                .andExpect(jsonPath("$[0].winner").value("testuser"));
     }
 }

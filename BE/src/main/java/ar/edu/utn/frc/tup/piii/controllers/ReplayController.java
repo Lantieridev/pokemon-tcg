@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
 import ar.edu.utn.frc.tup.piii.services.ReplayService;
@@ -83,5 +84,17 @@ public class ReplayController {
     @GetMapping("/matches/{matchId}/replay")
     public ReplayResponseDTO getReplay(@PathVariable final Long matchId) {
         return replayService.getReplay(matchId);
+    }
+
+    /**
+     * Retrieves the match history (replay library) for a user profile.
+     * Secured by default via JWT security filter.
+     *
+     * @param username the username of the profile
+     * @return the list of matches
+     */
+    @GetMapping("/users/{username}/replays")
+    public List<UserMatchHistoryDTO> getUserReplays(@PathVariable final String username) {
+        return replayService.getUserMatchHistory(username);
     }
 }

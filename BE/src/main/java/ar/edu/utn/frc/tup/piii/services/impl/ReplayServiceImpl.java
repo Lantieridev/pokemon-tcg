@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.services.impl;
 
 import ar.edu.utn.frc.tup.piii.dtos.ReplayEventDTO;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
@@ -15,7 +16,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Service implementation for managing match replays.
+ * Service implementation for managing match replays and profile histories.
  */
 @Service
 public class ReplayServiceImpl implements ReplayService {
@@ -53,5 +54,24 @@ public class ReplayServiceImpl implements ReplayService {
                 .matchId(matchId)
                 .events(events)
                 .build();
+    }
+
+    @Override
+    public List<UserMatchHistoryDTO> getUserMatchHistory(final String username) {
+        if (username == null) {
+            throw new IllegalArgumentException("Username cannot be null");
+        }
+
+        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+
+        return matches.stream()
+                .map(match -> UserMatchHistoryDTO.builder()
+                        .matchId(match.getId())
+                        .player1(match.getPlayer1() != null ? match.getPlayer1().getUsername() : null)
+                        .player2(match.getPlayer2() != null ? match.getPlayer2().getUsername() : null)
+                        .winner(match.getWinner() != null ? match.getWinner().getUsername() : null)
+                        .createdAt(match.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
