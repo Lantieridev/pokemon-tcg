@@ -60,7 +60,7 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
-        final long reportCount = chatReportRepository.countByReportedUsername(username);
+        final long reportCount = chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username);
         if (reportCount >= 3) {
             final Long lastCount = lastPenalizedCount.get(username);
             // Penalize if never penalized before OR if the report count has increased
