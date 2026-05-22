@@ -13,6 +13,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
  * @param trainerType   trainer card category, used for PLAY_TRAINER
  * @param attackIndex   zero-based attack index, used for DECLARE_ATTACK
  * @param energyType    energy type to attach, used for ATTACH_ENERGY; null defaults to COLORLESS
+ * @param selectedEnergyIndices indices of energies to discard, used for RETREAT
  */
 public record ActionRequestDTO(
         ActionType type,
@@ -21,7 +22,8 @@ public record ActionRequestDTO(
         Integer targetIndex,
         TrainerType trainerType,
         Integer attackIndex,
-        PokemonType energyType) {
+        PokemonType energyType,
+        java.util.List<Integer> selectedEnergyIndices) {
 
     /**
      * Backward-compatible constructor for callers that do not supply energyType.
@@ -33,6 +35,6 @@ public record ActionRequestDTO(
                             final Integer targetIndex,
                             final TrainerType trainerType,
                             final Integer attackIndex) {
-        this(type, cardId, targetId, targetIndex, trainerType, attackIndex, null);
+        this(type, cardId, targetId, targetIndex, trainerType, attackIndex, null, java.util.Collections.emptyList());
     }
 }

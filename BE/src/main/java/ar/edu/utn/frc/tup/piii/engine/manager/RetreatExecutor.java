@@ -43,8 +43,7 @@ public final class RetreatExecutor {
      */
     public void executeRetreat(final RetreatAction action) {
         Objects.requireNonNull(action, "action");
-        final int retreatCost = action.active().getRetreatCost();
-        action.active().removeEnergies(retreatCost);
+        action.active().removeEnergies(action.energyIndicesToDiscard());
         statusEffectManager.clearAll();
     }
 }

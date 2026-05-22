@@ -127,7 +127,7 @@ public final class GameFacade {
     private void applyAttachEnergy(final AttachEnergyAction action, final PlayerRuntime runtime) {
         final EnergyCard energyCard = findEnergyInHand(runtime, action.energyType());
         runtime.getHand().removeCard(energyCard.getCardId());
-        action.target().attachEnergy(action.energyType());
+        action.target().attachEnergy(energyCard);
     }
 
     private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime) {
@@ -207,7 +207,7 @@ public final class GameFacade {
                         effect = trainerEffectResolver.resolve(trainerCard.getEffectId());
                     }
                     if (effect != null) {
-                        effect.apply(runtime.getHand(), runtime.getDeck(), runtime.getDiscardPile());
+                        effect.apply(runtime, action.target());
                     }
                 }
             }
@@ -242,7 +242,8 @@ public final class GameFacade {
         return switch (dto.type()) {
             case DECLARE_ATTACK      -> buildDeclareAttack(board, playerIndex, dto);
             case RETREAT             -> new RetreatAction(board.getActivePokemon(playerIndex),
-                                            dto.targetIndex() != null ? dto.targetIndex() : 0);
+                                            dto.targetIndex() != null ? dto.targetIndex() : 0,
+                                            dto.selectedEnergyIndices() != null ? dto.selectedEnergyIndices() : java.util.Collections.emptyList());
             case PLAY_TRAINER        -> new PlayTrainerAction(dto.trainerType(),
                                             resolveTarget(board, playerIndex, dto),
                                             dto.cardId());

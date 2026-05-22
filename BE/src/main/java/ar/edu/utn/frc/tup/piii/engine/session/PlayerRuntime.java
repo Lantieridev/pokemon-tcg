@@ -136,4 +136,24 @@ public final class PlayerRuntime {
             hand.addCard(prizePile.remove(0));
         }
     }
+
+    /**
+     * Clears all remaining prize cards (e.g. for Sudden Death reset).
+     *
+     * @return the removed prize cards
+     */
+    public List<Card> clearPrizes() {
+        final List<Card> removed = new ArrayList<>(prizePile);
+        prizePile.clear();
+        return removed;
+    }
+
+    /**
+     * Adds the given prize cards to the prize pile (e.g. for Sudden Death reset).
+     *
+     * @param prizes the prize cards to add (never null)
+     */
+    public void addPrizes(final List<Card> prizes) {
+        prizePile.addAll(Objects.requireNonNull(prizes, "prizes must not be null"));
+    }
 }

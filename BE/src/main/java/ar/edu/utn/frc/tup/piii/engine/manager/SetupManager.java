@@ -30,30 +30,41 @@ import java.util.function.Consumer;
 public final class SetupManager {
 
     private static final int INITIAL_HAND_SIZE = 7;
-    private static final int PRIZE_COUNT = 6;
+    private final int prizeCount;
 
     private final CoinFlipper coinFlipper;
     private final Consumer<Deck> shuffler;
 
     /**
-     * Production constructor — uses the deck's built-in default shuffle.
+     * Production constructor — uses the deck's built-in default shuffle and 6 prizes.
      *
      * @param coinFlipper decides who goes first (never null)
      */
     public SetupManager(final CoinFlipper coinFlipper) {
-        this(coinFlipper, Deck::shuffle);
+        this(coinFlipper, Deck::shuffle, 6);
     }
 
     /**
-     * Test-friendly constructor that accepts an injectable shuffler.
-     * Pass {@code deck -> {}} for a no-op shuffler to keep deck order deterministic.
+     * Production constructor with custom prize count (e.g. for Sudden Death).
+     *
+     * @param coinFlipper decides who goes first (never null)
+     * @param prizeCount  number of prize cards to deal
+     */
+    public SetupManager(final CoinFlipper coinFlipper, final int prizeCount) {
+        this(coinFlipper, Deck::shuffle, prizeCount);
+    }
+
+    /**
+     * Test-friendly constructor that accepts an injectable shuffler and prize count.
      *
      * @param coinFlipper decides who goes first (never null)
      * @param shuffler    called whenever a deck needs to be shuffled (never null)
+     * @param prizeCount  number of prize cards to deal
      */
-    SetupManager(final CoinFlipper coinFlipper, final Consumer<Deck> shuffler) {
+    SetupManager(final CoinFlipper coinFlipper, final Consumer<Deck> shuffler, final int prizeCount) {
         this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
         this.shuffler = Objects.requireNonNull(shuffler, "shuffler must not be null");
+        this.prizeCount = prizeCount;
     }
 
     /**
@@ -112,8 +123,8 @@ public final class SetupManager {
         }
 
         // Step 5 — set aside Prize cards
-        slot0.addPrizes(slot0.getDeck().drawMultiple(PRIZE_COUNT));
-        slot1.addPrizes(slot1.getDeck().drawMultiple(PRIZE_COUNT));
+        slot0.addPrizes(slot0.getDeck().drawMultiple(prizeCount));
+        slot1.addPrizes(slot1.getDeck().drawMultiple(prizeCount));
 
         // Step 6 — coin flip for first player
         final int firstPlayerIndex = coinFlipper.flip() ? 0 : 1;

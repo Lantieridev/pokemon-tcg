@@ -57,6 +57,17 @@ public final class Bench {
         return Collections.unmodifiableList(slots);
     }
 
+    /**
+     * Removes all Pokémon from the bench.
+     *
+     * @return the removed Pokémon
+     */
+    public List<BattlePokemonState> removeAll() {
+        final List<BattlePokemonState> removed = new ArrayList<>(slots);
+        slots.clear();
+        return removed;
+    }
+
     public boolean isFull() {
         return slots.size() >= MAX_SIZE;
     }

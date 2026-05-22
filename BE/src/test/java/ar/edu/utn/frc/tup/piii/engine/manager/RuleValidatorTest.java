@@ -280,7 +280,7 @@ class RuleValidatorTest {
         when(statusEffectManager.canRetreat()).thenReturn(true);
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 
-        ValidationResult result = validator.validate(new RetreatAction(active));
+        ValidationResult result = validator.validate(new RetreatAction(active, 0, java.util.List.of(0, 1)));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
@@ -297,7 +297,7 @@ class RuleValidatorTest {
         when(statusEffectManager.canRetreat()).thenReturn(true);
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 
-        ValidationResult result = validator.validate(new RetreatAction(active));
+        ValidationResult result = validator.validate(new RetreatAction(active, 0, java.util.List.of(0)));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
@@ -311,7 +311,7 @@ class RuleValidatorTest {
         when(statusEffectManager.canRetreat()).thenReturn(true);
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 
-        ValidationResult result = validator.validate(new RetreatAction(active));
+        ValidationResult result = validator.validate(new RetreatAction(active, 0, java.util.Collections.emptyList()));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }

@@ -3,7 +3,9 @@ package ar.edu.utn.frc.tup.piii.engine;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
+import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
+import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private final PokemonType resistanceType;
     private final boolean ex;
     private int retreatCost = 0;
+    private final List<PokemonCard> underlyingCards = new ArrayList<>();
+    private final List<EnergyCard> attachedEnergyCards = new ArrayList<>();
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private boolean toolAttached = false;
     private final List<Attack> attacks = new ArrayList<>();
@@ -107,11 +111,13 @@ public class FakeBattlePokemonState implements BattlePokemonState {
 
     public void addAttachedEnergy(final PokemonType pokemonType) {
         attachedEnergies.add(pokemonType);
+        attachedEnergyCards.add(new EnergyCard("fake_energy", "Fake Energy", pokemonType, true));
     }
 
     @Override
-    public void attachEnergy(final PokemonType type) {
-        attachedEnergies.add(type);
+    public void attachEnergy(final EnergyCard energyCard) {
+        attachedEnergyCards.add(energyCard);
+        attachedEnergies.add(energyCard.getEnergyType());
     }
 
     @Override
@@ -143,6 +149,19 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     public void removeEnergies(final int count) {
         for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
             attachedEnergies.remove(attachedEnergies.size() - 1);
+            attachedEnergyCards.remove(attachedEnergyCards.size() - 1);
+        }
+    }
+
+    @Override
+    public void removeEnergies(final java.util.List<Integer> indices) {
+        java.util.List<Integer> sortedIndices = new java.util.ArrayList<>(indices);
+        sortedIndices.sort(java.util.Collections.reverseOrder());
+        for (int index : sortedIndices) {
+            if (index >= 0 && index < attachedEnergies.size()) {
+                attachedEnergies.remove(index);
+                attachedEnergyCards.remove(index);
+            }
         }
     }
 
@@ -176,5 +195,15 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public Card getBaseCard() {
         return null;
+    }
+
+    @Override
+    public List<PokemonCard> getUnderlyingCards() {
+        return underlyingCards;
+    }
+
+    @Override
+    public List<EnergyCard> getAttachedEnergyCards() {
+        return attachedEnergyCards;
     }
 }

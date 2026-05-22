@@ -91,6 +91,7 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @param count number of energy cards to remove (must be &gt;= 0)
      */
     void removeEnergies(int count);
+    void removeEnergies(java.util.List<Integer> indices);
 
     /**
      * Heals this Pokémon by reducing damage counters. One counter equals 10 HP.
@@ -101,11 +102,11 @@ public interface BattlePokemonState extends ActivePokemonState {
     void heal(int amount);
 
     /**
-     * Attaches an energy of the given type to this Pokémon.
+     * Attaches an energy card to this Pokémon.
      *
-     * @param type the energy type to attach (never null)
+     * @param energyCard the energy card to attach (never null)
      */
-    void attachEnergy(PokemonType type);
+    void attachEnergy(EnergyCard energyCard);
 
     /**
      * Sets whether a Pokémon Tool card is attached.
@@ -151,4 +152,20 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @return the current card (never null)
      */
     Card getBaseCard();
+
+    /**
+     * Returns the list of underlying pre-evolution Pokémon cards.
+     * Used by the KO handler to move them to the discard pile.
+     *
+     * @return list of underlying cards (never null; may be empty)
+     */
+    List<PokemonCard> getUnderlyingCards();
+
+    /**
+     * Returns the list of actual Energy cards currently attached to this Pokémon.
+     * Used by the KO handler to move them to the discard pile.
+     *
+     * @return list of attached energy cards (never null; may be empty)
+     */
+    List<EnergyCard> getAttachedEnergyCards();
 }

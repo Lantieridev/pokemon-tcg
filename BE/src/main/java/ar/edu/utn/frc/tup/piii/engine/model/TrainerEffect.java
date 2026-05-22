@@ -15,11 +15,10 @@ public interface TrainerEffect {
     /**
      * Applies this trainer's effect.
      *
-     * @param hand        the actor's hand (may be drawn into or discarded from)
-     * @param deck        the actor's deck (draw source)
-     * @param discardPile the actor's discard pile (discard target)
+     * @param runtime     the actor's runtime (provides hand, deck, discard pile, etc.)
+     * @param target      the targeted Pokémon (if applicable, otherwise null)
      */
-    void apply(Hand hand, Deck deck, DiscardPile discardPile);
+    void apply(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime, ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState target);
 
     // -------------------------------------------------------------------------
     // Built-in effect factories (static helpers for common XY1 Trainer effects)
@@ -34,7 +33,7 @@ public interface TrainerEffect {
      * @return a {@link TrainerEffect} that draws exactly {@code count} cards
      */
     static TrainerEffect drawCards(final int count) {
-        return (hand, deck, discardPile) -> hand.addCards(deck.drawMultiple(count));
+        return (runtime, target) -> runtime.getHand().addCards(runtime.getDeck().drawMultiple(count));
     }
 
     /**
@@ -44,9 +43,23 @@ public interface TrainerEffect {
      * @return a {@link TrainerEffect} implementing the "discard hand, draw 7" effect
      */
     static TrainerEffect professorOak() {
-        return (hand, deck, discardPile) -> {
-            discardPile.addAll(hand.removeAll());
-            hand.addCards(deck.drawMultiple(7));
+        return (runtime, target) -> {
+            runtime.getDiscardPile().addAll(runtime.getHand().removeAll());
+            runtime.getHand().addCards(runtime.getDeck().drawMultiple(7));
+        };
+    }
+
+    /**
+     * ITEM effect — heal damage from the targeted Pokémon.
+     *
+     * @param amount the amount of damage to heal
+     * @return a {@link TrainerEffect} that heals the specified amount
+     */
+    static TrainerEffect healDamage(final int amount) {
+        return (runtime, target) -> {
+            if (target != null) {
+                target.heal(amount);
+            }
         };
     }
 }
