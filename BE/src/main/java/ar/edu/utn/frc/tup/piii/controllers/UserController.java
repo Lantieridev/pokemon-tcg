@@ -2,8 +2,10 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.HonorRequest;
 import ar.edu.utn.frc.tup.piii.dtos.HonorType;
+import ar.edu.utn.frc.tup.piii.dtos.UserStatusResponse;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
+import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,10 +29,12 @@ public class UserController {
 
     private final MuteService muteService;
     private final HonorService honorService;
+    private final PenaltyService penaltyService;
 
-    public UserController(final MuteService muteService, final HonorService honorService) {
+    public UserController(final MuteService muteService, final HonorService honorService, final PenaltyService penaltyService) {
         this.muteService = Objects.requireNonNull(muteService, "muteService must not be null");
         this.honorService = Objects.requireNonNull(honorService, "honorService must not be null");
+        this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
     }
 
     /**
@@ -104,5 +108,24 @@ public class UserController {
     @GetMapping("/{username}/honor")
     public ResponseEntity<Map<HonorType, Integer>> getHonors(@PathVariable final String username) {
         return ResponseEntity.ok(honorService.getHonors(username));
+    }
+
+    /**
+     * Gets the moderation and penalty status of a user.
+     *
+     * @param username the user to inspect
+     * @return the user status details
+     */
+    @GetMapping("/{username}/status")
+    public ResponseEntity<UserStatusResponse> getUserStatus(@PathVariable final String username) {
+        if (penaltyService.isPenalized(username)) {
+            return ResponseEntity.ok(UserStatusResponse.builder()
+                    .status("PENALIZED")
+                    .penaltyExpiration(penaltyService.getPenaltyExpiration(username))
+                    .build());
+        }
+        return ResponseEntity.ok(UserStatusResponse.builder()
+                .status("ACTIVE")
+                .build());
     }
 }

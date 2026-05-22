@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.dtos.ChatMessageRequest;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
 import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
+import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -21,10 +22,14 @@ public class ChatWebSocketController {
 
     private final ChatService chatService;
     private final ProfanityFilterService profanityFilterService;
+    private final PenaltyService penaltyService;
 
-    public ChatWebSocketController(final ChatService chatService, final ProfanityFilterService profanityFilterService) {
+    public ChatWebSocketController(final ChatService chatService,
+                                   final ProfanityFilterService profanityFilterService,
+                                   final PenaltyService penaltyService) {
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
         this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
+        this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
     }
 
     /**
@@ -42,6 +47,15 @@ public class ChatWebSocketController {
                                                 final ChatMessageRequest request,
                                                 final Principal principal) {
         final String senderName = (principal != null) ? principal.getName() : request.getSender();
+
+        if (senderName != null && penaltyService.isPenalized(senderName)) {
+            return ChatMessageResponse.builder()
+                    .sender("SYSTEM")
+                    .message("No puedes enviar mensajes porque tu usuario se encuentra temporalmente penalizado.")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+        }
+
         final String filteredMessage = profanityFilterService.filter(request.getMessage());
 
         final ChatMessageResponse response = ChatMessageResponse.builder()
