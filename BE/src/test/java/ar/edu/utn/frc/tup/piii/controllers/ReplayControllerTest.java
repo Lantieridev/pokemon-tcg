@@ -2,7 +2,10 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest;
+import ar.edu.utn.frc.tup.piii.dtos.ReplayEventDTO;
+import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.services.ReplayService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +34,14 @@ class ReplayControllerTest {
     @Mock
     private ChatService chatService;
 
+    @Mock
+    private ReplayService replayService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        final ReplayController replayController = new ReplayController(chatService);
+        final ReplayController replayController = new ReplayController(chatService, replayService);
         mockMvc = MockMvcBuilders.standaloneSetup(replayController).build();
     }
 
@@ -77,5 +83,31 @@ class ReplayControllerTest {
                 .andExpect(status().isOk());
 
         verify(chatService).createReport(eq(matchId), any(ChatReportRequest.class));
+    }
+
+    @Test
+    void shouldReturnReplayEvents() throws Exception {
+        final Long matchId = 123L;
+        final ReplayResponseDTO replayResponse = ReplayResponseDTO.builder()
+                .matchId(matchId)
+                .events(List.of(
+                        ReplayEventDTO.builder()
+                                .turn(1)
+                                .player("player1")
+                                .action("DRAW_CARD")
+                                .result("Drew Pikachu")
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                ))
+                .build();
+
+        when(replayService.getReplay(matchId)).thenReturn(replayResponse);
+
+        mockMvc.perform(get("/api/matches/{matchId}/replay", matchId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matchId").value(matchId))
+                .andExpect(jsonPath("$.events", hasSize(1)))
+                .andExpect(jsonPath("$.events[0].player").value("player1"))
+                .andExpect(jsonPath("$.events[0].action").value("DRAW_CARD"));
     }
 }

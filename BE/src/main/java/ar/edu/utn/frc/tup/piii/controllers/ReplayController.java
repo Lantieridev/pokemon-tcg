@@ -2,7 +2,9 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest;
+import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.services.ReplayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,9 +24,11 @@ import java.util.Objects;
 public class ReplayController {
 
     private final ChatService chatService;
+    private final ReplayService replayService;
 
-    public ReplayController(final ChatService chatService) {
+    public ReplayController(final ChatService chatService, final ReplayService replayService) {
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
+        this.replayService = Objects.requireNonNull(replayService, "replayService must not be null");
     }
 
     /**
@@ -51,5 +55,17 @@ public class ReplayController {
                                                  @RequestBody final ChatReportRequest request) {
         chatService.createReport(matchId, request);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves the replay events for a given match.
+     * Secured by default via JWT security filter.
+     *
+     * @param matchId the match ID
+     * @return the replay response DTO
+     */
+    @GetMapping("/matches/{matchId}/replay")
+    public ReplayResponseDTO getReplay(@PathVariable final Long matchId) {
+        return replayService.getReplay(matchId);
     }
 }
