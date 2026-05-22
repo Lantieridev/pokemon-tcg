@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
+import ar.edu.utn.frc.tup.piii.services.deck.InvalidDeckException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,6 +47,12 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isUnprocessableEntity());
     }
 
+    @Test
+    void shouldReturn400WhenInvalidDeckExceptionIsThrown() throws Exception {
+        mockMvc.perform(get("/test/invalid-deck"))
+                .andExpect(status().isBadRequest());
+    }
+
     @RestController
     static final class ThrowingController {
 
@@ -62,6 +69,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/test/invalid-action")
         String invalidAction() {
             throw new InvalidActionException("retreat_blocked");
+        }
+
+        @GetMapping("/test/invalid-deck")
+        String invalidDeck() {
+            throw new InvalidDeckException("deck has 59 cards, expected 60");
         }
     }
 }

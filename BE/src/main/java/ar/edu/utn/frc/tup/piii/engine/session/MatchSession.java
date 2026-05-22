@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.engine.session;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.IllegalMatchStateTransitionException;
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
+import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ public final class MatchSession {
     private ScheduledFuture<?> playerBTimeout;
     private int activePlayerIndex = UNSET_PLAYER_INDEX;
     private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
+    private CoinFlipper coinFlipper = () -> Math.random() < 0.5;
 
     /**
      * Constructs a MatchSession in the WAITING state.
@@ -281,7 +283,15 @@ public final class MatchSession {
      * @param handler the handler to use (never null)
      */
     public void setKnockoutHandler(final KnockoutHandler handler) {
-        this.knockoutHandler = Objects.requireNonNull(handler, "handler must not be null");
+        this.knockoutHandler = Objects.requireNonNull(handler);
+    }
+
+    public CoinFlipper getCoinFlipper() {
+        return coinFlipper;
+    }
+
+    public void setCoinFlipper(final CoinFlipper coinFlipper) {
+        this.coinFlipper = Objects.requireNonNull(coinFlipper);
     }
 
     /**

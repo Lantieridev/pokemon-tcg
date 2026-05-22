@@ -47,8 +47,6 @@ import java.util.Random;
 @Component
 public final class GameFacade {
 
-    private static final Random RANDOM = new Random();
-
     private final AttackPipeline attackPipeline;
 
     public GameFacade() {
@@ -123,12 +121,13 @@ public final class GameFacade {
     private void applyAttachEnergy(final AttachEnergyAction action, final PlayerRuntime runtime) {
         final EnergyCard energyCard = findEnergyInHand(runtime, action.energyType());
         runtime.getHand().removeCard(energyCard.getCardId());
-        runtime.getActivePokemon().attachEnergy(action.energyType());
+        action.target().attachEnergy(action.energyType());
     }
 
     private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime) {
         if (action.evolution() != null) {
-            runtime.getHand().removeCard(action.evolution().getCardId());
+            PokemonCard newCard = (PokemonCard) runtime.getHand().removeCard(action.evolution().getCardId());
+            action.target().evolveInto(newCard);
         }
         new EvolveExecutor(runtime.getStatusEffectManager()).executeEvolve(action.target());
     }
@@ -155,7 +154,7 @@ public final class GameFacade {
                 attacker.getStatusEffectManager(),
                 defender.getStatusEffectManager(),
                 session.getKnockoutHandler(),
-                RANDOM::nextBoolean
+                session.getCoinFlipper()::flip
         ).build();
 
         attackPipeline.execute(ctx);
@@ -207,9 +206,10 @@ public final class GameFacade {
      * @param dto         the incoming action request (never null)
      * @return a concrete {@link Action} variant (never null)
      */
-    public Action toEngineAction(final MatchBoard board,
+    public Action toEngineAction(final MatchSession session,
                                  final int playerIndex,
                                  final ActionRequestDTO dto) {
+        final MatchBoard board = session.getBoard();
         return switch (dto.type()) {
             case DECLARE_ATTACK      -> buildDeclareAttack(board, playerIndex, dto);
             case RETREAT             -> new RetreatAction(board.getActivePokemon(playerIndex),
@@ -218,8 +218,14 @@ public final class GameFacade {
                                             resolveTarget(board, playerIndex, dto),
                                             dto.cardId());
             case ATTACH_ENERGY       -> new AttachEnergyAction(
+                                            resolveEvolveTarget(board, playerIndex, dto),
                                             dto.energyType() != null ? dto.energyType() : PokemonType.COLORLESS);
-            case EVOLVE              -> new EvolveAction(resolveEvolveTarget(board, playerIndex, dto), null);
+            case EVOLVE              -> {
+                final Card cardInHand = session.getPlayerRuntime(playerIndex).getHand().getCards().stream()
+                        .filter(c -> c.getCardId().equals(dto.cardId()))
+                        .findFirst().orElseThrow(() -> new IllegalArgumentException("Card not in hand"));
+                yield new EvolveAction(resolveEvolveTarget(board, playerIndex, dto), (PokemonCard) cardInHand);
+            }
             case PLACE_BASIC_POKEMON -> new PlaceBasicPokemonAction(dto.cardId());
             case USE_ABILITY         -> new UseAbilityAction(
                                             board.getActivePokemon(playerIndex),

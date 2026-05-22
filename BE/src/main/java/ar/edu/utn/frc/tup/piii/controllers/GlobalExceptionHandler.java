@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
+import ar.edu.utn.frc.tup.piii.services.deck.InvalidDeckException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,5 +29,10 @@ public final class GlobalExceptionHandler {
     @ExceptionHandler(InvalidActionException.class)
     public ResponseEntity<String> handleInvalidAction(final InvalidActionException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidDeckException.class)
+    public ResponseEntity<String> handleInvalidDeck(final InvalidDeckException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }

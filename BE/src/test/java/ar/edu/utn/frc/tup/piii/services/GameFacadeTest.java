@@ -14,8 +14,16 @@ import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
+import ar.edu.utn.frc.tup.piii.engine.model.Deck;
+import ar.edu.utn.frc.tup.piii.engine.model.Hand;
+import ar.edu.utn.frc.tup.piii.engine.model.Bench;
+import ar.edu.utn.frc.tup.piii.engine.model.DiscardPile;
+import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +43,7 @@ class GameFacadeTest {
     private static final String ABILITY_ID = "ability-001";
 
     private GameFacade facade;
+    private MatchSession session;
     private MatchBoard board;
     private FakeBattlePokemonState activePokemon;
     private FakeBattlePokemonState targetPokemon;
@@ -62,6 +71,19 @@ class GameFacadeTest {
                 45, 6, Map.of());
 
         board = new MatchBoard(List.of(player0, player1));
+        
+        Hand hand0 = new Hand();
+        hand0.addCard(new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
+            "evo-id", "Evo", 100, PokemonType.FIRE)
+            .evolutionStage(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_1)
+            .evolvesFrom("Squirtle")
+            .build());
+            
+        Card dummyCard = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 10, PokemonType.FIRE).build();
+        Deck deck = new Deck(List.of(dummyCard));
+        PlayerRuntime runtime0 = new PlayerRuntime(deck, hand0, new Bench(), new DiscardPile(), new StatusEffectManager(() -> true), activePokemon);
+        PlayerRuntime runtime1 = new PlayerRuntime(deck, new Hand(), new Bench(), new DiscardPile(), new StatusEffectManager(() -> true), targetPokemon);
+        session = new MatchSession("test-match", List.of("p1", "p2"), board, List.of(runtime0, runtime1));
     }
 
     @Test
@@ -69,7 +91,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.DECLARE_ATTACK, null, null, null, null, 0);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(DeclareAttackAction.class);
         final DeclareAttackAction declareAttack = (DeclareAttackAction) action;
@@ -82,7 +104,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.RETREAT, null, null, null, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(RetreatAction.class);
         assertThat(((RetreatAction) action).active()).isEqualTo(activePokemon);
@@ -93,7 +115,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.PLAY_TRAINER, null, null, null, TrainerType.SUPPORTER, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(PlayTrainerAction.class);
         assertThat(((PlayTrainerAction) action).trainerType()).isEqualTo(TrainerType.SUPPORTER);
@@ -104,7 +126,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.ATTACH_ENERGY, null, null, null, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(AttachEnergyAction.class);
     }
@@ -114,7 +136,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(AttachEnergyAction.class);
         assertThat(((AttachEnergyAction) action).energyType()).isEqualTo(PokemonType.FIRE);
@@ -123,9 +145,9 @@ class GameFacadeTest {
     @Test
     void shouldProduceEvolveActionWhenTypeIsEvolve() {
         final ActionRequestDTO dto = new ActionRequestDTO(
-                ActionType.EVOLVE, null, TARGET_ID, null, null, null);
+                ActionType.EVOLVE, "evo-id", TARGET_ID, null, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(EvolveAction.class);
         assertThat(((EvolveAction) action).target()).isEqualTo(activePokemon);
@@ -135,9 +157,9 @@ class GameFacadeTest {
     void shouldResolveBenchPokemonAsEvolveTargetWhenTargetIndexIsProvided() {
         // targetIndex=0 → bench slot 0 → targetPokemon
         final ActionRequestDTO dto = new ActionRequestDTO(
-                ActionType.EVOLVE, null, null, 0, null, null);
+                ActionType.EVOLVE, "evo-id", null, 0, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(EvolveAction.class);
         assertThat(((EvolveAction) action).target()).isEqualTo(targetPokemon);
@@ -148,7 +170,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.PLACE_BASIC_POKEMON, CARD_ID, null, null, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(PlaceBasicPokemonAction.class);
         assertThat(((PlaceBasicPokemonAction) action).cardId()).isEqualTo(CARD_ID);
@@ -159,7 +181,7 @@ class GameFacadeTest {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.USE_ABILITY, ABILITY_ID, null, null, null, null);
 
-        final Action action = facade.toEngineAction(board, PLAYER_INDEX, dto);
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
         assertThat(action).isInstanceOf(UseAbilityAction.class);
         assertThat(((UseAbilityAction) action).source()).isEqualTo(activePokemon);
