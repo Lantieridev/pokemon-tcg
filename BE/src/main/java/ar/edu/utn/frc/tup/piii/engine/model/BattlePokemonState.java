@@ -137,10 +137,18 @@ public interface BattlePokemonState extends ActivePokemonState {
     String getEvolvesFrom();
 
     /**
-     * Evolves this Pokémon into the new specified card. 
+     * Evolves this Pokémon into the new specified card.
      * Retains attached energies and damage counters, but replaces the underlying card stats.
      *
      * @param evolution the new evolution card
      */
     void evolveInto(PokemonCard evolution);
+
+    /**
+     * Returns the current underlying Pokémon card (the topmost evolution card).
+     * Used by the KO handler to move the card to the discard pile.
+     *
+     * @return the current card (never null)
+     */
+    Card getBaseCard();
 }

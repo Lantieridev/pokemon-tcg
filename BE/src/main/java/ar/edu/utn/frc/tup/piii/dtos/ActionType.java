@@ -10,5 +10,7 @@ public enum ActionType {
     ATTACH_ENERGY,
     EVOLVE,
     PLACE_BASIC_POKEMON,
-    USE_ABILITY
+    USE_ABILITY,
+    /** Ends the current player's turn without attacking (passes to between-turns phase). */
+    END_TURN
 }
