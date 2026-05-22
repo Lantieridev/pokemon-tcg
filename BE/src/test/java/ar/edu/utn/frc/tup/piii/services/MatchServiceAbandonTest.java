@@ -48,6 +48,7 @@ class MatchServiceAbandonTest {
     private SimpMessagingTemplate messaging;
     private PlayerPerspectiveMapper mapper;
     private ScheduledExecutorService scheduler;
+    private PenaltyService penaltyService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -61,6 +62,7 @@ class MatchServiceAbandonTest {
         messaging = mock(SimpMessagingTemplate.class);
         mapper = mock(PlayerPerspectiveMapper.class);
         scheduler = mock(ScheduledExecutorService.class);
+        penaltyService = mock(PenaltyService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -81,7 +83,7 @@ class MatchServiceAbandonTest {
 
         matchService = new MatchService(
                 registry, facade, ruleValidator, persistence, mapper, messaging,
-                scheduler, TIMEOUT_SECONDS);
+                scheduler, penaltyService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

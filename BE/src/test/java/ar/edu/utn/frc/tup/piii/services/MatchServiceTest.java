@@ -50,6 +50,7 @@ class MatchServiceTest {
     private SimpMessagingTemplate messaging;
     private PlayerPerspectiveMapper mapper;
     private ScheduledExecutorService scheduler;
+    private PenaltyService penaltyService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -64,6 +65,7 @@ class MatchServiceTest {
         messaging = mock(SimpMessagingTemplate.class);
         mapper = mock(PlayerPerspectiveMapper.class);
         scheduler = mock(ScheduledExecutorService.class);
+        penaltyService = mock(PenaltyService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -84,7 +86,7 @@ class MatchServiceTest {
 
         matchService = new MatchService(
                 registry, facade, ruleValidator, persistence, mapper, messaging,
-                scheduler, TIMEOUT_SECONDS);
+                scheduler, penaltyService, TIMEOUT_SECONDS);
     }
 
     @Test
@@ -138,5 +140,25 @@ class MatchServiceTest {
 
         verify(persistence, never()).save(any());
         verify(messaging, never()).convertAndSend(anyString(), any(Object.class));
+    }
+
+    @Test
+    void shouldRegisterMatchFinishedLegitimatelyWhenSessionFinishes() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0)));
+        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+
+        // Force session state to FINISHED after apply
+        org.mockito.Mockito.doAnswer(invocation -> {
+            session.finish();
+            return null;
+        }).when(facade).apply(any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        verify(penaltyService).registerMatchFinished(PLAYER_A_ID, true);
+        verify(penaltyService).registerMatchFinished(PLAYER_B_ID, true);
     }
 }
