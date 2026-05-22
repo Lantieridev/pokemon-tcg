@@ -9,8 +9,11 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.ChatReportRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
+import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +37,19 @@ public class ChatServiceImpl implements ChatService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final ChatReportRepository chatReportRepository;
+    private final ProfanityFilterService profanityFilterService;
+    private final PenaltyService penaltyService;
 
     public ChatServiceImpl(final MatchRepository matchRepository,
                            final UserRepository userRepository,
-                           final ChatReportRepository chatReportRepository) {
+                           final ChatReportRepository chatReportRepository,
+                           final ProfanityFilterService profanityFilterService,
+                           final PenaltyService penaltyService) {
         this.matchRepository = Objects.requireNonNull(matchRepository, "matchRepository must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.chatReportRepository = Objects.requireNonNull(chatReportRepository, "chatReportRepository must not be null");
+        this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
+        this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
     }
 
     @Override
@@ -91,6 +100,40 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> new NoSuchElementException("Reported user not found with id: " + request.getReportedId()));
 
         final List<ChatMessageResponse> history = getMessages(matchId);
+        final String reportedUsername = reported.getUsername();
+
+        boolean isValidated = false;
+
+        // 1. Detect profanity in reported user's messages
+        for (final ChatMessageResponse msg : history) {
+            if (reportedUsername.equals(msg.getSender())) {
+                final String original = msg.getMessage();
+                final String filtered = profanityFilterService.filter(original);
+                if (original != null && !original.equals(filtered)) {
+                    isValidated = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Detect spam / flooding (10+ messages in 30 seconds)
+        if (!isValidated) {
+            final List<ChatMessageResponse> reportedMsgs = history.stream()
+                    .filter(msg -> reportedUsername.equals(msg.getSender()))
+                    .toList();
+
+            for (int i = 0; i <= reportedMsgs.size() - 10; i++) {
+                final LocalDateTime start = reportedMsgs.get(i).getTimestamp();
+                final LocalDateTime end = reportedMsgs.get(i + 9).getTimestamp();
+                if (start != null && end != null) {
+                    final long seconds = java.time.Duration.between(start, end).getSeconds();
+                    if (seconds <= 30) {
+                        isValidated = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         final ChatReportEntity reportEntity = ChatReportEntity.builder()
                 .match(match)
@@ -98,8 +141,13 @@ public class ChatServiceImpl implements ChatService {
                 .reported(reported)
                 .reason(request.getReason())
                 .chatHistory(history)
+                .isValidated(isValidated)
                 .build();
 
         chatReportRepository.save(reportEntity);
+
+        if (isValidated) {
+            penaltyService.checkAndApplyPenalty(reportedUsername);
+        }
     }
 }
