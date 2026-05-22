@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PokeTCG Companion - Chat, Reportes & Replay</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            dark: {
+              900: '#020617',
+              800: '#0b1329',
+              700: '#1e293b',
+            },
+            poke: {
+              yellow: '#ffcb05',
+              blue: '#2a75d3',
+              red: '#ff1f51',
+              neonBlue: '#38bdf8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: radial-gradient(circle at top right, #0f172a, #020617);
+      font-family: 'Inter', sans-serif;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .glow-yellow:hover {
+      box-shadow: 0 0 15px rgba(255, 203, 5, 0.4);
+    }
+    .glow-blue {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+    }
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.5);
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen pb-12">
+
+  <!-- Header / Navigation -->
+  <header class="border-b border-slate-800 bg-dark-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 bg-poke-blue rounded-xl flex items-center justify-center text-white glow-blue">
+          <i class="fa-solid fa-bolt text-poke-yellow text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-outfit font-bold text-lg tracking-wider text-white">
+            POKÉ<span class="text-poke-yellow">TCG</span> <span class="text-poke-neonBlue">COMPANION</span>
+          </h1>
+          <p class="text-xs text-slate-400">Auxiliary Administration & Live Tester</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+        <button onclick="switchTab('auth')" id="tab-auth" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 bg-poke-blue text-white">
+          <i class="fa-solid fa-user-shield mr-2"></i>Auth & Conexión
+        </button>
+        <button onclick="switchTab('chat')" id="tab-chat" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-comments mr-2"></i>Live Chat & Reportes
+        </button>
+        <button onclick="switchTab('replay')" id="tab-replay" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-history mr-2"></i>Replay & Auditoría
+        </button>
+      </nav>
+
+      <!-- Connection Status Badge -->
+      <div class="flex items-center gap-3">
+        <div id="status-badge" class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-red-400 animate-pulse"></span> Desconectado
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 mt-6">
+
+    <!-- ==================== TAB 1: AUTH & CONNECTION ==================== -->
+    <section id="section-auth" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Intro & Setup info -->
+        <div class="md:col-span-7 space-y-6">
+          <div class="glass-panel rounded-2xl p-6 shadow-xl">
+            <h2 class="font-outfit text-2xl font-bold text-white mb-2">
+              <i class="fa-solid fa-circle-info text-poke-neonBlue mr-2"></i>Panel Auxiliar de Pruebas
+            </h2>
+            <p class="text-sm text-slate-300 leading-relaxed mb-4">
+              Este dashboard frontend te permite interactuar y visualizar los dos grandes componentes que implementaremos:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                <h3 class="font-semibold text-poke-yellow text-sm mb-2">
+                  <i class="fa-solid fa-comments mr-2"></i>Live Chat & Reportes
+                </h3>
+                <p class="text-xs text-slate-400">
+                  Chat WebSocket in-game con buffer de 50 mensajes. Sistema de reportes de mala conducta guardado como JSONB para auditorías.
+                </p>
+              </div>
+              <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                <h3 class="font-semibold text-poke-neonBlue text-sm mb-2">
+                  <i class="fa-solid fa-history mr-2"></i>Partidas & Replay
+                </h3>
+                <p class="text-xs text-slate-400">
+                  Historial cronológico de acciones. Controles interactivos (Play, Pausa, Speed, Retroceso, Avance) para auditar cada evento del match.
+                </p>
+              </div>
+            </div>
+            
+            <div class="mt-6 p-4 rounded-xl bg-poke-blue/10 border border-poke-blue/20">
+              <h4 class="text-xs font-semibold text-poke-neonBlue uppercase tracking-wider mb-2">¿Cómo probarlo?</h4>
+              <ol class="list-decimal list-inside text-xs text-slate-300 space-y-2">
+                <li>Puedes usar el **Modo Simulación** (activado por defecto) para probar la interactividad del chat, simular desconexiones/reconexiones (comprobando el buffer) y usar los controles de replay sin levantar el backend.</li>
+                <li>O puedes levantar el backend (puerto 8081), registrarte, loguearte para obtener un JWT real, y conectarte al WebSocket WebSocket real para una prueba de punta a punta.</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Active User Session / Mock Info -->
+          <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-4">
+            <h3 class="font-outfit text-lg font-bold text-white"><i class="fa-solid fa-circle-user mr-2 text-poke-yellow"></i>Estado de la Sesión</h3>
+            <div id="session-info-card" class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">Usuario Activo:</span>
+                <span id="session-username" class="font-mono text-poke-yellow font-bold">Invitado (Simulación)</span>
+              </div>
+              <div class="flex flex-col gap-1 text-xs">
+                <span class="text-slate-400">JWT Token:</span>
+                <textarea id="session-token" readonly class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-lg p-2 font-mono text-[10px] text-slate-400 resize-none h-16" placeholder="No autenticado. Se generará al iniciar sesión."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Register & Login -->
+        <div class="md:col-span-5 space-y-6">
+          <div class="glass-panel rounded-2xl p-6 shadow-xl space-y-5">
+            <!-- Tabs inside auth -->
+            <div class="flex border-b border-slate-800">
+              <button onclick="toggleAuthForm('login')" id="btn-tab-login" class="flex-1 pb-3 text-sm font-semibold text-poke-yellow border-b-2 border-poke-yellow transition-all">Iniciar Sesión</button>
+              <button onclick="toggleAuthForm('register')" id="btn-tab-register" class="flex-1 pb-3 text-sm font-semibold text-slate-400 transition-all">Registrarse</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de Usuario</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-user"></i></span>
+                  <input type="text" id="login-username" value="ash_ketchum" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-poke-yellow transition-all" placeholder="ash_ketchum">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                  <input type="password" id="login-password" value="pikachu_forever" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-poke-yellow transition-all" placeholder="••••••••">
+                </div>
+              </div>
+              <button type="submit" class="w-full bg-poke-yellow hover:bg-yellow-500 text-slate-900 py-3 rounded-xl font-bold text-sm transition-all duration-300 glow-yellow shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sign-in-alt"></i> Ingresar con JWT
+              </button>
+            </form>
+
+            <!-- Register Form (Hidden initially) -->
+            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre de Usuario</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-user"></i></span>
+                  <input type="text" id="reg-username" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-poke-blue transition-all" placeholder="ash_ketchum">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Correo Electrónico</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+                  <input type="email" id="reg-email" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-poke-blue transition-all" placeholder="ash@pallet.com">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                  <input type="password" id="reg-password" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-poke-blue transition-all" placeholder="••••••••">
+                </div>
+              </div>
+              <button type="submit" class="w-full bg-poke-blue hover:bg-blue-600 text-white py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-user-plus"></i> Registrar Usuario
+              </button>
+            </form>
+
+            <div class="border-t border-slate-800 pt-4 text-center">
+              <span class="text-xs text-slate-500">¿Deseas probar en simulación?</span>
+              <button onclick="activateSimMode()" class="mt-2 block w-full py-2 bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                Activar Modo Simulado (Sin Servidor)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: LIVE CHAT & REPORTS ==================== -->
+    <section id="section-chat" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Column Left: Chat Window (col-span-8) -->
+        <div class="lg:col-span-8 flex flex-col h-[600px] glass-panel rounded-2xl p-6 shadow-xl">
+          <!-- Chat Header -->
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center text-poke-yellow border border-slate-800">
+                <i class="fa-solid fa-comments text-lg"></i>
+              </div>
+              <div>
+                <h3 class="font-outfit font-bold text-white">Sala de Chat in-Game</h3>
+                <p class="text-xs text-slate-400">Match ID: <span class="font-mono text-poke-yellow">match-12</span> | Jugando: <span class="text-poke-neonBlue font-semibold">Ash</span> vs <span class="text-poke-red font-semibold">Gary</span></p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="simulateDisconnect()" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-lg text-xs font-medium transition-all">
+                <i class="fa-solid fa-wifi-slash mr-1"></i> Desconectar
+              </button>
+              <button onclick="simulateReconnect()" class="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/50 rounded-lg text-xs font-medium transition-all">
+                <i class="fa-solid fa-rotate mr-1"></i> Reconectar & Cargar Buffer
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat messages area -->
+          <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 pr-2 mb-4">
+            <!-- Messages will be injected by JS -->
+          </div>
+
+          <!-- Chat Input -->
+          <form onsubmit="handleSendChat(event)" class="flex gap-2">
+            <input type="text" id="chat-input" required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-poke-yellow transition-all" placeholder="Escribe un mensaje en el chat del duelo...">
+            <button type="submit" class="bg-poke-yellow hover:bg-yellow-500 text-slate-900 px-6 rounded-xl font-bold text-sm transition-all duration-300 glow-yellow flex items-center justify-center gap-2">
+              Enviar <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Column Right: Report Form (col-span-4) -->
+        <div class="lg:col-span-4 glass-panel rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="border-b border-slate-800 pb-3">
+              <h3 class="font-outfit text-lg font-bold text-white"><i class="fa-solid fa-triangle-exclamation text-poke-red mr-2"></i>Reportar Comportamiento</h3>
+              <p class="text-xs text-slate-400">Los reportes se persisten en la BD integrando el historial de chat en JSONB.</p>
+            </div>
+
+            <!-- Target User -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Jugador a Reportar</label>
+              <select id="report-target" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-poke-red transition-all">
+                <option value="gary_oak">Gary Oak (Duelo #12)</option>
+                <option value="ash_ketchum">Ash Ketchum (Duelo #12)</option>
+              </select>
+            </div>
+
+            <!-- Reason -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Motivo del Reporte</label>
+              <select id="report-reason" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-poke-red transition-all">
+                <option value="abusive_chat">Chat Ofensivo / Lenguaje Inapropiado</option>
+                <option value="spam">Spam / Acoso en el canal</option>
+                <option value="afk">Inactividad Intencional (AFK / Stall)</option>
+                <option value="collusion">Colusión / Trampa</option>
+              </select>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Detalle del Incidente</label>
+              <textarea id="report-description" required class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-poke-red transition-all h-28 resize-none" placeholder="Describe brevemente lo ocurrido..."></textarea>
+            </div>
+
+            <!-- Attach chat checkbox -->
+            <div class="flex items-start gap-2.5 bg-slate-900/60 p-3 rounded-xl border border-slate-850">
+              <input type="checkbox" id="report-attach-chat" checked class="mt-1 rounded bg-slate-950 border-slate-800 text-poke-red focus:ring-poke-red h-4 w-4">
+              <div>
+                <label for="report-attach-chat" class="block text-xs font-bold text-slate-200">Adjuntar logs del Chat</label>
+                <span class="block text-[10px] text-slate-400">Guarda los últimos 50 mensajes de la partida en el campo JSONB del reporte en PostgreSQL.</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="submitReport()" class="w-full mt-6 bg-poke-red hover:bg-red-600 text-white py-3 rounded-xl font-bold text-sm transition-all duration-300 shadow-lg shadow-red-500/10 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane-claim"></i> Enviar Reporte a la BD
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: REPLAY & AUDIT ==================== -->
+    <section id="section-replay" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Column Left: Visual TCG Board Representation (col-span-8) -->
+        <div class="lg:col-span-8 flex flex-col glass-panel rounded-2xl p-6 shadow-xl min-h-[500px]">
+          <!-- Header -->
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-4 mb-4 gap-4">
+            <div>
+              <h3 class="font-outfit font-bold text-white"><i class="fa-solid fa-tv text-poke-neonBlue mr-2"></i>Visualizador de Replays</h3>
+              <p class="text-xs text-slate-400">Simulación interactiva de eventos de partida. Observa los tableros de cada jugador en tiempo real.</p>
+            </div>
+            
+            <!-- Controls Play/Pause/Forward/Rewind -->
+            <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+              <button onclick="replayFirst()" title="Ir al inicio" class="p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-all text-sm">
+                <i class="fa-solid fa-backward-step"></i>
+              </button>
+              <button onclick="replayPrev()" title="Anterior acción" class="p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-all text-sm">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <button onclick="replayPlayPause()" id="btn-play-pause" title="Reproducir/Pausar" class="h-9 w-9 bg-poke-neonBlue text-slate-900 rounded-lg transition-all flex items-center justify-center text-sm font-bold shadow-md">
+                <i id="play-icon" class="fa-solid fa-play"></i>
+              </button>
+              <button onclick="replayNext()" title="Siguiente acción" class="p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-all text-sm">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+              <button onclick="replayLast()" title="Ir al final" class="p-2 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition-all text-sm">
+                <i class="fa-solid fa-forward-step"></i>
+              </button>
+              <div class="h-6 w-px bg-slate-850 mx-1"></div>
+              <!-- Speed selector -->
+              <select id="replay-speed" onchange="changeReplaySpeed(this.value)" class="bg-slate-900 text-xs text-slate-300 border-none rounded-lg px-2 py-1 focus:ring-0">
+                <option value="1000">1x (Lento)</option>
+                <option value="500" selected>2x (Normal)</option>
+                <option value="250">4x (Rápido)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Board layout -->
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/40 rounded-xl p-4 border border-slate-900">
+            <!-- Gary Oak (Opponent Area - Top) -->
+            <div class="border border-red-500/20 rounded-xl p-4 bg-slate-900/20 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-xs font-bold text-poke-red tracking-wide uppercase"><i class="fa-solid fa-user-ninja mr-1"></i> Gary Oak (Rival)</span>
+                  <span id="opp-hand" class="text-xs bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full text-slate-400">Cartas en mano: 4</span>
+                </div>
+                <!-- Active Pokemon Area -->
+                <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 flex items-center gap-3">
+                  <div class="h-14 w-10 bg-poke-red/20 rounded border border-poke-red/40 flex items-center justify-center">
+                    <i class="fa-solid fa-fire text-poke-red text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 id="opp-active-name" class="font-outfit text-sm font-bold text-white">Charizard</h4>
+                    <span id="opp-active-hp" class="text-xs text-red-400 font-semibold">HP: 120 / 120</span>
+                    <div class="flex gap-1 mt-1" id="opp-active-energy">
+                      <span class="h-3 w-3 rounded-full bg-orange-500" title="Energy: Fire"></span>
+                      <span class="h-3 w-3 rounded-full bg-orange-500" title="Energy: Fire"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-850 flex justify-between text-xs text-slate-400">
+                <span>Banca: <span id="opp-bench">Blastoise, Pidgeot</span></span>
+                <span>Premios restantes: <span id="opp-prizes" class="font-bold text-poke-red">4</span></span>
+              </div>
+            </div>
+
+            <!-- Ash Ketchum (Current Player Area - Bottom) -->
+            <div class="border border-poke-blue/20 rounded-xl p-4 bg-slate-900/20 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-xs font-bold text-poke-blue tracking-wide uppercase"><i class="fa-solid fa-graduation-cap mr-1"></i> Ash Ketchum (Tú)</span>
+                  <span id="player-hand" class="text-xs bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full text-slate-400">Cartas en mano: 6</span>
+                </div>
+                <!-- Active Pokemon Area -->
+                <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 flex items-center gap-3">
+                  <div class="h-14 w-10 bg-poke-yellow/20 rounded border border-poke-yellow/40 flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-poke-yellow text-lg"></i>
+                  </div>
+                  <div>
+                    <h4 id="player-active-name" class="font-outfit text-sm font-bold text-white">Pikachu</h4>
+                    <span id="player-active-hp" class="text-xs text-poke-yellow font-semibold">HP: 60 / 60</span>
+                    <div class="flex gap-1 mt-1" id="player-active-energy">
+                      <span class="h-3 w-3 rounded-full bg-yellow-500" title="Energy: Lightning"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-850 flex justify-between text-xs text-slate-400">
+                <span>Banca: <span id="player-bench">Bulbasaur, Butterfree</span></span>
+                <span>Premios restantes: <span id="player-prizes" class="font-bold text-poke-yellow">5</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column Right: Chronological Events Timeline (col-span-4) -->
+        <div class="lg:col-span-4 glass-panel rounded-2xl p-6 shadow-xl flex flex-col h-[500px]">
+          <div class="border-b border-slate-800 pb-3 mb-3">
+            <h3 class="font-outfit text-lg font-bold text-white"><i class="fa-solid fa-clock-rotate-left text-poke-yellow mr-2"></i>Línea de Eventos</h3>
+            <p class="text-xs text-slate-400">Acciones del duelo extraídas de la base de datos.</p>
+          </div>
+
+          <!-- Events List Container -->
+          <div id="events-timeline" class="flex-1 overflow-y-auto space-y-2 pr-2">
+            <!-- Events injected dynamically by JS -->
+          </div>
+          
+          <!-- Timeline progress bar indicator -->
+          <div class="border-t border-slate-850 pt-3 mt-3 space-y-1">
+            <div class="flex justify-between text-[10px] text-slate-500">
+              <span>Progreso del Replay</span>
+              <span id="replay-progress-text">Evento 0/0</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+              <div id="replay-progress-bar" class="bg-poke-neonBlue h-full transition-all duration-200" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sweet alert mockup (modal) -->
+  <div id="modal-alert" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-sm w-full rounded-2xl p-6 text-center space-y-4 border border-slate-700/50 shadow-2xl animate-bounce">
+      <div id="modal-icon-container" class="h-16 w-16 mx-auto rounded-full flex items-center justify-center">
+        <!-- Icon -->
+      </div>
+      <div>
+        <h3 id="modal-title" class="font-outfit text-lg font-bold text-white"></h3>
+        <p id="modal-body" class="text-xs text-slate-400 mt-1"></p>
+      </div>
+      <button onclick="closeModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl text-xs font-semibold transition-all">
+        Entendido
+      </button>
+    </div>
+  </div>
+
+  <!-- Real JavaScript Code -->
+  <script>
+    // App State Variables
+    let isSimMode = true;
+    let currentUser = null;
+    let jwtToken = null;
+    let wsConnection = null;
+
+    // Chat History Simulation / Real Store
+    let messages = [
+      { sender: 'ash_ketchum', text: '¡Hola! Suerte en la partida.', time: '18:45' },
+      { sender: 'gary_oak', text: 'No la necesito. Te venceré fácilmente, perdedor.', time: '18:46' },
+      { sender: 'ash_ketchum', text: 'Ya veremos quién ríe al último.', time: '18:46' },
+      { sender: 'gary_oak', text: '¡Usa Lanzallamas Charizard!', time: '18:47' }
+    ];
+
+    // Replay Events Data List
+    const replayEvents = [
+      {
+        id: 1,
+        turn: 1,
+        player: 'ash_ketchum',
+        type: 'ROBAR_CARTA',
+        desc: 'Ash Ketchum roba una carta.',
+        state: {
+          oppHand: 4, playerHand: 6,
+          oppActiveHp: 120, playerActiveHp: 60,
+          oppActiveEnergy: 2, playerActiveEnergy: 1,
+          oppPrizes: 4, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Pikachu',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Bulbasaur, Butterfree'
+        }
+      },
+      {
+        id: 2,
+        turn: 1,
+        player: 'ash_ketchum',
+        type: 'COLOCAR_ENERGIA',
+        desc: 'Ash equipa una Energía Relámpago a Pikachu.',
+        state: {
+          oppHand: 4, playerHand: 5,
+          oppActiveHp: 120, playerActiveHp: 60,
+          oppActiveEnergy: 2, playerActiveEnergy: 2,
+          oppPrizes: 4, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Pikachu',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Bulbasaur, Butterfree'
+        }
+      },
+      {
+        id: 3,
+        turn: 1,
+        player: 'ash_ketchum',
+        type: 'ATACAR',
+        desc: 'Pikachu usa Trueno y causa 50 de daño a Charizard (Debilidad x2 no aplica).',
+        state: {
+          oppHand: 4, playerHand: 5,
+          oppActiveHp: 70, playerActiveHp: 60,
+          oppActiveEnergy: 2, playerActiveEnergy: 2,
+          oppPrizes: 4, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Pikachu',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Bulbasaur, Butterfree'
+        }
+      },
+      {
+        id: 4,
+        turn: 2,
+        player: 'gary_oak',
+        type: 'ROBAR_CARTA',
+        desc: 'Gary Oak roba una carta.',
+        state: {
+          oppHand: 5, playerHand: 5,
+          oppActiveHp: 70, playerActiveHp: 60,
+          oppActiveEnergy: 2, playerActiveEnergy: 2,
+          oppPrizes: 4, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Pikachu',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Bulbasaur, Butterfree'
+        }
+      },
+      {
+        id: 5,
+        turn: 2,
+        player: 'gary_oak',
+        type: 'ATACAR',
+        desc: 'Charizard usa Lanzallamas infligiendo 80 de daño. ¡Pikachu queda fuera de combate (KO)!',
+        state: {
+          oppHand: 5, playerHand: 5,
+          oppActiveHp: 70, playerActiveHp: 0,
+          oppActiveEnergy: 0, playerActiveEnergy: 2,
+          oppPrizes: 3, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Pikachu (KO)',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Bulbasaur, Butterfree'
+        }
+      },
+      {
+        id: 6,
+        turn: 2,
+        player: 'ash_ketchum',
+        type: 'REEMPLAZAR_POKEMON',
+        desc: 'Ash promueve a Bulbasaur al Puesto Activo.',
+        state: {
+          oppHand: 5, playerHand: 5,
+          oppActiveHp: 70, playerActiveHp: 70,
+          oppActiveEnergy: 0, playerActiveEnergy: 0,
+          oppPrizes: 3, playerPrizes: 5,
+          oppActiveName: 'Charizard', playerActiveName: 'Bulbasaur',
+          oppBench: 'Blastoise, Pidgeot', playerBench: 'Butterfree'
+        }
+      }
+    ];
+
+    // Replay Player State
+    let currentEventIndex = 0;
+    let replayInterval = null;
+    let replaySpeedMs = 500;
+    let isReplayPlaying = false;
+
+    // Tabs Controller
+    function switchTab(tab) {
+      document.getElementById('section-auth').classList.add('hidden');
+      document.getElementById('section-chat').classList.add('hidden');
+      document.getElementById('section-replay').classList.add('hidden');
+
+      document.getElementById('tab-auth').className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 text-slate-400 hover:text-slate-200";
+      document.getElementById('tab-chat').className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 text-slate-400 hover:text-slate-200";
+      document.getElementById('tab-replay').className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 text-slate-400 hover:text-slate-200";
+
+      document.getElementById(`section-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-300 bg-poke-blue text-white";
+
+      if (tab === 'chat') {
+        renderChat();
+      } else if (tab === 'replay') {
+        renderReplay();
+      }
+    }
+
+    // Toggle Registration / Login Forms
+    function toggleAuthForm(mode) {
+      if (mode === 'login') {
+        document.getElementById('form-login').classList.remove('hidden');
+        document.getElementById('form-register').classList.add('hidden');
+        document.getElementById('btn-tab-login').className = "flex-1 pb-3 text-sm font-semibold text-poke-yellow border-b-2 border-poke-yellow transition-all";
+        document.getElementById('btn-tab-register').className = "flex-1 pb-3 text-sm font-semibold text-slate-400 transition-all";
+      } else {
+        document.getElementById('form-login').classList.add('hidden');
+        document.getElementById('form-register').classList.remove('hidden');
+        document.getElementById('btn-tab-login').className = "flex-1 pb-3 text-sm font-semibold text-slate-400 transition-all";
+        document.getElementById('btn-tab-register').className = "flex-1 pb-3 text-sm font-semibold text-poke-blue border-b-2 border-poke-blue transition-all";
+      }
+    }
+
+    // Activate Simulation Mode
+    function activateSimMode() {
+      isSimMode = true;
+      currentUser = "ash_ketchum";
+      jwtToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhc2hfa2V0Y2h1bSIsImlhdCI6MTc3OTQ4NzI1OCwiZXhwIjoxNzc5NTIzMjU4fQ.simulated_token_not_real";
+      
+      document.getElementById('session-username').innerText = "ash_ketchum (Simulación)";
+      document.getElementById('session-token').value = jwtToken;
+      
+      updateConnectionStatus(true);
+      showModal("Modo Simulación Activo", "Estás operando en modo desconectado. Los datos se mantendrán localmente.", "fa-solid fa-circle-check text-poke-yellow bg-poke-yellow/10");
+      switchTab('chat');
+    }
+
+    // Update Top status badge
+    function updateConnectionStatus(connected) {
+      const badge = document.getElementById('status-badge');
+      if (connected) {
+        badge.className = "px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5";
+        badge.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400"></span> Conectado`;
+      } else {
+        badge.className = "px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1.5";
+        badge.innerHTML = `<span class="h-2 w-2 rounded-full bg-red-400 animate-pulse"></span> Desconectado`;
+      }
+    }
+
+    // Handle AJAX Register
+    async function handleRegister(event) {
+      event.preventDefault();
+      const username = document.getElementById('reg-username').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+
+      try {
+        const response = await fetch('http://localhost:8081/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        if (response.ok) {
+          showModal("Usuario Creado", "¡Te has registrado con éxito! Ahora puedes iniciar sesión.", "fa-solid fa-user-check text-poke-blue bg-poke-blue/10");
+          toggleAuthForm('login');
+        } else {
+          const errMsg = await response.text();
+          showModal("Error al registrarse", errMsg, "fa-solid fa-triangle-exclamation text-poke-red bg-poke-red/10");
+        }
+      } catch (err) {
+        console.error(err);
+        showModal("Error de Red", "No se pudo conectar con el servidor backend en http://localhost:8081. Asegúrate de levantar el backend o activa el modo de simulación.", "fa-solid fa-plug-circle-exclamation text-poke-red bg-poke-red/10");
+      }
+    }
+
+    // Handle AJAX Login
+    async function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+
+      try {
+        const response = await fetch('http://localhost:8081/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          jwtToken = data.token;
+          currentUser = data.username;
+          isSimMode = false;
+
+          document.getElementById('session-username').innerText = currentUser;
+          document.getElementById('session-token').value = jwtToken;
+
+          // Connect WebSocket real
+          connectRealWebSocket();
+        } else {
+          showModal("Credenciales Inválidas", "El usuario o contraseña ingresado no coincide en la base de datos.", "fa-solid fa-circle-xmark text-poke-red bg-poke-red/10");
+        }
+      } catch (err) {
+        console.error(err);
+        showModal("Error de Red", "No se pudo conectar con el backend. ¿Deseas probar en Modo Simulado?", "fa-solid fa-plug-circle-exclamation text-poke-red bg-poke-red/10");
+      }
+    }
+
+    // Connect to actual Spring Boot WebSockets
+    function connectRealWebSocket() {
+      try {
+        // En un caso real usariamos stomp/sockjs o ws nativo
+        // Para no requerir mas librerias intentamos WS nativo mandando el JWT como ticket en query parameter
+        wsConnection = new WebSocket(`ws://localhost:8081/ws?token=${jwtToken}`);
+        
+        wsConnection.onopen = () => {
+          updateConnectionStatus(true);
+          showModal("Conectado con Éxito", "Token JWT validado criptográficamente en la conexión inicial.", "fa-solid fa-circle-check text-emerald-400 bg-emerald-500/10");
+          switchTab('chat');
+        };
+
+        wsConnection.onmessage = (event) => {
+          const messageObj = JSON.parse(event.data);
+          messages.push(messageObj);
+          renderChat();
+        };
+
+        wsConnection.onerror = (e) => {
+          console.error("WS error: ", e);
+        };
+
+        wsConnection.onclose = () => {
+          updateConnectionStatus(false);
+          // Si cerramos y no es sim, caemos a sim
+          isSimMode = true;
+        };
+      } catch (err) {
+        console.error(err);
+        isSimMode = true;
+        updateConnectionStatus(true); // Conectado en simulacion
+        showModal("Servidor WebSocket inaccesible", "Entrando a modo simulado local para testear chat.", "fa-solid fa-triangle-exclamation text-poke-yellow bg-poke-yellow/10");
+      }
+    }
+
+    // Render Chat Window
+    function renderChat() {
+      const container = document.getElementById('chat-messages');
+      container.innerHTML = '';
+
+      messages.forEach((msg, index) => {
+        const isSelf = msg.sender === currentUser;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `flex flex-col ${isSelf ? 'items-end' : 'items-start'} group transition-all`;
+
+        const nameLabel = document.createElement('span');
+        nameLabel.className = `text-[10px] ${isSelf ? 'text-poke-yellow' : 'text-slate-400'} font-bold mb-0.5 ml-1 mr-1`;
+        nameLabel.innerText = msg.sender;
+
+        const bodyWrapper = document.createElement('div');
+        bodyWrapper.className = "flex items-center gap-2 max-w-[80%]";
+
+        const contentBubble = document.createElement('div');
+        contentBubble.className = `p-3 rounded-2xl text-xs relative ${isSelf ? 'bg-poke-blue/30 text-white border border-poke-blue/30 rounded-tr-none' : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none'}`;
+        contentBubble.innerText = msg.text;
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = "absolute bottom-1 right-2 text-[8px] text-slate-500 font-mono";
+        timeSpan.innerText = msg.time;
+        contentBubble.appendChild(document.createElement('br'));
+        contentBubble.appendChild(timeSpan);
+
+        // Report Button (hover action)
+        const actionBtn = document.createElement('button');
+        actionBtn.type = "button";
+        actionBtn.onclick = () => selectReportMsg(msg.sender, msg.text);
+        actionBtn.className = "opacity-0 group-hover:opacity-100 transition-opacity bg-red-950/80 text-poke-red border border-poke-red/50 hover:bg-poke-red hover:text-white h-7 w-7 rounded-full flex items-center justify-center text-xs shadow-md";
+        actionBtn.title = "Reportar este mensaje";
+        actionBtn.innerHTML = `<i class="fa-solid fa-warning"></i>`;
+
+        if (isSelf) {
+          bodyWrapper.appendChild(contentBubble);
+        } else {
+          bodyWrapper.appendChild(contentBubble);
+          bodyWrapper.appendChild(actionBtn);
+        }
+
+        messageDiv.appendChild(nameLabel);
+        messageDiv.appendChild(bodyWrapper);
+        container.appendChild(messageDiv);
+      });
+
+      // Scroll to bottom
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Send chat handler
+    function handleSendChat(event) {
+      event.preventDefault();
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const newMsg = {
+        sender: currentUser || 'ash_ketchum',
+        text: text,
+        time: timeStr
+      };
+
+      if (!isSimMode && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+        wsConnection.send(JSON.stringify(newMsg));
+      } else {
+        // Mode Simulation
+        messages.push(newMsg);
+        renderChat();
+        
+        // Simular respuestas del oponente
+        if (text.toLowerCase().includes('hola') || text.toLowerCase().includes('hi')) {
+          setTimeout(() => {
+            messages.push({
+              sender: 'gary_oak',
+              text: 'Guárdate tus saludos. ¡Preocúpate por tus puntos de vida!',
+              time: timeStr
+            });
+            renderChat();
+          }, 1200);
+        }
+      }
+
+      input.value = '';
+    }
+
+    // Reconnection buffer demo
+    function simulateDisconnect() {
+      updateConnectionStatus(false);
+      showModal("Desconectado de la partida", "Simulando corte de conexión. Los nuevos mensajes se guardarán temporalmente en el caché del servidor.", "fa-solid fa-wifi-slash text-poke-red bg-poke-red/10");
+    }
+
+    function simulateReconnect() {
+      updateConnectionStatus(true);
+      // Simular que el backend nos devuelve el buffer de ultimos mensajes
+      messages = [
+        { sender: 'ash_ketchum', text: '¡Hola! Suerte en la partida.', time: '18:45' },
+        { sender: 'gary_oak', text: 'No la necesito. Te venceré fácilmente, perdedor.', time: '18:46' },
+        { sender: 'ash_ketchum', text: 'Ya veremos quién ríe al último.', time: '18:46' },
+        { sender: 'gary_oak', text: '¡Usa Lanzallamas Charizard!', time: '18:47' },
+        { sender: 'ash_ketchum', text: '[RECONECTADO] - Se cargaron 2 mensajes recibidos durante tu ausencia.', time: '18:49' },
+        { sender: 'gary_oak', text: '¿Te asustaste y te desconectaste?', time: '18:48' },
+        { sender: 'ash_ketchum', text: 'Tuve un corte, pero mi deck está listo para responder.', time: '18:49' }
+      ];
+      renderChat();
+      showModal("Reconexión Exitosa", "Cargados 50 mensajes del buffer persistente de partida.", "fa-solid fa-wifi text-emerald-400 bg-emerald-500/10");
+    }
+
+    // Set fields in report form from hover action
+    function selectReportMsg(sender, text) {
+      document.getElementById('report-target').value = sender === 'ash_ketchum' ? 'ash_ketchum' : 'gary_oak';
+      document.getElementById('report-reason').value = 'abusive_chat';
+      document.getElementById('report-description').value = `El jugador envió el siguiente mensaje ofensivo en el chat:\n"${text}"`;
+      
+      showModal("Mensaje seleccionado", "Los campos del reporte se han rellenado con la información del chat.", "fa-solid fa-triangle-exclamation text-poke-yellow bg-poke-yellow/10");
+    }
+
+    // Submit Report AJAX/Sim
+    async function submitReport() {
+      const target = document.getElementById('report-target').value;
+      const reason = document.getElementById('report-reason').value;
+      const desc = document.getElementById('report-description').value;
+      const attachChat = document.getElementById('report-attach-chat').checked;
+
+      const payload = {
+        reportedUser: target,
+        reason: reason,
+        description: desc,
+        chatSnapshot: attachChat ? messages.slice(-50) : null
+      };
+
+      if (!isSimMode) {
+        try {
+          const response = await fetch('http://localhost:8081/api/reports', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${jwtToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (response.ok) {
+            showModal("Reporte Guardado en BD", "El reporte con el snapshot JSONB ha sido persistido en PostgreSQL.", "fa-solid fa-shield-halved text-poke-red bg-poke-red/10");
+          } else {
+            const err = await response.text();
+            showModal("Error al enviar reporte", err, "fa-solid fa-triangle-exclamation text-poke-red bg-poke-red/10");
+          }
+        } catch (e) {
+          showModal("Error de Red", "No se pudo conectar al endpoint de reportes, guardando reporte simulado localmente.", "fa-solid fa-plug-circle-exclamation text-poke-red bg-poke-red/10");
+        }
+      } else {
+        // Simulacion
+        console.log("Reporte persistido en simulación: ", payload);
+        showModal("Reporte Simulado Guardado", "El reporte y su snapshot de mensajes en formato JSONB se han guardado con éxito.", "fa-solid fa-shield-halved text-poke-red bg-poke-red/10");
+      }
+
+      document.getElementById('report-description').value = '';
+    }
+
+    // ==================== REPLAY SYSTEM LOGIC ====================
+    function renderReplay() {
+      const container = document.getElementById('events-timeline');
+      container.innerHTML = '';
+
+      replayEvents.forEach((ev, idx) => {
+        const isCurrent = idx === currentEventIndex;
+
+        const eventCard = document.createElement('div');
+        eventCard.className = `p-3 rounded-xl border transition-all duration-300 cursor-pointer ${isCurrent ? 'bg-poke-neonBlue/15 border-poke-neonBlue/40 text-white font-semibold' : 'bg-slate-900/60 border-slate-850 text-slate-400 hover:bg-slate-900 hover:text-slate-200'}`;
+        eventCard.onclick = () => seekToEvent(idx);
+
+        const flexRow = document.createElement('div');
+        flexRow.className = "flex items-center justify-between text-xs mb-1";
+
+        const typeBadge = document.createElement('span');
+        typeBadge.className = `px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase ${ev.player === 'ash_ketchum' ? 'bg-poke-blue/20 text-poke-neonBlue' : 'bg-red-950 text-poke-red'}`;
+        typeBadge.innerText = ev.type;
+
+        const turnLabel = document.createElement('span');
+        turnLabel.className = "font-mono text-slate-500 text-[10px]";
+        turnLabel.innerText = `Turno ${ev.turn}`;
+
+        flexRow.appendChild(typeBadge);
+        flexRow.appendChild(turnLabel);
+
+        const descText = document.createElement('p');
+        descText.className = "text-xs";
+        descText.innerText = ev.desc;
+
+        eventCard.appendChild(flexRow);
+        eventCard.appendChild(descText);
+        container.appendChild(eventCard);
+      });
+
+      // Update Board UI with current event state
+      updateBoardUI(replayEvents[currentEventIndex]);
+      
+      // Update progress bar
+      const total = replayEvents.length;
+      const pct = total > 0 ? ((currentEventIndex + 1) / total) * 100 : 0;
+      document.getElementById('replay-progress-bar').style.width = `${pct}%`;
+      document.getElementById('replay-progress-text').innerText = `Evento ${currentEventIndex + 1}/${total}`;
+    }
+
+    function updateBoardUI(event) {
+      if (!event) return;
+      const state = event.state;
+
+      document.getElementById('opp-hand').innerText = `Cartas en mano: ${state.oppHand}`;
+      document.getElementById('opp-active-name').innerText = state.oppActiveName;
+      document.getElementById('opp-active-hp').innerText = `HP: ${state.oppActiveHp} / 120`;
+      
+      // Render Opponent Energy Bullets
+      const oppEnergyBox = document.getElementById('opp-active-energy');
+      oppEnergyBox.innerHTML = '';
+      for (let i = 0; i < state.oppActiveEnergy; i++) {
+        oppEnergyBox.innerHTML += `<span class="h-3 w-3 rounded-full bg-orange-500" title="Energy: Fire"></span>`;
+      }
+
+      document.getElementById('opp-bench').innerText = state.oppBench;
+      document.getElementById('opp-prizes').innerText = state.oppPrizes;
+
+      document.getElementById('player-hand').innerText = `Cartas en mano: ${state.playerHand}`;
+      document.getElementById('player-active-name').innerText = state.playerActiveName;
+      document.getElementById('player-active-hp').innerText = `HP: ${state.playerActiveHp} / 60`;
+
+      // Render Player Energy Bullets
+      const playerEnergyBox = document.getElementById('player-active-energy');
+      playerEnergyBox.innerHTML = '';
+      for (let i = 0; i < state.playerActiveEnergy; i++) {
+        playerEnergyBox.innerHTML += `<span class="h-3 w-3 rounded-full bg-yellow-500" title="Energy: Lightning"></span>`;
+      }
+
+      document.getElementById('player-bench').innerText = state.playerBench;
+      document.getElementById('player-prizes').innerText = state.playerPrizes;
+    }
+
+    function seekToEvent(idx) {
+      currentEventIndex = idx;
+      renderReplay();
+    }
+
+    function replayFirst() {
+      currentEventIndex = 0;
+      renderReplay();
+    }
+
+    function replayLast() {
+      currentEventIndex = replayEvents.length - 1;
+      renderReplay();
+    }
+
+    function replayNext() {
+      if (currentEventIndex < replayEvents.length - 1) {
+        currentEventIndex++;
+        renderReplay();
+      } else {
+        replayPause(); // Stop playing if reached the end
+      }
+    }
+
+    function replayPrev() {
+      if (currentEventIndex > 0) {
+        currentEventIndex--;
+        renderReplay();
+      }
+    }
+
+    function replayPlayPause() {
+      if (isReplayPlaying) {
+        replayPause();
+      } else {
+        replayPlay();
+      }
+    }
+
+    function replayPlay() {
+      isReplayPlaying = true;
+      document.getElementById('play-icon').className = "fa-solid fa-pause";
+      document.getElementById('btn-play-pause').className = "h-9 w-9 bg-poke-yellow text-slate-900 rounded-lg transition-all flex items-center justify-center text-sm font-bold shadow-md";
+      
+      replayInterval = setInterval(() => {
+        replayNext();
+      }, replaySpeedMs);
+    }
+
+    function replayPause() {
+      isReplayPlaying = false;
+      document.getElementById('play-icon').className = "fa-solid fa-play";
+      document.getElementById('btn-play-pause').className = "h-9 w-9 bg-poke-neonBlue text-slate-900 rounded-lg transition-all flex items-center justify-center text-sm font-bold shadow-md";
+      
+      clearInterval(replayInterval);
+    }
+
+    function changeReplaySpeed(value) {
+      replaySpeedMs = parseInt(value);
+      if (isReplayPlaying) {
+        clearInterval(replayInterval);
+        replayInterval = setInterval(() => {
+          replayNext();
+        }, replaySpeedMs);
+      }
+    }
+
+    // Modal Control
+    function showModal(title, body, iconClass) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerText = body;
+      
+      const iconContainer = document.getElementById('modal-icon-container');
+      iconContainer.className = `h-16 w-16 mx-auto rounded-full flex items-center justify-center ${iconClass.split(' ').slice(1).join(' ')}`;
+      iconContainer.innerHTML = `<i class="${iconClass.split(' ')[0]} text-2xl"></i>`;
+      
+      document.getElementById('modal-alert').className = "fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4";
+    }
+
+    function closeModal() {
+      document.getElementById('modal-alert').className = "fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 items-center justify-center p-4 hidden";
+    }
+  </script>
+</body>
+</html>
