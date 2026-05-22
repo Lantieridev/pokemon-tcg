@@ -36,11 +36,17 @@ class ChatServiceTest {
     @Mock
     private ChatReportRepository chatReportRepository;
 
+    @Mock
+    private ProfanityFilterService profanityFilterService;
+
+    @Mock
+    private PenaltyService penaltyService;
+
     private ChatService chatService;
 
     @BeforeEach
     void setUp() {
-        chatService = new ChatServiceImpl(matchRepository, userRepository, chatReportRepository);
+        chatService = new ChatServiceImpl(matchRepository, userRepository, chatReportRepository, profanityFilterService, penaltyService);
     }
 
     @Test
@@ -115,7 +121,7 @@ class ChatServiceTest {
     }
 
     @Test
-    void shouldCreateReportSuccessfully() {
+    void shouldCreateReportSuccessfullyAndValidateProfanity() {
         final String matchId = "123";
         final ChatReportRequest request = new ChatReportRequest(1L, 2L, "Toxic behavior");
 
@@ -124,9 +130,11 @@ class ChatServiceTest {
 
         final UserEntity reporter = new UserEntity();
         reporter.setId(1L);
+        reporter.setUsername("user1");
 
         final UserEntity reported = new UserEntity();
         reported.setId(2L);
+        reported.setUsername("user2");
 
         when(matchRepository.findById(123L)).thenReturn(Optional.of(match));
         when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
@@ -135,10 +143,12 @@ class ChatServiceTest {
         // Add some chat messages to cache to verify snapshot capture
         final ChatMessageResponse msg = ChatMessageResponse.builder()
                 .sender("user2")
-                .message("Bad words")
+                .message("you suck")
                 .timestamp(LocalDateTime.now())
                 .build();
         chatService.addMessage(matchId, msg);
+
+        when(profanityFilterService.filter("you suck")).thenReturn("***");
 
         chatService.createReport(matchId, request);
 
@@ -150,8 +160,91 @@ class ChatServiceTest {
         assertEquals(reporter, savedReport.getReporter());
         assertEquals(reported, savedReport.getReported());
         assertEquals("Toxic behavior", savedReport.getReason());
+        assertTrue(savedReport.getIsValidated());
         assertEquals(1, savedReport.getChatHistory().size());
-        assertEquals("Bad words", savedReport.getChatHistory().get(0).getMessage());
+
+        verify(penaltyService).checkAndApplyPenalty("user2");
+    }
+
+    @Test
+    void shouldValidateReportDueToSpam() {
+        final String matchId = "123";
+        final ChatReportRequest request = new ChatReportRequest(1L, 2L, "Spamming");
+
+        final MatchEntity match = new MatchEntity();
+        match.setId(123L);
+
+        final UserEntity reporter = new UserEntity();
+        reporter.setId(1L);
+        reporter.setUsername("user1");
+
+        final UserEntity reported = new UserEntity();
+        reported.setId(2L);
+        reported.setUsername("user2");
+
+        when(matchRepository.findById(123L)).thenReturn(Optional.of(match));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(reported));
+
+        // Generate 10 messages within 30 seconds
+        final LocalDateTime start = LocalDateTime.now();
+        for (int i = 0; i < 10; i++) {
+            final ChatMessageResponse msg = ChatMessageResponse.builder()
+                    .sender("user2")
+                    .message("Msg " + i)
+                    .timestamp(start.plusSeconds(i * 2)) // 2 seconds apart, total 18 seconds
+                    .build();
+            chatService.addMessage(matchId, msg);
+            when(profanityFilterService.filter("Msg " + i)).thenReturn("Msg " + i); // no profanity
+        }
+
+        chatService.createReport(matchId, request);
+
+        final ArgumentCaptor<ChatReportEntity> reportCaptor = ArgumentCaptor.forClass(ChatReportEntity.class);
+        verify(chatReportRepository).save(reportCaptor.capture());
+
+        final ChatReportEntity savedReport = reportCaptor.getValue();
+        assertTrue(savedReport.getIsValidated());
+        verify(penaltyService).checkAndApplyPenalty("user2");
+    }
+
+    @Test
+    void shouldSaveAsInvalidatedWhenNoRulesViolated() {
+        final String matchId = "123";
+        final ChatReportRequest request = new ChatReportRequest(1L, 2L, "Falsely accusing");
+
+        final MatchEntity match = new MatchEntity();
+        match.setId(123L);
+
+        final UserEntity reporter = new UserEntity();
+        reporter.setId(1L);
+        reporter.setUsername("user1");
+
+        final UserEntity reported = new UserEntity();
+        reported.setId(2L);
+        reported.setUsername("user2");
+
+        when(matchRepository.findById(123L)).thenReturn(Optional.of(match));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(reported));
+
+        // Only 1 polite message
+        final ChatMessageResponse msg = ChatMessageResponse.builder()
+                .sender("user2")
+                .message("Hello friend")
+                .timestamp(LocalDateTime.now())
+                .build();
+        chatService.addMessage(matchId, msg);
+        when(profanityFilterService.filter("Hello friend")).thenReturn("Hello friend");
+
+        chatService.createReport(matchId, request);
+
+        final ArgumentCaptor<ChatReportEntity> reportCaptor = ArgumentCaptor.forClass(ChatReportEntity.class);
+        verify(chatReportRepository).save(reportCaptor.capture());
+
+        final ChatReportEntity savedReport = reportCaptor.getValue();
+        assertFalse(savedReport.getIsValidated());
+        verify(penaltyService, never()).checkAndApplyPenalty(anyString());
     }
 
     @Test
