@@ -13,4 +13,22 @@ public interface GameStatePersistence {
      * @param snapshot the snapshot to persist (never null)
      */
     void save(GameStateSnapshot snapshot);
+
+    /**
+     * Persists the match session itself.
+     *
+     * @param session the match session to save
+     */
+    default void saveMatch(ar.edu.utn.frc.tup.piii.engine.session.MatchSession session) {}
+
+    /**
+     * Appends an action log entry.
+     *
+     * @param matchId the match identifier
+     * @param turnNumber the turn number
+     * @param playerId the player identifier who took the action
+     * @param actionType the action type identifier
+     * @param result the outcome description
+     */
+    default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {}
 }
