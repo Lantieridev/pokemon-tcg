@@ -31,4 +31,12 @@ public interface ChatService {
      * @param matchId the match ID
      */
     void clearMessages(String matchId);
+
+    /**
+     * Creates and persists a chat behavior report, capturing a snapshot of the current in-memory chat cache.
+     *
+     * @param matchId the match ID
+     * @param request the chat report details
+     */
+    void createReport(String matchId, ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest request);
 }

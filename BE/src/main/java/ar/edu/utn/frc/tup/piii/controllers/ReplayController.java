@@ -1,9 +1,13 @@
 package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
+import ar.edu.utn.frc.tup.piii.dtos.ChatReportRequest;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,5 +37,19 @@ public class ReplayController {
     @GetMapping("/matches/{matchId}/chat")
     public List<ChatMessageResponse> getChatHistory(@PathVariable final String matchId) {
         return chatService.getMessages(matchId);
+    }
+
+    /**
+     * Creates a behavior report for a player in a match.
+     *
+     * @param matchId the match ID
+     * @param request the chat report request details
+     * @return 200 OK if created successfully
+     */
+    @PostMapping("/matches/{matchId}/reports")
+    public ResponseEntity<Void> createChatReport(@PathVariable final String matchId,
+                                                 @RequestBody final ChatReportRequest request) {
+        chatService.createReport(matchId, request);
+        return ResponseEntity.ok().build();
     }
 }
