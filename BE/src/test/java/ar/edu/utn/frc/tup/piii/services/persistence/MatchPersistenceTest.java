@@ -47,7 +47,7 @@ class MatchPersistenceTest {
 
         // Player A Setup
         InPlayPokemon activeA = new InPlayPokemon(pokemon);
-        activeA.attachEnergy(PokemonType.LIGHTNING);
+        activeA.attachEnergy(energy);
         activeA.addDamageCounters(20);
 
         Hand handA = new Hand();

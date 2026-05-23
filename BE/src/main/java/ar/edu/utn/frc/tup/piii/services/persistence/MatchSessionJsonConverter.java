@@ -314,7 +314,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public void serialize(MatchBoard value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
-            gen.writeStringField("activeStadiumCardId", value.getActiveStadiumCardId());
+            if (value.getActiveStadium() != null) {
+                gen.writeObjectField("activeStadium", value.getActiveStadium());
+            } else {
+                gen.writeNullField("activeStadium");
+            }
             try {
                 java.lang.reflect.Field field = MatchBoard.class.getDeclaredField("players");
                 field.setAccessible(true);
@@ -339,8 +343,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
             }
             MatchBoard board = new MatchBoard(players);
-            if (node.has("activeStadiumCardId") && !node.get("activeStadiumCardId").isNull()) {
-                board.replaceStadium(node.get("activeStadiumCardId").asText());
+            if (node.has("activeStadium") && !node.get("activeStadium").isNull()) {
+                board.replaceStadium(p.getCodec().treeToValue(node.get("activeStadium"), TrainerCard.class));
             }
             return board;
         }
@@ -618,7 +622,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
-            gen.writeBooleanField("toolAttached", value.hasToolAttached());
+            if (value.getAttachedTool().isPresent()) {
+                gen.writeObjectField("attachedTool", value.getAttachedTool().get());
+            } else {
+                gen.writeNullField("attachedTool");
+            }
             gen.writeEndObject();
         }
 
@@ -629,7 +637,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
-            gen.writeBooleanField("toolAttached", value.hasToolAttached());
+            if (value.getAttachedTool().isPresent()) {
+                gen.writeObjectField("attachedTool", value.getAttachedTool().get());
+            } else {
+                gen.writeNullField("attachedTool");
+            }
             typeSer.writeTypeSuffix(gen, typeIdDef);
         }
     }
@@ -646,8 +658,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                     attachedEnergies.add(PokemonType.valueOf(eNode.asText()));
                 }
             }
-            boolean toolAttached = node.has("toolAttached") && node.get("toolAttached").asBoolean();
-            return new InPlayPokemon(card, damageCounters, attachedEnergies, toolAttached);
+            TrainerCard tool = null;
+            if (node.has("attachedTool") && !node.get("attachedTool").isNull()) {
+                tool = p.getCodec().treeToValue(node.get("attachedTool"), TrainerCard.class);
+            }
+            return new InPlayPokemon(card, damageCounters, attachedEnergies, tool);
         }
     }
 

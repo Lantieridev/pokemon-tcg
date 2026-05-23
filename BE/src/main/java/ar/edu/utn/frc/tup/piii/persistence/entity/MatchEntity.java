@@ -37,7 +37,7 @@ public class MatchEntity {
     @JoinColumn(name = "winner_id")
     private UserEntity winner;
 
-    @Column(name = "current_state", columnDefinition = "jsonb")
+    @Column(name = "current_state", length = 100000)
     @Convert(converter = ar.edu.utn.frc.tup.piii.services.persistence.MatchSessionJsonConverter.class)
     private ar.edu.utn.frc.tup.piii.engine.session.MatchSession currentState;
 
