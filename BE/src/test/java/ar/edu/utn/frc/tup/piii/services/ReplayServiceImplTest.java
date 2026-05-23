@@ -92,17 +92,16 @@ class ReplayServiceImplTest {
         final String username = "testuser";
         final UserEntity player1 = new UserEntity();
         player1.setUsername("testuser");
-        final UserEntity player2 = new UserEntity();
-        player2.setUsername("otheruser");
+        final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto matchDto = new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(
+                10L,
+                "FINISHED",
+                "testuser",
+                "otheruser",
+                "testuser",
+                LocalDateTime.now()
+        );
 
-        final MatchEntity match = new MatchEntity();
-        match.setId(10L);
-        match.setPlayer1(player1);
-        match.setPlayer2(player2);
-        match.setWinner(player1);
-        match.setCreatedAt(LocalDateTime.now());
-
-        when(matchRepository.findMatchesByUsername(username)).thenReturn(List.of(match));
+        when(matchRepository.findMatchesByUsername(username)).thenReturn(List.of(matchDto));
 
         final List<UserMatchHistoryDTO> history = replayService.getUserMatchHistory(username);
 
