@@ -31,4 +31,15 @@ public interface GameStatePersistence {
      * @param result the outcome description
      */
     default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {}
+
+    /**
+     * Declares the winner of a match.
+     *
+     * @param matchId        the match identifier (never null)
+     * @param winnerUsername the username of the winning player (never null)
+     * @deprecated Use the unified saveMatch flow with setWinnerId on MatchSession instead.
+     */
+    @Deprecated
+    default void declareWinner(String matchId, String winnerUsername) {}
 }
+

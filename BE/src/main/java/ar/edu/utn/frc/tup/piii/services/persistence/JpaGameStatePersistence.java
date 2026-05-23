@@ -37,4 +37,12 @@ public class JpaGameStatePersistence implements GameStatePersistence {
     public void logAction(final String matchId, final int turnNumber, final String playerId, final String actionType, final String result) {
         eventPublisher.publishEvent(new LogActionEvent(matchId, turnNumber, playerId, actionType, result));
     }
+
+    @Override
+    @Deprecated
+    public void declareWinner(final String matchId, final String winnerUsername) {
+        // Deprecated: Winner persistence has been unified into the saveMatch flow.
+        // This method is now a no-op to maintain backward compatibility.
+    }
 }
+

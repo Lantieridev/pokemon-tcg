@@ -546,6 +546,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("board", value.getBoard());
             gen.writeStringField("state", value.getState().name());
             gen.writeNumberField("activePlayerIndex", value.getActivePlayerIndex());
+            if (value.getWinnerId() != null) {
+                gen.writeStringField("winnerId", value.getWinnerId());
+            } else {
+                gen.writeNullField("winnerId");
+            }
 
             try {
                 java.lang.reflect.Field runtimesField = MatchSession.class.getDeclaredField("playerRuntimes");
@@ -592,6 +597,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             int activePlayerIndex = node.has("activePlayerIndex") && !node.get("activePlayerIndex").isNull()
                     ? node.get("activePlayerIndex").asInt()
                     : -1;
+            String winnerId = node.has("winnerId") && !node.get("winnerId").isNull()
+                    ? node.get("winnerId").asText()
+                    : null;
 
             MatchSession session = new MatchSession(matchId, playerIds, board, playerRuntimes);
 
@@ -603,6 +611,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 java.lang.reflect.Field activePlayerField = MatchSession.class.getDeclaredField("activePlayerIndex");
                 activePlayerField.setAccessible(true);
                 activePlayerField.set(session, activePlayerIndex);
+
+                java.lang.reflect.Field winnerIdField = MatchSession.class.getDeclaredField("winnerId");
+                winnerIdField.setAccessible(true);
+                winnerIdField.set(session, winnerId);
             } catch (Exception e) {
                 throw new IOException("Failed to restore MatchSession state fields", e);
             }

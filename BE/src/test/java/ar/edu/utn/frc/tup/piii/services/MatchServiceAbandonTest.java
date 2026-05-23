@@ -200,6 +200,8 @@ class MatchServiceAbandonTest {
         // broadcast must have been called (for both players)
         verify(messaging, org.mockito.Mockito.atLeastOnce())
                 .convertAndSend(any(String.class), any(Object.class));
+        // verify that the winner was declared (since PLAYER_A_ID forfeited, PLAYER_B_ID wins)
+        verify(persistence).declareWinner(MATCH_ID, PLAYER_B_ID);
         // registry must have removed the match
         verify(registry).remove(MATCH_ID);
     }

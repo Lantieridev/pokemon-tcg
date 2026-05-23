@@ -7,6 +7,8 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,8 @@ import java.util.Objects;
 
 @Component
 public class AsyncPersistenceListener {
+
+    private static final Logger log = LoggerFactory.getLogger(AsyncPersistenceListener.class);
 
     private final MatchRepository matchRepository;
     private final MatchLogRepository matchLogRepository;
@@ -38,6 +42,7 @@ public class AsyncPersistenceListener {
 
         final UserEntity player1 = getOrCreateUser(session.getPlayerIdA());
         final UserEntity player2 = getOrCreateUser(session.getPlayerIdB());
+        final UserEntity winner = session.getWinnerId() != null ? getOrCreateUser(session.getWinnerId()) : null;
 
         final MatchEntity entity = matchRepository.findById(matchIdNumeric)
                 .orElseGet(() -> MatchEntity.builder().id(matchIdNumeric).build());
@@ -45,6 +50,7 @@ public class AsyncPersistenceListener {
         entity.setStatus(session.getState().name());
         entity.setPlayer1(player1);
         entity.setPlayer2(player2);
+        entity.setWinner(winner);
         entity.setCurrentState(session);
 
         matchRepository.save(entity);
@@ -98,4 +104,5 @@ public class AsyncPersistenceListener {
             return userRepository.save(newUser);
         });
     }
+
 }
