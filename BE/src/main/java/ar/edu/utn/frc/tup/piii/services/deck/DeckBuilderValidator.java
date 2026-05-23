@@ -1,10 +1,11 @@
 package ar.edu.utn.frc.tup.piii.services.deck;
 
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Component;
 
 @Component
 public final class DeckBuilderValidator {
