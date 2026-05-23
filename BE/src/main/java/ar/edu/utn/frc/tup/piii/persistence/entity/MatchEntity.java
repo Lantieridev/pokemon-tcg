@@ -39,6 +39,7 @@ public class MatchEntity {
     private UserEntity winner;
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private Object currentState; // Represents the full GameState DTO
 
     @CreationTimestamp
