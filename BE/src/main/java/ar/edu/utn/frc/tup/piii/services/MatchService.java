@@ -132,6 +132,8 @@ public final class MatchService {
                 throw new InvalidActionException("not_your_turn");
             }
 
+            session.setActivePlayerIndex(playerIndex);
+
             final Action action = facade.toEngineAction(session, playerIndex, dto);
 
             // Use the per-session RuleValidator if available
