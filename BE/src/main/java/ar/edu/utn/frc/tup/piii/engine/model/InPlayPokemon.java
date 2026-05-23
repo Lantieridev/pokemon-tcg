@@ -33,13 +33,13 @@ public final class InPlayPokemon implements BattlePokemonState {
     /**
      * Comprehensive constructor for deserialization.
      */
-    public InPlayPokemon(final PokemonCard card, final int damageCounters, final List<PokemonType> attachedEnergies, final boolean toolAttached) {
+    public InPlayPokemon(final PokemonCard card, final int damageCounters, final List<PokemonType> attachedEnergies, final TrainerCard attachedTool) {
         this.card = Objects.requireNonNull(card, "card must not be null");
         this.damageCounters = damageCounters;
         if (attachedEnergies != null) {
             this.attachedEnergies.addAll(attachedEnergies);
         }
-        this.toolAttached = toolAttached;
+        this.attachedTool = attachedTool;
     }
 
     /**
