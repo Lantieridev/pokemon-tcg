@@ -46,10 +46,11 @@ class UseAbilityActionTest {
     @Test
     void shouldReturnValidWhenUseAbilityActionInMainPhase() {
         FakeBattlePokemonState source = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        source.setAbilities(java.util.List.of(new ar.edu.utn.frc.tup.piii.engine.model.Ability("speed-boost", "Speed Boost", ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MYSTICAL_FIRE)));
         MainPhase mainPhase = new MainPhase();
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 
-        ValidationResult result = validator.validate(new UseAbilityAction(source, "speed-boost"));
+        ValidationResult result = validator.validate(new UseAbilityAction(source, "speed-boost", null, null, null));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
@@ -61,6 +62,6 @@ class UseAbilityActionTest {
                 new InvalidTurnPhaseException("Expected MainPhase but was: AttackPhase"));
 
         assertThrows(InvalidTurnPhaseException.class,
-                () -> validator.validate(new UseAbilityAction(source, "speed-boost")));
+                () -> validator.validate(new UseAbilityAction(source, "speed-boost", null, null, null)));
     }
 }

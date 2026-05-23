@@ -17,5 +17,6 @@ public enum ActionType {
      * Promotes a benched Pokémon to the Active position after the current Active was knocked out.
      * Sent by the defending player; mandatory when the bench is non-empty. XY1 Rulebook §2.
      */
-    PROMOTE_ACTIVE
+    PROMOTE_ACTIVE,
+    SELECT_CARDS
 }

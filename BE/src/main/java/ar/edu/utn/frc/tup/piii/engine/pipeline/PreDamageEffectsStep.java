@@ -19,6 +19,15 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 ctx.addAttackerModifier(dmg -> dmg + extraDamage);
             }
         }
+
+        // Check for SAFEGUARD ability on the defender
+        boolean hasSafeguard = ctx.getDefender().getAbilities().stream()
+                .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SAFEGUARD);
+        
+        if (hasSafeguard && ctx.getAttacker().isEx()) {
+            ctx.setAttackBlocked(true);
+        }
+
         next.run();
     }
 

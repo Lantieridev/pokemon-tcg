@@ -23,6 +23,18 @@ public final class DiscardPile {
         cards.addAll(toDiscard);
     }
 
+    /**
+     * Removes the given card from the discard pile.
+     * Used by Max Revive (xy1-120) to retrieve a Pokémon card from the discard.
+     *
+     * @param card the card to remove (never null)
+     * @return {@code true} if the card was found and removed
+     */
+    public boolean remove(final Card card) {
+        Objects.requireNonNull(card, "card must not be null");
+        return cards.remove(card);
+    }
+
     /** Returns an unmodifiable view of the discard pile in insertion order. */
     public List<Card> getCards() {
         return Collections.unmodifiableList(cards);

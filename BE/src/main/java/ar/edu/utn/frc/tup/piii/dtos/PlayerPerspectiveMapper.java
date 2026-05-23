@@ -30,12 +30,30 @@ public final class PlayerPerspectiveMapper {
 
         final GameStateResponseDTO.PlayerView self = buildPlayerView(session, viewerIndex);
         final GameStateResponseDTO.OpponentView opponent = buildOpponentView(session, opponentIndex);
+        
+        PendingSelectionRequestDTO requestDto = null;
+        if (session.getPendingSelectionRequest() != null) {
+            final var req = session.getPendingSelectionRequest();
+            java.util.List<String> options = java.util.Collections.emptyList();
+            if (session.getActivePlayerIndex() == viewerIndex) {
+                final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = session.getPlayerRuntime(viewerIndex);
+                if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
+                    options = runtime.getDeck().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
+                    options = runtime.getDiscardPile().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK) {
+                    options = runtime.getDeck().getCards().stream().limit(7).map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                }
+            }
+            requestDto = new PendingSelectionRequestDTO(req.sourceEffect(), req.target() != null ? req.target().getCardId() : null, req.maxSelections(), req.source(), options);
+        }
 
         return new GameStateResponseDTO(
                 session.getMatchId(),
                 INITIAL_VERSION,
-                0,
-                session.getState().name(),
+                session.getActivePlayerIndex(),
+                session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name(),
+                requestDto,
                 self,
                 opponent);
     }

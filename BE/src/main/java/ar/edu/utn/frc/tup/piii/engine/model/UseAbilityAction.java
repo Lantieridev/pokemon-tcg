@@ -8,5 +8,5 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  * @param source    the Pokémon whose ability is being used
  * @param abilityId the identifier of the ability being activated
  */
-public record UseAbilityAction(BattlePokemonState source, String abilityId) implements Action {
+public record UseAbilityAction(BattlePokemonState source, String abilityId, Integer sourceIndex, Integer targetIndex, java.util.List<Integer> selectedEnergyIndices) implements Action {
 }

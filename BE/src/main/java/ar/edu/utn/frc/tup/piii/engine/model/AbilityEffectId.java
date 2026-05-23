@@ -7,5 +7,7 @@ public enum AbilityEffectId {
     FAIRY_TRANSFER,
     SAFEGUARD,
     SWEET_VEIL,
+    MYSTICAL_FIRE,
+    MAGNETIC_DRAW,
     NONE
 }

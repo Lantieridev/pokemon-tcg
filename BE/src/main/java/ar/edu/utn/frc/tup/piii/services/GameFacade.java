@@ -44,6 +44,7 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -126,6 +127,7 @@ public final class GameFacade {
             case UseAbilityAction abilityAction -> applyUseAbility(abilityAction, session);
             case EndTurnAction ignored         -> { /* turn advancement handled by MatchService */ }
             case PromoteActiveAction promote   -> applyPromoteActive(promote, runtime);
+            case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction selectCards -> applySelectCards(selectCards, session, runtime);
         }
     }
 
@@ -141,7 +143,8 @@ public final class GameFacade {
                 .ifPresent(ability -> {
                     var effect = abilityEffectResolver.resolve(ability.effectId());
                     if (effect != null) {
-                        effect.apply(session, source);
+                        effect.apply(session, action);
+                        source.markAbilityUsed(ability.effectId().name());
                     }
                 });
     }
@@ -152,12 +155,22 @@ public final class GameFacade {
         runtime.getBench().place(placed);
         // Register the newly placed Pokémon so evolution restriction tracking starts at 0 turns.
         runtime.recordPokemonEntered(placed);
+        
+        // Sweet Veil: remove Asleep condition from the active Pokémon if Sweet Veil enters play.
+        if (placed.getAbilities().stream().anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)) {
+            runtime.getStatusEffectManager().remove(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.DORMIDO);
+        }
     }
 
     private void applyAttachEnergy(final AttachEnergyAction action, final PlayerRuntime runtime) {
         final EnergyCard energyCard = findEnergyInHand(runtime, action.energyType());
         runtime.getHand().removeCard(energyCard.getCardId());
         action.target().attachEnergy(energyCard);
+
+        // Rainbow Energy: place 1 damage counter (10 HP) on the Pokémon when attached from hand.
+        if (energyCard.isProvidesAllTypes()) {
+            action.target().addDamageCounters(1);
+        }
     }
 
     private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime) {
@@ -168,6 +181,11 @@ public final class GameFacade {
         
         if (action.target() == runtime.getActivePokemon()) {
             new EvolveExecutor(runtime.getStatusEffectManager()).executeEvolve(action.target());
+        }
+        
+        // Sweet Veil: remove Asleep condition if the evolved Pokémon has Sweet Veil.
+        if (action.target().getAbilities().stream().anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)) {
+            runtime.getStatusEffectManager().remove(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.DORMIDO);
         }
     }
 
@@ -244,12 +262,25 @@ public final class GameFacade {
                     runtime.getDiscardPile().add(trainerCard);
                     final TrainerEffectId effectId = trainerCard.getEffectId();
 
-                    // Opponent-targeting effects are handled here since TrainerEffect.apply()
-                    // only receives the actor's PlayerRuntime (not the opponent's).
+                    // Effects that need special dispatch (opponent runtime or bench mutation).
                     if (effectId == TrainerEffectId.RED_CARD) {
                         applyRedCard(session);
                     } else if (effectId == TrainerEffectId.TEAM_FLARE_GRUNT) {
                         applyTeamFlareGrunt(session);
+                    } else if (effectId == TrainerEffectId.CASSIUS) {
+                        applyCassius(runtime, action.target());
+                    } else if (effectId == TrainerEffectId.EVOSODA) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, action.target(), 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.GREAT_BALL) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.PROFESSORS_LETTER) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 2, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.MAX_REVIVE) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
                     } else {
                         TrainerEffect effect = trainerCard.getEffect();
                         if (effect == null && effectId != null) {
@@ -287,6 +318,103 @@ public final class GameFacade {
         if (opponentActive != null && !opponentActive.getAttachedEnergies().isEmpty()) {
             opponentActive.removeEnergies(1);
         }
+    }
+
+    /**
+     * Cassius (xy1-115): shuffle 1 of the acting player's Pokémon (and all cards attached to it)
+     * back into the deck. The Pokémon is removed from the bench; its Pokémon cards, attached
+     * energies and tool (if any) are collected and added to the deck, which is then shuffled.
+     * No-op if {@code target} is null or is not found on the bench.
+     */
+    private void applyCassius(final PlayerRuntime runtime, final BattlePokemonState target) {
+        if (target == null) {
+            return;
+        }
+        final List<BattlePokemonState> benchSlots = runtime.getBench().getAll();
+        final int idx = benchSlots.indexOf(target);
+        if (idx >= 0) {
+            runtime.getBench().remove(idx);
+        }
+        // Collect all underlying cards to shuffle into the deck.
+        final List<Card> toShuffle = new ArrayList<>();
+        toShuffle.add(target.getBaseCard());
+        toShuffle.addAll(target.getUnderlyingCards());
+        toShuffle.addAll(target.getAttachedEnergyCards());
+        target.getAttachedTool().ifPresent(toShuffle::add);
+        runtime.getDeck().addCards(toShuffle);
+        runtime.getDeck().shuffle();
+        runtime.removePokemonFromPlay(target);
+    }
+
+    /**
+     * Resolves the pending interactive selection (e.g. from Evosoda, Great Ball, etc.).
+     */
+    private void applySelectCards(final ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction action, final MatchSession session, final PlayerRuntime runtime) {
+        final ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest request = session.getPendingSelectionRequest();
+        if (request == null) {
+            throw new IllegalStateException("No pending selection request found.");
+        }
+        
+        final TrainerEffectId effectId = request.sourceEffect();
+        final List<String> selectedIds = action.cardIds();
+        
+        if (effectId == TrainerEffectId.EVOSODA) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+                if (!found.isEmpty()) {
+                    request.target().evolveInto((PokemonCard) found.get(0));
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.GREAT_BALL) {
+            if (!selectedIds.isEmpty()) {
+                // The selection source is TOP_7_DECK, but for simplicity of the engine state, 
+                // the deck hasn't actually removed the top 7 yet (the client just rendered them).
+                // So we just find it in the top 7 and remove it.
+                final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));
+                Card selected = null;
+                for (Card c : top7) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        selected = c;
+                    }
+                }
+                if (selected != null) {
+                    top7.remove(selected);
+                    runtime.getHand().addCard(selected);
+                }
+                runtime.getDeck().addCards(top7);
+                runtime.getDeck().shuffle();
+            } else {
+                runtime.getDeck().shuffle();
+            }
+        } else if (effectId == TrainerEffectId.PROFESSORS_LETTER) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        runtime.getHand().addCard(found.get(0));
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.MAX_REVIVE) {
+            if (!selectedIds.isEmpty()) {
+                Card found = null;
+                for (Card c : runtime.getDiscardPile().getCards()) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        found = c;
+                        break;
+                    }
+                }
+                if (found != null) {
+                    runtime.getDiscardPile().remove(found);
+                    runtime.getDeck().addToTop(found);
+                }
+            }
+        }
+        
+        session.setPendingSelectionRequest(null);
+        session.getTurnManager().resumeMainPhase();
     }
 
     // --- helpers ---
@@ -333,11 +461,16 @@ public final class GameFacade {
             }
             case PLACE_BASIC_POKEMON -> new PlaceBasicPokemonAction(dto.cardId());
             case USE_ABILITY         -> new UseAbilityAction(
-                                            board.getActivePokemon(playerIndex),
-                                            dto.cardId());
+                                            resolvePokemonByIndex(board, playerIndex, dto.sourceIndex() != null ? dto.sourceIndex() : -1),
+                                            dto.cardId(),
+                                            dto.sourceIndex() != null ? dto.sourceIndex() : -1,
+                                            dto.targetIndex() != null ? dto.targetIndex() : -1,
+                                            dto.selectedEnergyIndices() != null ? dto.selectedEnergyIndices() : java.util.Collections.emptyList());
             case END_TURN            -> new EndTurnAction();
             case PROMOTE_ACTIVE      -> new PromoteActiveAction(
                                             dto.targetIndex() != null ? dto.targetIndex() : 0);
+            case SELECT_CARDS        -> new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(
+                                            dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList());
         };
     }
 
@@ -366,9 +499,35 @@ public final class GameFacade {
     private BattlePokemonState resolveTarget(final MatchBoard board,
                                               final int playerIndex,
                                               final ActionRequestDTO dto) {
-        if (dto.trainerType() == TrainerType.POKEMON_TOOL && dto.targetIndex() != null) {
-            return board.getBenchedPokemon(playerIndex).get(dto.targetIndex());
+        if (dto.targetIndex() == null) {
+            return null;
+        }
+        if (dto.trainerType() == TrainerType.POKEMON_TOOL) {
+            final var benched = board.getBenchedPokemon(playerIndex);
+            if (dto.targetIndex() >= 0 && dto.targetIndex() < benched.size()) {
+                return benched.get(dto.targetIndex());
+            }
+            return null;
+        }
+        // ITEM / SUPPORTER trainers may also specify a target (e.g. Cassius, Evosoda, Potion).
+        if (dto.targetIndex() < 0) {
+            return board.getActivePokemon(playerIndex);
+        }
+        final var benched = board.getBenchedPokemon(playerIndex);
+        if (dto.targetIndex() < benched.size()) {
+            return benched.get(dto.targetIndex());
         }
         return null;
+    }
+
+    private BattlePokemonState resolvePokemonByIndex(final MatchBoard board, final int playerIndex, final Integer index) {
+        if (index == null || index < 0) {
+            return board.getActivePokemon(playerIndex);
+        }
+        var benched = board.getBenchedPokemon(playerIndex);
+        if (index >= benched.size()) {
+            return null;
+        }
+        return benched.get(index);
     }
 }

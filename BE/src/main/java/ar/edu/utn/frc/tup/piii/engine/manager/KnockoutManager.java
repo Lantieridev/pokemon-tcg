@@ -82,6 +82,7 @@ public final class KnockoutManager implements PhaseListener {
             case BetweenTurnsPhase b -> checkBothPlayers();
             case DrawPhase d -> { /* no-op */ }
             case MainPhase m -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
         }
     }
 

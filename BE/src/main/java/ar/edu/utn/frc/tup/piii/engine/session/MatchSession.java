@@ -55,6 +55,12 @@ public final class MatchSession {
     private int promotingPlayerIndex = UNSET_PLAYER_INDEX;
 
     /**
+     * Set when an interactive action (like Evosoda) pauses the MainPhase to wait for
+     * the player to select cards from their deck/discard.
+     */
+    private ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest;
+
+    /**
      * Constructs a MatchSession in the WAITING state.
      *
      * @param matchId        unique identifier for this match (never null)
@@ -475,5 +481,13 @@ public final class MatchSession {
             throw new IllegalArgumentException("Player '" + playerId + "' is not part of match " + matchId);
         }
         return index;
+    }
+
+    public ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest getPendingSelectionRequest() {
+        return pendingSelectionRequest;
+    }
+
+    public void setPendingSelectionRequest(ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest) {
+        this.pendingSelectionRequest = pendingSelectionRequest;
     }
 }

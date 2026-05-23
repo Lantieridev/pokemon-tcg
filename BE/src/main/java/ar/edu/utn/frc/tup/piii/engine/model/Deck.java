@@ -4,9 +4,11 @@ import ar.edu.utn.frc.tup.piii.engine.exception.DeckEmptyException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Predicate;
 
 /**
  * Mutable runtime deck for one player. Index 0 is the top card (next to be drawn).
@@ -99,11 +101,52 @@ public final class Deck {
         cards.addAll(toReturn);
     }
 
+    /**
+     * Inserts a card at the top of the deck (index 0).
+     * Used by Max Revive (xy1-120): "Put a Pokémon from your discard pile on top of your deck."
+     *
+     * @param card the card to place on top (never null)
+     */
+    public void addToTop(final Card card) {
+        Objects.requireNonNull(card, "card must not be null");
+        cards.add(0, card);
+    }
+
+    /**
+     * Searches the deck for cards matching the predicate, removes up to {@code maxCount} of them,
+     * and returns them. Does NOT shuffle — caller is responsible for shuffling afterward.
+     * Used by Professor's Letter (search for basic energies) and Evosoda (search for evolution).
+     *
+     * @param predicate condition to match (never null)
+     * @param maxCount  maximum number of cards to remove (must be &gt;= 1)
+     * @return list of removed matching cards (may be empty, never null)
+     */
+    public List<Card> searchAndRemove(final Predicate<Card> predicate, final int maxCount) {
+        Objects.requireNonNull(predicate, "predicate must not be null");
+        final List<Card> found = new ArrayList<>();
+        final Iterator<Card> it = cards.iterator();
+        while (it.hasNext() && found.size() < maxCount) {
+            final Card c = it.next();
+            if (predicate.test(c)) {
+                found.add(c);
+                it.remove();
+            }
+        }
+        return found;
+    }
+
     public boolean isEmpty() {
         return cards.isEmpty();
     }
 
     public int size() {
         return cards.size();
+    }
+
+    /**
+     * Returns an unmodifiable view of the cards currently in the deck.
+     */
+    public List<Card> getCards() {
+        return Collections.unmodifiableList(cards);
     }
 }

@@ -12,6 +12,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
+import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
@@ -633,6 +634,71 @@ class RuleValidatorTest {
         ValidationResult result = validator.validate(new PlaceBasicPokemonAction("charmander-id"));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    // ─── Special Energy — Rainbow & Double Colorless ────────────────────────────
+
+    @Test
+    void shouldReturnValidWhenRainbowEnergySatisfiesTypedRequirement() {
+        // required: [FIRE], attached: [Rainbow Energy (COLORLESS, provides all types)]
+        FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        EnergyCard rainbow = new EnergyCard("rainbow-1", "Rainbow Energy",
+                PokemonType.COLORLESS, false, 1, true);
+        attacker.attachEnergy(rainbow);
+        Attack attack = new Attack("Ember", 30, List.of(PokemonType.FIRE));
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
+    void shouldReturnValidWhenDoubleColorlessEnergySatisfies2ColorlessRequirements() {
+        // required: [COLORLESS, COLORLESS], attached: [DCE (2 units COLORLESS)]
+        FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.COLORLESS, null, null, false);
+        EnergyCard dce = new EnergyCard("dce-1", "Double Colorless Energy",
+                PokemonType.COLORLESS, false, 2, false);
+        attacker.attachEnergy(dce);
+        Attack attack = new Attack("Tackle", 20, List.of(PokemonType.COLORLESS, PokemonType.COLORLESS));
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
+    void shouldPreferExactMatchOverRainbowForTypedRequirement() {
+        // required: [FIRE, COLORLESS], attached: [Fire Energy, Rainbow Energy]
+        // Fire should satisfy FIRE; Rainbow should satisfy COLORLESS.
+        FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        attacker.addAttachedEnergy(PokemonType.FIRE);
+        EnergyCard rainbow = new EnergyCard("rainbow-1", "Rainbow Energy",
+                PokemonType.COLORLESS, false, 1, true);
+        attacker.attachEnergy(rainbow);
+        Attack attack = new Attack("Flamethrower", 40, List.of(PokemonType.FIRE, PokemonType.COLORLESS));
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
+    void shouldReturnInvalidWhenRainbowEnergyAloneCannotSatisfyMultipleTypedRequirements() {
+        // required: [FIRE, FIRE], attached: [Rainbow Energy (1 unit)]
+        FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        EnergyCard rainbow = new EnergyCard("rainbow-1", "Rainbow Energy",
+                PokemonType.COLORLESS, false, 1, true);
+        attacker.attachEnergy(rainbow);
+        Attack attack = new Attack("Flamethrower", 60, List.of(PokemonType.FIRE, PokemonType.FIRE));
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "insufficient_energy_for_attack");
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────

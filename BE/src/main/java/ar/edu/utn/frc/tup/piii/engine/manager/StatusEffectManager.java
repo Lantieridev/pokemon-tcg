@@ -38,6 +38,7 @@ public class StatusEffectManager {
 
     private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
     private final CoinFlipper coinFlipper;
+    private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -46,6 +47,10 @@ public class StatusEffectManager {
      */
     public StatusEffectManager(final CoinFlipper coinFlipper) {
         this.coinFlipper = coinFlipper;
+    }
+
+    public void setPlayerRuntime(final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime) {
+        this.playerRuntime = playerRuntime;
     }
 
     /**
@@ -59,6 +64,11 @@ public class StatusEffectManager {
     public void apply(final StatusEffectType type) {
         if (type == null) {
             throw new InvalidStatusEffectException("Status effect type must not be null");
+        }
+        
+        if (type == StatusEffectType.DORMIDO && playerRuntime != null &&
+                playerRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)) {
+            return;
         }
         StatusEffect newEffect = buildEffect(type);
         if (newEffect.isRotationSlot()) {

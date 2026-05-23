@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
+import ar.edu.utn.frc.tup.piii.engine.model.PokemonToolEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
@@ -137,12 +138,14 @@ public final class CardMapper {
                 .aceSpec(aceSpec)
                 .effectText(effectText)
                 .effectId(inferTrainerEffectId(entity.getId(), effectText))
+                .toolEffectId(inferToolEffectId(entity.getId(), effectText))
                 .build();
     }
 
     private EnergyCard mapEnergy(final CardEntity entity) {
         final String name    = entity.getName() != null ? entity.getName() : "";
         final String subtype = subtype(entity);
+        final boolean basic  = "Basic".equals(subtype);
 
         final PokemonType energyType = TYPE_BY_NAME.entrySet().stream()
                 .filter(e -> name.startsWith(e.getKey()))
@@ -150,7 +153,17 @@ public final class CardMapper {
                 .findFirst()
                 .orElse(PokemonType.COLORLESS);
 
-        return new EnergyCard(entity.getId(), entity.getName(), energyType, "Basic".equals(subtype));
+        // Special energy detection by card name (XY1 set).
+        if (name.contains("Rainbow")) {
+            // Rainbow Energy: provides all types, deals 1 damage counter when attached.
+            return new EnergyCard(entity.getId(), name, PokemonType.COLORLESS, false, 1, true);
+        }
+        if (name.contains("Double Colorless")) {
+            // Double Colorless Energy: provides 2 Colorless energy units.
+            return new EnergyCard(entity.getId(), name, PokemonType.COLORLESS, false, 2, false);
+        }
+
+        return new EnergyCard(entity.getId(), entity.getName(), energyType, basic);
     }
 
     // --- parsing helpers ---
@@ -204,6 +217,20 @@ public final class CardMapper {
                     AbilityEffectId.SWEET_VEIL
             ));
         }
+        if ("xy1-26".equals(cardId)) { // Delphox
+            return List.of(new Ability(
+                    "Mystical Fire",
+                    "Once during your turn (before your attack), you may draw cards until you have 6 cards in your hand.",
+                    AbilityEffectId.MYSTICAL_FIRE
+            ));
+        }
+        if ("xy1-40".equals(cardId)) { // Electrode
+            return List.of(new Ability(
+                    "Magnetic Draw",
+                    "Once during your turn (before your attack), you may draw cards until you have 4 cards in your hand.",
+                    AbilityEffectId.MAGNETIC_DRAW
+            ));
+        }
         // Add safeguard if needed later, e.g. for Suicune PLB or Sigilyph LTR
         return List.of();
     }
@@ -217,29 +244,67 @@ public final class CardMapper {
     }
 
     private TrainerEffectId inferTrainerEffectId(final String cardId, final String text) {
+        // Card ID matching takes priority over text-based heuristics (more specific and reliable).
+        if ("xy1-115".equals(cardId)) { return TrainerEffectId.CASSIUS; }
+        if ("xy1-116".equals(cardId)) { return TrainerEffectId.EVOSODA; }
+        if ("xy1-118".equals(cardId)) { return TrainerEffectId.GREAT_BALL; }
+        if ("xy1-120".equals(cardId)) { return TrainerEffectId.MAX_REVIVE; }
+        if ("xy1-123".equals(cardId)) { return TrainerEffectId.PROFESSORS_LETTER; }
+
         if (text == null || text.isBlank()) {
             return TrainerEffectId.NONE;
         }
         final String lower = text.toLowerCase();
         
-        // Exact mappings by card ID (XY1 specific)
-        if ("xy1-118".equals(cardId)) { // Professor's Letter
-            // Actually Professor's letter is different. Professor Sycamore is xy1-122
-        }
-        
+        // ── Professor Sycamore / Professor's Research ───────────────────────────
         if (lower.contains("discard your hand and draw 7 cards")) {
-            return TrainerEffectId.PROFESSOR_OAK; // e.g. Professor Sycamore
+            return TrainerEffectId.PROFESSOR_OAK;
+        }
+        // ── Healing ─────────────────────────────────────────────────────────────
+        if (lower.contains("heal 60 damage") && lower.contains("discard")) {
+            return TrainerEffectId.SUPER_POTION; // xy1-128
         }
         if (lower.contains("heal 30 damage")) {
-            return TrainerEffectId.HEAL_30_DAMAGE; // e.g. Potion
+            return TrainerEffectId.HEAL_30_DAMAGE; // Potion
+        }
+        // ── Draw effects ────────────────────────────────────────────────────────
+        if (lower.contains("flip a coin") && lower.contains("draw 3 cards")) {
+            return TrainerEffectId.ROLLER_SKATES; // xy1-114
+        }
+        if (lower.contains("shuffle your hand into your deck") && lower.contains("draw 5 cards")) {
+            return TrainerEffectId.SHAUNA; // xy1-127
         }
         if (lower.contains("draw 3 cards")) {
-            return TrainerEffectId.DRAW_CARDS_3; // e.g. Tierno, Hau
+            return TrainerEffectId.DRAW_CARDS_3; // Tierno, Hau
         }
         if (lower.contains("draw 2 cards")) {
-            return TrainerEffectId.DRAW_CARDS_2; // e.g. Cheren
+            return TrainerEffectId.DRAW_CARDS_2; // Cheren
+        }
+        // ── Opponent-targeting effects ───────────────────────────────────────────
+        if (lower.contains("opponent shuffles") && lower.contains("draws 4 cards")
+                || lower.contains("shuffle his or her hand") && lower.contains("draw 4 cards")) {
+            return TrainerEffectId.RED_CARD; // xy1-124
+        }
+        if (lower.contains("discard an energy") && lower.contains("opponent")) {
+            return TrainerEffectId.TEAM_FLARE_GRUNT; // xy1-129
         }
         return TrainerEffectId.NONE;
+    }
+
+    private PokemonToolEffectId inferToolEffectId(final String cardId, final String text) {
+        if (text == null || text.isBlank()) {
+            return PokemonToolEffectId.NONE;
+        }
+        final String lower = text.toLowerCase();
+        
+        if (lower.contains("attacks of the pokemon this card is attached to do 20 more damage")) {
+            return PokemonToolEffectId.MUSCLE_BAND; // xy1-121
+        }
+        if (lower.contains("damage done to the pokemon this card is attached to by an opponent's attack is reduced by 20")) {
+            return PokemonToolEffectId.HARD_CHARM; // xy1-119
+        }
+        
+        return PokemonToolEffectId.NONE;
     }
 
     private static String subtype(final CardEntity entity) {
