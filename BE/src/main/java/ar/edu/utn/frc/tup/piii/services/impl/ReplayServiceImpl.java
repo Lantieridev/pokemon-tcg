@@ -62,15 +62,15 @@ public class ReplayServiceImpl implements ReplayService {
             throw new IllegalArgumentException("Username cannot be null");
         }
 
-        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+        final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = matchRepository.findMatchesByUsername(username);
 
         return matches.stream()
                 .map(match -> UserMatchHistoryDTO.builder()
-                        .matchId(match.getId())
-                        .player1(match.getPlayer1() != null ? match.getPlayer1().getUsername() : null)
-                        .player2(match.getPlayer2() != null ? match.getPlayer2().getUsername() : null)
-                        .winner(match.getWinner() != null ? match.getWinner().getUsername() : null)
-                        .createdAt(match.getCreatedAt())
+                        .matchId(match.id())
+                        .player1(match.player1Username())
+                        .player2(match.player2Username())
+                        .winner(match.winnerUsername())
+                        .createdAt(match.createdAt())
                         .build())
                 .collect(Collectors.toList());
     }
