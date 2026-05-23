@@ -362,15 +362,17 @@ public final class GameFacade {
             if (!selectedIds.isEmpty()) {
                 final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
                 if (!found.isEmpty()) {
-                    request.target().evolveInto((PokemonCard) found.get(0));
+                    Card selectedCard = found.get(0);
+                    if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(request.target().getName())) {
+                        request.target().evolveInto(pc);
+                    } else {
+                        throw new IllegalArgumentException("Selected card is not a valid evolution for the target");
+                    }
                 }
             }
             runtime.getDeck().shuffle();
         } else if (effectId == TrainerEffectId.GREAT_BALL) {
             if (!selectedIds.isEmpty()) {
-                // The selection source is TOP_7_DECK, but for simplicity of the engine state, 
-                // the deck hasn't actually removed the top 7 yet (the client just rendered them).
-                // So we just find it in the top 7 and remove it.
                 final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));
                 Card selected = null;
                 for (Card c : top7) {
@@ -379,6 +381,9 @@ public final class GameFacade {
                     }
                 }
                 if (selected != null) {
+                    if (!(selected instanceof PokemonCard)) {
+                        throw new IllegalArgumentException("Great Ball can only select a Pokemon card");
+                    }
                     top7.remove(selected);
                     runtime.getHand().addCard(selected);
                 }
@@ -392,6 +397,9 @@ public final class GameFacade {
                 for (String id : selectedIds) {
                     final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
                     if (!found.isEmpty()) {
+                        if (!(found.get(0) instanceof EnergyCard ec) || !ec.isBasic()) {
+                            throw new IllegalArgumentException("Professor's Letter can only select basic energy cards");
+                        }
                         runtime.getHand().addCard(found.get(0));
                     }
                 }
@@ -407,6 +415,9 @@ public final class GameFacade {
                     }
                 }
                 if (found != null) {
+                    if (!(found instanceof PokemonCard pc) || pc.getEvolutionStage() != ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                        throw new IllegalArgumentException("Max Revive can only select a Basic Pokemon card");
+                    }
                     runtime.getDiscardPile().remove(found);
                     runtime.getDeck().addToTop(found);
                 }
@@ -447,9 +458,21 @@ public final class GameFacade {
             case RETREAT             -> new RetreatAction(board.getActivePokemon(playerIndex),
                                             dto.targetIndex() != null ? dto.targetIndex() : 0,
                                             dto.selectedEnergyIndices() != null ? dto.selectedEnergyIndices() : java.util.Collections.emptyList());
-            case PLAY_TRAINER        -> new PlayTrainerAction(dto.trainerType(),
+            case PLAY_TRAINER        -> {
+                TrainerEffectId effectId = null;
+                if (dto.cardId() != null) {
+                    final Card card = session.getPlayerRuntime(playerIndex).getHand().getCards().stream()
+                            .filter(c -> c.getCardId().equals(dto.cardId()))
+                            .findFirst().orElse(null);
+                    if (card instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tc) {
+                        effectId = tc.getEffectId();
+                    }
+                }
+                yield new PlayTrainerAction(dto.trainerType(),
                                             resolveTarget(board, playerIndex, dto),
-                                            dto.cardId());
+                                            dto.cardId(),
+                                            effectId);
+            }
             case ATTACH_ENERGY       -> new AttachEnergyAction(
                                             resolveEvolveTarget(board, playerIndex, dto),
                                             dto.energyType() != null ? dto.energyType() : PokemonType.COLORLESS);
@@ -470,7 +493,8 @@ public final class GameFacade {
             case PROMOTE_ACTIVE      -> new PromoteActiveAction(
                                             dto.targetIndex() != null ? dto.targetIndex() : 0);
             case SELECT_CARDS        -> new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(
-                                            dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList());
+                                            dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList(),
+                                            session.getPendingSelectionRequest());
         };
     }
 

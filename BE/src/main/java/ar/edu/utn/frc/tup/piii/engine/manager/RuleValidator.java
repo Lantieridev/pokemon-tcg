@@ -256,6 +256,18 @@ public final class RuleValidator {
 
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action) {
         MainPhase mainPhase = turnManager.requireMainPhase();
+        if (action.effectId() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
+            if (action.target() == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            final int playerIndex = turnManager.activePlayerIndex();
+            if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
+                return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
+            }
+            if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
+                return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
+            }
+        }
         return switch (action.trainerType()) {
             case SUPPORTER    -> validateSupporter(mainPhase);
             case STADIUM      -> validateStadium(mainPhase);
@@ -443,10 +455,15 @@ public final class RuleValidator {
         if (!(turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase)) {
             return new ValidationResult.Invalid("wrong_phase_for_selection");
         }
-        // TODO: Validate that the selected cardIds exist in the source zone.
-        // TODO: Validate that the types of the selected cards match the request constraints (e.g. Basic Energy for Prof Letter).
-        // TODO: Validate that the number of selected cards does not exceed maxSelections.
-        // For now, these advanced validations are deferred to the front-end or to GameFacade.
+        
+        final ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest req = action.request();
+        if (req != null) {
+            if (action.cardIds().size() > req.maxSelections()) {
+                return new ValidationResult.Invalid("too_many_cards_selected");
+            }
+        }
+        
+        // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.
         return new ValidationResult.Valid();
     }
 }

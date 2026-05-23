@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
@@ -56,12 +57,15 @@ class MatchServiceTest {
     private MatchSession session;
     private MatchBoard board;
 
+    private TurnManager turnManager;
+
     @BeforeEach
     void setUp() {
         registry = mock(MatchSessionRegistry.class);
         facade = mock(GameFacade.class);
         ruleValidator = mock(RuleValidator.class);
         persistence = mock(GameStatePersistence.class);
+        turnManager = mock(TurnManager.class);
         messaging = mock(SimpMessagingTemplate.class);
         mapper = mock(PlayerPerspectiveMapper.class);
         scheduler = mock(ScheduledExecutorService.class);
@@ -76,8 +80,10 @@ class MatchServiceTest {
         session.setup();
         session.start();
 
-        // Wire the per-session RuleValidator (MatchService reads it from the session, not from its constructor)
+        // Wire the per-session dependencies
         session.setRuleValidator(ruleValidator);
+        session.setTurnManager(turnManager);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
@@ -123,7 +129,8 @@ class MatchServiceTest {
 
         final InOrder order = inOrder(facade, persistence);
         order.verify(facade).apply(any(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class),
-                any(ar.edu.utn.frc.tup.piii.engine.model.Action.class));
+                any(ar.edu.utn.frc.tup.piii.engine.model.Action.class),
+                any(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class));
         order.verify(persistence).save(any(GameStateSnapshot.class));
     }
 
@@ -156,7 +163,7 @@ class MatchServiceTest {
         org.mockito.Mockito.doAnswer(invocation -> {
             session.finish();
             return null;
-        }).when(facade).apply(any(), any());
+        }).when(facade).apply(any(), any(), any());
 
         matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
 

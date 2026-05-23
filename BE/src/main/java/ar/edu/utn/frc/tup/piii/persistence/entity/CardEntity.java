@@ -26,6 +26,9 @@ public class CardEntity {
     private String supertype;
     private String subtype;
     private Integer hp;
+    
+    @Column(name = "evolves_from")
+    private String evolvesFrom;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

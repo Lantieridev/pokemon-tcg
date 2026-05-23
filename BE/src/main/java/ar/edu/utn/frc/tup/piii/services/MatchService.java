@@ -114,15 +114,26 @@ public final class MatchService {
         try {
             final int playerIndex = session.indexOf(playerId);
 
-            // Enforce promotion-gate: while a KO replacement is pending, only the
-            // promoting player may act, and only with PROMOTE_ACTIVE (XY1 Rulebook §2).
+            boolean isAuthorized = false;
+
             if (session.isAwaitingPromotion()) {
+                // Enforce promotion-gate: while a KO replacement is pending, only the
+                // promoting player may act, and only with PROMOTE_ACTIVE (XY1 Rulebook §2).
                 if (dto.type() != ActionType.PROMOTE_ACTIVE) {
                     throw new InvalidActionException("must_promote_before_continuing");
                 }
                 if (session.getPromotingPlayerIndex() != playerIndex) {
                     throw new InvalidActionException("not_your_promotion");
                 }
+                isAuthorized = true;
+            } else {
+                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                    isAuthorized = true;
+                }
+            }
+
+            if (!isAuthorized) {
+                throw new InvalidActionException("not_your_turn");
             }
 
             final Action action = facade.toEngineAction(session, playerIndex, dto);
@@ -135,7 +146,6 @@ public final class MatchService {
                 throw new InvalidActionException(invalid.reason());
             }
 
-            session.setActivePlayerIndex(playerIndex);
             final TurnManager turnManager = session.getTurnManager();
 
             // Apply action and manage TurnManager phase transitions
