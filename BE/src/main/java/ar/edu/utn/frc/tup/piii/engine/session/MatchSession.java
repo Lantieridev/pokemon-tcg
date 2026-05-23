@@ -44,6 +44,7 @@ public final class MatchSession {
     private CoinFlipper coinFlipper;
     private TurnManager turnManager;
     private RuleValidator ruleValidator;
+    private String winnerId;
 
     /**
      * Set when a player's Active Pokémon has been knocked out and they must promote
@@ -489,5 +490,23 @@ public final class MatchSession {
 
     public void setPendingSelectionRequest(ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest) {
         this.pendingSelectionRequest = pendingSelectionRequest;
+    }
+
+    /**
+     * Returns the player ID of the winner, or null if the match is not finished or ended in a tie.
+     *
+     * @return winner player ID, or null
+     */
+    public String getWinnerId() {
+        return winnerId;
+    }
+
+    /**
+     * Sets the player ID of the winner.
+     *
+     * @param winnerId winner player ID
+     */
+    public void setWinnerId(final String winnerId) {
+        this.winnerId = winnerId;
     }
 }

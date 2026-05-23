@@ -3,12 +3,16 @@ package ar.edu.utn.frc.tup.piii.services.persistence;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.model.*;
 import ar.edu.utn.frc.tup.piii.engine.session.*;
+import ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto;
+import ar.edu.utn.frc.tup.piii.dtos.RankingDto;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -240,4 +244,138 @@ class MatchPersistenceTest {
         assertEquals("SUCCESS", logEntity.getResult());
         assertEquals("user-x", userRepository.findById(logEntity.getPlayer().getId()).map(UserEntity::getUsername).orElse(null));
     }
+
+    @Test
+    void testDeclareWinnerAsynchronously() throws InterruptedException {
+        String matchId = "winner-match-999";
+        Long numericId = (long) Math.abs(matchId.hashCode());
+
+        UserEntity player1 = userRepository.findByUsername("user-x").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
+        UserEntity player2 = userRepository.findByUsername("user-y").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
+
+        // Clean previous if any
+        matchRepository.findById(numericId).ifPresent(matchRepository::delete);
+
+        // Build match session
+        PokemonCard pokemon = new PokemonCard.Builder("p-002", "Charmander", 50, PokemonType.FIRE)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+        InPlayPokemon active = new InPlayPokemon(pokemon);
+        PlayerState psA = new PlayerState(active, List.of(), List.of(), 60, 6, new HashMap<>());
+        PlayerState psB = new PlayerState(active, List.of(), List.of(), 60, 6, new HashMap<>());
+        MatchBoard board = new MatchBoard(List.of(psA, psB));
+
+        MatchSession session = new MatchSession(
+                matchId,
+                List.of("user-x", "user-y"),
+                board
+        );
+        session.setWinnerId("user-y");
+        session.setup();
+        session.start();
+        session.finish();
+
+        // Save match
+        persistence.saveMatch(session);
+
+        MatchEntity updatedMatch = null;
+        for (int i = 0; i < 20; i++) {
+            Optional<MatchEntity> opt = matchRepository.findById(numericId);
+            if (opt.isPresent() && opt.get().getWinner() != null) {
+                updatedMatch = opt.get();
+                break;
+            }
+            Thread.sleep(100);
+        }
+
+        assertNotNull(updatedMatch, "Winner should be eventually set asynchronously through saveMatch");
+        assertNotNull(updatedMatch.getWinner());
+        assertEquals("user-y", userRepository.findById(updatedMatch.getWinner().getId()).map(UserEntity::getUsername).orElse(null));
+    }
+
+    @Test
+    void testGetGlobalRankingIntegration() {
+        // Clear all matches to have a controlled database state for pagination/ranking verification
+        matchRepository.deleteAll();
+
+        final UserEntity alice = userRepository.findByUsername("user-x").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
+        final UserEntity bob = userRepository.findByUsername("user-y").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
+        final UserEntity charlie = userRepository.findByUsername("user-z").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-z").email("z@z.com").password("pwd").build()));
+
+        // Seed matches:
+        // Match 1: Finished, winner is Alice
+        matchRepository.save(MatchEntity.builder().id(2001L).status("FINISHED").player1(alice).player2(bob).winner(alice).build());
+        // Match 2: Finished, winner is Alice
+        matchRepository.save(MatchEntity.builder().id(2002L).status("FINISHED").player1(alice).player2(charlie).winner(alice).build());
+        // Match 3: Finished, winner is Bob
+        matchRepository.save(MatchEntity.builder().id(2003L).status("FINISHED").player1(bob).player2(charlie).winner(bob).build());
+        // Match 4: Active (ignored), winner is Alice (simulating inconsistent data)
+        matchRepository.save(MatchEntity.builder().id(2004L).status("ACTIVE").player1(alice).player2(bob).winner(alice).build());
+        // Match 5: Finished, winner is null (ignored)
+        matchRepository.save(MatchEntity.builder().id(2005L).status("FINISHED").player1(alice).player2(bob).winner(null).build());
+
+        // Call repository
+        final Slice<RankingDto> ranking = matchRepository.getGlobalRanking(PageRequest.of(0, 10));
+
+        // Assertions
+        assertNotNull(ranking);
+        final List<RankingDto> content = ranking.getContent();
+        // Alice should have 2 wins, Bob 1 win. Charlie 0 wins (not in list).
+        assertEquals(2, content.size());
+
+        // Check order (DESC)
+        assertEquals("user-x", content.get(0).username());
+        assertEquals(2L, content.get(0).wins());
+
+        assertEquals("user-y", content.get(1).username());
+        assertEquals(1L, content.get(1).wins());
+    }
+
+    @Test
+    void testGetUserMatchHistoryIntegration() {
+        // Clear all matches to have controlled database state
+        matchRepository.deleteAll();
+
+        final UserEntity alice = userRepository.findByUsername("user-x").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
+        final UserEntity bob = userRepository.findByUsername("user-y").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
+        final UserEntity charlie = userRepository.findByUsername("user-z").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-z").email("z@z.com").password("pwd").build()));
+
+        // Seed matches:
+        // Match 1: Alice vs Bob, finished, Alice wins
+        matchRepository.save(MatchEntity.builder().id(3001L).status("FINISHED").player1(alice).player2(bob).winner(alice).build());
+        // Match 2: Bob vs Charlie, finished, Bob wins
+        matchRepository.save(MatchEntity.builder().id(3002L).status("FINISHED").player1(bob).player2(charlie).winner(bob).build());
+        // Match 3: Alice vs Charlie, ACTIVE (in progress), winner null
+        matchRepository.save(MatchEntity.builder().id(3003L).status("ACTIVE").player1(alice).player2(charlie).winner(null).build());
+
+        // Get history for Alice: should contain Match 1 and Match 3, but NOT Match 2
+        final Slice<MatchHistoryProjectionDto> rawHistoryAlice = matchRepository.findUserMatchHistory("user-x", PageRequest.of(0, 10));
+        assertNotNull(rawHistoryAlice);
+        final List<MatchHistoryProjectionDto> listAlice = rawHistoryAlice.getContent();
+        // Alice matches: 3001, 3003 (total: 2 matches)
+        assertEquals(2, listAlice.size());
+
+        // Assert sorting DESC: 3003 (saved last) should be first, 3001 (saved first) second
+        assertEquals(3003L, listAlice.get(0).id());
+        assertEquals("ACTIVE", listAlice.get(0).status());
+        assertEquals("user-x", listAlice.get(0).player1Username());
+        assertEquals("user-z", listAlice.get(0).player2Username());
+        assertNull(listAlice.get(0).winnerUsername());
+
+        assertEquals(3001L, listAlice.get(1).id());
+        assertEquals("FINISHED", listAlice.get(1).status());
+        assertEquals("user-x", listAlice.get(1).player1Username());
+        assertEquals("user-y", listAlice.get(1).player2Username());
+        assertEquals("user-x", listAlice.get(1).winnerUsername());
+    }
 }
+
+
