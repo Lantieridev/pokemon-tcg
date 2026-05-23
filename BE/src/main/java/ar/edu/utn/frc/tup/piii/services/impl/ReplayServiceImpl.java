@@ -1,0 +1,77 @@
+package ar.edu.utn.frc.tup.piii.services.impl;
+
+import ar.edu.utn.frc.tup.piii.dtos.ReplayEventDTO;
+import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
+import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
+import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
+import ar.edu.utn.frc.tup.piii.services.ReplayService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+/**
+ * Service implementation for managing match replays and profile histories.
+ */
+@Service
+public class ReplayServiceImpl implements ReplayService {
+
+    private final MatchRepository matchRepository;
+    private final MatchLogRepository matchLogRepository;
+
+    public ReplayServiceImpl(final MatchRepository matchRepository, final MatchLogRepository matchLogRepository) {
+        this.matchRepository = Objects.requireNonNull(matchRepository, "matchRepository must not be null");
+        this.matchLogRepository = Objects.requireNonNull(matchLogRepository, "matchLogRepository must not be null");
+    }
+
+    @Override
+    public ReplayResponseDTO getReplay(final Long matchId) {
+        if (matchId == null) {
+            throw new IllegalArgumentException("Match ID cannot be null");
+        }
+
+        final MatchEntity match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new NoSuchElementException("Match not found with id: " + matchId));
+
+        final List<MatchLogEntity> logEntities = matchLogRepository.findByMatchIdOrderByCreatedAtAsc(matchId);
+
+        final List<ReplayEventDTO> events = logEntities.stream()
+                .map(log -> ReplayEventDTO.builder()
+                        .turn(log.getTurnNumber())
+                        .player(log.getPlayer() != null ? log.getPlayer().getUsername() : null)
+                        .action(log.getActionType())
+                        .result(log.getResult())
+                        .timestamp(log.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ReplayResponseDTO.builder()
+                .matchId(matchId)
+                .events(events)
+                .build();
+    }
+
+    @Override
+    public List<UserMatchHistoryDTO> getUserMatchHistory(final String username) {
+        if (username == null) {
+            throw new IllegalArgumentException("Username cannot be null");
+        }
+
+        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+
+        return matches.stream()
+                .map(match -> UserMatchHistoryDTO.builder()
+                        .matchId(match.getId())
+                        .player1(match.getPlayer1() != null ? match.getPlayer1().getUsername() : null)
+                        .player2(match.getPlayer2() != null ? match.getPlayer2().getUsername() : null)
+                        .winner(match.getWinner() != null ? match.getWinner().getUsername() : null)
+                        .createdAt(match.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+}

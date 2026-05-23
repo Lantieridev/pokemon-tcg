@@ -17,6 +17,7 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
+import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,11 @@ public final class MatchService {
     private final SimpMessagingTemplate messaging;
     private final ScheduledExecutorService abandonmentScheduler;
     private final long abandonTimeoutSeconds;
+    private final PenaltyService penaltyService;
+
+    // Track turns of each player in a match in-memory
+    private final java.util.Map<String, String> lastActorInMatch = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, java.util.Map<String, Integer>> playerTurnsInMatch = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -67,6 +73,7 @@ public final class MatchService {
      * @param perspectiveMapper     builds per-player response DTOs (never null)
      * @param messaging             sends WebSocket messages (never null)
      * @param abandonmentScheduler  schedules disconnect timeout tasks (never null)
+     * @param penaltyService        manages turn penalties (never null)
      * @param abandonTimeoutSeconds seconds before a disconnected player forfeits
      */
     public MatchService(final MatchSessionRegistry registry,
@@ -75,6 +82,7 @@ public final class MatchService {
                         final PlayerPerspectiveMapper perspectiveMapper,
                         final SimpMessagingTemplate messaging,
                         final ScheduledExecutorService abandonmentScheduler,
+                        final PenaltyService penaltyService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -83,6 +91,7 @@ public final class MatchService {
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
         this.abandonmentScheduler = Objects.requireNonNull(abandonmentScheduler,
                 "abandonmentScheduler must not be null");
+        this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -132,12 +141,35 @@ public final class MatchService {
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
 
+            // Turn Tracking
+            final String lastActor = lastActorInMatch.get(matchId);
+            if (lastActor == null) {
+                lastActorInMatch.put(matchId, playerId);
+                final java.util.Map<String, Integer> turns = playerTurnsInMatch.computeIfAbsent(matchId, k -> new java.util.concurrent.ConcurrentHashMap<>());
+                turns.put(playerId, 1);
+            } else if (!lastActor.equals(playerId)) {
+                lastActorInMatch.put(matchId, playerId);
+                final java.util.Map<String, Integer> turns = playerTurnsInMatch.computeIfAbsent(matchId, k -> new java.util.concurrent.ConcurrentHashMap<>());
+                final int currentTurns = turns.getOrDefault(playerId, 0);
+                turns.put(playerId, currentTurns + 1);
+            }
+
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, FIRST_ROUND, session.getPlayerIds());
             persistence.save(snapshot);
             persistence.saveMatch(session);
             String resultDetail = String.format("Executed action %s with cardId=%s, targetId=%s", dto.type(), dto.cardId(), dto.targetId());
             persistence.logAction(matchId, 0, playerId, dto.type().name(), resultDetail);
+
+            if (session.getState() == MatchSessionState.FINISHED) {
+                // Legitimate match finish, counts for mute decrement for all penalized players in the match
+                for (final String participantId : session.getPlayerIds()) {
+                    penaltyService.registerMatchFinished(participantId, true);
+                }
+                // Clean up tracking
+                lastActorInMatch.remove(matchId);
+                playerTurnsInMatch.remove(matchId);
+            }
         } finally {
             lock.unlock();
         }
@@ -305,6 +337,28 @@ public final class MatchService {
                 persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
                 persistence.saveMatch(session);
                 persistence.logAction(matchId, 0, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
+
+                // Process penalties on match finish
+                final java.util.Map<String, Integer> turnsMap = playerTurnsInMatch.getOrDefault(matchId, java.util.Collections.emptyMap());
+                boolean completedLegitimately;
+
+                // For each player, evaluate if it is a legitimate match completion to decrement mute
+                for (final String participantId : session.getPlayerIds()) {
+                    if (participantId.equals(forfeitingPlayerId)) {
+                        // The penalized user who forfeited does NOT get a decrement
+                        completedLegitimately = false;
+                    } else {
+                        // The user who did not forfeit gets a decrement ONLY if both players had at least 5 turns
+                        final int turnsA = turnsMap.getOrDefault(session.getPlayerIdA(), 0);
+                        final int turnsB = turnsMap.getOrDefault(session.getPlayerIdB(), 0);
+                        completedLegitimately = (turnsA >= 5 && turnsB >= 5);
+                    }
+                    penaltyService.registerMatchFinished(participantId, completedLegitimately);
+                }
+
+                // Clean up tracking
+                lastActorInMatch.remove(matchId);
+                playerTurnsInMatch.remove(matchId);
             } finally {
                 lock.unlock();
             }
