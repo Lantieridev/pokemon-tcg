@@ -60,10 +60,6 @@ public final class MatchService {
     private final long abandonTimeoutSeconds;
     private final PenaltyService penaltyService;
 
-    // Track turns of each player in a match in-memory
-    private final java.util.Map<String, String> lastActorInMatch = new java.util.concurrent.ConcurrentHashMap<>();
-    private final java.util.Map<String, java.util.Map<String, Integer>> playerTurnsInMatch = new java.util.concurrent.ConcurrentHashMap<>();
-
     /**
      * Constructs a MatchService with all required collaborators.
      *
@@ -151,19 +147,6 @@ public final class MatchService {
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
 
-            // Turn Tracking
-            final String lastActor = lastActorInMatch.get(matchId);
-            if (lastActor == null) {
-                lastActorInMatch.put(matchId, playerId);
-                final java.util.Map<String, Integer> turns = playerTurnsInMatch.computeIfAbsent(matchId, k -> new java.util.concurrent.ConcurrentHashMap<>());
-                turns.put(playerId, 1);
-            } else if (!lastActor.equals(playerId)) {
-                lastActorInMatch.put(matchId, playerId);
-                final java.util.Map<String, Integer> turns = playerTurnsInMatch.computeIfAbsent(matchId, k -> new java.util.concurrent.ConcurrentHashMap<>());
-                final int currentTurns = turns.getOrDefault(playerId, 0);
-                turns.put(playerId, currentTurns + 1);
-            }
-
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, FIRST_ROUND, session.getPlayerIds());
             persistence.save(snapshot);
@@ -176,9 +159,6 @@ public final class MatchService {
                 for (final String participantId : session.getPlayerIds()) {
                     penaltyService.registerMatchFinished(participantId, true);
                 }
-                // Clean up tracking
-                lastActorInMatch.remove(matchId);
-                playerTurnsInMatch.remove(matchId);
             }
         } finally {
             lock.unlock();
@@ -366,8 +346,10 @@ public final class MatchService {
 
 
                 // Process penalties on match finish
-                final java.util.Map<String, Integer> turnsMap = playerTurnsInMatch.getOrDefault(matchId, java.util.Collections.emptyMap());
                 boolean completedLegitimately;
+                
+                final int turnsA = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(0) : 0;
+                final int turnsB = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(1) : 0;
 
                 // For each player, evaluate if it is a legitimate match completion to decrement mute
                 for (final String participantId : session.getPlayerIds()) {
@@ -376,16 +358,10 @@ public final class MatchService {
                         completedLegitimately = false;
                     } else {
                         // The user who did not forfeit gets a decrement ONLY if both players had at least 5 turns
-                        final int turnsA = turnsMap.getOrDefault(session.getPlayerIdA(), 0);
-                        final int turnsB = turnsMap.getOrDefault(session.getPlayerIdB(), 0);
                         completedLegitimately = (turnsA >= 5 && turnsB >= 5);
                     }
                     penaltyService.registerMatchFinished(participantId, completedLegitimately);
                 }
-
-                // Clean up tracking
-                lastActorInMatch.remove(matchId);
-                playerTurnsInMatch.remove(matchId);
             } finally {
                 lock.unlock();
             }

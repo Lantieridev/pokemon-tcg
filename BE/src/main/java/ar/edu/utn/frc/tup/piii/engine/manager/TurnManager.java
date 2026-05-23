@@ -32,6 +32,7 @@ public final class TurnManager {
     private int activePlayerIndex = UNSTARTED_PLAYER_INDEX;
     private int startingPlayerIndex = FIRST_PLAYER_INDEX;
     private final boolean[] firstTurnCompleted = new boolean[PLAYER_COUNT];
+    private final int[] turnCounts = new int[PLAYER_COUNT];
     private final List<PhaseListener> listeners = new ArrayList<>();
 
     // -------------------------------------------------------------------------
@@ -83,6 +84,8 @@ public final class TurnManager {
         this.activePlayerIndex = UNSTARTED_PLAYER_INDEX;
         this.firstTurnCompleted[0] = false;
         this.firstTurnCompleted[1] = false;
+        this.turnCounts[0] = 0;
+        this.turnCounts[1] = 0;
     }
 
     /**
@@ -129,6 +132,19 @@ public final class TurnManager {
         return !firstTurnCompleted[playerIndex];
     }
 
+    /**
+     * Returns the total number of turns started by the given player.
+     *
+     * @param playerIndex the zero-based player index
+     * @return the number of turns
+     */
+    public int getTurnCount(final int playerIndex) {
+        if (playerIndex < 0 || playerIndex >= PLAYER_COUNT) {
+            throw new IllegalArgumentException("Invalid player index: " + playerIndex);
+        }
+        return turnCounts[playerIndex];
+    }
+
     // -------------------------------------------------------------------------
     // Turn transitions
     // -------------------------------------------------------------------------
@@ -152,6 +168,7 @@ public final class TurnManager {
                     "Invalid player index: " + playerIndex + ". Must be in [0, " + PLAYER_COUNT + ")");
         }
         activePlayerIndex = playerIndex;
+        turnCounts[playerIndex]++;
         currentPhase = new DrawPhase();
         fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));
         fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
@@ -346,6 +363,7 @@ public final class TurnManager {
 
                 firstTurnCompleted[endingPlayer] = true;
                 activePlayerIndex = PLAYER_COUNT - 1 - endingPlayer;
+                turnCounts[activePlayerIndex]++;
                 currentPhase = new DrawPhase();
 
                 fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));

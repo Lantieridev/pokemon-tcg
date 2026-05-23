@@ -725,4 +725,44 @@ class TurnManagerTest {
         // Player 1 is the starting player on their first turn — attack must be blocked
         assertThrows(FirstTurnAttackException.class, () -> turnManager.declareAttack());
     }
+
+    // -------------------------------------------------------------------------
+    // Turn Counting API
+    // -------------------------------------------------------------------------
+
+    @Test
+    void shouldTrackTurnCountsPerPlayer() {
+        assertEquals(0, turnManager.getTurnCount(0));
+        assertEquals(0, turnManager.getTurnCount(1));
+
+        // Player 0 turn 1
+        turnManager.startTurn(0);
+        assertEquals(1, turnManager.getTurnCount(0));
+        assertEquals(0, turnManager.getTurnCount(1));
+        
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns(); // Starts player 1's turn
+
+        assertEquals(1, turnManager.getTurnCount(0));
+        assertEquals(1, turnManager.getTurnCount(1));
+
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns(); // Starts player 0's turn 2
+
+        assertEquals(2, turnManager.getTurnCount(0));
+        assertEquals(1, turnManager.getTurnCount(1));
+    }
+
+    @Test
+    void shouldResetTurnCountsOnReset() {
+        turnManager.startTurn(0);
+        assertEquals(1, turnManager.getTurnCount(0));
+
+        turnManager.reset();
+        
+        assertEquals(0, turnManager.getTurnCount(0));
+        assertEquals(0, turnManager.getTurnCount(1));
+    }
 }

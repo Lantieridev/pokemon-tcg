@@ -17,8 +17,9 @@ import java.util.List;
 @Repository
 public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
 
-    @Query("SELECT m FROM MatchEntity m WHERE m.player1.username = :username OR m.player2.username = :username ORDER BY m.createdAt DESC")
-    List<MatchEntity> findMatchesByUsername(@Param("username") String username);
+    @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(m.id, m.status, m.player1.username, m.player2.username, m.winner.username, m.createdAt) " +
+           "FROM MatchEntity m WHERE m.player1.username = :username OR m.player2.username = :username ORDER BY m.createdAt DESC")
+    List<MatchHistoryProjectionDto> findMatchesByUsername(@Param("username") String username);
 
 
 
