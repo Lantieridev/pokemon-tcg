@@ -37,4 +37,12 @@ public class JpaGameStatePersistence implements GameStatePersistence {
     public void logAction(final String matchId, final int turnNumber, final String playerId, final String actionType, final String result) {
         eventPublisher.publishEvent(new LogActionEvent(matchId, turnNumber, playerId, actionType, result));
     }
+
+    @Override
+    public void declareWinner(final String matchId, final String winnerUsername) {
+        Objects.requireNonNull(matchId, "matchId must not be null");
+        Objects.requireNonNull(winnerUsername, "winnerUsername must not be null");
+        eventPublisher.publishEvent(new MatchWinnerEvent(matchId, winnerUsername));
+    }
 }
+

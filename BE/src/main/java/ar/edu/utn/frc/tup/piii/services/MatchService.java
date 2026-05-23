@@ -336,7 +336,20 @@ public final class MatchService {
                 session.finish();
                 persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
                 persistence.saveMatch(session);
+
+                // Determine the winner (the other player)
+                String winnerUsername = null;
+                if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {
+                    winnerUsername = session.getPlayerIdA().equals(forfeitingPlayerId)
+                            ? session.getPlayerIdB()
+                            : session.getPlayerIdA();
+                }
+                if (winnerUsername != null) {
+                    persistence.declareWinner(matchId, winnerUsername);
+                }
+
                 persistence.logAction(matchId, 0, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
+
 
                 // Process penalties on match finish
                 final java.util.Map<String, Integer> turnsMap = playerTurnsInMatch.getOrDefault(matchId, java.util.Collections.emptyMap());

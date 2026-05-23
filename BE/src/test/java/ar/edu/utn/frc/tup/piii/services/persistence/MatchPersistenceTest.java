@@ -240,4 +240,50 @@ class MatchPersistenceTest {
         assertEquals("SUCCESS", logEntity.getResult());
         assertEquals("user-x", userRepository.findById(logEntity.getPlayer().getId()).map(UserEntity::getUsername).orElse(null));
     }
+
+    @Test
+    void testDeclareWinnerAsynchronously() throws InterruptedException {
+        String matchId = "winner-match-999";
+        Long numericId = (long) Math.abs(matchId.hashCode());
+
+        UserEntity player1 = userRepository.findByUsername("user-x").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
+        UserEntity player2 = userRepository.findByUsername("user-y").orElseGet(() ->
+                userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
+
+        MatchEntity entity = MatchEntity.builder()
+                .id(numericId)
+                .status("ACTIVE")
+                .player1(player1)
+                .player2(player2)
+                .build();
+        matchRepository.save(entity);
+
+        // Declare winner
+        persistence.declareWinner(matchId, "user-y");
+
+        MatchEntity updatedMatch = null;
+        for (int i = 0; i < 20; i++) {
+            Optional<MatchEntity> opt = matchRepository.findById(numericId);
+            if (opt.isPresent() && opt.get().getWinner() != null) {
+                updatedMatch = opt.get();
+                break;
+            }
+            Thread.sleep(100);
+        }
+
+        assertNotNull(updatedMatch, "Winner should be eventually set asynchronously");
+        assertNotNull(updatedMatch.getWinner());
+        assertEquals("user-y", userRepository.findById(updatedMatch.getWinner().getId()).map(UserEntity::getUsername).orElse(null));
+
+        // Attempting to declare a different winner should not overwrite it
+        persistence.declareWinner(matchId, "user-x");
+        Thread.sleep(500);
+
+        MatchEntity finalMatch = matchRepository.findById(numericId).orElseThrow();
+        assertNotNull(finalMatch.getWinner());
+        assertEquals("user-y", userRepository.findById(finalMatch.getWinner().getId()).map(UserEntity::getUsername).orElse(null), "Winner must not be overwritten once set");
+    }
 }
+
+
