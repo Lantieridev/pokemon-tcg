@@ -56,9 +56,9 @@ npm run build
 | Módulo | Estado |
 |--------|--------|
 | 1 — Game Engine | COMPLETADO |
-| 2 — WebSockets / Sesión | EN PROGRESO |
-| 3 — Deck Builder API | PENDIENTE |
-| 4 — Persistencia PostgreSQL | PENDIENTE |
+| 2 — WebSockets / Sesión | COMPLETADO |
+| 3 — Deck Builder API | EN PROGRESO |
+| 4 — Persistencia PostgreSQL | COMPLETADO |
 | 5 — Frontend | PENDIENTE |
 
 ---

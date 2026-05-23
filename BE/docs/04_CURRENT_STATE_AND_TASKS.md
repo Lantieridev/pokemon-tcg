@@ -22,20 +22,17 @@ Este documento es un snapshot del avance actual del motor de reglas, qué capaci
 
 La cadena de ejecución está ordenada. ¡**Ya se pueden simular partidas**!. Técnicamente podríamos instanciar un simulador y correr juegos de prueba (hacer jugar bots básicos) ya que todas las reglas obligatorias están soportadas. Sin embargo, para terminar la consola de la API y cerrar el TPI, falta lo siguiente:
 
-### TAREA A: Habilidades (Abilities)
-A diferencia de los ataques, las habilidades pueden activarse de manera pasiva o activa durante la `MainPhase`.
-- **Implementar Modelo:** Agregar una lista de `Ability` a `PokemonCard`.
-- **Acción:** Crear `UseAbilityAction` (parecido a `PlayTrainerAction` o `AttackAction`).
-- **Resolver:** Diseñar `AbilityEffectResolver` en `GameFacade` que mapee el ID de la habilidad a un efecto concreto sobre la mesa (ej: *Deluge* de Blastoise para adjuntar aguas de la mano).
+### TAREA A: Habilidades (Abilities) ✅ COMPLETADA
+El modelo y la resolución de habilidades ya están implementados.
 
-### TAREA B: Acciones Interactivas y Prompts al Jugador
-Ciertas cartas (ej: *Switch* u otras trainers) requieren que el jugador "elija" un Pokémon de la banca.
-- El Engine actual tiene soporte básico, pero en el modo asíncrono vía WebSocket, necesitamos orquestar un "Waiting for Player Input". Se recomienda crear un `PendingActionManager` que ponga la partida en pausa temporal hasta que el jugador responda.
+### TAREA B: Acciones Interactivas y Prompts al Jugador ✅ COMPLETADA
+El Engine tiene soporte completo para resoluciones de acciones e interactividad, manejado por la API y validado.
 
-### TAREA C: Debugging Profundo de Partida Completa
-Ahora que el engine compila y el setup + knockout andan perfectos, el siguiente gran paso del equipo es correr un **Integration Test End-to-End**.
-- Construir un script o un `@SpringBootTest` largo que juegue un partido completo (Setup -> Robar -> Bajar Energía -> Atacar -> Matar -> Tomar Premio -> Ganar).
-- Revisar logs y ver cómo se comporta la inyección de la memoria.
+### TAREA C: Debugging Profundo de Partida Completa ✅ COMPLETADA
+El test `XY1EndToEndIntegrationTest` ya se encarga de jugar y validar partidas completas e-2-e en el motor.
+
+### TAREA D: API de Mazos (Deck Builder) y Frontend ⏳ EN PROGRESO
+Actualmente el objetivo es finalizar los endpoints REST para que los jugadores puedan armar sus mazos consumiendo la API externa, y dar inicio al Frontend en Angular 20+.
 
 > [!TIP]
 > **A los desarrolladores o IAs entrantes:**  
