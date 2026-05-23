@@ -6,6 +6,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -16,10 +17,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DatabaseSeeder(final UserRepository userRepository, final MatchRepository matchRepository) {
+    public DatabaseSeeder(final UserRepository userRepository, final MatchRepository matchRepository, final PasswordEncoder passwordEncoder) {
         this.userRepository = Objects.requireNonNull(userRepository);
         this.matchRepository = Objects.requireNonNull(matchRepository);
+        this.passwordEncoder = Objects.requireNonNull(passwordEncoder);
     }
 
     @Override
@@ -74,7 +77,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 userRepository.save(UserEntity.builder()
                         .username(username)
                         .email(email)
-                        .password("dummy")
+                        .password(passwordEncoder.encode("dummy"))
                         .build())
         );
     }
