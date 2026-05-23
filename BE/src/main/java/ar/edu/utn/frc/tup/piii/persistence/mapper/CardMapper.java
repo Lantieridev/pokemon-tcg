@@ -33,6 +33,7 @@ public final class CardMapper {
     private static final Map<String, PokemonType> TYPE_BY_NAME;
     private static final Map<String, TrainerType> TRAINER_TYPE_BY_SUBTYPE;
     private static final Map<String, EvolutionStage> EVOLUTION_STAGE_BY_SUBTYPE;
+    private static final Map<String, AbilityEffectId> ABILITY_EFFECT_ID_BY_NAME;
 
     static {
         final Map<String, PokemonType> types = new HashMap<>();
@@ -61,6 +62,14 @@ public final class CardMapper {
         es.put("Stage 1", EvolutionStage.STAGE_1);
         es.put("Basic",   EvolutionStage.BASIC);
         EVOLUTION_STAGE_BY_SUBTYPE = Collections.unmodifiableMap(es);
+
+        final Map<String, AbilityEffectId> ab = new HashMap<>();
+        ab.put("Fairy Transfer", AbilityEffectId.FAIRY_TRANSFER);
+        ab.put("Sweet Veil",     AbilityEffectId.SWEET_VEIL);
+        ab.put("Mystical Fire",  AbilityEffectId.MYSTICAL_FIRE);
+        ab.put("Magnetic Draw",  AbilityEffectId.MAGNETIC_DRAW);
+        ab.put("Safeguard",      AbilityEffectId.SAFEGUARD);
+        ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 
     private final ObjectMapper objectMapper;
@@ -106,7 +115,7 @@ public final class CardMapper {
         final PokemonType weaknessType  = weaknessesRaw.isEmpty()  ? null : parseType((String) weaknessesRaw.get(0).get("type"));
         final PokemonType resistType    = resistancesRaw.isEmpty() ? null : parseType((String) resistancesRaw.get(0).get("type"));
 
-        final List<Ability> abilities = inferAbilities(entity.getId());
+        final List<Ability> abilities = parseAbilities(entity.getAbilities());
 
         final String subtype = subtype(entity);
         return new PokemonCard.Builder(entity.getId(), entity.getName(),
@@ -202,37 +211,14 @@ public final class CardMapper {
         return EvolutionStage.BASIC;
     }
 
-    private List<Ability> inferAbilities(final String cardId) {
-        if ("xy1-93".equals(cardId)) { // Aromatisse
-            return List.of(new Ability(
-                    "Fairy Transfer",
-                    "As often as you like during your turn (before your attack), you may move a Fairy Energy attached to 1 of your Pokémon to another of your Pokémon.",
-                    AbilityEffectId.FAIRY_TRANSFER
-            ));
-        }
-        if ("xy1-95".equals(cardId)) { // Slurpuff
-            return List.of(new Ability(
-                    "Sweet Veil",
-                    "Each of your Pokémon that has any Fairy Energy attached to it can't be affected by any Special Conditions.",
-                    AbilityEffectId.SWEET_VEIL
-            ));
-        }
-        if ("xy1-26".equals(cardId)) { // Delphox
-            return List.of(new Ability(
-                    "Mystical Fire",
-                    "Once during your turn (before your attack), you may draw cards until you have 6 cards in your hand.",
-                    AbilityEffectId.MYSTICAL_FIRE
-            ));
-        }
-        if ("xy1-40".equals(cardId)) { // Electrode
-            return List.of(new Ability(
-                    "Magnetic Draw",
-                    "Once during your turn (before your attack), you may draw cards until you have 4 cards in your hand.",
-                    AbilityEffectId.MAGNETIC_DRAW
-            ));
-        }
-        // Add safeguard if needed later, e.g. for Suicune PLB or Sigilyph LTR
-        return List.of();
+    private List<Ability> parseAbilities(final Object rawAbilities) {
+        final List<Map<String, Object>> abilitiesRaw = toListOfMaps(rawAbilities);
+        return abilitiesRaw.stream().map(raw -> {
+            final String name = String.valueOf(raw.getOrDefault("name", ""));
+            final String text = String.valueOf(raw.getOrDefault("text", ""));
+            final AbilityEffectId effectId = ABILITY_EFFECT_ID_BY_NAME.getOrDefault(name, AbilityEffectId.NONE);
+            return new Ability(name, text, effectId);
+        }).toList();
     }
 
     private PokemonType inferPokemonType(final List<Attack> attacks) {
