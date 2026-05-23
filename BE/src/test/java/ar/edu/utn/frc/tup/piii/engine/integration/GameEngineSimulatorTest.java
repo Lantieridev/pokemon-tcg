@@ -45,6 +45,7 @@ public class GameEngineSimulatorTest {
     private FakeDeckStateProvider deckProvider;
     private FakeBenchStateProvider benchProvider;
     private FakeBattlefieldStateProvider battlefieldProvider;
+    private ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider handProvider;
 
     private List<VictoryResult> victories;
     private List<BattlePokemonState> knockouts;
@@ -61,6 +62,7 @@ public class GameEngineSimulatorTest {
         deckProvider = new FakeDeckStateProvider();
         benchProvider = new FakeBenchStateProvider();
         battlefieldProvider = new FakeBattlefieldStateProvider(p0Active, p1Active);
+        handProvider = new ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider();
 
         turnManager = new TurnManager();
         statusEffectManager = new StatusEffectManager(() -> true);
@@ -77,7 +79,7 @@ public class GameEngineSimulatorTest {
 
         PokemonTurnInPlayProvider turnInPlayProvider = p -> 1; // dummy 1 turn in play
 
-        ruleValidator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider);
+        ruleValidator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, handProvider);
     }
 
     @Test

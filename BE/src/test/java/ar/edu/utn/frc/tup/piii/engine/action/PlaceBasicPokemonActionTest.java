@@ -24,6 +24,7 @@ class PlaceBasicPokemonActionTest {
     private StatusEffectManager statusEffectManager;
     private FakePokemonTurnInPlayProvider turnInPlayProvider;
     private FakeBenchStateProvider benchProvider;
+    private ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider handProvider;
     private RuleValidator validator;
 
     @BeforeEach
@@ -32,13 +33,17 @@ class PlaceBasicPokemonActionTest {
         statusEffectManager = Mockito.mock(StatusEffectManager.class);
         turnInPlayProvider = new FakePokemonTurnInPlayProvider();
         benchProvider = new FakeBenchStateProvider();
-        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider);
+        handProvider = new ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider();
+        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, handProvider);
     }
 
     @Test
     void shouldReturnValidWhenPlaceBasicPokemonActionInMainPhase() {
         MainPhase mainPhase = new MainPhase();
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        benchProvider.set(0, 0);
+        handProvider.addCard(0, new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("pikachu-xy1-42", "Pikachu", 60, ar.edu.utn.frc.tup.piii.engine.model.PokemonType.LIGHTNING).evolutionStage(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC).build());
 
         ValidationResult result = validator.validate(new PlaceBasicPokemonAction("pikachu-xy1-42"));
 

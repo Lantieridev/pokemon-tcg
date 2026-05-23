@@ -10,7 +10,9 @@ import ar.edu.utn.frc.tup.piii.engine.model.Hand;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -27,6 +29,14 @@ public final class PlayerRuntime {
     private final StatusEffectManager statusEffectManager;
     private BattlePokemonState activePokemon;
     private final List<Card> prizePile;
+
+    /**
+     * Tracks how many full turns each Pokémon has been in play.
+     * Keyed by Pokémon identity (object reference). A value of 0 means the Pokémon
+     * entered play this turn and cannot yet evolve. Incremented by TurnInPlayTracker
+     * at the end of each full turn. FR-010.
+     */
+    private final Map<BattlePokemonState, Integer> turnsInPlay = new HashMap<>();
 
     /**
      * Full constructor including prize pile.
@@ -155,5 +165,62 @@ public final class PlayerRuntime {
      */
     public void addPrizes(final List<Card> prizes) {
         prizePile.addAll(Objects.requireNonNull(prizes, "prizes must not be null"));
+    }
+
+    // -------------------------------------------------------------------------
+    // turnsInPlay tracking (FR-010 — evolution restriction)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Records that a Pokémon has just entered play (active slot or bench).
+     * Sets its turns-in-play counter to 0, preventing immediate evolution.
+     *
+     * @param pokemon the Pokémon that entered play (never null)
+     */
+    public void recordPokemonEntered(final BattlePokemonState pokemon) {
+        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        turnsInPlay.put(pokemon, 0);
+    }
+
+    /**
+     * Increments the turns-in-play counter for every Pokémon currently tracked.
+     * Called by {@code TurnInPlayTracker} at the end of this player's full turn.
+     */
+    public void incrementAllTurnsInPlay() {
+        turnsInPlay.replaceAll((pokemon, turns) -> turns + 1);
+    }
+
+    /**
+     * Returns the number of full turns the given Pokémon has been in play.
+     * Returns 0 if the Pokémon entered play this turn or is not tracked.
+     *
+     * @param pokemon the Pokémon to look up (never null)
+     * @return turns in play (&gt;= 0)
+     */
+    public int getTurnsInPlay(final BattlePokemonState pokemon) {
+        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        return turnsInPlay.getOrDefault(pokemon, 0);
+    }
+
+    /**
+     * Returns true if this player has the given Pokémon registered in their
+     * turns-in-play map (i.e. the Pokémon is or was in play for this player).
+     *
+     * @param pokemon the Pokémon to check (never null)
+     * @return true if tracked
+     */
+    public boolean hasPokemonInPlay(final BattlePokemonState pokemon) {
+        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        return turnsInPlay.containsKey(pokemon);
+    }
+
+    /**
+     * Removes a Pokémon from the turns-in-play map (e.g. after KO or discard).
+     *
+     * @param pokemon the Pokémon to remove (never null)
+     */
+    public void removePokemonFromPlay(final BattlePokemonState pokemon) {
+        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        turnsInPlay.remove(pokemon);
     }
 }

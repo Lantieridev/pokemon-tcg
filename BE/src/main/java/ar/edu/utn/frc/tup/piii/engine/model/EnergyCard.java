@@ -44,4 +44,8 @@ public final class EnergyCard implements Card {
     public boolean isBasic() {
         return basic;
     }
+
+    public boolean isSpecial() {
+        return !basic;
+    }
 }

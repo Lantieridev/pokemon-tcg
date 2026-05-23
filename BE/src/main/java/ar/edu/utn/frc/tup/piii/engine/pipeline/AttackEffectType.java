@@ -14,5 +14,23 @@ public enum AttackEffectType {
     HEAL_SELF,
     SELF_DAMAGE,
     DISCARD_ENERGY,
-    COIN_FLIP_EXTRA_DAMAGE
+    COIN_FLIP_EXTRA_DAMAGE,
+    /**
+     * Applies damage to each of the opponent's Benched Pokémon.
+     * Weakness and Resistance do not apply to Benched Pokémon (§3 rulebook).
+     * Example: Xerneas-EX "Break Through" (xy1-97) — {@code "bench_damage:20"}.
+     */
+    BENCH_DAMAGE,
+    /**
+     * Moves energy from the attacker to one of its Benched Pokémon.
+     * Example: Yveltal-EX "Y Cyclone" (xy1-79) — {@code "move_energy"}.
+     * FR-TODO: requires full runtime access; not yet implemented.
+     */
+    MOVE_ENERGY,
+    /**
+     * Forces the opponent to switch their Active Pokémon with a Benched one.
+     * Example: Blastoise-EX "Rapid Spin" (xy1-29) — {@code "force_switch"}.
+     * FR-TODO: requires full runtime access; not yet implemented.
+     */
+    FORCE_SWITCH
 }

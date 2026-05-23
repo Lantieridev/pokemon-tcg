@@ -163,7 +163,7 @@ class InPlayPokemonTest {
     @Test
     void setToolAttachedShouldPersist() {
         final InPlayPokemon p = new InPlayPokemon(pikachu());
-        p.setToolAttached(true);
+        p.attachTool(new TrainerCard.Builder("tool", "tool", TrainerType.POKEMON_TOOL).build());
         assertTrue(p.hasToolAttached());
     }
 

@@ -1,5 +1,7 @@
 package ar.edu.utn.frc.tup.piii.persistence.mapper;
 
+import ar.edu.utn.frc.tup.piii.engine.model.Ability;
+import ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
@@ -103,6 +105,8 @@ public final class CardMapper {
         final PokemonType weaknessType  = weaknessesRaw.isEmpty()  ? null : parseType((String) weaknessesRaw.get(0).get("type"));
         final PokemonType resistType    = resistancesRaw.isEmpty() ? null : parseType((String) resistancesRaw.get(0).get("type"));
 
+        final List<Ability> abilities = inferAbilities(entity.getId());
+
         final String subtype = subtype(entity);
         return new PokemonCard.Builder(entity.getId(), entity.getName(),
                 entity.getHp() != null ? entity.getHp() : 0, pokemonType)
@@ -111,6 +115,7 @@ public final class CardMapper {
                 .retreatCost(retreatRaw.size())
                 .ex(subtype.contains("EX"))
                 .evolutionStage(parseEvolutionStage(subtype))
+                .abilities(abilities)
                 .attacks(attacks)
                 .build();
     }
@@ -182,6 +187,25 @@ public final class CardMapper {
             }
         }
         return EvolutionStage.BASIC;
+    }
+
+    private List<Ability> inferAbilities(final String cardId) {
+        if ("xy1-93".equals(cardId)) { // Aromatisse
+            return List.of(new Ability(
+                    "Fairy Transfer",
+                    "As often as you like during your turn (before your attack), you may move a Fairy Energy attached to 1 of your Pokémon to another of your Pokémon.",
+                    AbilityEffectId.FAIRY_TRANSFER
+            ));
+        }
+        if ("xy1-95".equals(cardId)) { // Slurpuff
+            return List.of(new Ability(
+                    "Sweet Veil",
+                    "Each of your Pokémon that has any Fairy Energy attached to it can't be affected by any Special Conditions.",
+                    AbilityEffectId.SWEET_VEIL
+            ));
+        }
+        // Add safeguard if needed later, e.g. for Suicune PLB or Sigilyph LTR
+        return List.of();
     }
 
     private PokemonType inferPokemonType(final List<Attack> attacks) {

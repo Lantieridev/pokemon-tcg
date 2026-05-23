@@ -38,11 +38,29 @@ public final class DamageCalculator {
      * @throws NullPointerException if {@code ctx} is null
      */
     public DamageResult calculate(final DamageContext ctx) {
+        return calculate(ctx, false);
+    }
+
+    /**
+     * Calculates the damage and counter count for the given context, with optional
+     * weakness suppression for Stadium effects such as Shadow Circle (xy1-126).
+     *
+     * <p>When {@code suppressWeakness} is {@code true}, step 3 of the §3 formula is skipped:
+     * the defender's weakness type is not applied even if it matches the attacker's type.</p>
+     *
+     * @param ctx              the damage context (must not be null)
+     * @param suppressWeakness {@code true} to skip the Weakness ×2 step
+     * @return the final damage result
+     * @throws NullPointerException if {@code ctx} is null
+     */
+    public DamageResult calculate(final DamageContext ctx, final boolean suppressWeakness) {
         Objects.requireNonNull(ctx, "DamageContext must not be null");
 
         int dmg = ctx.attack().baseDamage();
         dmg = applyAttackerModifiers(dmg, ctx.attackerModifiers());
-        dmg = applyWeakness(dmg, ctx);
+        if (!suppressWeakness) {
+            dmg = applyWeakness(dmg, ctx);
+        }
         dmg = applyResistance(dmg, ctx);
         dmg = applyDefenderModifiers(dmg, ctx.defenderModifiers());
         int floored = Math.max(dmg, MINIMUM_DAMAGE);

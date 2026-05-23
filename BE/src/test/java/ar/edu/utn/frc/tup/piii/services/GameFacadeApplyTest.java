@@ -18,6 +18,8 @@ import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
@@ -245,6 +247,59 @@ class GameFacadeApplyTest {
         facade.apply(session, new PlayTrainerAction(TrainerType.STADIUM, null, "xy1-117"), turnManager);
 
         assertTrue(turnManager.requireMainPhase().isStadiumPlayed(), "Stadium play should be recorded in MainPhase");
+    }
+
+    // --- PlayTrainerAction: RED_CARD ---
+
+    @Test
+    void shouldShuffleOpponentHandIntoDeckAndDrawFourWhenRedCardPlayed() {
+        // Opponent (Player 1) has 3 cards in hand; deck has 1 card (from setUp)
+        // Total after shuffle: 1 + 3 = 4 → draw 4 → hand1 = 4, deck1 = 0
+        hand1.addCard(new EnergyCard("h1-1", "Water Energy", PokemonType.WATER, true));
+        hand1.addCard(new EnergyCard("h1-2", "Water Energy", PokemonType.WATER, true));
+        hand1.addCard(new EnergyCard("h1-3", "Water Energy", PokemonType.WATER, true));
+
+        final TrainerCard redCard = new TrainerCard.Builder("xy1-124", "Red Card", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.RED_CARD)
+                .build();
+        hand0.addCard(redCard);
+
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, null, "xy1-124"));
+
+        assertEquals(4, hand1.size(), "Opponent must draw exactly 4 cards after Red Card");
+        // deck1 should be empty (1 original + 3 hand - 4 drawn = 0)
+        assertEquals(0, runtime1.getDeck().size(), "Opponent's deck exhausted after draw");
+    }
+
+    @Test
+    void shouldDiscardOneEnergyFromOpponentActiveWhenTeamFlareGruntPlayed() {
+        // Attach 2 energies to opponent's active Pokémon
+        active1.attachEnergy(new EnergyCard("e-op1", "Water Energy", PokemonType.WATER, true));
+        active1.attachEnergy(new EnergyCard("e-op2", "Water Energy", PokemonType.WATER, true));
+
+        final TrainerCard grunt = new TrainerCard.Builder("xy1-129", "Team Flare Grunt", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.TEAM_FLARE_GRUNT)
+                .build();
+        hand0.addCard(grunt);
+
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, null, "xy1-129"));
+
+        assertEquals(1, active1.getAttachedEnergies().size(),
+                "Team Flare Grunt must remove exactly 1 energy from opponent's Active");
+    }
+
+    @Test
+    void shouldNotRemoveEnergyWhenTeamFlareGruntPlayedAndOpponentHasNoEnergy() {
+        // active1 has no energies attached by default
+        final TrainerCard grunt = new TrainerCard.Builder("xy1-129", "Team Flare Grunt", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.TEAM_FLARE_GRUNT)
+                .build();
+        hand0.addCard(grunt);
+
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, null, "xy1-129"));
+
+        assertEquals(0, active1.getAttachedEnergies().size(),
+                "No energy to discard — active should remain at 0");
     }
 
     // --- helpers ---

@@ -57,6 +57,10 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         defender.getDiscardPile().add(knocked.getBaseCard());
         knocked.getUnderlyingCards().forEach(defender.getDiscardPile()::add);
         knocked.getAttachedEnergyCards().forEach(defender.getDiscardPile()::add);
+        knocked.getAttachedTool().ifPresent(tool -> {
+            defender.getDiscardPile().add(tool);
+            knocked.detachTool();
+        });
 
         // Remove from field: active slot or bench
         if (knocked.equals(defender.getActivePokemon())) {
@@ -69,6 +73,9 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
 
         // Award prizes to the attacker (taken from their prize pile into hand)
         attacker.takePrizes(prizesToTake);
+
+        // Remove from turnsInPlay tracking — this Pokémon is no longer in play
+        defender.removePokemonFromPlay(knocked);
 
         // Notify downstream handler (VictoryConditionChecker)
         downstream.onKnockout(knocked, prizesToTake);

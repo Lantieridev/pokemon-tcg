@@ -1,12 +1,14 @@
 package ar.edu.utn.frc.tup.piii.engine.pipeline;
 
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
+import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageModifier;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageResult;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,15 +28,18 @@ public final class AttackContext {
     // --- Immutable inputs ---
     private final BattlePokemonState attacker;
     private final BattlePokemonState defender;
+    private final List<BattlePokemonState> defenderBench;
     private final Attack attack;
     private final String effectText;
     private final StatusEffectManager attackerStatusManager;
     private final StatusEffectManager defenderStatusManager;
     private final KnockoutHandler knockoutHandler;
     private final CoinFlipper coinFlipper;
+    private final StadiumStateProvider stadiumProvider;
 
     // --- Mutable pipeline state ---
     private boolean attackBlocked;
+    private boolean weaknessSuppressed;
     private final List<DamageModifier> attackerModifiers = new ArrayList<>();
     private final List<DamageModifier> defenderModifiers = new ArrayList<>();
     private DamageResult damageResult;
@@ -42,12 +47,14 @@ public final class AttackContext {
     private AttackContext(final Builder b) {
         this.attacker = b.attacker;
         this.defender = b.defender;
+        this.defenderBench = List.copyOf(b.defenderBench);
         this.attack = b.attack;
         this.effectText = b.effectText;
         this.attackerStatusManager = b.attackerStatusManager;
         this.defenderStatusManager = b.defenderStatusManager;
         this.knockoutHandler = b.knockoutHandler;
         this.coinFlipper = b.coinFlipper;
+        this.stadiumProvider = b.stadiumProvider;
     }
 
     // --- Immutable getters ---
@@ -58,6 +65,16 @@ public final class AttackContext {
 
     public BattlePokemonState getDefender() {
         return defender;
+    }
+
+    /**
+     * Returns the list of Pokémon on the defender's bench (may be empty if bench access
+     * was not provided when building the context).
+     *
+     * @return defender's benched Pokémon (never null; may be empty)
+     */
+    public List<BattlePokemonState> getDefenderBench() {
+        return defenderBench;
     }
 
     public Attack getAttack() {
@@ -84,6 +101,16 @@ public final class AttackContext {
         return coinFlipper;
     }
 
+    /**
+     * Returns the currently active Stadium card, or {@code null} if no Stadium is in play
+     * or no provider was set when building the context.
+     *
+     * @return active Stadium, or null
+     */
+    public TrainerCard getActiveStadium() {
+        return stadiumProvider != null ? stadiumProvider.getActiveStadium() : null;
+    }
+
     // --- Mutable state ---
 
     public boolean isAttackBlocked() {
@@ -92,6 +119,26 @@ public final class AttackContext {
 
     public void setAttackBlocked(final boolean blocked) {
         this.attackBlocked = blocked;
+    }
+
+    /**
+     * Returns {@code true} if a Stadium effect (e.g. Shadow Circle) has suppressed
+     * the defender's Weakness for this attack.
+     *
+     * @return true if weakness should be ignored in damage calculation
+     */
+    public boolean isWeaknessSuppressed() {
+        return weaknessSuppressed;
+    }
+
+    /**
+     * Marks the defender's Weakness as suppressed for this attack.
+     * Invoked by {@code StadiumEffectStep} when Shadow Circle is active.
+     *
+     * @param suppressed true to suppress weakness
+     */
+    public void setWeaknessSuppressed(final boolean suppressed) {
+        this.weaknessSuppressed = suppressed;
     }
 
     public void addAttackerModifier(final DamageModifier modifier) {
@@ -130,6 +177,8 @@ public final class AttackContext {
         private final KnockoutHandler knockoutHandler;
         private final CoinFlipper coinFlipper;
         private String effectText = "";
+        private List<BattlePokemonState> defenderBench = List.of();
+        private StadiumStateProvider stadiumProvider = () -> null;
 
         /**
          * @param attacker              the attacking Pokémon (never null)
@@ -168,6 +217,30 @@ public final class AttackContext {
          */
         public Builder effectText(final String effectText) {
             this.effectText = effectText != null ? effectText : "";
+            return this;
+        }
+
+        /**
+         * Optional list of Pokémon on the defender's bench (needed for bench-damage effects).
+         * Defaults to an empty list.
+         *
+         * @param bench defender's benched Pokémon (null treated as empty)
+         * @return this builder
+         */
+        public Builder defenderBench(final List<BattlePokemonState> bench) {
+            this.defenderBench = bench != null ? bench : List.of();
+            return this;
+        }
+
+        /**
+         * Optional provider for the currently active Stadium card.
+         * Defaults to a no-op provider (returns null → no stadium).
+         *
+         * @param provider the stadium provider (null treated as no-op)
+         * @return this builder
+         */
+        public Builder stadiumProvider(final StadiumStateProvider provider) {
+            this.stadiumProvider = provider != null ? provider : () -> null;
             return this;
         }
 

@@ -50,9 +50,9 @@ class DrawPhaseExecutorTest {
 
         turnManager.startTurn(STARTING_PLAYER);
 
-        assertEquals(1, runtimeFor(STARTING_PLAYER).getHand().size(),
-                "Starting player must draw on their first turn (XY1)");
-        assertEquals(4, runtimeFor(STARTING_PLAYER).getDeck().size());
+        assertEquals(0, runtimeFor(STARTING_PLAYER).getHand().size(),
+                "Starting player must NOT draw on their first turn (XY1)");
+        assertEquals(5, runtimeFor(STARTING_PLAYER).getDeck().size());
     }
 
     @Test
@@ -70,22 +70,20 @@ class DrawPhaseExecutorTest {
     void shouldDrawCardForStartingPlayerOnSecondTurn() {
         registerExecutor(runtimes, turnManager);
 
-        // Player 0 (starting) first turn — draws
+        // Player 0 (starting) first turn — DOES NOT draw
         turnManager.startTurn(STARTING_PLAYER);
-        assertEquals(1, runtimeFor(STARTING_PLAYER).getHand().size());
-        turnManager.endDraw();
+        assertEquals(0, runtimeFor(STARTING_PLAYER).getHand().size());
         turnManager.passTurn();
         // endBetweenTurns auto-starts Player 1's turn → player 1 draws
         turnManager.endBetweenTurns();
         assertEquals(1, runtimeFor(OTHER_PLAYER).getHand().size());
 
         // Advance player 1's turn
-        turnManager.endDraw();
         turnManager.passTurn();
         // endBetweenTurns auto-starts Player 0's second turn → player 0 draws
         turnManager.endBetweenTurns();
 
-        assertEquals(2, runtimeFor(STARTING_PLAYER).getHand().size(),
+        assertEquals(1, runtimeFor(STARTING_PLAYER).getHand().size(),
                 "Starting player draws 1 on their second turn");
     }
 
@@ -118,13 +116,11 @@ class DrawPhaseExecutorTest {
         turnManager.startTurn(OTHER_PLAYER);
         assertEquals(1, runtimeFor(OTHER_PLAYER).getHand().size());
 
-        turnManager.endDraw();
         turnManager.passTurn();
-        // endBetweenTurns starts player 0's first turn → player 0 draws
+        // endBetweenTurns starts player 0's first turn → player 0 DOES NOT draw
         turnManager.endBetweenTurns();
-        assertEquals(1, runtimeFor(STARTING_PLAYER).getHand().size());
+        assertEquals(0, runtimeFor(STARTING_PLAYER).getHand().size());
 
-        turnManager.endDraw();
         turnManager.passTurn();
         // endBetweenTurns starts player 1's second turn → player 1 draws again
         turnManager.endBetweenTurns();

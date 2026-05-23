@@ -204,6 +204,63 @@ class AttackEffectResolverTest {
         assertEquals(defenderCountersBefore, defender.getDamageCounters());
     }
 
+    // --- apply: bench_damage (EX attacks) ---
+
+    @Test
+    void shouldResolveBenchDamageType() {
+        assertEquals(AttackEffectType.BENCH_DAMAGE, resolver.resolveType("bench_damage:20"));
+    }
+
+    @Test
+    void shouldApplyDamageToEachBenchedPokemon() {
+        final FakeBattlePokemonState benched1 =
+                new FakeBattlePokemonState(60, PokemonType.WATER, null, null, false);
+        final FakeBattlePokemonState benched2 =
+                new FakeBattlePokemonState(60, PokemonType.WATER, null, null, false);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("bench_damage:20")
+                .defenderBench(List.of(benched1, benched2))
+                .build();
+
+        resolver.apply(ctx);
+
+        // 20 damage = 2 counters each
+        assertEquals(2, benched1.getDamageCounters(), "benched1 should receive 2 counters (20 damage)");
+        assertEquals(2, benched2.getDamageCounters(), "benched2 should receive 2 counters (20 damage)");
+    }
+
+    @Test
+    void shouldBeNoOpForBenchDamageWhenNoBenchedPokemon() {
+        // Empty bench — should not throw
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("bench_damage:20")
+                .defenderBench(List.of())
+                .build();
+
+        resolver.apply(ctx); // must not throw
+
+        assertEquals(0, defender.getDamageCounters(), "active defender should not be affected by bench_damage");
+    }
+
+    @Test
+    void shouldResolveMoveEnergyTypeAndBeNoOp() {
+        assertEquals(AttackEffectType.MOVE_ENERGY, resolver.resolveType("move_energy"));
+        final AttackContext ctx = buildCtx("move_energy");
+        resolver.apply(ctx); // FR-TODO: no-op, must not throw
+    }
+
+    @Test
+    void shouldResolveForceSwitchTypeAndBeNoOp() {
+        assertEquals(AttackEffectType.FORCE_SWITCH, resolver.resolveType("force_switch"));
+        final AttackContext ctx = buildCtx("force_switch");
+        resolver.apply(ctx); // FR-TODO: no-op, must not throw
+    }
+
     // --- helpers ---
 
     private AttackContext buildCtx(final String effectText) {

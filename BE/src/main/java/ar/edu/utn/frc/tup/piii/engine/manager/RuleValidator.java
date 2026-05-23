@@ -1,7 +1,10 @@
 package ar.edu.utn.frc.tup.piii.engine.manager;
 
 import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
@@ -13,6 +16,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
+import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
@@ -50,30 +54,58 @@ public final class RuleValidator {
     private static final String CANNOT_ATTACK_FIRST_TURN = "cannot_attack_first_turn";
     private static final int MIN_TURNS_TO_EVOLVE = 1;
     private static final int MAX_ENERGY_PER_TURN = 1;
+    /** Card ID of Fairy Garden in the XY1 set. */
+    private static final String FAIRY_GARDEN_ID = "xy1-117";
 
     private final TurnManager turnManager;
     private final List<StatusEffectManager> statusEffectManagers;
     private final PokemonTurnInPlayProvider turnInPlayProvider;
     private final BenchStateProvider benchStateProvider;
+    private final HandStateProvider handStateProvider;
+    /** Optional — null means no Stadium awareness (no effects applied). */
+    private final StadiumStateProvider stadiumProvider;
 
     /**
-     * Multi-player constructor. Accepts one {@link StatusEffectManager} per player so that
-     * the validator always reads the active player's status state.
+     * Full constructor. Accepts one {@link StatusEffectManager} per player and an optional
+     * {@link StadiumStateProvider} for Stadium-dependent rule modifications (e.g. Fairy Garden).
      *
      * @param turnManager          manages turn phases and player state (must not be null)
      * @param statusEffectManagers one SEM per player, indexed by player index (must not be null)
      * @param turnInPlayProvider   reports how many turns a Pokémon has been in play (must not be null)
      * @param benchStateProvider   provides bench size per player (must not be null)
+     * @param handStateProvider    provides read-only access to player's hands (must not be null)
+     * @param stadiumProvider      provides the active Stadium card, or null if not needed
      */
     public RuleValidator(final TurnManager turnManager,
                          final List<StatusEffectManager> statusEffectManagers,
                          final PokemonTurnInPlayProvider turnInPlayProvider,
-                         final BenchStateProvider benchStateProvider) {
+                         final BenchStateProvider benchStateProvider,
+                         final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider,
+                         final StadiumStateProvider stadiumProvider) {
         this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
         this.statusEffectManagers = List.copyOf(
                 Objects.requireNonNull(statusEffectManagers, "statusEffectManagers"));
         this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
         this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
+        this.handStateProvider = Objects.requireNonNull(handStateProvider, "handStateProvider");
+        this.stadiumProvider = stadiumProvider; // nullable — no Stadium awareness if null
+    }
+
+    /**
+     * Multi-player constructor without Stadium awareness (backward-compatible).
+     *
+     * @param turnManager          manages turn phases and player state (must not be null)
+     * @param statusEffectManagers one SEM per player, indexed by player index (must not be null)
+     * @param turnInPlayProvider   reports how many turns a Pokémon has been in play (must not be null)
+     * @param benchStateProvider   provides bench size per player (must not be null)
+     * @param handStateProvider    provides read-only access to player's hands (must not be null)
+     */
+    public RuleValidator(final TurnManager turnManager,
+                         final List<StatusEffectManager> statusEffectManagers,
+                         final PokemonTurnInPlayProvider turnInPlayProvider,
+                         final BenchStateProvider benchStateProvider,
+                         final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider) {
+        this(turnManager, statusEffectManagers, turnInPlayProvider, benchStateProvider, handStateProvider, null);
     }
 
     /**
@@ -83,12 +115,14 @@ public final class RuleValidator {
      * @param statusEffectManager manages active status effects on the current Pokémon (must not be null)
      * @param turnInPlayProvider  reports how many turns a Pokémon has been in play (must not be null)
      * @param benchStateProvider  provides bench size per player (must not be null)
+     * @param handStateProvider   provides read-only access to player's hands (must not be null)
      */
     public RuleValidator(final TurnManager turnManager,
                          final StatusEffectManager statusEffectManager,
                          final PokemonTurnInPlayProvider turnInPlayProvider,
-                         final BenchStateProvider benchStateProvider) {
-        this(turnManager, List.of(statusEffectManager), turnInPlayProvider, benchStateProvider);
+                         final BenchStateProvider benchStateProvider,
+                         final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider) {
+        this(turnManager, List.of(statusEffectManager), turnInPlayProvider, benchStateProvider, handStateProvider, null);
     }
 
     /**
@@ -113,9 +147,10 @@ public final class RuleValidator {
             case PlayTrainerAction a        -> validatePlayTrainer(a);
             case AttachEnergyAction a       -> validateAttachEnergy(a);
             case DeclareAttackAction a      -> validateDeclareAttack(a);
-            case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon();
+            case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon(a);
             case UseAbilityAction a         -> validateUseAbility();
             case EndTurnAction a            -> new ValidationResult.Valid();
+            case PromoteActiveAction a      -> validatePromoteActive(a);
         };
     }
 
@@ -170,27 +205,51 @@ public final class RuleValidator {
         if (mainPhase.isRetreatUsed()) {
             return new ValidationResult.Invalid(RETREAT_ALREADY_USED);
         }
-        int retreatCost = action.active().getRetreatCost();
+
+        // Fairy Garden (xy1-117): if active and Pokémon has ≥1 Fairy energy, retreat is free.
+        final int retreatCost = (isFairyGardenActive() && hasFairyEnergy(action.active()))
+                ? 0
+                : action.active().getRetreatCost();
+
         if (action.active().getAttachedEnergies().size() < retreatCost) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_RETREAT);
         }
-        
+
         java.util.List<Integer> indices = action.energyIndicesToDiscard();
         if (indices == null || indices.size() != retreatCost) {
             return new ValidationResult.Invalid("Must specify exactly " + retreatCost + " energy indices to discard.");
         }
-        
+
         long uniqueIndices = indices.stream().distinct().count();
         if (uniqueIndices != indices.size()) {
             return new ValidationResult.Invalid("Duplicate energy indices are not allowed.");
         }
-        
+
         int attachedSize = action.active().getAttachedEnergies().size();
         if (indices.stream().anyMatch(i -> i < 0 || i >= attachedSize)) {
             return new ValidationResult.Invalid("Invalid energy index specified.");
         }
-        
+
         return new ValidationResult.Valid();
+    }
+
+    /**
+     * Returns {@code true} if Fairy Garden (xy1-117) is the currently active Stadium.
+     */
+    private boolean isFairyGardenActive() {
+        if (stadiumProvider == null) {
+            return false;
+        }
+        final TrainerCard stadium = stadiumProvider.getActiveStadium();
+        return stadium != null && FAIRY_GARDEN_ID.equals(stadium.getCardId());
+    }
+
+    /**
+     * Returns {@code true} if the given Pokémon has at least one FAIRY energy attached.
+     * Required by Fairy Garden's free-retreat condition.
+     */
+    private boolean hasFairyEnergy(final BattlePokemonState pokemon) {
+        return pokemon.getAttachedEnergies().contains(PokemonType.FAIRY);
     }
 
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action) {
@@ -231,6 +290,9 @@ public final class RuleValidator {
         if (action.target() == null) {
             return new ValidationResult.Invalid("target_pokemon_required");
         }
+        if (action.energyType() == null) {
+            return new ValidationResult.Invalid("energy_type_required");
+        }
         MainPhase mainPhase = turnManager.requireMainPhase();
         if (mainPhase.getEnergyAttached() >= MAX_ENERGY_PER_TURN) {
             return new ValidationResult.Invalid(ENERGY_ALREADY_ATTACHED);
@@ -252,13 +314,41 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validatePlaceBasicPokemon() {
+    private ValidationResult validatePlaceBasicPokemon(final PlaceBasicPokemonAction action) {
         turnManager.requireMainPhase();
+        
+        final int playerIndex = turnManager.activePlayerIndex();
+        final ar.edu.utn.frc.tup.piii.engine.model.Card card = handStateProvider.getCardInHand(playerIndex, action.cardId());
+        
+        if (card == null) {
+            return new ValidationResult.Invalid("card_not_in_hand");
+        }
+        if (!card.isBasicPokemon()) {
+            return new ValidationResult.Invalid("card_not_basic_pokemon");
+        }
+        if (benchStateProvider.getBenchSize(playerIndex) >= 5) {
+            return new ValidationResult.Invalid("bench_full");
+        }
         return new ValidationResult.Valid();
     }
 
     private ValidationResult validateUseAbility() {
         turnManager.requireMainPhase();
+        return new ValidationResult.Valid();
+    }
+
+    /**
+     * Validates a PROMOTE_ACTIVE action. Checks that the bench index is non-negative.
+     * The service layer is responsible for verifying that promotion is actually pending
+     * and that the correct player is promoting.
+     *
+     * @param action the promote action (never null)
+     * @return Valid if the bench index is ≥ 0; Invalid otherwise
+     */
+    private ValidationResult validatePromoteActive(final PromoteActiveAction action) {
+        if (action.benchIndex() < 0) {
+            return new ValidationResult.Invalid("invalid_bench_index");
+        }
         return new ValidationResult.Valid();
     }
 

@@ -3,15 +3,18 @@ package ar.edu.utn.frc.tup.piii.engine.session;
 import ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PrizeStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayList;
 
 /**
  * Runtime snapshot of the match board implementing all engine provider interfaces.
@@ -21,8 +24,10 @@ public final class MatchBoard
         implements BattlefieldStateProvider,
                    BenchStateProvider,
                    DeckStateProvider,
+                   HandStateProvider,
                    PrizeStateProvider,
-                   PokemonTurnInPlayProvider {
+                   PokemonTurnInPlayProvider,
+                   StadiumStateProvider {
 
     private static final int REQUIRED_PLAYER_COUNT = 2;
 
@@ -31,8 +36,9 @@ public final class MatchBoard
 
     /**
      * Live runtime references; non-null once {@link #bindRuntimes(List)} is called.
-     * When bound, mutable data (prize count, deck size) is read from runtimes rather
-     * than from the immutable {@link PlayerState} snapshots.
+     * When bound, ALL mutable data (active Pokémon, bench, hand, attacks, prize count,
+     * deck size, turns-in-play) is read from runtimes rather than from the immutable
+     * {@link PlayerState} snapshots.
      */
     private List<PlayerRuntime> boundRuntimes;
 
@@ -70,16 +76,25 @@ public final class MatchBoard
 
     @Override
     public BattlePokemonState getActivePokemon(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getActivePokemon();
+        }
         return players.get(playerIndex).getActivePokemon();
     }
 
     @Override
     public int getBenchSize(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getBench().size();
+        }
         return players.get(playerIndex).getBench().size();
     }
 
     @Override
     public List<BattlePokemonState> getBenchedPokemon(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getBench().getAll();
+        }
         return players.get(playerIndex).getBench();
     }
 
@@ -102,6 +117,14 @@ public final class MatchBoard
     @Override
     public int getTurnsInPlay(final BattlePokemonState pokemon) {
         Objects.requireNonNull(pokemon, "pokemon must not be null");
+        if (boundRuntimes != null) {
+            for (final PlayerRuntime runtime : boundRuntimes) {
+                if (runtime.hasPokemonInPlay(pokemon)) {
+                    return runtime.getTurnsInPlay(pokemon);
+                }
+            }
+            return 0;
+        }
         for (final PlayerState player : players) {
             final int turns = player.getTurnsInPlay(pokemon);
             if (turns > 0) {
@@ -112,13 +135,30 @@ public final class MatchBoard
     }
 
     /**
-     * Returns the hand (card ID list) for the specified player.
+     * Returns the hand as a list of card IDs for the specified player.
+     * Reads from live runtimes when bound (after match setup).
      *
      * @param playerIndex 0 or 1
-     * @return hand list (never null)
+     * @return hand card IDs (never null)
      */
     public List<String> getHandOf(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getHand().getCards().stream()
+                    .map(Card::getCardId)
+                    .toList();
+        }
         return players.get(playerIndex).getHand();
+    }
+
+    @Override
+    public Card getCardInHand(final int playerIndex, final String cardId) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getHand().getCards().stream()
+                    .filter(c -> c.getCardId().equals(cardId))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null; // The snapshot (PlayerState) doesn't have the full Card objects, only IDs.
     }
 
     /**
@@ -133,11 +173,19 @@ public final class MatchBoard
 
     /**
      * Returns the attacks available to the active Pokémon of the specified player.
+     * Reads from the live active Pokémon when runtimes are bound (reflects post-evolution state).
      *
      * @param playerIndex 0 or 1
      * @return attacks list (never null; may be empty)
      */
     public List<Attack> getActiveAttacks(final int playerIndex) {
+        if (boundRuntimes != null) {
+            final BattlePokemonState active = boundRuntimes.get(playerIndex).getActivePokemon();
+            if (active != null) {
+                return active.getAttacks();
+            }
+            return List.of();
+        }
         return players.get(playerIndex).getActiveAttacks();
     }
 

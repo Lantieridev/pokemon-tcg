@@ -72,6 +72,19 @@ public final class TurnManager {
     }
 
     /**
+     * Resets all turn-tracking state so that a new game (e.g. Sudden Death) can begin.
+     * Clears the current phase, resets the active player index, and marks both players
+     * as not yet having completed their first turn. Must be called before
+     * {@link #startTurn(int)} when restarting a match from FINISHED state.
+     */
+    public void reset() {
+        this.currentPhase = null;
+        this.activePlayerIndex = UNSTARTED_PLAYER_INDEX;
+        this.firstTurnCompleted[0] = false;
+        this.firstTurnCompleted[1] = false;
+    }
+
+    /**
      * Returns the index of the player who goes first.
      * Used by DrawPhaseExecutor to skip the starting player's first draw.
      *

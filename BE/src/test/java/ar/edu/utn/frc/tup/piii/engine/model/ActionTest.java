@@ -73,7 +73,8 @@ class ActionTest {
             new DeclareAttackAction(pokemon, attack),
             new PlaceBasicPokemonAction("pikachu-xy1-42"),
             new UseAbilityAction(pokemon, "ability-1"),
-            new EndTurnAction()
+            new EndTurnAction(),
+            new PromoteActiveAction(0)
         };
 
         for (Action action : actions) {
@@ -86,8 +87,15 @@ class ActionTest {
                 case PlaceBasicPokemonAction a -> "place";
                 case UseAbilityAction a        -> "ability";
                 case EndTurnAction a           -> "endturn";
+                case PromoteActiveAction a     -> "promote";
             };
             assertNotNull(label);
         }
+    }
+
+    @Test
+    void shouldHaveBenchIndexWhenPromoteActiveActionIsCreated() {
+        final PromoteActiveAction action = new PromoteActiveAction(2);
+        assertEquals(2, action.benchIndex());
     }
 }

@@ -84,6 +84,23 @@ public interface BattlePokemonState extends ActivePokemonState {
     boolean hasToolAttached();
 
     /**
+     * Attaches a Pokémon Tool card to this Pokémon, recording the card reference
+     * so the damage pipeline can read its {@link PokemonToolEffectId}.
+     * Replaces any previously attached tool.
+     *
+     * @param tool the tool card to attach (never null)
+     */
+    void attachTool(TrainerCard tool);
+
+    /**
+     * Returns the Pokémon Tool card currently attached to this Pokémon,
+     * wrapped in an Optional.
+     *
+     * @return an Optional containing the attached tool card, or empty if none
+     */
+    java.util.Optional<TrainerCard> getAttachedTool();
+
+    /**
      * Removes the specified number of energy cards from this Pokémon's attached energies.
      * Any energy type counts toward the cost (as per XY1 retreat rules).
      * If {@code count} is 0, this is a no-op.
@@ -109,11 +126,10 @@ public interface BattlePokemonState extends ActivePokemonState {
     void attachEnergy(EnergyCard energyCard);
 
     /**
-     * Sets whether a Pokémon Tool card is attached.
-     *
-     * @param attached true to mark a tool as attached, false to remove it
+     * Detaches the currently attached Pokémon Tool (e.g. when the Pokémon is KO'd
+     * and the tool has already been moved to the discard pile).
      */
-    void setToolAttached(boolean attached);
+    void detachTool();
 
     /**
      * Returns the list of attacks available to this Pokémon.
@@ -121,6 +137,13 @@ public interface BattlePokemonState extends ActivePokemonState {
      * @return attacks (never null; may be empty)
      */
     List<Attack> getAttacks();
+
+    /**
+     * Returns the list of abilities available to this Pokémon.
+     *
+     * @return abilities (never null; may be empty)
+     */
+    List<Ability> getAbilities();
 
     /**
      * Returns the evolution stage of this Pokémon card.

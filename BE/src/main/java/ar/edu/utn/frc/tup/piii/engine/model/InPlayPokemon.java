@@ -21,7 +21,7 @@ public final class InPlayPokemon implements BattlePokemonState {
     private final List<PokemonCard> underlyingCards = new ArrayList<>();
     private final List<EnergyCard> attachedEnergyCards = new ArrayList<>();
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
-    private boolean toolAttached;
+    private TrainerCard attachedTool;
 
     /**
      * @param card the source card data (never null)
@@ -100,6 +100,11 @@ public final class InPlayPokemon implements BattlePokemonState {
     @Override
     public EvolutionStage getEvolutionStage() {
         return card.getEvolutionStage();
+    }
+
+    @Override
+    public List<Ability> getAbilities() {
+        return card.getAbilities();
     }
 
     @Override
@@ -182,17 +187,36 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     @Override
     public boolean hasToolAttached() {
-        return toolAttached;
+        return attachedTool != null;
     }
 
     /**
-     * Sets whether a Pokémon Tool card is attached. Called by the engine when a Tool is
-     * played or discarded.
+     * Attaches a Pokémon Tool card to this Pokémon. Replaces any previously attached tool.
+     * Callers are responsible for discarding the old tool before calling this method.
      *
-     * @param attached true to mark a tool as attached, false to remove it
+     * @param tool the tool card to attach (never null)
      */
     @Override
-    public void setToolAttached(final boolean attached) {
-        this.toolAttached = attached;
+    public void attachTool(final TrainerCard tool) {
+        this.attachedTool = Objects.requireNonNull(tool, "tool must not be null");
+    }
+
+    /**
+     * Returns the Pokémon Tool card currently attached to this Pokémon, wrapped in an Optional.
+     *
+     * @return an Optional containing the attached tool, or empty if none
+     */
+    @Override
+    public java.util.Optional<TrainerCard> getAttachedTool() {
+        return java.util.Optional.ofNullable(attachedTool);
+    }
+
+    /**
+     * Detaches the currently attached Pokémon Tool (called after it has been moved
+     * to the discard pile by the KO handler).
+     */
+    @Override
+    public void detachTool() {
+        this.attachedTool = null;
     }
 }

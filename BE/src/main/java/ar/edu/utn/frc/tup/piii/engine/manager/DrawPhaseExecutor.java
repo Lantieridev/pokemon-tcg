@@ -65,20 +65,27 @@ public final class DrawPhaseExecutor implements PhaseListener {
     }
 
     private void executeDraw(final int playerIndex) {
-        final boolean isStartingPlayer = turnManager.getStartingPlayerIndex() == playerIndex;
-        final boolean isFirstTurn = turnManager.isFirstTurnOfPlayer(playerIndex);
-
-        // En XY1 §2, el jugador que va primero SÍ roba una carta en su primer turno.
-        // La restricción es que no puede atacar, pero sí puede robar.
-
         final PlayerRuntime runtime = playerRuntimes.get(playerIndex);
 
         if (runtime.getDeck().isEmpty()) {
             final int opponentIndex = 1 - playerIndex;
             victoryHandler.onVictory(new VictoryResult.DeckOutVictory(opponentIndex));
+            // Do NOT advance to MainPhase — the match is over.
             return;
         }
 
-        runtime.getHand().addCard(runtime.getDeck().draw());
+        // XY1 §2 — Excepción: el jugador que empieza NO roba en su primer turno.
+        // Consigna RF-01b: "El jugador que empieza no roba en su primer turno."
+        final boolean isStartingPlayerFirstTurn =
+                turnManager.getStartingPlayerIndex() == playerIndex
+                && turnManager.isFirstTurnOfPlayer(playerIndex);
+
+        if (!isStartingPlayerFirstTurn) {
+            runtime.getHand().addCard(runtime.getDeck().draw());
+        }
+
+        // Advance to MainPhase automatically. TurnManager.fire() uses List.copyOf(),
+        // so this re-entrant call is safe.
+        turnManager.endDraw();
     }
 }

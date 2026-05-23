@@ -62,4 +62,46 @@ public interface TrainerEffect {
             }
         };
     }
+
+    /**
+     * ITEM effect — Roller Skates (xy1-114): flip a coin; if heads, draw 3 cards.
+     *
+     * @param flipper the coin-flip provider (never null)
+     * @return a {@link TrainerEffect} that conditionally draws 3 cards
+     */
+    static TrainerEffect rollerSkates(final CoinFlipper flipper) {
+        return (runtime, target) -> {
+            if (flipper.flip()) {
+                runtime.getHand().addCards(runtime.getDeck().drawMultiple(3));
+            }
+        };
+    }
+
+    /**
+     * SUPPORTER effect — Shauna (xy1-127): shuffle your hand into your deck, then draw 5 cards.
+     *
+     * @return a {@link TrainerEffect} implementing Shauna's shuffle-and-draw effect
+     */
+    static TrainerEffect shauna() {
+        return (runtime, target) -> {
+            runtime.getDeck().addCards(runtime.getHand().removeAll());
+            runtime.getDeck().shuffle();
+            runtime.getHand().addCards(runtime.getDeck().drawMultiple(5));
+        };
+    }
+
+    /**
+     * ITEM effect — Super Potion (xy1-128): heal 60 damage from the targeted Pokémon.
+     * If healing is applied, discard 1 energy attached to that Pokémon.
+     *
+     * @return a {@link TrainerEffect} implementing Super Potion's heal-and-discard effect
+     */
+    static TrainerEffect superPotion() {
+        return (runtime, target) -> {
+            if (target != null && target.getDamageCounters() > 0) {
+                target.heal(60);
+                target.removeEnergies(1);
+            }
+        };
+    }
 }
