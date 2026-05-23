@@ -334,9 +334,6 @@ public final class MatchService {
             lock.lock();
             try {
                 session.finish();
-                persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
-                persistence.saveMatch(session);
-
                 // Determine the winner (the other player)
                 String winnerUsername = null;
                 if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {
@@ -344,6 +341,13 @@ public final class MatchService {
                             ? session.getPlayerIdB()
                             : session.getPlayerIdA();
                 }
+                if (winnerUsername != null) {
+                    session.setWinnerId(winnerUsername);
+                }
+
+                persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
+                persistence.saveMatch(session);
+
                 if (winnerUsername != null) {
                     persistence.declareWinner(matchId, winnerUsername);
                 }

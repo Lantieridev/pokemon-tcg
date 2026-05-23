@@ -205,6 +205,14 @@ public final class MatchCreationService {
             return;
         }
 
+        if (result instanceof VictoryResult.PrizeVictory prize) {
+            session.setWinnerId(session.getPlayerIds().get(prize.winnerPlayerIndex()));
+        } else if (result instanceof VictoryResult.BenchOutVictory bench) {
+            session.setWinnerId(session.getPlayerIds().get(bench.winnerPlayerIndex()));
+        } else if (result instanceof VictoryResult.DeckOutVictory deck) {
+            session.setWinnerId(session.getPlayerIds().get(deck.winnerPlayerIndex()));
+        }
+
         session.finish();
         messaging.convertAndSend(topicA, result);
         messaging.convertAndSend(topicB, result);

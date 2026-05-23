@@ -42,6 +42,7 @@ public class AsyncPersistenceListener {
 
         final UserEntity player1 = getOrCreateUser(session.getPlayerIdA());
         final UserEntity player2 = getOrCreateUser(session.getPlayerIdB());
+        final UserEntity winner = session.getWinnerId() != null ? getOrCreateUser(session.getWinnerId()) : null;
 
         final MatchEntity entity = matchRepository.findById(matchIdNumeric)
                 .orElseGet(() -> MatchEntity.builder().id(matchIdNumeric).build());
@@ -49,6 +50,7 @@ public class AsyncPersistenceListener {
         entity.setStatus(session.getState().name());
         entity.setPlayer1(player1);
         entity.setPlayer2(player2);
+        entity.setWinner(winner);
         entity.setCurrentState(session);
 
         matchRepository.save(entity);
@@ -103,24 +105,4 @@ public class AsyncPersistenceListener {
         });
     }
 
-    @Async
-    @EventListener
-    @Transactional
-    public void onMatchWinner(final MatchWinnerEvent event) {
-        final Long matchIdNumeric = parseOrHashId(event.matchId());
-        final UserEntity winner = getOrCreateUser(event.winnerUsername());
-
-        if (winner == null) {
-            log.warn("Cannot declare winner for match {}: winner user '{}' could not be resolved/created.",
-                    event.matchId(), event.winnerUsername());
-            return;
-        }
-
-        final int updatedRows = matchRepository.updateWinnerIfNull(matchIdNumeric, winner);
-        if (updatedRows == 0) {
-            log.warn("Match winner update query returned 0 rows affected for matchId: {} ({}) and winner: {}. "
-                     + "Either the match does not exist or a winner was already set.",
-                    event.matchId(), matchIdNumeric, event.winnerUsername());
-        }
-    }
 }

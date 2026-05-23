@@ -39,10 +39,10 @@ public class JpaGameStatePersistence implements GameStatePersistence {
     }
 
     @Override
+    @Deprecated
     public void declareWinner(final String matchId, final String winnerUsername) {
-        Objects.requireNonNull(matchId, "matchId must not be null");
-        Objects.requireNonNull(winnerUsername, "winnerUsername must not be null");
-        eventPublisher.publishEvent(new MatchWinnerEvent(matchId, winnerUsername));
+        // Deprecated: Winner persistence has been unified into the saveMatch flow.
+        // This method is now a no-op to maintain backward compatibility.
     }
 }
 

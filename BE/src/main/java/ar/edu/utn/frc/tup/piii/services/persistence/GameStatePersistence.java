@@ -37,7 +37,9 @@ public interface GameStatePersistence {
      *
      * @param matchId        the match identifier (never null)
      * @param winnerUsername the username of the winning player (never null)
+     * @deprecated Use the unified saveMatch flow with setWinnerId on MatchSession instead.
      */
+    @Deprecated
     default void declareWinner(String matchId, String winnerUsername) {}
 }
 
