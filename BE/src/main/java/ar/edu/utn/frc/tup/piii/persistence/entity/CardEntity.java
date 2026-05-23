@@ -29,6 +29,10 @@ public class CardEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
+    private Object abilities;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
     private Object rules;
 
     @JdbcTypeCode(SqlTypes.JSON)
