@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.engine;
 
+import ar.edu.utn.frc.tup.piii.engine.model.Ability;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
@@ -7,8 +8,10 @@ import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +32,7 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private final List<PokemonCard> underlyingCards = new ArrayList<>();
     private final List<EnergyCard> attachedEnergyCards = new ArrayList<>();
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
-    private boolean toolAttached = false;
+    private TrainerCard attachedTool = null;
     private final List<Attack> attacks = new ArrayList<>();
     private EvolutionStage evolutionStage = EvolutionStage.BASIC;
     private String evolvesFrom = null;
@@ -131,13 +134,23 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     }
 
     @Override
-    public void setToolAttached(final boolean attached) {
-        this.toolAttached = attached;
+    public void attachTool(final TrainerCard tool) {
+        this.attachedTool = tool;
+    }
+
+    @Override
+    public java.util.Optional<TrainerCard> getAttachedTool() {
+        return java.util.Optional.ofNullable(attachedTool);
+    }
+
+    @Override
+    public void detachTool() {
+        this.attachedTool = null;
     }
 
     @Override
     public boolean hasToolAttached() {
-        return toolAttached;
+        return attachedTool != null;
     }
 
     @Override
@@ -176,6 +189,11 @@ public class FakeBattlePokemonState implements BattlePokemonState {
 
     public void setEvolutionStage(final EvolutionStage stage) {
         this.evolutionStage = stage;
+    }
+
+    @Override
+    public List<Ability> getAbilities() {
+        return Collections.emptyList();
     }
 
     @Override

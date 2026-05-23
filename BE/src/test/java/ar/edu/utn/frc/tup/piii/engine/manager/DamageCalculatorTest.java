@@ -249,4 +249,38 @@ class DamageCalculatorTest {
     void shouldThrowNullPointerExceptionWhenContextIsNull() {
         assertThrows(NullPointerException.class, () -> calculator.calculate(null));
     }
+
+    // ─── Shadow Circle: weakness suppression ─────────────────────────────────
+
+    @Test
+    void shouldNotApplyWeaknessWhenWeaknessIsSuppressed() {
+        // FIRE attacker vs WATER defender that has FIRE weakness — normally ×2
+        // With weakness suppressed, damage should stay at base (no ×2)
+        final FakeBattlePokemonState attacker = new FakeBattlePokemonState(
+                BASE_HP, PokemonType.FIRE, null, null, false);
+        final FakeBattlePokemonState defender = new FakeBattlePokemonState(
+                BASE_HP, PokemonType.WATER, PokemonType.FIRE, null, false);
+        final DamageContext ctx = new DamageContext(
+                attacker, defender, new Attack("Flamethrower", BASE_DAMAGE_60, List.of()), List.of(), List.of());
+
+        final DamageResult withWeakness    = calculator.calculate(ctx, false);
+        final DamageResult withSuppression = calculator.calculate(ctx, true);
+
+        assertEquals(120, withWeakness.finalDamage(),    "Normal: 60 × 2 = 120");
+        assertEquals(60,  withSuppression.finalDamage(), "Suppressed: no ×2 → 60");
+    }
+
+    @Test
+    void shouldApplyWeaknessNormallyWhenSuppressionIsFalse() {
+        final FakeBattlePokemonState attacker = new FakeBattlePokemonState(
+                BASE_HP, PokemonType.WATER, null, null, false);
+        final FakeBattlePokemonState defender = new FakeBattlePokemonState(
+                BASE_HP, PokemonType.FIRE, PokemonType.WATER, null, false);
+        final DamageContext ctx = new DamageContext(
+                attacker, defender, new Attack("Water Gun", BASE_DAMAGE_30, List.of()), List.of(), List.of());
+
+        final DamageResult result = calculator.calculate(ctx, false);
+
+        assertEquals(60, result.finalDamage(), "suppressWeakness=false: 30 × 2 = 60");
+    }
 }

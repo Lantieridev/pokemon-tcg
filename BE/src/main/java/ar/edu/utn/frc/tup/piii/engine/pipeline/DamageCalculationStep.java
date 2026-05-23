@@ -30,7 +30,7 @@ public final class DamageCalculationStep implements AttackPipelineStep {
                 ctx.getAttack(),
                 ctx.getAttackerModifiers(),
                 ctx.getDefenderModifiers());
-        final DamageResult result = calculator.calculate(dmgCtx);
+        final DamageResult result = calculator.calculate(dmgCtx, ctx.isWeaknessSuppressed());
         ctx.setDamageResult(result);
         next.run();
     }

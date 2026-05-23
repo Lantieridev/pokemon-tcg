@@ -16,22 +16,28 @@ import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
+import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffect;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.AttackContext;
+import ar.edu.utn.frc.tup.piii.engine.pipeline.AttackCancellationStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.AttackEffectResolver;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.AttackPipeline;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.DamageApplicationStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.DamageCalculationStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.KnockoutCheckStep;
+import ar.edu.utn.frc.tup.piii.engine.pipeline.PokemonToolStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.PostDamageEffectsStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.PreDamageEffectsStep;
+import ar.edu.utn.frc.tup.piii.engine.pipeline.StadiumEffectStep;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.TrainerEffectResolver;
+import ar.edu.utn.frc.tup.piii.engine.pipeline.AbilityEffectResolver;
 import ar.edu.utn.frc.tup.piii.engine.pipeline.ValidationStep;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
@@ -52,12 +58,17 @@ public final class GameFacade {
 
     private final AttackPipeline attackPipeline;
     private final TrainerEffectResolver trainerEffectResolver;
+    private final AbilityEffectResolver abilityEffectResolver;
 
     public GameFacade() {
         this.trainerEffectResolver = new TrainerEffectResolver();
+        this.abilityEffectResolver = new AbilityEffectResolver();
         this.attackPipeline = new AttackPipeline(List.of(
                 new ValidationStep(),
                 new PreDamageEffectsStep(),
+                new PokemonToolStep(trainerEffectResolver),
+                new StadiumEffectStep(trainerEffectResolver),
+                new AttackCancellationStep(),
                 new DamageCalculationStep(new DamageCalculator()),
                 new DamageApplicationStep(),
                 new PostDamageEffectsStep(new AttackEffectResolver()),
@@ -112,16 +123,35 @@ public final class GameFacade {
                     }
                 }
             }
-            case UseAbilityAction ignored      -> { /* FR-TODO: ability effects not yet implemented */ }
+            case UseAbilityAction abilityAction -> applyUseAbility(abilityAction, session);
             case EndTurnAction ignored         -> { /* turn advancement handled by MatchService */ }
+            case PromoteActiveAction promote   -> applyPromoteActive(promote, runtime);
         }
     }
 
     // --- action handlers ---
 
+    private void applyUseAbility(final UseAbilityAction action, final MatchSession session) {
+        final BattlePokemonState source = action.source();
+        final String abilityIdStr = action.abilityId();
+        // Determine the AbilityEffectId from the ability name/ID
+        source.getAbilities().stream()
+                .filter(a -> a.name().equalsIgnoreCase(abilityIdStr) || a.effectId().name().equalsIgnoreCase(abilityIdStr))
+                .findFirst()
+                .ifPresent(ability -> {
+                    var effect = abilityEffectResolver.resolve(ability.effectId());
+                    if (effect != null) {
+                        effect.apply(session, source);
+                    }
+                });
+    }
+
     private void applyPlacePokemon(final PlaceBasicPokemonAction action, final PlayerRuntime runtime) {
         final Card card = runtime.getHand().removeCard(action.cardId());
-        runtime.getBench().place(new InPlayPokemon((PokemonCard) card));
+        final InPlayPokemon placed = new InPlayPokemon((PokemonCard) card);
+        runtime.getBench().place(placed);
+        // Register the newly placed Pokémon so evolution restriction tracking starts at 0 turns.
+        runtime.recordPokemonEntered(placed);
     }
 
     private void applyAttachEnergy(final AttachEnergyAction action, final PlayerRuntime runtime) {
@@ -149,6 +179,13 @@ public final class GameFacade {
         runtime.getBench().place(oldActive);
     }
 
+    private void applyPromoteActive(final PromoteActiveAction action, final PlayerRuntime runtime) {
+        final BattlePokemonState newActive = runtime.getBench().promote(action.benchIndex());
+        runtime.setActivePokemon(newActive);
+        // All status conditions are cleared when a Pokémon enters the Active position (XY1 §5).
+        runtime.getStatusEffectManager().clearAll();
+    }
+
     private void applyDeclareAttack(final DeclareAttackAction action,
                                      final MatchSession session,
                                      final int attackerIndex) {
@@ -164,7 +201,10 @@ public final class GameFacade {
                 defender.getStatusEffectManager(),
                 session.getKnockoutHandler(),
                 session.getCoinFlipper()::flip
-        ).build();
+        )
+        .defenderBench(defender.getBench().getAll())
+        .stadiumProvider(session.getBoard())
+        .build();
 
         attackPipeline.execute(ctx);
     }
@@ -193,24 +233,59 @@ public final class GameFacade {
                 }
             }
             case POKEMON_TOOL -> {
-                // Tool stays attached to the Pokémon; not discarded until the Pokémon is KO'd.
-                if (action.target() != null) {
-                    action.target().setToolAttached(true);
+                // Tool stays attached to the Pokémon; discarded when the Pokémon is KO'd.
+                if (action.target() != null && trainerCard != null) {
+                    action.target().attachTool(trainerCard);
                 }
             }
             default -> {
                 // ITEM and SUPPORTER: card goes to discard after use (XY1 rulebook §4).
                 if (trainerCard != null) {
                     runtime.getDiscardPile().add(trainerCard);
-                    TrainerEffect effect = trainerCard.getEffect();
-                    if (effect == null && trainerCard.getEffectId() != null) {
-                        effect = trainerEffectResolver.resolve(trainerCard.getEffectId());
-                    }
-                    if (effect != null) {
-                        effect.apply(runtime, action.target());
+                    final TrainerEffectId effectId = trainerCard.getEffectId();
+
+                    // Opponent-targeting effects are handled here since TrainerEffect.apply()
+                    // only receives the actor's PlayerRuntime (not the opponent's).
+                    if (effectId == TrainerEffectId.RED_CARD) {
+                        applyRedCard(session);
+                    } else if (effectId == TrainerEffectId.TEAM_FLARE_GRUNT) {
+                        applyTeamFlareGrunt(session);
+                    } else {
+                        TrainerEffect effect = trainerCard.getEffect();
+                        if (effect == null && effectId != null) {
+                            effect = trainerEffectResolver.resolve(effectId, session.getCoinFlipper());
+                        }
+                        if (effect != null) {
+                            effect.apply(runtime, action.target());
+                        }
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Red Card (xy1-124): the opponent shuffles their hand into their deck, then draws 4 cards.
+     * Must be called after the Red Card is removed from the actor's hand and placed in discard.
+     */
+    private void applyRedCard(final MatchSession session) {
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        opponent.getDeck().addCards(opponent.getHand().removeAll());
+        opponent.getDeck().shuffle();
+        opponent.getHand().addCards(opponent.getDeck().drawMultiple(4));
+    }
+
+    /**
+     * Team Flare Grunt (xy1-129): discard 1 Energy card attached to the opponent's Active Pokémon.
+     * Must be called after the Team Flare Grunt card is removed from the actor's hand and placed in discard.
+     */
+    private void applyTeamFlareGrunt(final MatchSession session) {
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        final BattlePokemonState opponentActive = opponent.getActivePokemon();
+        if (opponentActive != null && !opponentActive.getAttachedEnergies().isEmpty()) {
+            opponentActive.removeEnergies(1);
         }
     }
 
@@ -261,6 +336,8 @@ public final class GameFacade {
                                             board.getActivePokemon(playerIndex),
                                             dto.cardId());
             case END_TURN            -> new EndTurnAction();
+            case PROMOTE_ACTIVE      -> new PromoteActiveAction(
+                                            dto.targetIndex() != null ? dto.targetIndex() : 0);
         };
     }
 

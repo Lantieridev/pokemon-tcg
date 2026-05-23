@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.configs;
 
 import ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper;
 import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
@@ -42,7 +43,8 @@ public class MatchEngineConfig {
                 return List.of();
             }
         };
-        return new RuleValidator(turnManager, statusEffectManager, pokemon -> 0, noBench);
+        final HandStateProvider noHand = (playerIndex, cardId) -> null;
+        return new RuleValidator(turnManager, statusEffectManager, pokemon -> 0, noBench, noHand);
     }
 
     /**

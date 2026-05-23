@@ -12,5 +12,10 @@ public enum ActionType {
     PLACE_BASIC_POKEMON,
     USE_ABILITY,
     /** Ends the current player's turn without attacking (passes to between-turns phase). */
-    END_TURN
+    END_TURN,
+    /**
+     * Promotes a benched Pokémon to the Active position after the current Active was knocked out.
+     * Sent by the defending player; mandatory when the bench is non-empty. XY1 Rulebook §2.
+     */
+    PROMOTE_ACTIVE
 }

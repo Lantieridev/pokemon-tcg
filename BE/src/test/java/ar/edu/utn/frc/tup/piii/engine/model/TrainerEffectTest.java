@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.engine.model;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper;
+import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -139,5 +140,153 @@ class TrainerEffectTest {
 
         assertEquals(null, card.getEffect(),
                 "TrainerCard with no effect set should return null from getEffect()");
+    }
+
+    // -----------------------------------------------------------------------
+    // Roller Skates (xy1-114)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void shouldDrawThreeCardsWhenRollerSkatesFlipsHeads() {
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.rollerSkates(() -> true).apply(runtime, null); // always heads
+
+        assertEquals(3, hand.size(), "Roller Skates heads → draw 3");
+        assertEquals(DECK_SIZE - 3, deck.size());
+    }
+
+    @Test
+    void shouldDrawNothingWhenRollerSkatesFlipsTails() {
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.rollerSkates(() -> false).apply(runtime, null); // always tails
+
+        assertEquals(0, hand.size(), "Roller Skates tails → draw nothing");
+        assertEquals(DECK_SIZE, deck.size());
+    }
+
+    // -----------------------------------------------------------------------
+    // Shauna (xy1-127)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void shouldShuffleHandIntoDeckAndDrawFiveWhenShaunaApplied() {
+        final Hand hand = new Hand();
+        hand.addCard(energyCard("hand-1"));
+        hand.addCard(energyCard("hand-2"));
+        final int originalHandSize = hand.size();
+
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.shauna().apply(runtime, null);
+
+        assertEquals(5, hand.size(), "Hand should have exactly 5 cards after Shauna");
+        assertEquals(DECK_SIZE + originalHandSize - 5, deck.size(),
+                "Deck should contain original cards plus previous hand minus the 5 drawn");
+        assertEquals(0, discard.size(), "Shauna does not discard — it recycles hand into deck");
+    }
+
+    @Test
+    void shouldEmptyHandBeforeDrawingWhenShaunaApplied() {
+        final Hand hand = new Hand();
+        hand.addCard(energyCard("old-1"));
+        hand.addCard(energyCard("old-2"));
+        hand.addCard(energyCard("old-3"));
+
+        final Deck deck = buildDeck(10);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.shauna().apply(runtime, null);
+
+        // Hand had 3, deck had 10 → deck becomes 13, draw 5 → deck ends at 8, hand at 5
+        assertEquals(5, hand.size());
+        assertEquals(8, deck.size());
+    }
+
+    // -----------------------------------------------------------------------
+    // Super Potion (xy1-128)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void shouldHealSixtyAndDiscardOneEnergyWhenSuperPotionApplied() {
+        final FakeBattlePokemonState target =
+                new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        target.addDamageCounters(8); // 80 damage
+        target.addAttachedEnergy(PokemonType.FIRE);
+        target.addAttachedEnergy(PokemonType.FIRE);
+
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.superPotion().apply(runtime, target);
+
+        // heal 60 → 80 - 60 = 20 → 2 counters
+        assertEquals(2, target.getDamageCounters(), "Super Potion should heal 60 damage (6 counters)");
+        // discard 1 energy → 1 remaining
+        assertEquals(1, target.getAttachedEnergies().size(), "Super Potion should discard 1 energy");
+    }
+
+    @Test
+    void shouldNotApplySuperPotionWhenTargetHasNoDamage() {
+        final FakeBattlePokemonState target =
+                new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        // no damage counters
+        target.addAttachedEnergy(PokemonType.FIRE);
+
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.superPotion().apply(runtime, target);
+
+        assertEquals(0, target.getDamageCounters(), "No healing when Pokémon is at full HP");
+        assertEquals(1, target.getAttachedEnergies().size(), "No energy discarded when Pokémon is at full HP");
+    }
+
+    @Test
+    void shouldBeNoOpWhenSuperPotionTargetIsNull() {
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        // Must not throw
+        TrainerEffect.superPotion().apply(runtime, null);
+
+        assertEquals(DECK_SIZE, deck.size());
+    }
+
+    // -----------------------------------------------------------------------
+    // Heal 30 factory (existing, extended coverage)
+    // -----------------------------------------------------------------------
+
+    @Test
+    void shouldHealThirtyDamageFromTarget() {
+        final FakeBattlePokemonState target =
+                new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        target.addDamageCounters(5); // 50 damage
+
+        final Hand hand = new Hand();
+        final Deck deck = buildDeck(DECK_SIZE);
+        final DiscardPile discard = new DiscardPile();
+        final PlayerRuntime runtime = buildRuntime(hand, deck, discard);
+
+        TrainerEffect.healDamage(30).apply(runtime, target);
+
+        // heal 30 → 50 - 30 = 20 → 2 counters
+        assertEquals(2, target.getDamageCounters());
     }
 }

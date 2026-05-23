@@ -2,14 +2,19 @@ package ar.edu.utn.frc.tup.piii.engine.manager;
 
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.FakeBenchStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.FakePokemonTurnInPlayProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
+import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
@@ -37,6 +42,7 @@ class RuleValidatorTest {
     private StatusEffectManager statusEffectManager;
     private FakePokemonTurnInPlayProvider turnInPlayProvider;
     private FakeBenchStateProvider benchProvider;
+    private FakeHandStateProvider handProvider;
     private RuleValidator validator;
 
     @BeforeEach
@@ -45,7 +51,8 @@ class RuleValidatorTest {
         statusEffectManager = Mockito.mock(StatusEffectManager.class);
         turnInPlayProvider = new FakePokemonTurnInPlayProvider();
         benchProvider = new FakeBenchStateProvider();
-        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider);
+        handProvider = new FakeHandStateProvider();
+        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, handProvider);
     }
 
     // ─── Constructor null-guards ───────────────────────────────────────────────
@@ -53,30 +60,36 @@ class RuleValidatorTest {
     @Test
     void shouldThrowNullPointerExceptionWhenTurnManagerIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(null, statusEffectManager, turnInPlayProvider, benchProvider));
+                () -> new RuleValidator(null, statusEffectManager, turnInPlayProvider, benchProvider, handProvider));
     }
 
     @Test
     void shouldThrowNullPointerExceptionWhenStatusEffectManagerIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, (StatusEffectManager) null, turnInPlayProvider, benchProvider));
+                () -> new RuleValidator(turnManager, (StatusEffectManager) null, turnInPlayProvider, benchProvider, handProvider));
     }
 
     @Test
     void shouldThrowNullPointerExceptionWhenTurnInPlayProviderIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, statusEffectManager, null, benchProvider));
+                () -> new RuleValidator(turnManager, statusEffectManager, null, benchProvider, handProvider));
     }
 
     @Test
     void shouldThrowNullPointerExceptionWhenBenchStateProviderIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, null));
+                () -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, null, handProvider));
+    }
+
+    @Test
+    void shouldThrowNullPointerExceptionWhenHandStateProviderIsNull() {
+        assertThrows(NullPointerException.class,
+                () -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, (HandStateProvider) null));
     }
 
     @Test
     void shouldNotThrowWhenAllDependenciesAreValid() {
-        assertDoesNotThrow(() -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider));
+        assertDoesNotThrow(() -> new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, handProvider));
     }
 
     // ─── EvolveAction ─────────────────────────────────────────────────────────
@@ -470,6 +483,154 @@ class RuleValidatorTest {
         when(statusEffectManager.canAttack()).thenReturn(true);
 
         ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    // ─── RetreatAction: Fairy Garden (xy1-117) ────────────────────────────────
+
+    @Test
+    void shouldAllowFreeRetreatWhenFairyGardenActiveAndPokemonHasFairyEnergy() {
+        final TrainerCard fairyGarden = new TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM)
+                .build();
+        final RuleValidator fairyValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider,
+                () -> fairyGarden);
+
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        active.setRetreatCost(2); // normally costs 2, but Fairy Garden makes it free
+        active.addAttachedEnergy(PokemonType.FAIRY); // triggers Fairy Garden
+
+        final ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(statusEffectManager.canRetreat()).thenReturn(true);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        benchProvider.set(0, 1);
+
+        // With Fairy Garden, retreat is free — pass empty energy index list
+        final ValidationResult result = fairyValidator.validate(
+                new RetreatAction(active, 0, java.util.Collections.emptyList()));
+
+        assertInstanceOf(ValidationResult.Valid.class, result,
+                "Fairy Garden must allow free retreat when Pokémon has FAIRY energy");
+    }
+
+    @Test
+    void shouldNotReduceRetreatCostWhenFairyGardenActiveButNoPokemonHasFairyEnergy() {
+        final TrainerCard fairyGarden = new TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM)
+                .build();
+        final RuleValidator fairyValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider,
+                () -> fairyGarden);
+
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        active.setRetreatCost(2);
+        active.addAttachedEnergy(PokemonType.FIRE); // No Fairy energy → Fairy Garden doesn't apply
+
+        final ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(statusEffectManager.canRetreat()).thenReturn(true);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        benchProvider.set(0, 1);
+
+        // Only 1 energy but cost is 2 → should be invalid even with Fairy Garden
+        final ValidationResult result = fairyValidator.validate(
+                new RetreatAction(active, 0, java.util.List.of(0)));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result,
+                "Fairy Garden must NOT reduce retreat cost without FAIRY energy");
+        assertInvalidReason(result, "insufficient_energy_for_retreat");
+    }
+
+    @Test
+    void shouldNotReduceRetreatCostWhenNoStadiumIsActive() {
+        // Default validator has null stadiumProvider
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(HP, PokemonType.FAIRY, null, null, false);
+        active.setRetreatCost(1);
+        active.addAttachedEnergy(PokemonType.FAIRY);
+
+        final ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(statusEffectManager.canRetreat()).thenReturn(true);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        benchProvider.set(0, 1);
+
+        // No stadium → must discard 1 energy normally
+        final ValidationResult result = validator.validate(
+                new RetreatAction(active, 0, java.util.List.of(0)));
+
+        assertInstanceOf(ValidationResult.Valid.class, result,
+                "Without Fairy Garden, retreat follows normal cost (1 energy)");
+    }
+
+    // ─── PlaceBasicPokemonAction ──────────────────────────────────────────────
+
+    @Test
+    void shouldReturnInvalidWhenCardNotInHand() {
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase = new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        ValidationResult result = validator.validate(new PlaceBasicPokemonAction("missing-card-id"));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "card_not_in_hand");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenCardIsNotBasicPokemon() {
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase = new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard stage1 = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
+                "charmeleon-id", "Charmeleon", 90, PokemonType.FIRE)
+                .evolutionStage(EvolutionStage.STAGE_1).build();
+        handProvider.addCard(0, stage1);
+
+        ValidationResult result = validator.validate(new PlaceBasicPokemonAction("charmeleon-id"));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "card_not_basic_pokemon");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenBenchIsFull() {
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase = new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
+                "charmander-id", "Charmander", 60, PokemonType.FIRE)
+                .evolutionStage(EvolutionStage.BASIC).build();
+        handProvider.addCard(0, basic);
+
+        // Max bench is typically 5
+        benchProvider.set(0, 5);
+
+        ValidationResult result = validator.validate(new PlaceBasicPokemonAction("charmander-id"));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "bench_full");
+    }
+
+    @Test
+    void shouldReturnValidWhenPlacingBasicPokemonWithBenchSpace() {
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase = new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
+                "charmander-id", "Charmander", 60, PokemonType.FIRE)
+                .evolutionStage(EvolutionStage.BASIC).build();
+        handProvider.addCard(0, basic);
+
+        benchProvider.set(0, 4);
+
+        ValidationResult result = validator.validate(new PlaceBasicPokemonAction("charmander-id"));
 
         assertInstanceOf(ValidationResult.Valid.class, result);
     }

@@ -8,8 +8,10 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
+import ar.edu.utn.frc.tup.piii.dtos.ActionType;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
+import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
@@ -102,6 +104,18 @@ public final class MatchService {
         lock.lock();
         try {
             final int playerIndex = session.indexOf(playerId);
+
+            // Enforce promotion-gate: while a KO replacement is pending, only the
+            // promoting player may act, and only with PROMOTE_ACTIVE (XY1 Rulebook §2).
+            if (session.isAwaitingPromotion()) {
+                if (dto.type() != ActionType.PROMOTE_ACTIVE) {
+                    throw new InvalidActionException("must_promote_before_continuing");
+                }
+                if (session.getPromotingPlayerIndex() != playerIndex) {
+                    throw new InvalidActionException("not_your_promotion");
+                }
+            }
+
             final Action action = facade.toEngineAction(session, playerIndex, dto);
 
             // Use the per-session RuleValidator if available
@@ -172,7 +186,13 @@ public final class MatchService {
 
     /**
      * Applies the action and, when a TurnManager is bound to the session, drives the
-     * correct phase transitions (DECLARE_ATTACK → attack + between-turns; END_TURN → between-turns).
+     * correct phase transitions.
+     *
+     * <p>KO-promotion pause: after an attack resolves (or after between-turns status effects),
+     * if the defending player's Active slot is empty AND they have a non-empty bench, the flow
+     * PAUSES and {@link MatchSession#setAwaitingPromotion(int)} is set. Phase progression
+     * (processBetweenTurns + endBetweenTurns) only continues once the promotion arrives.
+     * See {@link ActionType#PROMOTE_ACTIVE}.</p>
      *
      * @param session     the current match session
      * @param action      the validated engine action
@@ -190,7 +210,12 @@ public final class MatchService {
             case DeclareAttackAction ignored -> {
                 turnManager.declareAttack();
                 facade.apply(session, action, turnManager);
+                // PhaseExited(AttackPhase) fires here → KnockoutManager checks for KOs
                 turnManager.endAttack();
+                // If defender's active was just KO'd and bench has Pokémon, pause
+                if (checkForPendingPromotion(session)) {
+                    return; // between-turns will run once PROMOTE_ACTIVE is received
+                }
                 processBetweenTurns(session, turnManager);
                 turnManager.endBetweenTurns();
             }
@@ -199,12 +224,39 @@ public final class MatchService {
                 processBetweenTurns(session, turnManager);
                 turnManager.endBetweenTurns();
             }
+            case PromoteActiveAction ignored -> {
+                // Apply the promotion; session.clearAwaitingPromotion() is called after
+                facade.apply(session, action, turnManager);
+                session.clearAwaitingPromotion();
+                // Resume the deferred between-turns phase that was paused for this promotion
+                processBetweenTurns(session, turnManager);
+                turnManager.endBetweenTurns();
+            }
             default -> facade.apply(session, action, turnManager);
         }
     }
 
     /**
-     * Runs between-turns status effects for the active player's Pokémon.
+     * Checks whether any player's Active Pokémon slot is empty and their bench is non-empty,
+     * indicating that a mandatory KO-replacement promotion is required before play continues.
+     * When detected, sets the promotion-pending state on the session.
+     *
+     * @param session the current match session
+     * @return {@code true} if promotion is now pending (caller should pause phase progression)
+     */
+    private boolean checkForPendingPromotion(final MatchSession session) {
+        for (int i = 0; i < 2; i++) {
+            final var runtime = session.getPlayerRuntime(i);
+            if (runtime.getActivePokemon() == null && !runtime.getBench().getAll().isEmpty()) {
+                session.setAwaitingPromotion(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Runs between-turns status effects for both players' Active Pokémon.
      * Must be called AFTER entering BetweenTurnsPhase and BEFORE calling
      * {@link TurnManager#endBetweenTurns()}.
      *

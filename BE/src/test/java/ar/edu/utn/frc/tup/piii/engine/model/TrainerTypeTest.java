@@ -36,7 +36,7 @@ class TrainerTypeTest {
         statusEffectManager = Mockito.mock(StatusEffectManager.class);
         validator = new RuleValidator(
                 turnManager, statusEffectManager,
-                new FakePokemonTurnInPlayProvider(), new FakeBenchStateProvider());
+                new FakePokemonTurnInPlayProvider(), new FakeBenchStateProvider(), new ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider());
     }
 
     @Test
@@ -65,7 +65,7 @@ class TrainerTypeTest {
     @Test
     void shouldReturnInvalidWhenPokemonToolAlreadyAttached() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
-        target.setToolAttached(true);
+        target.attachTool(new TrainerCard.Builder("tool", "tool", TrainerType.POKEMON_TOOL).build());
         MainPhase mainPhase = new MainPhase();
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 
@@ -79,7 +79,7 @@ class TrainerTypeTest {
     @Test
     void shouldReturnValidWhenPokemonToolIsAttachedToTargetWithNoTool() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
-        target.setToolAttached(false);
+        target.detachTool();
         MainPhase mainPhase = new MainPhase();
         when(turnManager.requireMainPhase()).thenReturn(mainPhase);
 

@@ -311,6 +311,9 @@ class AttackPipelineTest {
         return new AttackPipeline(List.of(
                 new ValidationStep(),
                 new PreDamageEffectsStep(),
+                new PokemonToolStep(new TrainerEffectResolver()),
+                new StadiumEffectStep(new TrainerEffectResolver()),
+                new AttackCancellationStep(),
                 new DamageCalculationStep(new DamageCalculator()),
                 new DamageApplicationStep(),
                 new PostDamageEffectsStep(new AttackEffectResolver()),

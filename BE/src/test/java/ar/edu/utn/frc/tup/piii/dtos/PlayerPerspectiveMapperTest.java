@@ -108,7 +108,7 @@ class PlayerPerspectiveMapperTest {
         pokemon.setRetreatCost(1);
         pokemon.addAttachedEnergy(PokemonType.FIRE);
         pokemon.addAttachedEnergy(PokemonType.FIRE);
-        pokemon.setToolAttached(true);
+        pokemon.attachTool(new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("tool", "tool", ar.edu.utn.frc.tup.piii.engine.model.TrainerType.POKEMON_TOOL).build());
 
         final ar.edu.utn.frc.tup.piii.engine.session.PlayerState ps =
                 new ar.edu.utn.frc.tup.piii.engine.session.PlayerState(

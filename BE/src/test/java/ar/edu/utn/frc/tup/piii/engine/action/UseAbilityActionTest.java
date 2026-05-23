@@ -30,6 +30,7 @@ class UseAbilityActionTest {
     private StatusEffectManager statusEffectManager;
     private FakePokemonTurnInPlayProvider turnInPlayProvider;
     private FakeBenchStateProvider benchProvider;
+    private ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider handProvider;
     private RuleValidator validator;
 
     @BeforeEach
@@ -38,7 +39,8 @@ class UseAbilityActionTest {
         statusEffectManager = Mockito.mock(StatusEffectManager.class);
         turnInPlayProvider = new FakePokemonTurnInPlayProvider();
         benchProvider = new FakeBenchStateProvider();
-        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider);
+        handProvider = new ar.edu.utn.frc.tup.piii.engine.FakeHandStateProvider();
+        validator = new RuleValidator(turnManager, statusEffectManager, turnInPlayProvider, benchProvider, handProvider);
     }
 
     @Test

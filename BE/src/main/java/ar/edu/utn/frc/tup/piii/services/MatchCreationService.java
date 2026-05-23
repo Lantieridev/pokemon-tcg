@@ -11,6 +11,7 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.SetupManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.SetupResult;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnInPlayTracker;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.VictoryConditionChecker;
 import ar.edu.utn.frc.tup.piii.engine.model.Bench;
@@ -108,6 +109,12 @@ public final class MatchCreationService {
                 slot1.getActivePokemon(), new ArrayList<>(slot1.getPrizes()));
         final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
 
+        // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
+        runtime0.recordPokemonEntered(slot0.getActivePokemon());
+        bench0.getAll().forEach(runtime0::recordPokemonEntered);
+        runtime1.recordPokemonEntered(slot1.getActivePokemon());
+        bench1.getAll().forEach(runtime1::recordPokemonEntered);
+
         // --- Build MatchBoard (immutable snapshot fields only) ---
         final PlayerState ps0 = new PlayerState(
                 slot0.getActivePokemon(), bench0.getAll(),
@@ -144,14 +151,19 @@ public final class MatchCreationService {
         final DrawPhaseExecutor drawExec =
                 new DrawPhaseExecutor(runtimes, turnManager, victoryHandler);
 
+        final TurnInPlayTracker turnInPlayTracker = new TurnInPlayTracker(runtimes);
+
         turnManager.registerListener(drawExec);
         turnManager.registerListener(koManager);
         turnManager.registerListener(vcc);
+        turnManager.registerListener(turnInPlayTracker);
 
         // --- Wire RuleValidator ---
         final RuleValidator ruleValidator = new RuleValidator(
                 turnManager,
                 List.of(sem0, sem1),
+                board,
+                board,
                 board,
                 board);
 
@@ -170,19 +182,30 @@ public final class MatchCreationService {
     }
 
     /**
-     * Handles a victory result by finishing the session and broadcasting the final state.
-     * This is called from inside the attack pipeline — must not acquire the session lock.
+     * Handles a victory result. For a normal win (Prize, BenchOut, DeckOut) the session
+     * is finished and removed. For {@link VictoryResult.SuddenDeath} the session is reset
+     * to a 1-prize-per-player sudden-death state and the match continues (Rulebook §6).
      *
-     * @param matchId   the finished match's ID
-     * @param session   the session to finish
-     * @param result    the victory result
+     * @param matchId   the match identifier
+     * @param session   the session to finish or reset
+     * @param result    the victory result from the engine
      */
     private void handleVictory(final String matchId,
                                 final MatchSession session,
                                 final VictoryResult result) {
-        session.finish();
         final String topicA = MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdA();
         final String topicB = MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdB();
+
+        if (result instanceof VictoryResult.SuddenDeath) {
+            // Rulebook §6: both players start a new game with 1 Prize card each.
+            session.resetForSuddenDeath();
+            messaging.convertAndSend(topicA, result);
+            messaging.convertAndSend(topicB, result);
+            // Session stays in registry — match continues in sudden-death mode.
+            return;
+        }
+
+        session.finish();
         messaging.convertAndSend(topicA, result);
         messaging.convertAndSend(topicB, result);
         registry.remove(matchId);

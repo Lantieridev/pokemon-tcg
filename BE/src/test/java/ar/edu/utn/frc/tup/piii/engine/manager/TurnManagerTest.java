@@ -681,4 +681,48 @@ class TurnManagerTest {
         turnManager.endDraw();
         assertDoesNotThrow(() -> turnManager.declareAttack());
     }
+
+    @Test
+    void shouldResetAllTurnStateForSuddenDeathRestart() {
+        // Simulate a completed turn cycle so manager has non-null state
+        turnManager.startTurn(0);
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns(); // firstTurnCompleted[0] = true, now player 1's turn
+
+        // Match ended mid-turn (e.g. KO during player 1's MainPhase)
+        turnManager.endDraw();
+
+        // reset() must clear everything so startTurn can be called again
+        turnManager.reset();
+
+        assertNull(turnManager.currentPhase(), "Phase should be null after reset");
+        assertEquals(-1, turnManager.activePlayerIndex(), "Active player should be -1 after reset");
+        assertTrue(turnManager.isFirstTurnOfPlayer(0), "Player 0 first-turn flag should be reset");
+        assertTrue(turnManager.isFirstTurnOfPlayer(1), "Player 1 first-turn flag should be reset");
+
+        // Must be able to start a fresh turn (Sudden Death) without exception
+        assertDoesNotThrow(() -> turnManager.startTurn(1));
+    }
+
+    @Test
+    void shouldRespectFirstTurnAttackRestrictionAfterReset() {
+        // Complete a full match cycle
+        turnManager.startTurn(0);
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns();
+        turnManager.endDraw();
+        turnManager.passTurn();
+        turnManager.endBetweenTurns();
+
+        // Reset for Sudden Death — starting player is now 1
+        turnManager.reset();
+        turnManager.setStartingPlayer(1);
+        turnManager.startTurn(1);
+        turnManager.endDraw();
+
+        // Player 1 is the starting player on their first turn — attack must be blocked
+        assertThrows(FirstTurnAttackException.class, () -> turnManager.declareAttack());
+    }
 }

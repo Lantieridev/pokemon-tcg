@@ -20,6 +20,7 @@ public final class PokemonCard implements Card {
     private final boolean ex;
     private final EvolutionStage evolutionStage;
     private final String evolvesFrom;
+    private final List<Ability> abilities;
     private final List<Attack> attacks;
 
     private PokemonCard(final Builder builder) {
@@ -33,6 +34,7 @@ public final class PokemonCard implements Card {
         this.ex = builder.ex;
         this.evolutionStage = builder.evolutionStage;
         this.evolvesFrom = builder.evolvesFrom;
+        this.abilities = List.copyOf(builder.abilities);
         this.attacks = List.copyOf(builder.attacks);
     }
 
@@ -87,8 +89,13 @@ public final class PokemonCard implements Card {
     }
 
     /** Returns the species name this card evolves from, or null for Basic Pokémon. */
+    /** Returns the species name this card evolves from, or null for Basic Pokémon. */
     public String getEvolvesFrom() {
         return evolvesFrom;
+    }
+
+    public List<Ability> getAbilities() {
+        return abilities;
     }
 
     public List<Attack> getAttacks() {
@@ -106,6 +113,7 @@ public final class PokemonCard implements Card {
         private boolean ex;
         private EvolutionStage evolutionStage = EvolutionStage.BASIC;
         private String evolvesFrom;
+        private List<Ability> abilities = List.of();
         private List<Attack> attacks = List.of();
 
         public Builder(final String cardId,
@@ -145,6 +153,11 @@ public final class PokemonCard implements Card {
 
         public Builder evolvesFrom(final String species) {
             this.evolvesFrom = species;
+            return this;
+        }
+
+        public Builder abilities(final List<Ability> abilityList) {
+            this.abilities = Objects.requireNonNull(abilityList, "abilities must not be null");
             return this;
         }
 

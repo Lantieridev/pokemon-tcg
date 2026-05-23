@@ -44,6 +44,9 @@ public final class AttackEffectResolver {
         m.put("self_damage",      AttackEffectType.SELF_DAMAGE);
         m.put("discard_energy",   AttackEffectType.DISCARD_ENERGY);
         m.put("coin_flip_extra",  AttackEffectType.COIN_FLIP_EXTRA_DAMAGE);
+        m.put("bench_damage",     AttackEffectType.BENCH_DAMAGE);
+        m.put("move_energy",      AttackEffectType.MOVE_ENERGY);
+        m.put("force_switch",     AttackEffectType.FORCE_SWITCH);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -75,6 +78,19 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> ctx.getAttacker().addDamageCounters(amount / DAMAGE_PER_COUNTER));
         m.put(AttackEffectType.DISCARD_ENERGY,
                 (amount, ctx) -> ctx.getAttacker().removeEnergies(amount));
+        m.put(AttackEffectType.BENCH_DAMAGE,
+                (amount, ctx) -> {
+                    // Bench damage: apply N damage to each of the opponent's Benched Pokémon.
+                    // Weakness and Resistance do not apply to Benched Pokémon (XY1 §3).
+                    final int counters = amount / DAMAGE_PER_COUNTER;
+                    ctx.getDefenderBench().forEach(benched -> benched.addDamageCounters(counters));
+                });
+        // FR-TODO: move_energy requires attacker bench runtime access — deferred.
+        m.put(AttackEffectType.MOVE_ENERGY,
+                (amount, ctx) -> { });
+        // FR-TODO: force_switch requires opponent runtime access — deferred.
+        m.put(AttackEffectType.FORCE_SWITCH,
+                (amount, ctx) -> { });
         this.handlers = Collections.unmodifiableMap(m);
     }
 

@@ -18,6 +18,7 @@ public final class TrainerCard implements Card {
     private final String effectText;
     private final TrainerEffectId effectId;
     private final TrainerEffect effect;
+    private final PokemonToolEffectId toolEffectId;
 
     private TrainerCard(final Builder builder) {
         this.cardId = builder.cardId;
@@ -27,6 +28,7 @@ public final class TrainerCard implements Card {
         this.effectText = builder.effectText;
         this.effectId = builder.effectId;
         this.effect = builder.effect;
+        this.toolEffectId = builder.toolEffectId;
     }
 
     @Override
@@ -71,6 +73,16 @@ public final class TrainerCard implements Card {
         return effect;
     }
 
+    /**
+     * Returns the Pokémon Tool passive effect identifier for this card,
+     * or {@link PokemonToolEffectId#NONE} if this is not a Tool or its effect is not modelled.
+     *
+     * @return tool effect id (never null)
+     */
+    public PokemonToolEffectId getToolEffectId() {
+        return toolEffectId != null ? toolEffectId : PokemonToolEffectId.NONE;
+    }
+
     public static final class Builder {
         private final String cardId;
         private final String name;
@@ -79,6 +91,7 @@ public final class TrainerCard implements Card {
         private String effectText;
         private TrainerEffectId effectId = TrainerEffectId.NONE;
         private TrainerEffect effect;
+        private PokemonToolEffectId toolEffectId = PokemonToolEffectId.NONE;
 
         public Builder(final String cardId, final String name, final TrainerType trainerType) {
             this.cardId = Objects.requireNonNull(cardId, "cardId must not be null");
@@ -109,6 +122,17 @@ public final class TrainerCard implements Card {
          */
         public Builder effect(final TrainerEffect trainerEffect) {
             this.effect = trainerEffect;
+            return this;
+        }
+
+        /**
+         * Declares the passive runtime effect for a Pokémon Tool card.
+         *
+         * @param id the tool effect identifier (null treated as NONE)
+         * @return this builder
+         */
+        public Builder toolEffectId(final PokemonToolEffectId id) {
+            this.toolEffectId = id != null ? id : PokemonToolEffectId.NONE;
             return this;
         }
 

@@ -46,6 +46,15 @@ public final class MatchSession {
     private RuleValidator ruleValidator;
 
     /**
+     * Set when a player's Active Pokémon has been knocked out and they must promote
+     * a benched Pokémon before normal phase progression can continue (XY1 Rulebook §2).
+     */
+    private boolean awaitingPromotion = false;
+
+    /** Index (0 or 1) of the player who must send PROMOTE_ACTIVE, or -1 if none pending. */
+    private int promotingPlayerIndex = UNSET_PLAYER_INDEX;
+
+    /**
      * Constructs a MatchSession in the WAITING state.
      *
      * @param matchId        unique identifier for this match (never null)
@@ -156,6 +165,7 @@ public final class MatchSession {
             
             pr.getStatusEffectManager().clearAll();
             pr.getDeck().addCards(allCards);
+            pr.getDeck().shuffle();
         }
 
         // Re-run setup phase with 1 prize
@@ -174,6 +184,7 @@ public final class MatchSession {
 
         // Restart TurnManager
         if (turnManager != null) {
+            turnManager.reset();
             turnManager.setStartingPlayer(setupResult.firstPlayerIndex());
             state = MatchSessionState.ACTIVE;
             turnManager.startTurn(setupResult.firstPlayerIndex());
@@ -405,6 +416,49 @@ public final class MatchSession {
      */
     public void setRuleValidator(final RuleValidator validator) {
         this.ruleValidator = Objects.requireNonNull(validator, "validator must not be null");
+    }
+
+    // -------------------------------------------------------------------------
+    // Promotion-pending state (XY1 §2 — mandatory replacement after KO)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} if a player must send PROMOTE_ACTIVE before phase progression resumes.
+     * Set by the service layer after a KO leaves an active slot empty with a non-empty bench.
+     *
+     * @return true when promotion is pending
+     */
+    public boolean isAwaitingPromotion() {
+        return awaitingPromotion;
+    }
+
+    /**
+     * Returns the zero-based index of the player who must promote, or -1 if none is pending.
+     *
+     * @return promoting player index
+     */
+    public int getPromotingPlayerIndex() {
+        return promotingPlayerIndex;
+    }
+
+    /**
+     * Marks the given player as required to promote a benched Pokémon before play continues.
+     * Called by the service layer immediately after a KO that left the active slot empty.
+     *
+     * @param playerIndex 0 or 1 — the player who must promote (never -1)
+     */
+    public void setAwaitingPromotion(final int playerIndex) {
+        this.awaitingPromotion = true;
+        this.promotingPlayerIndex = playerIndex;
+    }
+
+    /**
+     * Clears the promotion-pending flag. Called after the promoting player's
+     * PROMOTE_ACTIVE action has been successfully applied.
+     */
+    public void clearAwaitingPromotion() {
+        this.awaitingPromotion = false;
+        this.promotingPlayerIndex = UNSET_PLAYER_INDEX;
     }
 
     /**
