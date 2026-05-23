@@ -1,7 +1,10 @@
 package ar.edu.utn.frc.tup.piii.persistence.repository;
 
+import ar.edu.utn.frc.tup.piii.dtos.RankingDto;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,5 +22,13 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
     @Modifying
     @Query("UPDATE MatchEntity m SET m.winner = :winner WHERE m.id = :id AND m.winner IS NULL")
     int updateWinnerIfNull(@Param("id") Long id, @Param("winner") UserEntity winner);
+
+    @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.RankingDto(m.winner.username, COUNT(m)) " +
+           "FROM MatchEntity m " +
+           "WHERE m.winner IS NOT NULL AND m.status = 'FINISHED' " +
+           "GROUP BY m.winner.username " +
+           "ORDER BY COUNT(m) DESC")
+    Slice<RankingDto> getGlobalRanking(Pageable pageable);
 }
+
 
