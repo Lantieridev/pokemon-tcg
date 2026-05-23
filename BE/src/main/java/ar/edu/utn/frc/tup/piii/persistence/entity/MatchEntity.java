@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 public class MatchEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String status;
@@ -38,9 +37,9 @@ public class MatchEntity {
     @JoinColumn(name = "winner_id")
     private UserEntity winner;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Object currentState; // Represents the full GameState DTO
+    @Column(name = "current_state", columnDefinition = "jsonb")
+    @Convert(converter = ar.edu.utn.frc.tup.piii.services.persistence.MatchSessionJsonConverter.class)
+    private ar.edu.utn.frc.tup.piii.engine.session.MatchSession currentState;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
