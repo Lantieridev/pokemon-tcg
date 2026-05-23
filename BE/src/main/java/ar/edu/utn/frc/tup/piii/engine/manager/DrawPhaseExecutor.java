@@ -61,6 +61,7 @@ public final class DrawPhaseExecutor implements PhaseListener {
             case MainPhase m         -> { /* no-op */ }
             case AttackPhase a       -> { /* no-op */ }
             case BetweenTurnsPhase b -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
         }
     }
 

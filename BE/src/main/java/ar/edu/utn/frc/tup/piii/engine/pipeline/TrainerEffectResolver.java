@@ -38,8 +38,8 @@ public final class TrainerEffectResolver {
             case ROLLER_SKATES     -> TrainerEffect.rollerSkates(flipper != null ? flipper : () -> false);
             case SHAUNA            -> TrainerEffect.shauna();
             case SUPER_POTION      -> TrainerEffect.superPotion();
-            // Opponent-targeting effects are resolved directly in GameFacade — not via this resolver.
-            case RED_CARD, TEAM_FLARE_GRUNT -> null;
+            // Resolved directly in GameFacade (interactive selection, bench mutation, or opponent access).
+            case RED_CARD, TEAM_FLARE_GRUNT, CASSIUS, EVOSODA, GREAT_BALL, MAX_REVIVE, PROFESSORS_LETTER -> null;
             case NONE              -> null;
         };
     }

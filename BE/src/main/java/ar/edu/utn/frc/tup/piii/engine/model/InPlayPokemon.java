@@ -21,6 +21,7 @@ public final class InPlayPokemon implements BattlePokemonState {
     private final List<PokemonCard> underlyingCards = new ArrayList<>();
     private final List<EnergyCard> attachedEnergyCards = new ArrayList<>();
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
+    private final java.util.Set<String> usedAbilitiesThisTurn = new java.util.HashSet<>();
     private TrainerCard attachedTool;
 
     /**
@@ -131,6 +132,23 @@ public final class InPlayPokemon implements BattlePokemonState {
         return card.getEvolvesFrom();
     }
 
+    @Override
+    public void markAbilityUsed(final String abilityName) {
+        if (abilityName != null) {
+            usedAbilitiesThisTurn.add(abilityName);
+        }
+    }
+
+    @Override
+    public boolean hasUsedAbilityThisTurn(final String abilityName) {
+        return usedAbilitiesThisTurn.contains(abilityName);
+    }
+
+    @Override
+    public void resetAbilitiesUsedThisTurn() {
+        usedAbilitiesThisTurn.clear();
+    }
+
     // -------------------------------------------------------------------------
     // BattlePokemonState — mutable battle state
     // -------------------------------------------------------------------------
@@ -169,6 +187,8 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     /**
      * Attaches an energy card to this Pokémon.
+     * Special energies may provide multiple energy units (e.g. Double Colorless)
+     * or count as all types (e.g. Rainbow Energy).
      *
      * @param energyCard the energy card to attach (never null)
      */
@@ -176,7 +196,9 @@ public final class InPlayPokemon implements BattlePokemonState {
     public void attachEnergy(final EnergyCard energyCard) {
         Objects.requireNonNull(energyCard, "energy card must not be null");
         attachedEnergyCards.add(energyCard);
-        attachedEnergies.add(energyCard.getEnergyType());
+        for (int i = 0; i < energyCard.getEnergyCount(); i++) {
+            attachedEnergies.add(energyCard.getEnergyType());
+        }
     }
 
     @Override

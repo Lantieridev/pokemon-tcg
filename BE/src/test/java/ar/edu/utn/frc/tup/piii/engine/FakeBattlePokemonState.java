@@ -36,6 +36,7 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     private final List<Attack> attacks = new ArrayList<>();
     private EvolutionStage evolutionStage = EvolutionStage.BASIC;
     private String evolvesFrom = null;
+    private List<Ability> abilities = new ArrayList<>();
 
     public FakeBattlePokemonState(final int maxHp, final PokemonType type,
                                   final PokemonType weaknessType,
@@ -120,7 +121,9 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public void attachEnergy(final EnergyCard energyCard) {
         attachedEnergyCards.add(energyCard);
-        attachedEnergies.add(energyCard.getEnergyType());
+        for (int i = 0; i < energyCard.getEnergyCount(); i++) {
+            attachedEnergies.add(energyCard.getEnergyType());
+        }
     }
 
     @Override
@@ -191,9 +194,13 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         this.evolutionStage = stage;
     }
 
+    public void setAbilities(final List<Ability> abilities) {
+        this.abilities = new ArrayList<>(abilities);
+    }
+
     @Override
     public List<Ability> getAbilities() {
-        return Collections.emptyList();
+        return List.copyOf(abilities);
     }
 
     @Override
@@ -223,5 +230,18 @@ public class FakeBattlePokemonState implements BattlePokemonState {
     @Override
     public List<EnergyCard> getAttachedEnergyCards() {
         return attachedEnergyCards;
+    }
+
+    @Override
+    public boolean hasUsedAbilityThisTurn(String abilityName) {
+        return false;
+    }
+
+    @Override
+    public void markAbilityUsed(String abilityName) {
+    }
+    
+    @Override
+    public void resetAbilitiesUsedThisTurn() {
     }
 }

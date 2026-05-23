@@ -191,6 +191,19 @@ public final class PlayerRuntime {
     }
 
     /**
+     * Resets the used abilities tracker for all Pokémon in play.
+     * Called at the end of this player's full turn.
+     */
+    public void resetAllAbilitiesUsedThisTurn() {
+        if (activePokemon != null) {
+            activePokemon.resetAbilitiesUsedThisTurn();
+        }
+        for (BattlePokemonState benched : bench.getAll()) {
+            benched.resetAbilitiesUsedThisTurn();
+        }
+    }
+
+    /**
      * Returns the number of full turns the given Pokémon has been in play.
      * Returns 0 if the Pokémon entered play this turn or is not tracked.
      *
@@ -222,5 +235,23 @@ public final class PlayerRuntime {
     public void removePokemonFromPlay(final BattlePokemonState pokemon) {
         Objects.requireNonNull(pokemon, "pokemon must not be null");
         turnsInPlay.remove(pokemon);
+    }
+
+    /**
+     * Checks if any Pokémon currently in play (Active or Bench) has the specified ability.
+     *
+     * @param abilityId the ability ID to check
+     * @return true if the ability is present on any of this player's in-play Pokémon
+     */
+    public boolean hasAbility(final ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId abilityId) {
+        if (activePokemon != null && activePokemon.getAbilities().stream().anyMatch(a -> a.effectId() == abilityId)) {
+            return true;
+        }
+        for (BattlePokemonState benched : bench.getAll()) {
+            if (benched.getAbilities().stream().anyMatch(a -> a.effectId() == abilityId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

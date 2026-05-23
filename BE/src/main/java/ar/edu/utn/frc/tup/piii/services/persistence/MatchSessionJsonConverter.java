@@ -677,7 +677,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             String name = node.get("name").asText();
             PokemonType energyType = PokemonType.valueOf(node.get("energyType").asText());
             boolean basic = node.has("basic") && node.get("basic").asBoolean();
-            return new EnergyCard(cardId, name, energyType, basic);
+            int energyCount = node.has("energyCount") ? node.get("energyCount").asInt(1) : 1;
+            boolean providesAllTypes = node.has("providesAllTypes") && node.get("providesAllTypes").asBoolean();
+            return new EnergyCard(cardId, name, energyType, basic, energyCount, providesAllTypes);
         }
     }
 }

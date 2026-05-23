@@ -28,6 +28,7 @@ public final class TurnManager {
     private static final int FIRST_PLAYER_INDEX = 0;
 
     private TurnPhase currentPhase;
+    private TurnPhase previousPhase;
     private int activePlayerIndex = UNSTARTED_PLAYER_INDEX;
     private int startingPlayerIndex = FIRST_PLAYER_INDEX;
     private final boolean[] firstTurnCompleted = new boolean[PLAYER_COUNT];
@@ -178,6 +179,8 @@ public final class TurnManager {
                     "endDraw() called during AttackPhase");
             case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
                     "endDraw() called during BetweenTurnsPhase");
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
+                    "endDraw() called during ActionResolutionPhase");
         }
     }
 
@@ -196,6 +199,42 @@ public final class TurnManager {
                     "Expected MainPhase but was: " + phaseName(currentPhase));
         }
         return main;
+    }
+
+    /**
+     * Interrupts the MainPhase to resolve an interactive action (like selecting cards from the deck).
+     *
+     * @throws InvalidPhaseTransitionException if not currently in MainPhase
+     */
+    public void interruptMainPhase() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        }
+        if (!(currentPhase instanceof MainPhase)) {
+            throw new InvalidPhaseTransitionException("Can only interrupt during MainPhase");
+        }
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        previousPhase = currentPhase;
+        currentPhase = new ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase();
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
+    }
+
+    /**
+     * Resumes the MainPhase after resolving an interactive action.
+     *
+     * @throws InvalidPhaseTransitionException if not currently in ActionResolutionPhase
+     */
+    public void resumeMainPhase() {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException("No turn in progress");
+        }
+        if (!(currentPhase instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase)) {
+            throw new InvalidPhaseTransitionException("Can only resume from ActionResolutionPhase");
+        }
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        currentPhase = previousPhase;
+        previousPhase = null;
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     /**
@@ -226,6 +265,8 @@ public final class TurnManager {
                     "declareAttack() called during AttackPhase");
             case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
                     "declareAttack() called during BetweenTurnsPhase");
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
+                    "declareAttack() called during ActionResolutionPhase");
         }
     }
 
@@ -251,6 +292,8 @@ public final class TurnManager {
                     "passTurn() called during AttackPhase");
             case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
                     "passTurn() called during BetweenTurnsPhase");
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
+                    "passTurn() called during ActionResolutionPhase");
         }
     }
 
@@ -276,6 +319,8 @@ public final class TurnManager {
                     "endAttack() called during MainPhase");
             case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
                     "endAttack() called during BetweenTurnsPhase");
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
+                    "endAttack() called during ActionResolutionPhase");
         }
     }
 
@@ -312,6 +357,8 @@ public final class TurnManager {
                     "endBetweenTurns() called during MainPhase");
             case AttackPhase a -> throw new InvalidPhaseTransitionException(
                     "endBetweenTurns() called during AttackPhase");
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
+                    "endBetweenTurns() called during ActionResolutionPhase");
         }
     }
 

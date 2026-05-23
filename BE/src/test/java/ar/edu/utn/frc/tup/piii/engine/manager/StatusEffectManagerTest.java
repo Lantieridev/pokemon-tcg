@@ -49,6 +49,26 @@ class StatusEffectManagerTest {
     }
 
     @Test
+    void shouldNotApplyAsleepWhenProtectedBySweetVeil() {
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime mockRuntime = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        when(mockRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)).thenReturn(true);
+        manager.setPlayerRuntime(mockRuntime);
+
+        manager.apply(StatusEffectType.DORMIDO);
+        assertFalse(manager.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldApplyOtherEffectsEvenWhenProtectedBySweetVeil() {
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime mockRuntime = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        when(mockRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)).thenReturn(true);
+        manager.setPlayerRuntime(mockRuntime);
+
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertTrue(manager.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
     void shouldRemoveExistingRotationSlotEffectWhenApplyingNewRotationSlotEffect() {
         manager.apply(StatusEffectType.DORMIDO);
         manager.apply(StatusEffectType.PARALIZADO);

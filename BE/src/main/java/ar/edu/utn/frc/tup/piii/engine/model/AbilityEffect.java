@@ -14,8 +14,8 @@ public interface AbilityEffect {
      * Applies this ability's effect.
      *
      * @param session the match session
-     * @param source  the Pokémon using the ability
+     * @param action  the action representing the ability use, which contains the source and targets
      */
-    void apply(MatchSession session, BattlePokemonState source);
+    void apply(MatchSession session, UseAbilityAction action);
 
 }

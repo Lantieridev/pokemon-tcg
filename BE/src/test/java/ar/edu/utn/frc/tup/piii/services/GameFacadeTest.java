@@ -125,7 +125,7 @@ class GameFacadeTest {
     @Test
     void shouldProduceAttachEnergyActionWhenTypeIsAttachEnergy() {
         final ActionRequestDTO dto = new ActionRequestDTO(
-                ActionType.ATTACH_ENERGY, null, null, null, null, null);
+                ActionType.ATTACH_ENERGY, "hand-energy", "active-poke", null, null, null, null, null, null, null);
 
         final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 
@@ -135,7 +135,7 @@ class GameFacadeTest {
     @Test
     void shouldUseEnergyTypeFromDtoWhenBuildingAttachEnergyAction() {
         final ActionRequestDTO dto = new ActionRequestDTO(
-                ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE, java.util.Collections.emptyList());
+                ActionType.ATTACH_ENERGY, null, null, null, null, null, PokemonType.FIRE, java.util.Collections.emptyList(), null, null);
 
         final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
 

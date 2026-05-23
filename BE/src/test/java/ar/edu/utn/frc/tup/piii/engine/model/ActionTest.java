@@ -72,7 +72,7 @@ class ActionTest {
             new AttachEnergyAction(pokemon, PokemonType.WATER),
             new DeclareAttackAction(pokemon, attack),
             new PlaceBasicPokemonAction("pikachu-xy1-42"),
-            new UseAbilityAction(pokemon, "ability-1"),
+            new UseAbilityAction(pokemon, "ability-1", null, null, null),
             new EndTurnAction(),
             new PromoteActiveAction(0)
         };
@@ -88,6 +88,7 @@ class ActionTest {
                 case UseAbilityAction a        -> "ability";
                 case EndTurnAction a           -> "endturn";
                 case PromoteActiveAction a     -> "promote";
+                case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction a -> "select";
             };
             assertNotNull(label);
         }

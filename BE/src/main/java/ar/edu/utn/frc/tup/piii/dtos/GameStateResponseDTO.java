@@ -14,11 +14,12 @@ import java.util.List;
  * @param self              full view of the receiving player's state
  * @param opponent          restricted view of the opponent (no card IDs exposed)
  */
-public record GameStateResponseDTO(
+    public record GameStateResponseDTO(
         String matchId,
         long version,
         int activePlayerIndex,
         String currentPhase,
+        PendingSelectionRequestDTO pendingSelectionRequest,
         PlayerView self,
         OpponentView opponent) {
 

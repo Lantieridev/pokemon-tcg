@@ -10,6 +10,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
+import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
@@ -148,9 +149,10 @@ public final class RuleValidator {
             case AttachEnergyAction a       -> validateAttachEnergy(a);
             case DeclareAttackAction a      -> validateDeclareAttack(a);
             case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon(a);
-            case UseAbilityAction a         -> validateUseAbility();
+            case UseAbilityAction a         -> validateUseAbility(a);
             case EndTurnAction a            -> new ValidationResult.Valid();
             case PromoteActiveAction a      -> validatePromoteActive(a);
+            case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction a -> validateSelectCards(a);
         };
     }
 
@@ -332,8 +334,31 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateUseAbility() {
+    private ValidationResult validateUseAbility(final UseAbilityAction action) {
         turnManager.requireMainPhase();
+        
+        final BattlePokemonState source = action.source();
+        if (source == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        
+        final String abilityIdStr = action.abilityId();
+        
+        var abilityOpt = source.getAbilities().stream()
+                .filter(a -> a.name().equalsIgnoreCase(abilityIdStr) || a.effectId().name().equalsIgnoreCase(abilityIdStr))
+                .findFirst();
+                
+        if (abilityOpt.isEmpty()) {
+            return new ValidationResult.Invalid("ability_not_found");
+        }
+        
+        var ability = abilityOpt.get();
+        if (ability.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MYSTICAL_FIRE || ability.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MAGNETIC_DRAW) {
+            if (source.hasUsedAbilityThisTurn(ability.effectId().name())) {
+                return new ValidationResult.Invalid("ability_already_used_this_turn");
+            }
+        }
+        
         return new ValidationResult.Valid();
     }
 
@@ -367,22 +392,61 @@ public final class RuleValidator {
     }
 
     private boolean hasEnoughEnergyForAttack(final BattlePokemonState attacker, final Attack attack) {
-        Map<PokemonType, Long> available = new HashMap<>(
-                attacker.getAttachedEnergies().stream()
-                        .collect(Collectors.groupingBy(e -> e, Collectors.counting())));
+        // Build a mutable pool of energy entries. Each entry tracks its type and whether
+        // it is a wildcard (Rainbow Energy — provides all types).
+        List<EnergyCard> energyCards = attacker.getAttachedEnergyCards();
+        List<PokemonType> pool = new java.util.ArrayList<>(attacker.getAttachedEnergies());
+        List<Boolean> wildcard = new java.util.ArrayList<>();
+        // Build wildcard flags aligned with the pool. Each EnergyCard may contribute
+        // multiple entries (e.g. Double Colorless = 2). We expand accordingly.
+        for (EnergyCard ec : energyCards) {
+            for (int i = 0; i < ec.getEnergyCount(); i++) {
+                wildcard.add(ec.isProvidesAllTypes());
+            }
+        }
+
         int colorlessRequired = 0;
         for (PokemonType required : attack.requiredEnergies()) {
             if (required == PokemonType.COLORLESS) {
                 colorlessRequired++;
                 continue;
             }
-            long count = available.getOrDefault(required, 0L);
-            if (count == 0) {
+            // First try to satisfy with exact-match (non-wildcard) energies.
+            boolean satisfied = false;
+            for (int i = 0; i < pool.size(); i++) {
+                if (!wildcard.get(i) && pool.get(i) == required) {
+                    pool.remove(i);
+                    wildcard.remove(i);
+                    satisfied = true;
+                    break;
+                }
+            }
+            if (!satisfied) {
+                // Fall back to wildcard energies (Rainbow Energy).
+                for (int i = 0; i < pool.size(); i++) {
+                    if (wildcard.get(i)) {
+                        pool.remove(i);
+                        wildcard.remove(i);
+                        satisfied = true;
+                        break;
+                    }
+                }
+            }
+            if (!satisfied) {
                 return false;
             }
-            available.put(required, count - 1);
         }
-        long remaining = available.values().stream().mapToLong(Long::longValue).sum();
-        return remaining >= colorlessRequired;
+        return pool.size() >= colorlessRequired;
+    }
+
+    private ValidationResult validateSelectCards(final ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction action) {
+        if (!(turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase)) {
+            return new ValidationResult.Invalid("wrong_phase_for_selection");
+        }
+        // TODO: Validate that the selected cardIds exist in the source zone.
+        // TODO: Validate that the types of the selected cards match the request constraints (e.g. Basic Energy for Prof Letter).
+        // TODO: Validate that the number of selected cards does not exceed maxSelections.
+        // For now, these advanced validations are deferred to the front-end or to GameFacade.
+        return new ValidationResult.Valid();
     }
 }

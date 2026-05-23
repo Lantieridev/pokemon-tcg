@@ -108,6 +108,9 @@ public final class MatchCreationService {
                 deck1, hand1, bench1, dp1, sem1,
                 slot1.getActivePokemon(), new ArrayList<>(slot1.getPrizes()));
         final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
+        
+        sem0.setPlayerRuntime(runtime0);
+        sem1.setPlayerRuntime(runtime1);
 
         // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
         runtime0.recordPokemonEntered(slot0.getActivePokemon());

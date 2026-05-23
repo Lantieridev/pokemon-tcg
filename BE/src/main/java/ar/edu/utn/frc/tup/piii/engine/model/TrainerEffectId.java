@@ -13,6 +13,13 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  *       Resolved in {@code GameFacade} (requires opponent runtime).</li>
  *   <li>{@code TEAM_FLARE_GRUNT} — discard 1 energy from opponent's Active (xy1-129)
  *       Resolved in {@code GameFacade} (requires opponent runtime).</li>
+ *   <li>{@code CASSIUS} — shuffle 1 of your Pokémon + attached cards into your deck (xy1-115)
+ *       Resolved in {@code GameFacade} (requires bench mutation).</li>
+ *   <li>{@code EVOSODA} — search deck for evolution card and evolve a Pokémon (xy1-116)
+ *       Resolved in {@code GameFacade} (requires bench + deck access).</li>
+ *   <li>{@code GREAT_BALL} — look at top 7, take first Pokémon, shuffle rest (xy1-118).</li>
+ *   <li>{@code MAX_REVIVE} — put last Pokémon from discard on top of deck (xy1-120).</li>
+ *   <li>{@code PROFESSORS_LETTER} — search deck for up to 2 basic Energy cards (xy1-123).</li>
  * </ul>
  * </p>
  */
@@ -27,5 +34,10 @@ public enum TrainerEffectId {
     SUPER_POTION,
     RED_CARD,
     TEAM_FLARE_GRUNT,
+    CASSIUS,
+    EVOSODA,
+    GREAT_BALL,
+    MAX_REVIVE,
+    PROFESSORS_LETTER,
     NONE
 }

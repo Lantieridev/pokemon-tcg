@@ -23,7 +23,9 @@ public record ActionRequestDTO(
         TrainerType trainerType,
         Integer attackIndex,
         PokemonType energyType,
-        java.util.List<Integer> selectedEnergyIndices) {
+        java.util.List<Integer> selectedEnergyIndices,
+        Integer sourceIndex,
+        java.util.List<String> selectedCardIds) {
 
     /**
      * Backward-compatible constructor for callers that do not supply energyType.
@@ -35,6 +37,6 @@ public record ActionRequestDTO(
                             final Integer targetIndex,
                             final TrainerType trainerType,
                             final Integer attackIndex) {
-        this(type, cardId, targetId, targetIndex, trainerType, attackIndex, null, java.util.Collections.emptyList());
+        this(type, cardId, targetId, targetIndex, trainerType, attackIndex, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList());
     }
 }

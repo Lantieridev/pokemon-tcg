@@ -39,7 +39,10 @@ public final class TurnInPlayTracker implements PhaseListener {
     @Override
     public void on(final PhaseEvent event) {
         switch (event) {
-            case PhaseEvent.TurnEnded e  -> playerRuntimes.get(e.playerIndex()).incrementAllTurnsInPlay();
+            case PhaseEvent.TurnEnded e  -> {
+                playerRuntimes.get(e.playerIndex()).incrementAllTurnsInPlay();
+                playerRuntimes.get(e.playerIndex()).resetAllAbilitiesUsedThisTurn();
+            }
             case PhaseEvent.TurnStarted e -> { /* no-op */ }
             case PhaseEvent.PhaseEntered e -> { /* no-op */ }
             case PhaseEvent.PhaseExited e  -> { /* no-op */ }

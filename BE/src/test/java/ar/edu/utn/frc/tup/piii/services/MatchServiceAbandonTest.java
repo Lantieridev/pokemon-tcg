@@ -78,7 +78,7 @@ class MatchServiceAbandonTest {
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
-                MATCH_ID, 1L, 0, "ACTIVE",
+                MATCH_ID, 1L, 0, "ACTIVE", null,
                 new GameStateResponseDTO.PlayerView(PLAYER_A_ID, null, List.of(), List.of(), 45, 6),
                 new GameStateResponseDTO.OpponentView(PLAYER_B_ID, null, List.of(), 0, 45, 6));
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);

@@ -146,6 +146,21 @@ public interface BattlePokemonState extends ActivePokemonState {
     List<Ability> getAbilities();
 
     /**
+     * Marks a specific ability as having been used this turn.
+     */
+    void markAbilityUsed(String abilityName);
+
+    /**
+     * Checks if a specific ability has been used this turn.
+     */
+    boolean hasUsedAbilityThisTurn(String abilityName);
+
+    /**
+     * Resets all ability usage tracking for the current turn.
+     */
+    void resetAbilitiesUsedThisTurn();
+
+    /**
      * Returns the evolution stage of this Pokémon card.
      *
      * @return evolution stage (never null)
