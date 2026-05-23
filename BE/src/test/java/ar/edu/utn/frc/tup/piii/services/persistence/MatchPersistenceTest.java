@@ -298,6 +298,7 @@ class MatchPersistenceTest {
     @Test
     void testGetGlobalRankingIntegration() {
         // Clear all matches to have a controlled database state for pagination/ranking verification
+        matchLogRepository.deleteAll();
         matchRepository.deleteAll();
 
         final UserEntity alice = userRepository.findByUsername("user-x").orElseGet(() ->
@@ -339,6 +340,7 @@ class MatchPersistenceTest {
     @Test
     void testGetUserMatchHistoryIntegration() {
         // Clear all matches to have controlled database state
+        matchLogRepository.deleteAll();
         matchRepository.deleteAll();
 
         final UserEntity alice = userRepository.findByUsername("user-x").orElseGet(() ->

@@ -30,12 +30,6 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Sql(scripts = {
-    "/db/migration/V1__init_schema.sql",
-    "/db/migration/V2__seed_xy1_cards.sql",
-    "/db/migration/V3__add_abilities_to_cards.sql",
-    "/db/migration/V5__add_evolves_from_to_cards.sql"
-})
 class XY1EndToEndIntegrationTest {
 
     @Autowired
@@ -136,9 +130,9 @@ class XY1EndToEndIntegrationTest {
         
         // Since coin flip is random during start(), we check the index dynamically
         if (activeIndex != 0) {
-            // Player B goes first, let's just end their turn to make Player A go first for predictable scripting
-            ActionRequestDTO endTurnB = new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null, null, Collections.emptyList(), null, Collections.emptyList());
-            matchService.processAction(matchId, activePlayerId, endTurnB);
+            // Force Player A to go first without advancing turn counts
+            session.getTurnManager().reset();
+            session.getTurnManager().startTurn(0);
             activeIndex = session.getTurnManager().activePlayerIndex();
             activePlayerId = session.getPlayerIds().get(activeIndex);
         }
