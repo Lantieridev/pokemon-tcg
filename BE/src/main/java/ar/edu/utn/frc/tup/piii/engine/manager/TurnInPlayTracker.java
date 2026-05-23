@@ -40,7 +40,18 @@ public final class TurnInPlayTracker implements PhaseListener {
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.TurnEnded e  -> {
+                System.err.println("DEBUG: TurnEnded for playerIndex=" + e.playerIndex());
+                System.err.println("DEBUG: Keys in map:");
+                playerRuntimes.get(e.playerIndex()).getTurnsInPlayKeys().forEach(k -> System.err.println("  " + k.getBaseCard().getCardId() + " hashCode=" + k.hashCode() + " equals=" + k.equals(playerRuntimes.get(e.playerIndex()).getActivePokemon())));
+                System.err.println("DEBUG: Before incrementing: ");
+                playerRuntimes.get(e.playerIndex()).getBench().getAll().forEach(p -> System.err.println("Bench: " + p.getBaseCard().getCardId() + " -> " + playerRuntimes.get(e.playerIndex()).getTurnsInPlay(p)));
+                if (playerRuntimes.get(e.playerIndex()).getActivePokemon() != null) {
+                     System.err.println("Active: " + playerRuntimes.get(e.playerIndex()).getActivePokemon().getBaseCard().getCardId() + " -> " + playerRuntimes.get(e.playerIndex()).getTurnsInPlay(playerRuntimes.get(e.playerIndex()).getActivePokemon()));
+                }
                 playerRuntimes.get(e.playerIndex()).incrementAllTurnsInPlay();
+                if (playerRuntimes.get(e.playerIndex()).getActivePokemon() != null) {
+                     System.err.println("After Active: " + playerRuntimes.get(e.playerIndex()).getActivePokemon().getBaseCard().getCardId() + " -> " + playerRuntimes.get(e.playerIndex()).getTurnsInPlay(playerRuntimes.get(e.playerIndex()).getActivePokemon()));
+                }
                 playerRuntimes.get(e.playerIndex()).resetAllAbilitiesUsedThisTurn();
             }
             case PhaseEvent.TurnStarted e -> { /* no-op */ }

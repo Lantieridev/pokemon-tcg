@@ -7,5 +7,5 @@ import java.util.List;
  *
  * @param cardIds the list of selected card IDs
  */
-public record SelectCardsAction(List<String> cardIds) implements Action {
+public record SelectCardsAction(List<String> cardIds, PendingSelectionRequest request) implements Action {
 }

@@ -215,6 +215,10 @@ public final class PlayerRuntime {
         return turnsInPlay.getOrDefault(pokemon, 0);
     }
 
+    public java.util.Set<BattlePokemonState> getTurnsInPlayKeys() {
+        return turnsInPlay.keySet();
+    }
+
     /**
      * Returns true if this player has the given Pokémon registered in their
      * turns-in-play map (i.e. the Pokémon is or was in play for this player).

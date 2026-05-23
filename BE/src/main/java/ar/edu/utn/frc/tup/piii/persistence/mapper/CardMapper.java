@@ -125,6 +125,7 @@ public final class CardMapper {
                 .retreatCost(retreatRaw.size())
                 .ex(subtype.contains("EX"))
                 .evolutionStage(parseEvolutionStage(subtype))
+                .evolvesFrom(entity.getEvolvesFrom())
                 .abilities(abilities)
                 .attacks(attacks)
                 .build();
@@ -304,10 +305,15 @@ public final class CardMapper {
         }
         try {
             if (raw instanceof String str) {
-                return objectMapper.readValue(str, new TypeReference<>() { });
+                if (str.startsWith("\"") && str.endsWith("\"")) {
+                    str = objectMapper.readValue(str, String.class);
+                }
+                return objectMapper.readValue(str, new TypeReference<List<Map<String, Object>>>() { });
             }
-            return objectMapper.convertValue(raw, new TypeReference<>() { });
+            return objectMapper.convertValue(raw, new TypeReference<List<Map<String, Object>>>() { });
         } catch (final Exception e) {
+            System.err.println("MAPPING ERROR: class=" + (raw != null ? raw.getClass() : "null") + " raw=" + raw + " error=" + e.getMessage());
+            e.printStackTrace();
             return Collections.emptyList();
         }
     }
@@ -318,10 +324,16 @@ public final class CardMapper {
             return Collections.emptyList();
         }
         try {
-            if (raw instanceof String str) {
-                return objectMapper.readValue(str, new TypeReference<>() { });
+            if (raw instanceof byte[] bytes) {
+                return objectMapper.readValue(bytes, new TypeReference<List<Object>>() { });
             }
-            return objectMapper.convertValue(raw, new TypeReference<>() { });
+            if (raw instanceof String str) {
+                if (str.startsWith("\"") && str.endsWith("\"")) {
+                    str = objectMapper.readValue(str, String.class);
+                }
+                return objectMapper.readValue(str, new TypeReference<List<Object>>() { });
+            }
+            return objectMapper.convertValue(raw, new TypeReference<List<Object>>() { });
         } catch (final Exception e) {
             return Collections.emptyList();
         }
