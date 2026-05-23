@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.persistence.repository;
 
+import ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto;
 import ar.edu.utn.frc.tup.piii.dtos.RankingDto;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
@@ -19,9 +20,7 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
     @Query("SELECT m FROM MatchEntity m WHERE m.player1.username = :username OR m.player2.username = :username ORDER BY m.createdAt DESC")
     List<MatchEntity> findMatchesByUsername(@Param("username") String username);
 
-    @Modifying
-    @Query("UPDATE MatchEntity m SET m.winner = :winner WHERE m.id = :id AND m.winner IS NULL")
-    int updateWinnerIfNull(@Param("id") Long id, @Param("winner") UserEntity winner);
+
 
     @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.RankingDto(m.winner.username, COUNT(m)) " +
            "FROM MatchEntity m " +
@@ -29,6 +28,16 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
            "GROUP BY m.winner.username " +
            "ORDER BY COUNT(m) DESC")
     Slice<RankingDto> getGlobalRanking(Pageable pageable);
+
+    @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(" +
+           "m.id, m.status, p1.username, p2.username, w.username, m.createdAt) " +
+           "FROM MatchEntity m " +
+           "LEFT JOIN m.player1 p1 " +
+           "LEFT JOIN m.player2 p2 " +
+           "LEFT JOIN m.winner w " +
+           "WHERE p1.username = :username OR p2.username = :username " +
+           "ORDER BY m.createdAt DESC")
+    Slice<MatchHistoryProjectionDto> findUserMatchHistory(@Param("username") String username, Pageable pageable);
 }
 
 

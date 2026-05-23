@@ -2,7 +2,9 @@ package ar.edu.utn.frc.tup.piii;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.web.client.RestClient;
 
 /**
  * Main class.
@@ -17,5 +19,14 @@ public class Application {
      */
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+    }
+
+    /**
+     * Bean for RestClient.Builder to resolve RestClientPokemonTcgApiClient dependency injection.
+     * @return a new RestClient.Builder
+     */
+    @Bean
+    public RestClient.Builder restClientBuilder() {
+        return RestClient.builder();
     }
 }
