@@ -38,11 +38,19 @@ public class AuthControllerTest {
 
     private MockMvc mockMvc;
 
+    @Autowired
+    private ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository matchLogRepository;
+
+    @Autowired
+    private ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository matchRepository;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .addFilters(springSecurityFilterChain)
                 .build();
+        matchLogRepository.deleteAll();
+        matchRepository.deleteAll();
         userRepository.deleteAll();
     }
 
