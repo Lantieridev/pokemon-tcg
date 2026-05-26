@@ -158,6 +158,7 @@ public final class InPlayPokemon implements BattlePokemonState {
         Objects.requireNonNull(evolution, "evolution card must not be null");
         this.underlyingCards.add(this.card);
         this.card = evolution;
+        this.usedAbilitiesThisTurn.clear();
     }
 
     /**

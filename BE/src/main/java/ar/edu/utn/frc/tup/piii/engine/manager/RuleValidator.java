@@ -332,11 +332,13 @@ public final class RuleValidator {
         turnManager.requireMainPhase();
         
         final int playerIndex = turnManager.activePlayerIndex();
-        final ar.edu.utn.frc.tup.piii.engine.model.Card card = handStateProvider.getCardInHand(playerIndex, action.cardId());
-        
-        if (card == null) {
+        final java.util.Optional<ar.edu.utn.frc.tup.piii.engine.model.Card> maybeCard =
+                handStateProvider.getCardInHand(playerIndex, action.cardId());
+
+        if (maybeCard.isEmpty()) {
             return new ValidationResult.Invalid("card_not_in_hand");
         }
+        final ar.edu.utn.frc.tup.piii.engine.model.Card card = maybeCard.get();
         if (!card.isBasicPokemon()) {
             return new ValidationResult.Invalid("card_not_basic_pokemon");
         }

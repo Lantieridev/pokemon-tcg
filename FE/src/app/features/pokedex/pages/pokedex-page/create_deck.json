@@ -1,0 +1,22 @@
+{
+  "userId": 1,
+  "name": "Grass Master Deck",
+  "cards": [
+    {
+      "cardId": "xy1-1",
+      "quantity": 4
+    },
+    {
+      "cardId": "xy1-12",
+      "quantity": 4
+    },
+    {
+      "cardId": "xy1-13",
+      "quantity": 4
+    },
+    {
+      "cardId": "xy1-132",
+      "quantity": 48
+    }
+  ]
+}

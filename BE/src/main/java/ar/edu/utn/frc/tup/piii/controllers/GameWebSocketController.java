@@ -38,7 +38,14 @@ public final class GameWebSocketController {
     @MessageMapping("/match/{matchId}/action")
     public void handleAction(@DestinationVariable final String matchId,
                              @Header("playerId") final String playerId,
+                             final java.security.Principal principal,
                              @Payload final ActionRequestDTO action) {
+        if (principal == null) {
+            throw new IllegalArgumentException("User must be authenticated");
+        }
+        if (!principal.getName().equals(playerId)) {
+            throw new IllegalArgumentException("Player ID must match the authenticated user");
+        }
         matchService.processAction(matchId, playerId, action);
     }
 }

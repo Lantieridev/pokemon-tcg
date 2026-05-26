@@ -3,6 +3,8 @@ package ar.edu.utn.frc.tup.piii.engine.pipeline;
 import ar.edu.utn.frc.tup.piii.engine.model.AbilityEffect;
 import ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId;
 
+import java.util.Optional;
+
 /**
  * Resolves a {@link AbilityEffectId} into an executable {@link AbilityEffect}.
  */
@@ -12,14 +14,16 @@ public final class AbilityEffectResolver {
      * Resolves the given ability effect ID into an {@link AbilityEffect}.
      *
      * @param effectId the mapped identifier of the ability effect
-     * @return an {@link AbilityEffect} matching the id, or {@code null} if unknown/unimplemented
+     * @return an {@link Optional} containing the matching {@link AbilityEffect}, or
+     *         {@link Optional#empty()} when the id is null, NONE, or passive
+     *         (handled directly by the pipeline).
      */
-    public AbilityEffect resolve(final AbilityEffectId effectId) {
+    public Optional<AbilityEffect> resolve(final AbilityEffectId effectId) {
         if (effectId == null) {
-            return null;
+            return Optional.empty();
         }
 
-        return switch (effectId) {
+        final AbilityEffect effect = switch (effectId) {
             case FAIRY_TRANSFER -> (session, action) -> {
                 final int playerIndex = session.getActivePlayerIndex();
                 final ar.edu.utn.frc.tup.piii.engine.session.MatchBoard board = session.getBoard();
@@ -67,5 +71,6 @@ public final class AbilityEffectResolver {
             case SAFEGUARD, SWEET_VEIL -> null; // Passive abilities are typically checked directly in the pipeline
             case NONE -> null;
         };
+        return Optional.ofNullable(effect);
     }
 }

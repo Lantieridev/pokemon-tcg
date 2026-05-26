@@ -30,10 +30,7 @@ public final class StadiumEffectStep implements AttackPipelineStep {
     public void process(final AttackContext ctx, final Runnable next) {
         final TrainerCard stadium = ctx.getActiveStadium();
         if (stadium != null) {
-            var effect = resolver.resolveStadium(stadium.getCardId());
-            if (effect != null) {
-                effect.apply(ctx);
-            }
+            resolver.resolveStadium(stadium.getCardId()).ifPresent(effect -> effect.apply(ctx));
         }
         next.run();
     }

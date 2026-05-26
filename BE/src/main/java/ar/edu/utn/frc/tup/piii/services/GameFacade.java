@@ -140,13 +140,11 @@ public final class GameFacade {
         source.getAbilities().stream()
                 .filter(a -> a.name().equalsIgnoreCase(abilityIdStr) || a.effectId().name().equalsIgnoreCase(abilityIdStr))
                 .findFirst()
-                .ifPresent(ability -> {
-                    var effect = abilityEffectResolver.resolve(ability.effectId());
-                    if (effect != null) {
-                        effect.apply(session, action);
-                        source.markAbilityUsed(ability.effectId().name());
-                    }
-                });
+                .ifPresent(ability -> abilityEffectResolver.resolve(ability.effectId())
+                        .ifPresent(effect -> {
+                            effect.apply(session, action);
+                            source.markAbilityUsed(ability.effectId().name());
+                        }));
     }
 
     private void applyPlacePokemon(final PlaceBasicPokemonAction action, final PlayerRuntime runtime) {
@@ -177,6 +175,12 @@ public final class GameFacade {
         if (action.evolution() != null) {
             PokemonCard newCard = (PokemonCard) runtime.getHand().removeCard(action.evolution().getCardId());
             action.target().evolveInto(newCard);
+            // XY1 §2: a Pokémon cannot evolve in the same turn it evolved. The
+            // BattlePokemonState mutates in-place, so we must reset its turnsInPlay
+            // counter to 0 so RuleValidator sees it as "just entered". Done HERE
+            // (inside the mutation guard) so a no-op call cannot accidentally
+            // mark an unrelated Pokémon as freshly placed.
+            runtime.recordPokemonEntered(action.target());
         }
         
         if (action.target() == runtime.getActivePokemon()) {
@@ -284,7 +288,7 @@ public final class GameFacade {
                     } else {
                         TrainerEffect effect = trainerCard.getEffect();
                         if (effect == null && effectId != null) {
-                            effect = trainerEffectResolver.resolve(effectId, session.getCoinFlipper());
+                            effect = trainerEffectResolver.resolve(effectId, session.getCoinFlipper()).orElse(null);
                         }
                         if (effect != null) {
                             effect.apply(runtime, action.target());

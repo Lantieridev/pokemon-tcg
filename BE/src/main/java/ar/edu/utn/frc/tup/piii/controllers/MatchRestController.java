@@ -2,7 +2,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.CreateMatchRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.services.CardResolutionService;
@@ -85,7 +85,14 @@ public final class MatchRestController {
      */
     @GetMapping("/{matchId}/state")
     public GameStateResponseDTO getState(@PathVariable final String matchId,
-                                         @RequestHeader("X-Player-Id") final String playerId) {
+                                         @RequestHeader("X-Player-Id") final String playerId,
+                                         final java.security.Principal principal) {
+        if (principal == null) {
+            throw new org.springframework.security.authentication.BadCredentialsException("User must be authenticated");
+        }
+        if (!principal.getName().equals(playerId)) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot access another player's state");
+        }
         final MatchSession session = registry.find(matchId)
                 .orElseThrow(() -> new NoSuchElementException("Match not found: " + matchId));
         final int viewerIndex = session.indexOf(playerId);

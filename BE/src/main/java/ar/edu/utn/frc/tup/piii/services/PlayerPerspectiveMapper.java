@@ -1,4 +1,9 @@
-package ar.edu.utn.frc.tup.piii.dtos;
+package ar.edu.utn.frc.tup.piii.services;
+
+import ar.edu.utn.frc.tup.piii.dtos.AttackDTO;
+import ar.edu.utn.frc.tup.piii.dtos.BattlePokemonDTO;
+import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.PendingSelectionRequestDTO;
 
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;

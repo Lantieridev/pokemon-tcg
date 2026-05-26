@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -44,12 +45,26 @@ public class StatusEffectManager {
      * Constructs a StatusEffectManager with the given CoinFlipper.
      *
      * @param coinFlipper the coin flipper used for probabilistic outcomes (must not be null)
+     * @throws NullPointerException if {@code coinFlipper} is null
      */
     public StatusEffectManager(final CoinFlipper coinFlipper) {
-        this.coinFlipper = coinFlipper;
+        this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
     }
 
+    /**
+     * Binds the owning {@link ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime} once
+     * the circular dependency can be resolved (StatusEffectManager is built before
+     * PlayerRuntime exists). Set-once semantics: subsequent calls fail fast.
+     *
+     * @param playerRuntime the owning runtime (must not be null)
+     * @throws NullPointerException  if {@code playerRuntime} is null
+     * @throws IllegalStateException if a runtime has already been bound
+     */
     public void setPlayerRuntime(final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime) {
+        Objects.requireNonNull(playerRuntime, "playerRuntime must not be null");
+        if (this.playerRuntime != null) {
+            throw new IllegalStateException("playerRuntime already bound; set-once semantics");
+        }
         this.playerRuntime = playerRuntime;
     }
 

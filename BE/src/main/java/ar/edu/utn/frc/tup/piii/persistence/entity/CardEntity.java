@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.persistence.entity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -30,27 +31,27 @@ public class CardEntity {
     @Column(name = "evolves_from")
     private String evolvesFrom;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object abilities;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object rules;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object attacks;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object weaknesses;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object resistances;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(columnDefinition = "jsonb")
     private Object retreatCost;
 
