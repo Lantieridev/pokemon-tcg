@@ -77,7 +77,7 @@ class WebSocketConfigTest {
     }
 
     @Test
-    void shouldNotAuthenticateWhenTokenIsInvalid() {
+    void shouldThrowExceptionWhenTokenIsInvalid() {
         final ArgumentCaptor<ChannelInterceptor> captor = ArgumentCaptor.forClass(ChannelInterceptor.class);
         webSocketConfig.configureClientInboundChannel(channelRegistration);
         verify(channelRegistration).interceptors(captor.capture());
@@ -91,9 +91,66 @@ class WebSocketConfigTest {
 
         when(jwtUtil.isValidToken("invalid-token")).thenReturn(false);
 
+        assertThrows(org.springframework.messaging.MessagingException.class, () -> {
+            interceptor.preSend(stompMessage, messageChannel);
+        });
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTokenIsMissing() {
+        final ArgumentCaptor<ChannelInterceptor> captor = ArgumentCaptor.forClass(ChannelInterceptor.class);
+        webSocketConfig.configureClientInboundChannel(channelRegistration);
+        verify(channelRegistration).interceptors(captor.capture());
+        final ChannelInterceptor interceptor = captor.getValue();
+
+        final StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+        accessor.setLeaveMutable(true);
+        final Message<byte[]> stompMessage = org.springframework.messaging.support.MessageBuilder
+                .createMessage(new byte[0], accessor.getMessageHeaders());
+
+        assertThrows(org.springframework.messaging.MessagingException.class, () -> {
+            interceptor.preSend(stompMessage, messageChannel);
+        });
+    }
+
+    @Test
+    void shouldAuthorizeSubscribeToOwnChannel() {
+        final ArgumentCaptor<ChannelInterceptor> captor = ArgumentCaptor.forClass(ChannelInterceptor.class);
+        webSocketConfig.configureClientInboundChannel(channelRegistration);
+        verify(channelRegistration).interceptors(captor.capture());
+        final ChannelInterceptor interceptor = captor.getValue();
+
+        final StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        accessor.setDestination("/topic/match/match-123/player/john_doe");
+        final UsernamePasswordAuthenticationToken auth = mock(UsernamePasswordAuthenticationToken.class);
+        when(auth.getName()).thenReturn("john_doe");
+        accessor.setUser(auth);
+        accessor.setLeaveMutable(true);
+        final Message<byte[]> stompMessage = org.springframework.messaging.support.MessageBuilder
+                .createMessage(new byte[0], accessor.getMessageHeaders());
+
         final Message<?> resultMessage = interceptor.preSend(stompMessage, messageChannel);
-        final StompHeaderAccessor resultAccessor = MessageHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class);
-        assertNotNull(resultAccessor);
-        assertNull(resultAccessor.getUser());
+        assertNotNull(resultMessage);
+    }
+
+    @Test
+    void shouldRejectSubscribeToOtherChannel() {
+        final ArgumentCaptor<ChannelInterceptor> captor = ArgumentCaptor.forClass(ChannelInterceptor.class);
+        webSocketConfig.configureClientInboundChannel(channelRegistration);
+        verify(channelRegistration).interceptors(captor.capture());
+        final ChannelInterceptor interceptor = captor.getValue();
+
+        final StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        accessor.setDestination("/topic/match/match-123/player/misty");
+        final UsernamePasswordAuthenticationToken auth = mock(UsernamePasswordAuthenticationToken.class);
+        when(auth.getName()).thenReturn("john_doe");
+        accessor.setUser(auth);
+        accessor.setLeaveMutable(true);
+        final Message<byte[]> stompMessage = org.springframework.messaging.support.MessageBuilder
+                .createMessage(new byte[0], accessor.getMessageHeaders());
+
+        assertThrows(org.springframework.messaging.MessagingException.class, () -> {
+            interceptor.preSend(stompMessage, messageChannel);
+        });
     }
 }

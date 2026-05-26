@@ -204,6 +204,11 @@ public final class TurnManager {
     /**
      * Returns the current phase cast to MainPhase.
      *
+     * <p>The {@code instanceof} below is a deliberate type-guard, not polymorphic
+     * dispatch — this method's contract is "require a specific subtype or throw",
+     * which is exactly what pattern-matching {@code instanceof} expresses in Java 21.
+     * No Strategy/State refactor would simplify it.</p>
+     *
      * @return the current MainPhase instance
      * @throws InvalidTurnPhaseException if the current phase is not MainPhase or no turn in progress
      */

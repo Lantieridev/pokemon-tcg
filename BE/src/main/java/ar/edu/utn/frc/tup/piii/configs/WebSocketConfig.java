@@ -52,16 +52,36 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(final Message<?> message, final MessageChannel channel) {
                 final StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    final String authorizationHeader = accessor.getFirstNativeHeader("Authorization");
-                    if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                        final String token = authorizationHeader.substring(7);
-                        if (jwtUtil.isValidToken(token)) {
-                            final String username = jwtUtil.getUsernameFromToken(token);
-                            final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                            final UsernamePasswordAuthenticationToken authentication =
-                                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                            accessor.setUser(authentication);
+                if (accessor == null) {
+                    return message;
+                }
+
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    final String authHeader = accessor.getFirstNativeHeader("Authorization");
+                    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                        throw new org.springframework.messaging.MessagingException("Missing or malformed Authorization header");
+                    }
+                    final String token = authHeader.substring(7);
+                    if (!jwtUtil.isValidToken(token)) {
+                        throw new org.springframework.messaging.MessagingException("Invalid JWT");
+                    }
+                    final String username = jwtUtil.getUsernameFromToken(token);
+                    final UserDetails user = userDetailsService.loadUserByUsername(username);
+                    final UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                    accessor.setUser(authentication);
+                }
+
+                if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                    final java.security.Principal principal = accessor.getUser();
+                    if (principal == null) {
+                        throw new org.springframework.messaging.MessagingException("Subscription requires authentication");
+                    }
+                    final String dest = accessor.getDestination();
+                    if (dest != null && dest.contains("/player/")) {
+                        final String subscribedPlayerId = dest.substring(dest.lastIndexOf('/') + 1);
+                        if (!principal.getName().equals(subscribedPlayerId)) {
+                            throw new org.springframework.messaging.MessagingException("Cannot subscribe to another player's channel");
                         }
                     }
                 }

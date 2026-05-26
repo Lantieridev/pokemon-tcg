@@ -1,8 +1,1081 @@
-<main class="pokedex-page">
-  <h1>Feature de ejemplo</h1>
-  <p>
-    La carpeta <code>features/pokedex</code> fue creada exclusivamente como referencia de
-    estructura feature-driven. Debe eliminarse y reemplazarse por las features reales del
-    proyecto.
-  </p>
-</main>
+<!-- ═══════════════════════════════════════════════════════════════
+     MONSTRA TCG — Angular 20 · Debug + Production Prototype
+     Frontend real conectado a Spring Boot via REST + STOMP WS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="monstra-root">
+
+  <!-- ═══════════════ TOP NAVIGATION BAR ═══════════════ -->
+  <header class="topbar">
+    <!-- Logo / Brand -->
+    <div class="brand-group">
+      <div class="pokeball-icon"></div>
+      <div class="brand-text">
+        <div class="brand-name">MONSTRA <span class="brand-accent">TCG</span></div>
+        <div class="brand-sub">v0.5 · Angular 20 + Spring Boot</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab" [class.active]="currentTab() === 'lobby'" (click)="currentTab.set('lobby')">
+        <span class="nav-icon">🏠</span> Lobby
+      </button>
+      <button class="nav-tab" [class.active]="currentTab() === 'battle'" (click)="navigateToBattle()">
+        <span class="nav-icon">⚔️</span> Partida
+        @if (activeMatchId()) { <span class="nav-badge">LIVE</span> }
+      </button>
+      <button class="nav-tab" [class.active]="currentTab() === 'deck'" (click)="currentTab.set('deck')">
+        <span class="nav-icon">🃏</span> Deck
+      </button>
+      <button class="nav-tab" [class.active]="currentTab() === 'shop'" (click)="currentTab.set('shop')">
+        <span class="nav-icon">📦</span> Sobres
+      </button>
+      <button class="nav-tab" [class.active]="currentTab() === 'profile'" (click)="currentTab.set('profile')">
+        <span class="nav-icon">👤</span> Perfil
+      </button>
+    </nav>
+
+    <!-- Right side status area -->
+    <div class="topbar-right">
+      <!-- API Status pill -->
+      <div class="api-status-pill" [ngClass]="apiStatus()">
+        <div class="status-dot"></div>
+        <span class="status-text-tiny">
+          @if (apiStatus() === 'connected') { ✅ {{ apiResponseTime() }}ms }
+          @else if (apiStatus() === 'checking') { 🟡 ... }
+          @else { 🔴 OFF }
+        </span>
+        <button class="btn-icon-round" (click)="pingApi()" title="Reconectar">⟳</button>
+      </div>
+
+      <!-- WS Live badge -->
+      @if (wsConnected()) {
+        <div class="ws-live-badge">⚡ WS LIVE</div>
+      }
+
+      <!-- Auto-poll indicator -->
+      @if (isPolling()) {
+        <div class="polling-badge">🔄 POLL</div>
+      }
+
+      <!-- User chip -->
+      @if (currentUser()) {
+        <button class="user-chip" (click)="currentTab.set('profile')">
+          <div class="avatar-micro">{{ currentUser()?.username?.substring(0,2)?.toUpperCase() }}</div>
+          <span class="username-text">{{ currentUser()?.username }}</span>
+        </button>
+        <button class="btn btn-sm btn-danger" (click)="logout()">Salir</button>
+      } @else {
+        <button class="btn btn-sm btn-primary" (click)="currentTab.set('profile')">
+          🔐 Ingresar
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <main class="main-content">
+
+    <!-- ══════════════════════════════════════════════
+         LOBBY SCREEN
+         ══════════════════════════════════════════════ -->
+    @if (currentTab() === 'lobby') {
+      <div class="screen lobby-screen">
+
+        <!-- Hero / Matchmaking Card -->
+        <div class="hero-card">
+          <div class="hero-grid-bg"></div>
+          <div class="hero-inner">
+            <div class="hero-left">
+              <div class="hero-eyebrow">Lobby · Set XY1 · 146 cartas</div>
+              <h2 class="hero-title">
+                ¡Bienvenido, <span class="text-accent">{{ currentUser()?.username || 'Entrenador' }}</span>!
+              </h2>
+              <p class="hero-desc">
+                Creá una partida real contra el backend Spring Boot o conectate por WebSocket al tablero activo.
+                @if (!currentUser()) {
+                  <span class="hero-warn">⚠️ Iniciá sesión en Perfil para acceder a partidas reales.</span>
+                }
+              </p>
+              <div class="hero-actions">
+                <button class="btn btn-primary hero-btn" (click)="navigateToBattle()">
+                  ⚔️ Ir al Tablero
+                </button>
+                <button class="btn btn-secondary hero-btn" (click)="fetchRankings()">
+                  🔄 Actualizar Rankings
+                </button>
+                <button class="btn btn-secondary hero-btn" (click)="fetchDecks()">
+                  🃏 Mis Mazos
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Deck Preview -->
+            <div class="deck-preview-widget">
+              <div class="deck-preview-header">
+                <span class="mono-label">Mazo activo · GET /api/decks</span>
+                <button class="btn btn-sm btn-secondary" (click)="fetchDecks()">⟳</button>
+              </div>
+              @if (decks().length > 0) {
+                <div class="deck-preview-body">
+                  <div class="deck-preview-icon">🎴</div>
+                  <div class="deck-preview-info">
+                    <div class="deck-preview-name">{{ decks()[0].name }}</div>
+                    <div class="deck-preview-meta">{{ decks()[0].cardCount || '—' }} / 60 cartas</div>
+                    <div class="deck-preview-meta">{{ decks().length }} mazo(s) guardados</div>
+                  </div>
+                </div>
+              } @else {
+                <div class="text-muted text-center py-3">Sin mazos. Creá uno en la sección Deck.</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Strip -->
+        <div class="stats-strip">
+          <div class="stat-card" style="--tone-color: #52f0ff">
+            <div class="stat-icon" style="color: #52f0ff">🌐</div>
+            <div class="stat-body">
+              <div class="stat-key">API Status</div>
+              <div class="stat-val">{{ apiStatus() }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="--tone-color: #c5ff3d">
+            <div class="stat-icon" style="color: #c5ff3d">⚡</div>
+            <div class="stat-body">
+              <div class="stat-key">WS STOMP</div>
+              <div class="stat-val">{{ wsConnected() ? 'CONECTADO' : 'OFF' }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="--tone-color: #ff5fb0">
+            <div class="stat-icon" style="color: #ff5fb0">🎮</div>
+            <div class="stat-body">
+              <div class="stat-key">Match Activo</div>
+              <div class="stat-val">{{ activeMatchId() ? activeMatchId().substring(0, 8) + '…' : '—' }}</div>
+            </div>
+          </div>
+          <div class="stat-card" style="--tone-color: #ffd23d">
+            <div class="stat-icon" style="color: #ffd23d">📦</div>
+            <div class="stat-body">
+              <div class="stat-key">Mis Mazos</div>
+              <div class="stat-val">{{ decks().length }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lobby Grid: Rankings + Match Creator -->
+        <div class="lobby-grid">
+
+          <!-- Rankings Panel -->
+          <div class="debug-card">
+            <h3>🏆 Ranking Global (GET /api/rankings)</h3>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:64px">Puesto</th>
+                    <th>Jugador</th>
+                    <th class="text-right">Victorias</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (rankings().length > 0) {
+                    @for (rank of rankings(); track rank.username; let i = $index) {
+                      <tr>
+                        <td>
+                          <span class="rank-badge"
+                                [class.gold]="i === 0"
+                                [class.silver]="i === 1"
+                                [class.bronze]="i === 2">
+                            {{ i + 1 + (rankingPage() * rankingSize()) }}
+                          </span>
+                        </td>
+                        <td><strong>{{ rank.username }}</strong></td>
+                        <td class="text-right text-accent">{{ rank.wins }} 🏆</td>
+                      </tr>
+                    }
+                  } @else {
+                    <tr>
+                      <td colspan="3" class="text-center text-muted">No hay rankings disponibles.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button class="btn btn-sm btn-secondary"
+                      [disabled]="rankingPage() === 0"
+                      (click)="prevRankingPage()">◀ Anterior</button>
+              <span class="page-indicator">Pág {{ rankingPage() + 1 }}</span>
+              <button class="btn btn-sm btn-secondary"
+                      (click)="nextRankingPage()">Siguiente ▶</button>
+            </div>
+          </div>
+
+          <!-- Match Creator Panel -->
+          <div class="debug-card">
+            <h3>🔨 Nueva Partida (POST /api/matches)</h3>
+            <div class="form-group">
+              <label>Jugador A (playerAId)</label>
+              <input type="text" [(ngModel)]="simPlayerAId" class="form-control"
+                     [placeholder]="currentUser()?.username || 'e.g. Ash'" />
+            </div>
+            <div class="form-group">
+              <label>Mazo A (deckAId)</label>
+              <input type="number" [(ngModel)]="simDeckAId" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Jugador B (playerBId)</label>
+              <input type="text" [(ngModel)]="simPlayerBId" class="form-control"
+                     placeholder="e.g. Gary" />
+            </div>
+            <div class="form-group">
+              <label>Mazo B (deckBId)</label>
+              <input type="number" [(ngModel)]="simDeckBId" class="form-control" />
+            </div>
+            <button class="btn btn-primary btn-block" (click)="createMatch()">
+              🚀 Crear Partida
+            </button>
+            <button class="btn btn-warning btn-block mt-2" (click)="quickStartTestMatch()" style="background: linear-gradient(135deg, #f59e0b, #ef4444); border: none; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.4);">
+              ⚡ Partida de Prueba Rápida (Ash vs Misty)
+            </button>
+
+            @if (activeMatchId()) {
+              <div class="match-created-box mt-3">
+                <div class="mono-label">✅ Match creado:</div>
+                <code class="match-id-code">{{ activeMatchId() }}</code>
+                <button class="btn btn-success btn-block mt-2" (click)="navigateToBattle()">
+                  ⚔️ Ir al Tablero de Batalla
+                </button>
+              </div>
+            }
+
+            <!-- Quick access to existing match -->
+            <div class="divider-horizontal">o acceder a partida existente</div>
+            <div class="form-group">
+              <label>Match ID existente</label>
+              <input type="text" [(ngModel)]="activeMatchId" class="form-control"
+                     placeholder="UUID de la partida" />
+            </div>
+            <div class="form-group">
+              <label>Perspectiva (Player ID)</label>
+              <input type="text" [(ngModel)]="viewerPlayerId" class="form-control"
+                     [placeholder]="currentUser()?.username || 'Player ID'" />
+            </div>
+            <button class="btn btn-secondary btn-block" (click)="fetchMatchState(); navigateToBattle()">
+              👁️ Ver Estado de Partida
+            </button>
+          </div>
+
+        </div>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════
+         BATTLE SCREEN — Tablero de Juego
+         ══════════════════════════════════════════════ -->
+    @if (currentTab() === 'battle') {
+      <div class="screen battle-screen">
+
+        <!-- Battle Setup Bar (always visible) -->
+        <div class="battle-config-bar">
+          <div class="form-group">
+            <label>Match ID</label>
+            <input type="text" [(ngModel)]="activeMatchId"
+                   placeholder="UUID de la partida" class="form-control form-control-sm" />
+          </div>
+          <div class="form-group">
+            <label>Player ID (perspectiva)</label>
+            <input type="text" [(ngModel)]="viewerPlayerId"
+                   [placeholder]="currentUser()?.username || 'Player ID'" class="form-control form-control-sm" />
+          </div>
+          <div class="battle-config-actions">
+            <button class="btn btn-sm btn-secondary" (click)="fetchMatchState()">
+              📋 Estado
+            </button>
+            <button class="btn btn-sm"
+                    [class.btn-success]="!wsConnected()"
+                    [class.btn-danger]="wsConnected()"
+                    (click)="wsConnected() ? disconnectWebSocket() : connectWebSocket()">
+              {{ wsConnected() ? '⛔ Desconectar WS' : '🔌 Conectar WS' }}
+            </button>
+            <label class="switch-container" title="Auto-polling REST 2s">
+              <input type="checkbox" [checked]="isPolling()" (change)="togglePolling()" />
+              <span class="switch-slider"></span>
+            </label>
+            <span class="lbl-polling">Auto-poll</span>
+          </div>
+        </div>
+
+        @if (matchError()) {
+          <div class="alert alert-danger mx-3">
+            <strong>Error:</strong> {{ matchError() }}
+          </div>
+        }
+
+        <!-- Battle Main Layout: Board + Right Sidebar -->
+        <div class="battle-main-layout">
+
+          <!-- ═══ CENTER: THE BATTLE BOARD ═══ -->
+          <div class="battle-board-column">
+
+            @if (matchState()) {
+
+              <!-- Phase / Turn Bar -->
+              <div class="turn-bar">
+                <span class="phase-badge">{{ matchState().currentPhase }}</span>
+                <span class="turn-desc">
+                  Turno de:
+                  <strong class="text-accent">
+                    {{ matchState().activePlayerIndex === 0
+                       ? matchState().self?.playerId
+                       : matchState().opponent?.playerId }}
+                  </strong>
+                </span>
+                <span class="version-tag">v{{ matchState().version }}</span>
+                @if (isMyTurn()) {
+                  <span class="my-turn-badge pulse-glow">¡TU TURNO!</span>
+                }
+              </div>
+
+              <!-- ═══ BATTLEFIELD ═══ -->
+              <div class="battlefield">
+
+                <!-- OPPONENT SECTION (top) -->
+                <div class="player-zone opponent-zone">
+
+                  <!-- Prizes (left) -->
+                  <div class="prizes-column">
+                    <div class="zone-label">🏆 Premios rival</div>
+                    <div class="prize-grid">
+                      @for (i of [0,1,2,3,4,5]; track i) {
+                        <div class="prize-cell" [class.prize-remaining]="i < (matchState().opponent?.prizeCount || 0)">
+                          @if (i < (matchState().opponent?.prizeCount || 0)) {
+                            <div class="card-back-prize"></div>
+                          } @else {
+                            <div class="prize-empty"></div>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="deck-info-mini">
+                      <span>📦 {{ matchState().opponent?.deckSize }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Active Pokémon (center) -->
+                  <div class="active-column">
+                    <div class="zone-label opponent-label">
+                      👹 {{ matchState().opponent?.playerId }}
+                      <span class="hand-count-badge">🎴 {{ matchState().opponent?.handSize }}</span>
+                    </div>
+                    @if (matchState().opponent?.active) {
+                      <div class="pokemon-battle-card opp-card"
+                           [style.transform]="getStatusRotation(matchState().opponent.active)"
+                           [style.border-color]="getTypeColor(matchState().opponent.active.pokemonType)">
+                        <img [src]="getCardImageUrl(matchState().opponent.active.cardId)"
+                             [alt]="matchState().opponent.active.name"
+                             class="battle-card-img" />
+                        <div class="card-info-bar">
+                          <span class="poke-name-sm">{{ matchState().opponent.active.name || matchState().opponent.active.cardId }}</span>
+                          <span class="poke-type-dot"
+                                [style.background]="getTypeColor(matchState().opponent.active.pokemonType)">
+                          </span>
+                        </div>
+                        <div class="hp-wrap">
+                          <div class="hp-bar-track">
+                            <div class="hp-bar-fill"
+                                 [style.width.%]="getHpPercent(matchState().opponent.active)"
+                                 [class.hp-danger]="getHpPercent(matchState().opponent.active) < 25"
+                                 [class.hp-warning]="getHpPercent(matchState().opponent.active) >= 25 && getHpPercent(matchState().opponent.active) < 50">
+                            </div>
+                          </div>
+                          <span class="hp-text">
+                            {{ getPokemonHp(matchState().opponent.active) }}/{{ matchState().opponent.active.maxHp }} HP
+                          </span>
+                        </div>
+                        @if (matchState().opponent.active.statusConditions?.length > 0) {
+                          <div class="status-badge">{{ getStatusLabel(matchState().opponent.active) }}</div>
+                        }
+                        @if (matchState().opponent.active.attachedEnergies?.length > 0) {
+                          <div class="energy-strip">
+                            @for (e of matchState().opponent.active.attachedEnergies; track $index) {
+                              <span class="energy-pip" [style.background]="getTypeColor(e)" [title]="e"></span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="empty-zone-card">
+                        <span>ACTIVO VACÍO</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Bench (right) -->
+                  <div class="bench-column">
+                    <div class="zone-label">BANCA RIVAL ({{ matchState().opponent?.bench?.length || 0 }}/5)</div>
+                    <div class="bench-row">
+                      @for (poke of (matchState().opponent?.bench || []); track $index) {
+                        <div class="bench-slot"
+                             [style.border-color]="getTypeColor(poke?.pokemonType)">
+                          @if (poke) {
+                            <img [src]="getCardImageUrl(poke.cardId)" class="bench-img" [title]="poke.name" />
+                            <div class="bench-hp-bar">
+                              <div class="hp-bar-fill bench-hp-fill"
+                                   [style.width.%]="getHpPercent(poke)"
+                                   [class.hp-danger]="getHpPercent(poke) < 25">
+                              </div>
+                            </div>
+                            <span class="bench-name-tiny">{{ poke.name || poke.cardId }}</span>
+                          } @else {
+                            <span class="bench-empty-label">—</span>
+                          }
+                        </div>
+                      }
+                      @for (i of emptyBenchSlots(matchState().opponent?.bench); track i) {
+                        <div class="bench-slot bench-slot-empty"></div>
+                      }
+                    </div>
+                  </div>
+
+                </div>
+                <!-- END OPPONENT ZONE -->
+
+                <!-- CENTER DIVIDER -->
+                <div class="battle-divider">
+                  <div class="divider-line"></div>
+                  <span class="divider-label">⚔ BATALLA ⚔</span>
+                  <div class="divider-line"></div>
+                </div>
+
+                <!-- MY SECTION (bottom) -->
+                <div class="player-zone my-zone">
+
+                  <!-- My Bench (left) -->
+                  <div class="bench-column">
+                    <div class="zone-label">MI BANCA ({{ matchState().self?.bench?.length || 0 }}/5)</div>
+                    <div class="bench-row">
+                      @for (poke of (matchState().self?.bench || []); track $index; let bi = $index) {
+                        <div class="bench-slot my-bench-slot"
+                             [style.border-color]="getTypeColor(poke?.pokemonType)"
+                             [class.bench-selected]="selectedBenchIndex() === bi"
+                             (click)="selectBenchPokemon(bi)">
+                          @if (poke) {
+                            <img [src]="getCardImageUrl(poke.cardId)" class="bench-img" [title]="poke.name" />
+                            <div class="bench-hp-bar">
+                              <div class="hp-bar-fill bench-hp-fill"
+                                   [style.width.%]="getHpPercent(poke)"
+                                   [class.hp-danger]="getHpPercent(poke) < 25">
+                              </div>
+                            </div>
+                            <span class="bench-name-tiny">{{ poke.name || poke.cardId }}</span>
+                          } @else {
+                            <span class="bench-empty-label">—</span>
+                          }
+                        </div>
+                      }
+                      @for (i of emptyBenchSlots(matchState().self?.bench); track i) {
+                        <div class="bench-slot bench-slot-empty drop-target"
+                             (dragover)="$event.preventDefault()"
+                             (drop)="onDropToBench($event, i)">
+                          <span class="drop-hint">arrastrar</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- My Active Pokémon (center) -->
+                  <div class="active-column">
+                    <div class="zone-label my-label">
+                      👤 {{ matchState().self?.playerId }}
+                    </div>
+                    @if (matchState().self?.active) {
+                      <div class="pokemon-battle-card my-active-card"
+                           [style.transform]="getStatusRotation(matchState().self.active)"
+                           [style.border-color]="getTypeColor(matchState().self.active.pokemonType)">
+                        <img [src]="getCardImageUrl(matchState().self.active.cardId)"
+                             [alt]="matchState().self.active.name"
+                             class="battle-card-img" />
+                        <div class="card-info-bar">
+                          <span class="poke-name-sm">{{ matchState().self.active.name || matchState().self.active.cardId }}</span>
+                          <span class="poke-type-dot"
+                                [style.background]="getTypeColor(matchState().self.active.pokemonType)">
+                          </span>
+                        </div>
+                        <div class="hp-wrap">
+                          <div class="hp-bar-track">
+                            <div class="hp-bar-fill"
+                                 [style.width.%]="getHpPercent(matchState().self.active)"
+                                 [class.hp-danger]="getHpPercent(matchState().self.active) < 25"
+                                 [class.hp-warning]="getHpPercent(matchState().self.active) >= 25 && getHpPercent(matchState().self.active) < 50">
+                            </div>
+                          </div>
+                          <span class="hp-text">
+                            {{ getPokemonHp(matchState().self.active) }}/{{ matchState().self.active.maxHp }} HP
+                          </span>
+                        </div>
+                        @if (matchState().self.active.statusConditions?.length > 0) {
+                          <div class="status-badge status-mine">{{ getStatusLabel(matchState().self.active) }}</div>
+                        }
+                        <!-- Quick Attack Buttons on active card -->
+                        @if (matchState().self.active.attacks?.length > 0) {
+                          <div class="attack-quick-list">
+                            @for (att of matchState().self.active.attacks; track $index; let ai = $index) {
+                              <button class="attack-quick-btn"
+                                      [title]="'Costo: ' + (att.energyCost?.join(', ') || 'Gratis')"
+                                      (click)="quickAttack(ai)"
+                                      [disabled]="!isMyTurn()">
+                                ⚡ {{ att.name }}
+                                <span class="atk-dmg">{{ att.damage }}</span>
+                              </button>
+                            }
+                          </div>
+                        }
+                        @if (matchState().self.active.attachedEnergies?.length > 0) {
+                          <div class="energy-strip">
+                            @for (e of matchState().self.active.attachedEnergies; track $index) {
+                              <span class="energy-pip" [style.background]="getTypeColor(e)" [title]="e"></span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="empty-zone-card drop-target my-active-drop"
+                           (dragover)="$event.preventDefault()"
+                           (drop)="onDropToActive($event)">
+                        <span>ACTIVO VACÍO</span>
+                        <span class="drop-hint">Arrastrar básico aquí</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- My Prizes (right) -->
+                  <div class="prizes-column">
+                    <div class="zone-label">🏆 Mis Premios</div>
+                    <div class="prize-grid">
+                      @for (i of [0,1,2,3,4,5]; track i) {
+                        <div class="prize-cell" [class.prize-remaining]="i < (matchState().self?.prizeCount || 0)">
+                          @if (i < (matchState().self?.prizeCount || 0)) {
+                            <div class="card-back-prize"></div>
+                          } @else {
+                            <div class="prize-empty"></div>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div class="deck-info-mini">
+                      <span>📦 {{ matchState().self?.deckSize }}</span>
+                    </div>
+                  </div>
+
+                </div>
+                <!-- END MY ZONE -->
+
+                <!-- PENDING SELECTION (e.g. KO, search effects) -->
+                @if (matchState().pendingSelectionRequest) {
+                  <div class="pending-selection-overlay">
+                    <div class="pending-selection-box">
+                      <h4 class="pending-title">
+                        💡 Selección requerida · {{ matchState().pendingSelectionRequest.source }}
+                      </h4>
+                      <p class="pending-desc">
+                        Efecto: <code>{{ matchState().pendingSelectionRequest.sourceEffect }}</code>
+                        | Máx: {{ matchState().pendingSelectionRequest.maxSelections }}
+                      </p>
+                      @if (matchState().pendingSelectionRequest.options?.length > 0) {
+                        <div class="pending-options">
+                          @for (opt of matchState().pendingSelectionRequest.options; track opt) {
+                            <button class="btn btn-secondary btn-sm"
+                                    (click)="quickAction('SELECT_CARDS', { selectedCardId: opt })">
+                              {{ opt }}
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+              </div>
+              <!-- END BATTLEFIELD -->
+
+              <!-- MY HAND -->
+              <div class="hand-area">
+                <div class="hand-label">
+                  🎴 MI MANO — {{ matchState().self?.hand?.length || 0 }} cartas
+                  @if (actionCardId()) {
+                    <span class="selected-card-label">Seleccionada: <code>{{ actionCardId() }}</code></span>
+                  }
+                </div>
+                <div class="hand-cards-scroll">
+                  @for (cardId of (matchState().self?.hand || []); track cardId) {
+                    <div class="hand-card"
+                         [class.hand-card-selected]="actionCardId() === cardId"
+                         (click)="actionCardId.set(cardId)"
+                         draggable="true"
+                         (dragstart)="onDragHandCard($event, cardId)">
+                      <img [src]="getCardImageUrl(cardId)" class="hand-card-img" />
+                      <div class="hand-card-id">{{ cardId }}</div>
+                    </div>
+                  }
+                  @empty {
+                    <div class="text-muted text-center py-2">Mano vacía</div>
+                  }
+                </div>
+              </div>
+
+              <!-- QUICK ACTION BAR -->
+              <div class="quick-action-bar">
+                <div class="qab-section">
+                  <span class="qab-label">Ataques</span>
+                  <button class="btn btn-sm qab-btn qab-attack"
+                          (click)="quickAttack(0)" [disabled]="!isMyTurn()">
+                    ⚔️ Atacar #0
+                  </button>
+                  <button class="btn btn-sm qab-btn qab-attack"
+                          (click)="quickAttack(1)" [disabled]="!isMyTurn()">
+                    ⚔️ Atacar #1
+                  </button>
+                </div>
+                <div class="qab-section">
+                  <span class="qab-label">Acciones</span>
+                  <button class="btn btn-sm qab-btn"
+                          (click)="quickAction('ATTACH_ENERGY')" [disabled]="!isMyTurn()">
+                    ⚡ Energía
+                  </button>
+                  <button class="btn btn-sm qab-btn"
+                          (click)="quickAction('RETREAT')" [disabled]="!isMyTurn()">
+                    🔄 Retirar
+                  </button>
+                  <button class="btn btn-sm qab-btn"
+                          (click)="quickAction('EVOLVE')" [disabled]="!isMyTurn()">
+                    ✨ Evolucionar
+                  </button>
+                  <button class="btn btn-sm qab-btn"
+                          (click)="quickAction('PLAY_TRAINER')" [disabled]="!isMyTurn()">
+                    🧑 Trainer
+                  </button>
+                </div>
+                <div class="qab-section">
+                  <button class="btn btn-sm btn-success qab-end-turn"
+                          (click)="quickAction('END_TURN')" [disabled]="!isMyTurn()">
+                    ✅ Terminar Turno
+                  </button>
+                </div>
+              </div>
+
+              <!-- ADVANCED ACTION CONTROLLER (collapsible) -->
+              <details class="action-controller">
+                <summary>🕹️ Control de Acción Avanzado (STOMP /app/match/…/action)</summary>
+                <div class="form-grid mt-2">
+                  <div class="form-group">
+                    <label>Tipo de Acción</label>
+                    <select [(ngModel)]="actionType" class="form-control">
+                      <option value="PLACE_BASIC_POKEMON">Colocar Pokémon Básico</option>
+                      <option value="ATTACH_ENERGY">Adjuntar Energía</option>
+                      <option value="DECLARE_ATTACK">Declarar Ataque</option>
+                      <option value="EVOLVE">Evolucionar Pokémon</option>
+                      <option value="RETREAT">Retirar Pokémon Activo</option>
+                      <option value="PLAY_TRAINER">Jugar Carta Trainer</option>
+                      <option value="SELECT_CARDS">Seleccionar Cartas</option>
+                      <option value="END_TURN">Terminar Turno</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Card ID (de mano)</label>
+                    <input type="text" [(ngModel)]="actionCardId" class="form-control" placeholder="e.g. xy1-46" />
+                  </div>
+                  <div class="form-group">
+                    <label>Target Index (0=Activo, 1-5=Banca)</label>
+                    <input type="number" [(ngModel)]="actionTargetIndex" class="form-control" placeholder="0..5" />
+                  </div>
+                  <div class="form-group">
+                    <label>Attack Index</label>
+                    <input type="number" [(ngModel)]="actionAttackIndex" class="form-control" placeholder="0 ó 1" />
+                  </div>
+                  <div class="form-group">
+                    <label>Energy Type</label>
+                    <select [(ngModel)]="actionEnergyType" class="form-control">
+                      <option value="COLORLESS">Incolora</option>
+                      <option value="GRASS">Planta</option>
+                      <option value="FIRE">Fuego</option>
+                      <option value="WATER">Agua</option>
+                      <option value="LIGHTNING">Eléctrica</option>
+                      <option value="PSYCHIC">Psíquica</option>
+                      <option value="FIGHTING">Lucha</option>
+                      <option value="DARKNESS">Siniestra</option>
+                      <option value="METAL">Metal</option>
+                      <option value="DRAGON">Dragón</option>
+                      <option value="FAIRY">Hada</option>
+                    </select>
+                  </div>
+                  @if (actionType() === 'SELECT_CARDS') {
+                    <div class="form-group">
+                      <label>Carta seleccionada (selectedCardId)</label>
+                      <input type="text" [(ngModel)]="actionSelectedCardId" class="form-control" placeholder="e.g. xy1-1" />
+                    </div>
+                  }
+                  @if (actionType() === 'RETREAT') {
+                    <div class="form-group">
+                      <label>Source Index (energía a descartar)</label>
+                      <input type="number" [(ngModel)]="actionSourceIndex" class="form-control" />
+                    </div>
+                  }
+                </div>
+                <div class="action-submit-bar mt-2">
+                  <button class="btn btn-primary" (click)="sendAction()">
+                    🚀 Enviar Acción {{ wsConnected() ? '(WS STOMP)' : '(Debug — conectá WS)' }}
+                  </button>
+                  @if (!wsConnected()) {
+                    <span class="text-warning ml-3">⚠️ Conectá el WebSocket para enviar acciones reales</span>
+                  }
+                </div>
+              </details>
+
+            } @else {
+              <!-- No match loaded placeholder -->
+              <div class="no-match-placeholder">
+                <div class="pokeball-large"></div>
+                <h3>Sin Partida Activa</h3>
+                <p>Ingresá un Match ID y Player ID en la barra superior, o creá una nueva partida desde el Lobby.</p>
+                @if (matchError()) {
+                  <div class="alert alert-danger mt-3">{{ matchError() }}</div>
+                }
+                <div class="no-match-actions">
+                  <button class="btn btn-primary" (click)="currentTab.set('lobby')">
+                    🏠 Ir al Lobby
+                  </button>
+                  <button class="btn btn-secondary" (click)="fetchMatchState()">
+                    📋 Reintentar Estado
+                  </button>
+                </div>
+              </div>
+            }
+
+          </div>
+          <!-- END BATTLE BOARD COLUMN -->
+
+          <!-- ═══ RIGHT SIDEBAR ═══ -->
+          <aside class="battle-sidebar">
+
+            <!-- WS Monitor -->
+            <div class="sidebar-panel">
+              <div class="sidebar-panel-header">
+                <h4>🔌 WebSocket STOMP</h4>
+                <span class="ws-status-chip" [class.ws-live]="wsConnected()">
+                  {{ wsConnected() ? 'LIVE' : 'OFF' }}
+                </span>
+              </div>
+              @if (wsError()) {
+                <div class="text-danger text-xs">{{ wsError() }}</div>
+              }
+              <div class="ws-messages-box">
+                @for (msg of wsMessages(); track $index) {
+                  <div class="ws-msg-entry">{{ msg }}</div>
+                } @empty {
+                  <div class="text-muted text-xs">Esperando mensajes WS...</div>
+                }
+              </div>
+            </div>
+
+            <!-- Signal Inspector -->
+            <div class="sidebar-panel">
+              <h4 class="sidebar-panel-title">🔍 Signal Inspector</h4>
+              <div class="signal-grid">
+                <div class="sig-row"><span class="sig-k">Phase</span><span class="sig-v">{{ matchState()?.currentPhase || '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">Active</span><span class="sig-v">{{ matchState()?.activePlayerIndex ?? '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">Version</span><span class="sig-v">#{{ matchState()?.version ?? '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">My hand</span><span class="sig-v">{{ matchState()?.self?.hand?.length ?? 0 }}</span></div>
+                <div class="sig-row"><span class="sig-k">My deck</span><span class="sig-v">{{ matchState()?.self?.deckSize ?? '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">My prizes</span><span class="sig-v">{{ matchState()?.self?.prizeCount ?? '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">Opp hand</span><span class="sig-v">{{ matchState()?.opponent?.handSize ?? '—' }}</span></div>
+                <div class="sig-row"><span class="sig-k">isMyTurn</span><span class="sig-v" [class.sig-v-yes]="isMyTurn()">{{ isMyTurn() }}</span></div>
+                <div class="sig-row"><span class="sig-k">wsConn</span><span class="sig-v" [class.sig-v-yes]="wsConnected()">{{ wsConnected() }}</span></div>
+                <div class="sig-row"><span class="sig-k">polling</span><span class="sig-v">{{ isPolling() }}</span></div>
+                <div class="sig-row"><span class="sig-k">API</span><span class="sig-v" [class.sig-v-yes]="apiStatus() === 'connected'">{{ apiStatus() }}</span></div>
+                <div class="sig-row"><span class="sig-k">selCard</span><span class="sig-v">{{ actionCardId() || '—' }}</span></div>
+              </div>
+            </div>
+
+            <!-- Battle / Event Log -->
+            <div class="sidebar-panel sidebar-log-panel">
+              <h4 class="sidebar-panel-title">📋 Log Cronológico</h4>
+              <div class="battle-log-box">
+                @for (log of logs().slice(0, 30); track $index) {
+                  <div class="log-entry">{{ log }}</div>
+                } @empty {
+                  <div class="text-muted text-xs">Sin logs todavía.</div>
+                }
+              </div>
+            </div>
+
+          </aside>
+
+        </div>
+        <!-- END BATTLE MAIN LAYOUT -->
+
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════
+         DECK BUILDER SCREEN
+         ══════════════════════════════════════════════ -->
+    @if (currentTab() === 'deck') {
+      <div class="screen deck-screen">
+        <div class="debug-card">
+          <div class="card-header-with-action">
+            <h3>🃏 Explorador de Mazos (GET /api/decks)</h3>
+            <button class="btn btn-secondary btn-sm" (click)="fetchDecks()">⟳ Recargar</button>
+          </div>
+          <div class="deck-explorer-layout">
+            <div class="deck-list-pane">
+              @if (decks().length > 0) {
+                <div class="deck-selection-grid">
+                  @for (d of decks(); track d.id) {
+                    <div class="deck-box"
+                         [class.active]="selectedDeck()?.id === d.id"
+                         (click)="viewDeckDetails(d.id)">
+                      <span class="deck-icon">🎴</span>
+                      <span class="deck-name">{{ d.name }}</span>
+                      <span class="deck-card-count">{{ d.cardCount }} cartas</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-muted text-center py-4">
+                  Iniciá sesión para ver y seleccionar mazos.
+                </p>
+              }
+            </div>
+
+            <div class="deck-details-pane">
+              @if (deckLoading()) {
+                <div class="loading-spinner-box">
+                  <div class="pokeball-icon spin"></div>
+                  <p>Cargando cartas del mazo...</p>
+                </div>
+              } @else if (selectedDeck()) {
+                <div class="deck-header-detail">
+                  <h4>{{ selectedDeck().name }}</h4>
+                  <p>
+                    ID: <code>{{ selectedDeck().id }}</code>
+                    | Cartas: <strong>{{ selectedDeck().cards?.length || 0 }}/60</strong>
+                    @if ((selectedDeck().cards?.length || 0) === 60) {
+                      <span class="badge badge-success ml-2">✅ Válido</span>
+                    } @else {
+                      <span class="badge badge-danger ml-2">⚠️ Incompleto</span>
+                    }
+                  </p>
+                </div>
+                <div class="deck-cards-scroll">
+                  @for (card of selectedDeck().cards; track card.cardId) {
+                    <div class="deck-card-preview">
+                      <img [src]="getCardImageUrl(card.cardId)"
+                           [alt]="card.name"
+                           class="mini-card-img" />
+                      <div class="card-desc">
+                        <span class="card-name">{{ card.name }}</span>
+                        <span class="card-code">{{ card.cardId }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="text-muted text-center py-4">
+                  Seleccioná un mazo de la izquierda para ver su contenido.
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════
+         SHOP / SOBRES SCREEN
+         ══════════════════════════════════════════════ -->
+    @if (currentTab() === 'shop') {
+      <div class="screen shop-screen">
+        <div class="debug-card">
+          <h3>📦 Apertura de Sobres</h3>
+          <p class="text-muted">Las cartas del set XY1 están sembradas en la base de datos local.</p>
+          <div class="shop-pack-grid">
+            @for (pack of shopPacks; track pack.name) {
+              <div class="shop-pack-card" [style.border-color]="pack.color">
+                <div class="pack-icon" [style.color]="pack.color">{{ pack.icon }}</div>
+                <div class="pack-name">{{ pack.name }}</div>
+                <div class="pack-desc">{{ pack.desc }}</div>
+                <button class="btn btn-secondary btn-block mt-3" disabled>Próximamente</button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════════
+         PROFILE + AUTH + SERVER CONFIG SCREEN
+         ══════════════════════════════════════════════ -->
+    @if (currentTab() === 'profile') {
+      <div class="screen profile-screen">
+
+        <!-- Auth / User Panel -->
+        <div class="debug-card">
+          @if (!currentUser()) {
+            <h3>🔐 Autenticación (POST /api/auth/login | /register)</h3>
+            <div class="tab-header">
+              <button class="tab-btn" [class.active]="authMode() === 'login'" (click)="authMode.set('login')">Ingresar</button>
+              <button class="tab-btn" [class.active]="authMode() === 'register'" (click)="authMode.set('register')">Registrar</button>
+            </div>
+            <div class="form-group">
+              <label>Nombre de Usuario</label>
+              <input type="text" [(ngModel)]="authUsername" class="form-control" placeholder="e.g. AshKetchum" />
+            </div>
+            @if (authMode() === 'register') {
+              <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" [(ngModel)]="authEmail" class="form-control" placeholder="e.g. ash@pallet.com" />
+              </div>
+            }
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input type="password" [(ngModel)]="authPassword" class="form-control" placeholder="••••••••" />
+            </div>
+            <button class="btn btn-primary btn-block"
+                    (click)="authMode() === 'login' ? login() : register()">
+              {{ authMode() === 'login' ? '🔓 Iniciar Sesión' : '📝 Crear Cuenta y Entrar' }}
+            </button>
+          } @else {
+            <div class="user-profile">
+              <div class="profile-header">
+                <div class="avatar">{{ currentUser()?.username?.substring(0,2)?.toUpperCase() }}</div>
+                <div>
+                  <h3>👤 {{ currentUser()?.username }}</h3>
+                  <span class="badge badge-success">Sesión Activa</span>
+                </div>
+                <button class="btn btn-danger btn-sm ml-auto" (click)="logout()">Salir</button>
+              </div>
+
+              @if (userStatusInfo()) {
+                <div class="status-summary mt-3">
+                  <h4>Estado del Jugador (GET /api/users/{{ currentUser()?.username }}/status)</h4>
+                  <div class="status-grid">
+                    <div class="status-item">
+                      <span class="lbl">Estado:</span>
+                      <span class="val" [ngClass]="userStatusInfo().status">{{ userStatusInfo().status }}</span>
+                    </div>
+                    @if (userStatusInfo().penaltyType) {
+                      <div class="status-item">
+                        <span class="lbl">Sanción:</span>
+                        <span class="val text-danger">{{ userStatusInfo().penaltyType }}</span>
+                      </div>
+                    }
+                    @if (userStatusInfo().matchesPenalizedRemaining > 0) {
+                      <div class="status-item">
+                        <span class="lbl">Partidas rest.:</span>
+                        <span class="val">{{ userStatusInfo().matchesPenalizedRemaining }}</span>
+                      </div>
+                    }
+                  </div>
+                  @if (userStatusInfo().pendingNotifications?.length > 0) {
+                    <div class="alert alert-warning mt-2">
+                      <h5>🔔 Notificaciones de Moderación</h5>
+                      <ul>
+                        @for (note of userStatusInfo().pendingNotifications; track $index) {
+                          <li>{{ note }}</li>
+                        }
+                      </ul>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="honors-panel mt-3">
+                <h4>🏅 Otorgar Honores (POST /api/users/…/honor)</h4>
+                <div class="form-row">
+                  <input type="text" [(ngModel)]="targetHonorUser"
+                         placeholder="Usuario objetivo" class="form-control flex-fill" />
+                  <select [(ngModel)]="selectedHonorType" class="form-control">
+                    <option value="SPORTMANSHIP">Conducta Deportiva</option>
+                    <option value="SKILL">Gran Habilidad</option>
+                    <option value="FRIENDLY">Amigable</option>
+                  </select>
+                  <button class="btn btn-secondary" (click)="awardHonor()">Otorgar</button>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <button class="btn btn-secondary btn-sm" (click)="fetchMatchHistory()">
+                  📜 Cargar Historial de Partidas
+                </button>
+                @if (matchHistory().length > 0) {
+                  <div class="match-history-list mt-2">
+                    @for (m of matchHistory(); track $index) {
+                      <div class="history-row">
+                        <span class="history-id">{{ m.matchId?.substring(0, 8) || '—' }}…</span>
+                        <span class="history-result" [class.win]="m.winner === currentUser()?.username">
+                          {{ m.winner === currentUser()?.username ? '✅ Win' : '❌ Loss' }}
+                        </span>
+                        <span class="history-date text-muted">{{ m.createdAt?.substring(0, 10) || '—' }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Server Config -->
+        <div class="debug-card">
+          <h3>⚙️ Configuración del Servidor</h3>
+          <div class="form-row">
+            <div class="form-group flex-fill">
+              <label>URL Base de la API</label>
+              <input type="text" [(ngModel)]="apiUrl" class="form-control"
+                     placeholder="http://localhost:8081" />
+            </div>
+            <div class="btn-group-align">
+              <button class="btn btn-primary" (click)="pingApi()">Probar Conexión</button>
+            </div>
+          </div>
+          <div class="api-status-bar" [ngClass]="apiStatus()">
+            <div class="status-indicator"></div>
+            <div class="status-details">
+              <span class="status-label">API SERVER</span>
+              <span class="status-value">
+                @if (apiStatus() === 'connected') { 🟢 CONECTADO ({{ apiResponseTime() }}ms) }
+                @else if (apiStatus() === 'checking') { 🟡 VERIFICANDO... }
+                @else { 🔴 DESCONECTADO }
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+  </main>
+  <!-- END MAIN CONTENT -->
+
+  <!-- ═══════════════ PERSISTENT SYSTEM CONSOLE (Bottom) ═══════════════ -->
+  <footer class="system-console">
+    <div class="console-header">
+      <h4>💻 Consola del Sistema &amp; Logs en Tiempo Real</h4>
+      <div class="console-controls">
+        <span class="console-count">{{ logs().length }} entradas</span>
+        <button class="btn btn-sm btn-secondary" (click)="clearLogs()">🗑 Limpiar</button>
+      </div>
+    </div>
+    <div class="console-body">
+      @for (log of logs(); track $index) {
+        <div class="console-line">{{ log }}</div>
+      } @empty {
+        <div class="console-line text-muted">Sistema inicializado. Sin eventos todavía.</div>
+      }
+    </div>
+  </footer>
+
+</div>

@@ -2,8 +2,6 @@ package ar.edu.utn.frc.tup.piii.persistence.entity;
 
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,7 +38,7 @@ public class ChatReportEntity {
     @Column(nullable = false)
     private String reason;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonbConverter.class)
     @Column(name = "chat_history", nullable = false)
     private List<ChatMessageResponse> chatHistory;
 

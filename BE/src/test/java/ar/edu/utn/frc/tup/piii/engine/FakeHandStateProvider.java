@@ -5,6 +5,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.Card;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class FakeHandStateProvider implements HandStateProvider {
 
@@ -15,11 +16,11 @@ public class FakeHandStateProvider implements HandStateProvider {
     }
 
     @Override
-    public Card getCardInHand(int playerIndex, String cardId) {
-        Map<String, Card> playerHand = hands.get(playerIndex);
-        if (playerHand != null) {
-            return playerHand.get(cardId);
+    public Optional<Card> getCardInHand(int playerIndex, String cardId) {
+        final Map<String, Card> playerHand = hands.get(playerIndex);
+        if (playerHand == null) {
+            return Optional.empty();
         }
-        return null;
+        return Optional.ofNullable(playerHand.get(cardId));
     }
 }

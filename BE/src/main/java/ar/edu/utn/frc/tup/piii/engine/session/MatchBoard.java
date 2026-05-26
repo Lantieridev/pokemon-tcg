@@ -151,14 +151,14 @@ public final class MatchBoard
     }
 
     @Override
-    public Card getCardInHand(final int playerIndex, final String cardId) {
+    public java.util.Optional<Card> getCardInHand(final int playerIndex, final String cardId) {
         if (boundRuntimes != null) {
             return boundRuntimes.get(playerIndex).getHand().getCards().stream()
                     .filter(c -> c.getCardId().equals(cardId))
-                    .findFirst()
-                    .orElse(null);
+                    .findFirst();
         }
-        return null; // The snapshot (PlayerState) doesn't have the full Card objects, only IDs.
+        // The snapshot (PlayerState) doesn't have the full Card objects, only IDs.
+        return java.util.Optional.empty();
     }
 
     /**

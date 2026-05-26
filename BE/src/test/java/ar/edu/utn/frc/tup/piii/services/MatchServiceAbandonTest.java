@@ -1,7 +1,7 @@
 package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;

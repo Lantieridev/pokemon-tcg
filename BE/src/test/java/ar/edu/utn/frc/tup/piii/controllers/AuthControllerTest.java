@@ -25,12 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Sql(scripts = {
-    "/db/migration/V1__init_schema.sql",
-    "/db/migration/V2__seed_xy1_cards.sql",
-    "/db/migration/V3__add_abilities_to_cards.sql",
-    "/db/migration/V5__add_evolves_from_to_cards.sql"
-})
 public class AuthControllerTest {
 
     @Autowired

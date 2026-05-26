@@ -2,7 +2,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.CreateMatchRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.services.CardResolutionService;
@@ -60,7 +60,7 @@ class MatchRestControllerTest {
         final GameStateResponseDTO expected = mock(GameStateResponseDTO.class);
         when(perspectiveMapper.toResponse(session, 0)).thenReturn(expected);
 
-        final GameStateResponseDTO result = controller.getState(matchId, playerId);
+        final GameStateResponseDTO result = controller.getState(matchId, playerId, () -> playerId);
 
         assertSame(expected, result);
     }
@@ -73,7 +73,7 @@ class MatchRestControllerTest {
         when(registry.find(matchId)).thenReturn(Optional.empty());
 
         assertThrows(NoSuchElementException.class,
-                () -> controller.getState(matchId, playerId));
+                () -> controller.getState(matchId, playerId, () -> playerId));
     }
 
     @Test

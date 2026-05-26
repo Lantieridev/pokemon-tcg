@@ -2,6 +2,8 @@ package ar.edu.utn.frc.tup.piii.engine.listener;
 
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 
+import java.util.Optional;
+
 /**
  * Provides read-only access to a player's hand for rule validation purposes.
  */
@@ -12,7 +14,9 @@ public interface HandStateProvider {
      *
      * @param playerIndex the index of the player
      * @param cardId      the unique identifier of the card to find
-     * @return the Card if found, or null if the player doesn't have it
+     * @return an {@link Optional} containing the matching card, or
+     *         {@link Optional#empty()} if the player doesn't have it
+     *         (or the snapshot only carries IDs, not full cards).
      */
-    Card getCardInHand(int playerIndex, String cardId);
+    Optional<Card> getCardInHand(int playerIndex, String cardId);
 }

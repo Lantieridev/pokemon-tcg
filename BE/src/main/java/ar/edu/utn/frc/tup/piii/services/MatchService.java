@@ -2,7 +2,7 @@ package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.ActionRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.dtos.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
@@ -149,12 +149,13 @@ public final class MatchService {
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
 
+            final int turnNumber = getCurrentTurnNumber(session);
             final GameStateSnapshot snapshot = new GameStateSnapshot(
-                    matchId, FIRST_ROUND, session.getPlayerIds());
+                    matchId, turnNumber, session.getPlayerIds());
             persistence.save(snapshot);
             persistence.saveMatch(session);
             String resultDetail = String.format("Executed action %s with cardId=%s, targetId=%s", dto.type(), dto.cardId(), dto.targetId());
-            persistence.logAction(matchId, 0, playerId, dto.type().name(), resultDetail);
+            persistence.logAction(matchId, turnNumber, playerId, dto.type().name(), resultDetail);
 
             if (session.getState() == MatchSessionState.FINISHED) {
                 // Legitimate match finish, counts for mute decrement for all penalized players in the match
@@ -337,14 +338,15 @@ public final class MatchService {
                     session.setWinnerId(winnerUsername);
                 }
 
-                persistence.save(new GameStateSnapshot(matchId, FIRST_ROUND, session.getPlayerIds()));
+                final int turnNumber = getCurrentTurnNumber(session);
+                persistence.save(new GameStateSnapshot(matchId, turnNumber, session.getPlayerIds()));
                 persistence.saveMatch(session);
 
                 if (winnerUsername != null) {
                     persistence.declareWinner(matchId, winnerUsername);
                 }
 
-                persistence.logAction(matchId, 0, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
+                persistence.logAction(matchId, turnNumber, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
 
 
                 // Process penalties on match finish
@@ -379,5 +381,12 @@ public final class MatchService {
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdA(), viewA);
         messaging.convertAndSend(
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdB(), viewB);
+    }
+
+    private int getCurrentTurnNumber(final MatchSession session) {
+        if (session.getTurnManager() == null) {
+            return 0;
+        }
+        return session.getTurnManager().getTurnCount(0) + session.getTurnManager().getTurnCount(1);
     }
 }

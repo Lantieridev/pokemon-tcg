@@ -33,7 +33,7 @@ class GameWebSocketControllerTest {
         final String playerId = "player-a";
         final ActionRequestDTO dto = new ActionRequestDTO(ActionType.PLACE_BASIC_POKEMON, null, null, null, null, null);
 
-        controller.handleAction(matchId, playerId, dto);
+        controller.handleAction(matchId, playerId, () -> playerId, dto);
 
         verify(matchService).processAction(matchId, playerId, dto);
     }
@@ -48,6 +48,6 @@ class GameWebSocketControllerTest {
                 .when(matchService).processAction(matchId, playerId, dto);
 
         assertThrows(InvalidActionException.class,
-                () -> controller.handleAction(matchId, playerId, dto));
+                () -> controller.handleAction(matchId, playerId, () -> playerId, dto));
     }
 }

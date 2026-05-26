@@ -34,20 +34,14 @@ public final class PokemonToolStep implements AttackPipelineStep {
     }
 
     private void applyAttackerTool(final AttackContext ctx) {
-        ctx.getAttacker().getAttachedTool().ifPresent(tool -> {
-            var effect = resolver.resolveTool(tool.getToolEffectId());
-            if (effect != null) {
-                effect.apply(ctx, true);
-            }
-        });
+        ctx.getAttacker().getAttachedTool().ifPresent(tool ->
+                resolver.resolveTool(tool.getToolEffectId())
+                        .ifPresent(effect -> effect.apply(ctx, true)));
     }
 
     private void applyDefenderTool(final AttackContext ctx) {
-        ctx.getDefender().getAttachedTool().ifPresent(tool -> {
-            var effect = resolver.resolveTool(tool.getToolEffectId());
-            if (effect != null) {
-                effect.apply(ctx, false);
-            }
-        });
+        ctx.getDefender().getAttachedTool().ifPresent(tool ->
+                resolver.resolveTool(tool.getToolEffectId())
+                        .ifPresent(effect -> effect.apply(ctx, false)));
     }
 }

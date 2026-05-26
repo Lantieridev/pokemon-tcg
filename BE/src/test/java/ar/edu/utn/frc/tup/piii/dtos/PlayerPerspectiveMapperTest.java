@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.dtos;
 
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
