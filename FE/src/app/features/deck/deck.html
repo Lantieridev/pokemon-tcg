@@ -96,7 +96,7 @@
     <!-- Deck header -->
     <div class="px-6 py-5 border-b border-white/8">
       <div class="flex items-center justify-between mb-1">
-        <input value="Charizard Rush" class="bg-transparent text-white outline-none font-display font-bold text-xl flex-1 hover:bg-white/5 rounded px-1 py-0.5 transition" />
+        <input [(ngModel)]="deckName" class="bg-transparent text-white outline-none font-display font-bold text-xl flex-1 hover:bg-white/5 rounded px-1 py-0.5 transition" />
         <button class="text-white/30 hover:text-white"><app-icon name="close" svgClass="w-4 h-4"></app-icon></button>
       </div>
       <div class="flex items-center gap-2 text-xs text-white">
@@ -155,14 +155,21 @@
     </div>
 
     <!-- Bottom: save / play -->
-    <div class="px-6 py-4 border-t border-white/8 flex items-center gap-3">
-      <button class="flex-1 py-3 rounded-xl text-sm font-display font-semibold border border-white/10 text-white hover:bg-white/5 transition">
-        Guardar borrador
-      </button>
-      <button [class]="'flex-1 py-3 rounded-xl text-sm font-display font-bold tracking-wide transition ' +
-        (stats().total === 60 ? 'bg-gradient-to-b from-[#e3c878] to-[#876311] text-[#1a0c12] hover:brightness-110 shadow-[0_10px_24px_-6px_rgba(227,200,120,.45)]' : 'bg-white/5 text-white/30 cursor-not-allowed')">
-        JUGAR CON ESTE MAZO
-      </button>
+    <div class="px-6 py-4 border-t border-white/8 flex flex-col gap-2">
+      <div class="flex items-center gap-3">
+        <button class="flex-1 py-3 rounded-xl text-sm font-display font-semibold border border-white/10 text-white hover:bg-white/5 transition">
+          Guardar borrador
+        </button>
+        <button (click)="saveDeck()" [disabled]="stats().total !== 60 || isSaving()" [class]="'flex-1 py-3 rounded-xl text-sm font-display font-bold tracking-wide transition ' +
+          (stats().total === 60 ? 'bg-gradient-to-b from-[#e3c878] to-[#876311] text-[#1a0c12] hover:brightness-110 shadow-[0_10px_24px_-6px_rgba(227,200,120,.45)]' : 'bg-white/5 text-white/30 cursor-not-allowed')">
+          {{ isSaving() ? 'GUARDANDO...' : 'GUARDAR MAZO' }}
+        </button>
+      </div>
+      @if (saveMessage()) {
+        <div [class]="'text-xs text-center font-bold ' + (saveMessage().includes('Error') ? 'text-red-400' : 'text-green-400')">
+          {{ saveMessage() }}
+        </div>
+      }
     </div>
   </div>
 
