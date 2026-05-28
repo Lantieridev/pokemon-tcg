@@ -40,6 +40,11 @@ public class UserProfileResponseDTO {
         private Integer matchesWon;
         private Integer matchesLost;
         private Double winRate;
+        private Integer perfectWins;
+        private Integer comebackWins;
+        private Integer totalKos;
+        private Integer trainerCardsPlayed;
+        private Integer totalDamageDealt;
     }
 
     @Data
