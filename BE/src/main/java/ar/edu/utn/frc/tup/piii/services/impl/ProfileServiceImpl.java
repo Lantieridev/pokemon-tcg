@@ -58,7 +58,7 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public UserProfileResponseDTO getProfile(final String username) {
         final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
         if (userOpt.isEmpty()) {
@@ -89,6 +89,20 @@ public class ProfileServiceImpl implements ProfileService {
 
         // 2. Honores recibidos
         final Map<HonorType, Integer> honors = honorService.getHonors(username);
+        final int totalHonors = honors.values().stream().mapToInt(Integer::intValue).sum();
+
+        // 2.1. Calcular partidas terminadas totalmente
+        int completedMatchesPlayed = 0;
+        for (final MatchEntity m : matches) {
+            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+                completedMatchesPlayed++;
+            }
+        }
+
+        // 2.2. Chequear y Desbloquear Títulos antes de armar la respuesta
+        final int uniqueCardsCount = deckRepository.countUniqueCardsByUserId(user.getId());
+        checkAndUnlockTitles(user, completedMatchesPlayed, matchesWon, totalHonors, uniqueCardsCount);
+        userRepository.save(user);
 
         // 3. Showcase (Vitrina)
         final List<UserShowcaseEntity> showcaseEntities = userShowcaseRepository.findByUserUsernameOrderBySlotPositionAsc(username);
@@ -234,15 +248,20 @@ public class ProfileServiceImpl implements ProfileService {
         // 3. Chequear y Desbloquear Títulos
         final List<MatchEntity> matches = matchRepository.findMatchesByUsername(user.getUsername());
         int matchesWon = 0;
+        int completedMatchesPlayed = 0;
         for (final MatchEntity m : matches) {
             if (m.getWinner() != null && m.getWinner().getId().equals(userId)) {
                 matchesWon++;
             }
+            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+                completedMatchesPlayed++;
+            }
         }
         final Map<HonorType, Integer> honors = honorService.getHonors(user.getUsername());
         final int totalHonors = honors.values().stream().mapToInt(Integer::intValue).sum();
+        final int uniqueCardsCount = deckRepository.countUniqueCardsByUserId(userId);
 
-        checkAndUnlockTitles(user, matchesWon, totalHonors);
+        checkAndUnlockTitles(user, completedMatchesPlayed, matchesWon, totalHonors, uniqueCardsCount);
 
         userRepository.save(user);
     }
@@ -259,16 +278,19 @@ public class ProfileServiceImpl implements ProfileService {
         }
     }
 
-    private void checkAndUnlockTitles(final UserEntity user, final int matchesWon, final int totalHonors) {
+    private void checkAndUnlockTitles(final UserEntity user, final int matchesPlayed, final int matchesWon, final int totalHonors, final int uniqueCardsCount) {
         Set<String> titles = user.getUnlockedTitles();
         if (titles == null) {
             titles = new HashSet<>();
         }
 
         boolean changed = false;
-        if (titles.isEmpty()) {
-            titles.add("Novato");
-            titles.add("Entrenador");
+
+        // Títulos por Defecto
+        if (titles.add("Novato")) {
+            changed = true;
+        }
+        if (titles.add("Entrenador")) {
             changed = true;
         }
 
@@ -285,8 +307,67 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         // Títulos por Victorias
-        if (matchesWon >= 10) {
-            if (titles.add("Ganador implacable")) {
+        if (matchesWon >= 5) {
+            if (titles.add("Ganador Prometedor")) {
+                changed = true;
+            }
+        }
+        if (matchesWon >= 20) {
+            if (titles.add("Ganador Implacable")) {
+                changed = true;
+            }
+        }
+        if (matchesWon >= 50) {
+            if (titles.add("Campeón del Tablero")) {
+                changed = true;
+            }
+        }
+        if (matchesWon >= 100) {
+            if (titles.add("Leyenda del Tablero")) {
+                changed = true;
+            }
+        }
+
+        // Títulos por Partidas Jugadas (Terminadas totalmente)
+        if (matchesPlayed >= 10) {
+            if (titles.add("Combatiente")) {
+                changed = true;
+            }
+        }
+        if (matchesPlayed >= 25) {
+            if (titles.add("Combatiente Tenaz")) {
+                changed = true;
+            }
+        }
+        if (matchesPlayed >= 50) {
+            if (titles.add("Veterano de Batallas")) {
+                changed = true;
+            }
+        }
+        if (matchesPlayed >= 100) {
+            if (titles.add("Leyenda de Batallas")) {
+                changed = true;
+            }
+        }
+
+        // Títulos por Colección (Cartas distintas en sus mazos)
+        if (uniqueCardsCount >= 30) {
+            if (titles.add("Coleccionista Novato")) {
+                changed = true;
+            }
+        }
+        if (uniqueCardsCount >= 50) {
+            if (titles.add("Coleccionista Experto")) {
+                changed = true;
+            }
+        }
+        if (uniqueCardsCount >= 100) {
+            if (titles.add("Coleccionista de Élite")) {
+                changed = true;
+            }
+        }
+        if (uniqueCardsCount >= 150) {
+            if (titles.add("Maestro Coleccionista")) {
                 changed = true;
             }
         }
