@@ -9,6 +9,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.services.impl.ProfileServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ public class ProfileServiceTest {
     private MatchRepository matchRepository;
     private CardRepository cardRepository;
     private HonorService honorService;
+    private DeckRepository deckRepository;
+    private ProfanityFilterService profanityFilterService;
     private ProfileService profileService;
 
     @BeforeEach
@@ -43,13 +46,17 @@ public class ProfileServiceTest {
         matchRepository = mock(MatchRepository.class);
         cardRepository = mock(CardRepository.class);
         honorService = mock(HonorService.class);
+        deckRepository = mock(DeckRepository.class);
+        profanityFilterService = mock(ProfanityFilterService.class);
 
         profileService = new ProfileServiceImpl(
                 userRepository,
                 userShowcaseRepository,
                 matchRepository,
                 cardRepository,
-                honorService
+                honorService,
+                deckRepository,
+                profanityFilterService
         );
     }
 
@@ -156,5 +163,67 @@ public class ProfileServiceTest {
         verify(userRepository, times(1)).save(user);
         assertEquals(1, user.getLevel());
         assertEquals(35, user.getXp());
+    }
+
+    @Test
+    public void testUpdateProfileDescriptionSuccess() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .level(1)
+                .xp(10)
+                .unlockedTitles(new HashSet<>(List.of("Novato")))
+                .activeTitle("Novato")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(profanityFilterService.getProfaneWords("Valid bio")).thenReturn(Collections.emptyList());
+
+        final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
+                .description("Valid bio")
+                .build();
+
+        profileService.updateProfile("lucas", request);
+
+        verify(userRepository, times(1)).save(user);
+        assertEquals("Valid bio", user.getDescription());
+    }
+
+    @Test
+    public void testUpdateProfileDescriptionTooLong() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+
+        final String longDesc = "a".repeat(151);
+        final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
+                .description(longDesc)
+                .build();
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            profileService.updateProfile("lucas", request);
+        });
+    }
+
+    @Test
+    public void testUpdateProfileDescriptionProfane() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(profanityFilterService.getProfaneWords("you loser")).thenReturn(List.of("loser"));
+
+        final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
+                .description("you loser")
+                .build();
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            profileService.updateProfile("lucas", request);
+        });
     }
 }
