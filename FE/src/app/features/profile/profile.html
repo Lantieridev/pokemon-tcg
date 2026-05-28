@@ -1,0 +1,267 @@
+<div class="absolute inset-0 overflow-y-auto scroll"
+     style="background: radial-gradient(circle at 18% 22%, rgba(59,91,167,.2), transparent 45%), radial-gradient(circle at 82% 78%, rgba(238,21,21,.13), transparent 55%), linear-gradient(180deg, #131e30 0%, #0a1020 100%)">
+  <div class="absolute inset-0 hex-grid opacity-40 pointer-events-none"></div>
+  <div class="absolute inset-0 hex-bg pointer-events-none"></div>
+
+  <div class="relative max-w-[1480px] mx-auto px-10 py-10">
+
+    <!-- ── HERO: Trainer Card ──────────────────────────────── -->
+    <div class="flex justify-center mb-10">
+      <div class="trainer-card">
+        <div class="relative z-10 flex items-stretch gap-6">
+
+          <!-- Avatar -->
+          <div class="relative">
+            <div class="w-[180px] h-[180px] rounded-2xl flex items-center justify-center overflow-hidden"
+                 style="background:linear-gradient(180deg, #3b5ba7 0%, #25408f 100%); border:5px solid #1a1010; box-shadow:0 6px 0 #1a1010, inset 0 -8px 0 rgba(0,0,0,.2), inset 0 4px 0 rgba(255,255,255,.15);">
+              <svg viewBox="0 0 100 100" class="w-full h-full">
+                <ellipse cx="50" cy="32" rx="34" ry="6" fill="#ee1515" />
+                <rect x="32" y="14" width="36" height="20" rx="4" fill="#ee1515" />
+                <circle cx="50" cy="24" r="6" fill="#fff" stroke="#1a1010" stroke-width="1.5" />
+                <path d="M 44 24 A 6 6 0 0 1 56 24 Z" fill="#fff" />
+                <line x1="44" y1="24" x2="56" y2="24" stroke="#1a1010" stroke-width="1.5" />
+                <circle cx="50" cy="55" r="18" fill="#fdd9b5" />
+                <path d="M 32 38 Q 32 48 38 50 L 36 42 Z M 68 38 Q 68 48 62 50 L 64 42 Z" fill="#1a1010" />
+                <ellipse cx="44" cy="56" rx="2" ry="3" fill="#1a1010" />
+                <ellipse cx="56" cy="56" rx="2" ry="3" fill="#1a1010" />
+                <circle cx="44.5" cy="55" r=".7" fill="#fff" />
+                <circle cx="56.5" cy="55" r=".7" fill="#fff" />
+                <path d="M 46 64 Q 50 67 54 64" stroke="#1a1010" stroke-width="1.4" fill="none" stroke-linecap="round" />
+                <rect x="22" y="78" width="56" height="22" fill="#3b5ba7" />
+                <rect x="48" y="78" width="4" height="22" fill="#fff" />
+                <circle cx="50" cy="86" r="1.8" fill="#ee1515" />
+              </svg>
+            </div>
+            <div class="absolute -bottom-3 -right-3 px-3 py-1 rounded-lg font-display text-[11px] tracking-widest"
+                 style="background:#1a1010; color:#fff; border:2px solid #fff; box-shadow:0 3px 0 #1a1010;">
+              ID 12480
+            </div>
+          </div>
+
+          <!-- Right: name + meta -->
+          <div class="flex-1 flex flex-col justify-between py-1">
+            <div>
+              <div class="font-chunky text-[10px] tracking-[.32em] uppercase mb-0.5" style="color:var(--p-red);">
+                ◆ Trainer Card ◆
+              </div>
+              <div class="font-display text-5xl leading-none" style="color:#1a1010; text-shadow:2px 2px 0 #ffcb05;">
+                ASHRIVERO
+              </div>
+              <div class="mt-3 flex items-center gap-2">
+                <div class="ribbon">Liga Oro III</div>
+                <span class="font-mono text-xs" style="color:#5b6885;">· Miembro desde Marzo 2025</span>
+              </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-3 gap-x-6 gap-y-2 text-sm">
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">MMR</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:#1a1010;">1842</div>
+              </div>
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">Victorias</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:#1a1010;">142</div>
+              </div>
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">Win-rate</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:var(--p-red);">68%</div>
+              </div>
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">Pokédex</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:#1a1010;">62 / 150</div>
+              </div>
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">Mazos</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:#1a1010;">7</div>
+              </div>
+              <div>
+                <div class="font-chunky text-[9px] tracking-[.18em] uppercase" style="color:#8a6f3a;">Tiempo</div>
+                <div class="font-display text-lg leading-none tnum mt-0.5" style="color:#1a1010;">48 h</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active deck preview row -->
+        <div class="mt-5 relative z-10 flex items-center gap-3 px-4 py-2.5 rounded-xl"
+             style="background:#fff; border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010;">
+          <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:#5b6885;">
+            Mazo activo
+          </div>
+          <div class="font-display text-base" style="color:#1a1010;">Charizard Rush</div>
+          <div class="font-mono text-xs" style="color:#5b6885;">60 / 60</div>
+          <div class="flex-1"></div>
+          <div class="flex items-center" style="margin-right: -8px;">
+            @for (id of ['charizard','charmeleon','pikachu']; track id; let i = $index) {
+              <img [src]="cards[id].img" alt="" class="card-img"
+                   [style.width.px]="30" [style.height.px]="42"
+                   [style.marginLeft.px]="i === 0 ? 0 : -16"
+                   [style.transform]="'rotate(' + ((i-1)*8) + 'deg)'"
+                   [style.zIndex]="i"
+                   style="border: 1.5px solid #1a1010;" />
+            }
+          </div>
+          <button class="ml-3 menu-chip" style="padding:5px 12px; font-size:11px;">
+            Editar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Body: Two-column layout ─────────────────────────── -->
+    <div class="grid grid-cols-[1.6fr_1fr] gap-6">
+
+      <!-- LEFT — Match history + Mastery -->
+      <div class="space-y-6">
+        <!-- Match history -->
+        <div class="rounded-2xl overflow-hidden"
+             style="background:linear-gradient(180deg, #1c2a44 0%, #131e30 100%); border:3px solid #1a1010; box-shadow:0 5px 0 #1a1010;">
+          <div class="px-5 py-4 flex items-center justify-between" style="border-bottom:2px solid rgba(255,203,5,.18);">
+            <div class="section-rule" style="flex: none;">Match History</div>
+            <button class="font-chunky text-[10px] tracking-widest hover:underline" style="color:var(--p-yellow);">
+              VER TODO →
+            </button>
+          </div>
+          <div class="divide-y" style="border-color:rgba(255,255,255,.05);">
+            <div class="match-row font-chunky text-[9px] tracking-widest" style="color:#5b6885;">
+              <span></span><span>VS</span><span>TURNOS</span><span>LP</span><span>HACE</span><span></span>
+            </div>
+            @for (m of matches; track m.id) {
+              <div class="match-row hover:bg-white/3 transition">
+                <div class="flex items-center gap-2">
+                  <div class="w-9 h-9 rounded-md flex items-center justify-center font-display text-sm"
+                       [style.background]="m.w ? '#5ad27a' : 'var(--p-red)'"
+                       style="color:#fff; border:2px solid #1a1010; box-shadow:0 2px 0 #1a1010;">
+                    {{ m.w ? 'V' : 'D' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm font-bold">{{ m.vs }}</div>
+                  <div class="text-[10px] font-mono" style="color:#5b6885;">{{ m.opp }} · {{ m.deck }}</div>
+                </div>
+                <div class="text-sm tnum" style="color:#9aa9c7;">{{ m.turns }}</div>
+                <div [class]="'text-sm font-chunky tnum'"
+                     [style.color]="m.lp > 0 ? '#5ad27a' : 'var(--p-red)'">
+                  {{ m.lp > 0 ? '+' : '' }}{{ m.lp }}
+                </div>
+                <div class="text-xs" style="color:#5b6885;">{{ m.ago }}</div>
+                <button class="menu-chip yellow" style="padding:4px 9px; font-size:9px;">
+                  <app-icon name="replay" svgClass="w-3 h-3"></app-icon>REPLAY
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Mastery -->
+        <div class="rounded-2xl p-5"
+             style="background:linear-gradient(180deg, #1c2a44 0%, #131e30 100%); border:3px solid #1a1010; box-shadow:0 5px 0 #1a1010;">
+          <div class="flex items-center justify-between mb-4">
+            <div class="section-rule" style="flex: none;">Mastery</div>
+            <span class="font-chunky text-[9px] tracking-widest" style="color:#5b6885;">
+              TOP POKÉMON POR USO
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            @for (m of mastery; track m.id) {
+              <div class="relative group hover:-translate-y-1 transition">
+                <img [src]="cards[m.id].img" [alt]="cards[m.id].name" class="card-img w-full" />
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full flex gap-0.5"
+                     style="background:#1a1010; border:2px solid var(--p-yellow);">
+                  @for (s of [1,2,3,4,5]; track s) {
+                    <app-icon name="star" svgClass="w-3 h-3"
+                              [style.color]="s <= m.stars ? 'var(--p-yellow)' : 'rgba(255,255,255,.18)'"
+                              [style.fill]="s <= m.stars ? 'var(--p-yellow)' : 'transparent'"></app-icon>
+                  }
+                </div>
+                <div class="mt-4 text-center">
+                  <div class="font-chunky text-[10px] tnum" style="color:#9aa9c7;">{{ m.plays }} partidas</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — Win rate + Achievements -->
+      <div class="space-y-6">
+        <!-- Win-rate donut -->
+        <div class="rounded-2xl p-5"
+             style="background:linear-gradient(180deg, #1c2a44 0%, #131e30 100%); border:3px solid #1a1010; box-shadow:0 5px 0 #1a1010;">
+          <div class="section-rule mb-5">Win Rate por mazo</div>
+          
+          <!-- WinRateDonut inline -->
+          <div class="relative w-44 h-44 mx-auto">
+            <div class="absolute inset-0 rounded-full"
+                 [style.background]="'conic-gradient(' + donutStops + ')'"
+                 style="box-shadow:0 0 0 4px #1a1010;"></div>
+            <div class="absolute inset-3 rounded-full flex flex-col items-center justify-center"
+                 style="background:radial-gradient(circle at 50% 30%, #1c2a44 0%, #0d1521 100%); border:2px solid #1a1010;">
+              <div class="font-chunky text-[10px] tracking-widest" style="color:#9aa9c7;">WIN RATE</div>
+              <div class="font-display text-4xl tnum" style="color:var(--p-yellow);">{{ overallWinRate }}%</div>
+              <div class="font-chunky text-[10px]" style="color:#5b6885;">{{ totalWins }}V · {{ totalLosses }}D</div>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-2.5">
+            @for (a of archetypes; track a.name) {
+              <div class="flex items-center gap-3 text-xs">
+                <div class="w-2.5 h-2.5 rounded-sm" [style.background]="a.color" style="border:1px solid #1a1010;"></div>
+                <div class="flex-1 font-semibold">{{ a.name }}</div>
+                <div class="font-mono tnum" style="color:#9aa9c7;">{{ a.wins }}V — {{ a.losses }}D</div>
+                <div class="font-chunky tnum w-10 text-right">{{ Math.round((a.wins / (a.wins + a.losses)) * 100) }}%</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="rounded-2xl p-5"
+             style="background:linear-gradient(180deg, #1c2a44 0%, #131e30 100%); border:3px solid #1a1010; box-shadow:0 5px 0 #1a1010;">
+          <div class="section-rule mb-4">Logros recientes</div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 py-1">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.04); border:2.5px solid var(--p-yellow); box-shadow:0 3px 0 #1a1010;">
+                <app-icon name="trophy" svgClass="w-5 h-5" style="color:var(--p-yellow)"></app-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold">Vencedor de Furious Fists</div>
+                <div class="text-[10px] font-mono" style="color:#5b6885;">Set XY2 — 12 victorias</div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-3 py-1">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.04); border:2.5px solid var(--p-red); box-shadow:0 3px 0 #1a1010;">
+                <app-icon name="sword" svgClass="w-5 h-5" style="color:var(--p-red)"></app-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold">Cazador de EX</div>
+                <div class="text-[10px] font-mono" style="color:#5b6885;">10 EX derrotados</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 py-1">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.04); border:2.5px solid #5ad27a; box-shadow:0 3px 0 #1a1010;">
+                <app-icon name="cards" svgClass="w-5 h-5" style="color:#5ad27a"></app-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold">Primer 60-0</div>
+                <div class="text-[10px] font-mono" style="color:#5b6885;">Mazo legal sin tachas</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 py-1">
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(255,255,255,.04); border:2.5px solid #c87bff; box-shadow:0 3px 0 #1a1010;">
+                <app-icon name="shield" svgClass="w-5 h-5" style="color:#c87bff"></app-icon>
+              </div>
+              <div>
+                <div class="text-sm font-bold">Calado por veneno</div>
+                <div class="text-[10px] font-mono" style="color:#5b6885;">Sufrir 6 KO por envenenado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

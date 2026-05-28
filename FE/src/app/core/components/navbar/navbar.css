@@ -1,0 +1,26 @@
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px 12px 0 0;
+  border: 2px solid transparent;
+  border-bottom: none;
+  color: #a59cc4;
+  font-family: 'Bowlby One', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.nav-tab:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.nav-tab.active {
+  color: #fff;
+  background: linear-gradient(180deg, #1c2a44 0%, #131e30 100%);
+  border-color: rgba(255,203,5,0.4);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.1);
+}

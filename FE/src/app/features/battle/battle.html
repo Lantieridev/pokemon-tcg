@@ -1,0 +1,426 @@
+<div class="absolute inset-0 flex" (click)="closeMenu()">
+  <div class="relative flex-1 overflow-hidden playmat-classic">
+    <div class="playmat-texture"></div>
+
+    <!-- ── TOP STRIP — opponent HUD + controls ────────────────────────── -->
+    <div class="absolute top-3 left-4 right-4 z-30 flex items-center gap-3">
+      <!-- Player HUD Opponent -->
+      <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
+           [class.opacity-90]="isMyTurn"
+           style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
+           [style.boxShadow]="!isMyTurn ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
+             style="background:var(--p-red); color:#fff; border:2px solid #1a1010;">
+          {{ opp().avatar }}
+        </div>
+        <div class="leading-tight">
+          <div class="font-display text-[13px] flex items-center gap-2">{{ opp().name }}</div>
+          <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ opp().tag }}</div>
+        </div>
+        <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
+        <div class="leading-tight text-right">
+          <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="!isMyTurn ? 'var(--p-red)' : '#5b6885'">
+            {{ !isMyTurn ? 'SU TURNO' : 'ESPERANDO' }}
+          </div>
+          <div class="font-display text-lg tnum" style="color:#1a1010">
+            {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="ml-2 flex items-center gap-2">
+        <span class="font-chunky text-[10px] tracking-[.2em]" style="color:var(--p-yellow)">
+          Mano del rival
+        </span>
+        <span class="font-display text-base tnum" style="color:#fff">{{ opp().handCount }}</span>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <button class="menu-chip red" style="padding:7px 14px; font-size:11px"
+              (click)="$event.stopPropagation(); onLeave()">
+        <app-icon name="logout" svgClass="w-3.5 h-3.5"></app-icon> Abandonar
+      </button>
+    </div>
+
+    <!-- Opponent hand silhouette arc -->
+    <div class="absolute top-[68px] left-1/2 -translate-x-1/2 z-10 flex">
+      @for (h of oppHandArray; track $index) {
+        <div class="card-back"
+             [style.width.px]="50" [style.height.px]="72"
+             [style.marginLeft.px]="$index === 0 ? 0 : -28"
+             [style.transform]="'rotate(' + (($index - (opp().handCount - 1) / 2) * 6) + 'deg) translateY(' + (Math.abs($index - (opp().handCount - 1) / 2) * 2) + 'px)'"
+             style="transform-origin: 50% 200%;"></div>
+      }
+    </div>
+
+    <!-- LEFT COLUMN — both players' prize cards stacked -->
+    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
+      <!-- Opponent Prizes -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
+        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+          @for (alive of opp().prizes; track $index) {
+            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <!-- My Prizes -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
+        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+          @for (alive of me().prizes; track $index) {
+            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN — both players' deck + discard -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
+      <!-- Opponent Deck/Discard -->
+      <div class="flex flex-col items-center gap-3">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
+        <div class="relative">
+          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
+          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
+          <div class="card-back relative" style="width:70px; height:98px"></div>
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp().deckCount }}</div>
+        </div>
+        <div class="relative">
+          <div class="rounded-md flex items-center justify-center"
+               style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+            <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+          </div>
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp().discardCount }}</div>
+          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
+        </div>
+      </div>
+      <!-- My Deck/Discard -->
+      <div class="flex flex-col items-center gap-3">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
+        <div class="relative">
+          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
+          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
+          <div class="card-back relative" style="width:70px; height:98px"></div>
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me().deckCount }}</div>
+        </div>
+        <div class="relative">
+          <img [src]="cards[me().discard[me().discard.length - 1]].img"
+               alt="discard" class="card-img" style="width: 70px; height: 98px; filter:saturate(.65) brightness(.75)" />
+          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me().discard.length }}</div>
+          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
+    <div class="absolute left-0 right-0 top-[150px] bottom-[260px] z-10 flex flex-col items-center justify-between px-[180px]">
+      
+      <!-- OPPONENT BENCH -->
+      <div class="flex items-end gap-3" style="transform: rotate(180deg)">
+        @for (b of oppEmptyBench; track $index) {
+          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 86px; height: 120.4px;">
+            <div class="w-full h-full rounded-md flex items-center justify-center"
+                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+            </div>
+          </div>
+        }
+        @for (b of opp().bench; track $index) {
+          <div>
+            <app-field-pokemon
+              [cardId]="b.card"
+              [energies]="b.energies"
+              [damage]="b.damage"
+              [width]="86"
+              direction="down">
+            </app-field-pokemon>
+          </div>
+        }
+      </div>
+
+      <!-- OPPONENT ACTIVE -->
+      <div style="transform: rotate(180deg)">
+        <app-field-pokemon
+          [cardId]="opp().active.card"
+          [energies]="opp().active.energies"
+          [damage]="opp().active.damage"
+          [status]="opp().active.status"
+          [width]="140"
+          [glow]="true"
+          direction="down">
+        </app-field-pokemon>
+      </div>
+
+      <!-- STADIUM -->
+      <div class="flex flex-col items-center gap-2 my-1">
+        <div class="px-4 py-1 rounded-full"
+             style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
+          <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
+        </div>
+        <div class="relative flex flex-col items-center">
+          <div class="flex items-center gap-3">
+            <div class="h-px w-24" style="background:linear-gradient(90deg, transparent, rgba(255,203,5,.5))"></div>
+            <div class="flex items-center justify-center relative w-[122px] h-[86px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
+                <div class="text-center">
+                  <div class="font-chunky text-[9px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Estadio</div>
+                  <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+                </div>
+            </div>
+            <div class="h-px w-24" style="background:linear-gradient(90deg, rgba(255,203,5,.5), transparent)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY ACTIVE -->
+      <div (click)="openMenu($event, me().active)">
+        <app-field-pokemon
+          [cardId]="me().active.card"
+          [energies]="me().active.energies"
+          [damage]="me().active.damage"
+          [status]="me().active.status"
+          [width]="148"
+          [glow]="true"
+          direction="up">
+        </app-field-pokemon>
+      </div>
+
+      <!-- MY BENCH -->
+      <div class="flex items-start gap-3">
+        @for (b of me().bench; track $index) {
+          <div (click)="openMenu($event, b)">
+            <app-field-pokemon
+              [cardId]="b.card"
+              [energies]="b.energies"
+              [damage]="b.damage"
+              [width]="94"
+              direction="up">
+            </app-field-pokemon>
+          </div>
+        }
+        @for (b of myEmptyBench; track $index) {
+          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 94px; height: 131.6px;">
+            <div class="w-full h-full rounded-md flex items-center justify-center"
+                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+            </div>
+          </div>
+        }
+      </div>
+      
+    </div>
+
+    <!-- ── BOTTOM STRIP — player HUD + end turn + hand fan ─────────────── -->
+    <div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
+      <div class="flex items-end justify-between px-4 pb-3 pointer-events-auto">
+        <!-- Player HUD Me -->
+        <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
+             [class.opacity-90]="!isMyTurn"
+             style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
+             [style.boxShadow]="isMyTurn ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
+               style="background:var(--p-blue); color:#fff; border:2px solid #1a1010;">
+            {{ me().avatar }}
+          </div>
+          <div class="leading-tight">
+            <div class="font-display text-[13px] flex items-center gap-2">{{ me().name }}</div>
+            <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ me().tag }}</div>
+          </div>
+          <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
+          <div class="leading-tight text-right">
+            <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="isMyTurn ? 'var(--p-red)' : '#5b6885'">
+              {{ isMyTurn ? 'SU TURNO' : 'ESPERANDO' }}
+            </div>
+            <div class="font-display text-lg tnum" style="color:#1a1010">
+              {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-end gap-3">
+          <button class="battle-cta" style="font-size: 22px; padding:12px 28px 12px 18px">
+            <span class="pb-icon" style="width: 34px; height: 34px; border-width: 2px"></span>
+            <span>FIN TURNO</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Fan hand -->
+      <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
+        @for (c of visibleHand; track $index) {
+          <div class="fan-card" [style.--i]="$index" [style.--n]="handCount" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index" draggable="true">
+            <img [src]="cards[c].img" [alt]="cards[c].name" class="card-img w-full h-full" draggable="false" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Context menu -->
+    @if (menu()) {
+      <div class="context-menu"
+           [style.left.px]="menu().x" [style.top.px]="menu().y" style="transform: translate(20px, -50%)"
+           (click)="$event.stopPropagation()">
+        <div class="label">{{ cards[menu().cardId].name }} · HP {{ cards[menu().cardId].hp! - menu().damage }}/{{ cards[menu().cardId].hp }}</div>
+
+        <div class="item" (click)="closeMenu()">
+          <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
+          <span>Lanzallamas</span>
+          <span class="cost ml-auto mr-2">
+            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
+            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
+            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+          </span>
+          <span class="key">100</span>
+        </div>
+        <div class="item" (click)="closeMenu()">
+          <app-icon name="bolt" svgClass="w-4 h-4" style="color:#b5a07a"></app-icon>
+          <span>Cuerpo en Llamas</span>
+          <span class="cost ml-auto mr-2">
+            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
+            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+          </span>
+          <span class="key">30</span>
+        </div>
+
+        <div class="label">Acciones</div>
+        <div class="item" (click)="closeMenu()">
+          <app-icon name="heart" svgClass="w-4 h-4" style="color:#1f8a5b"></app-icon>
+          <span>Habilidad: Garras Ardientes</span>
+          <span class="key">PASIVA</span>
+        </div>
+        <div class="item" (click)="closeMenu()">
+          <app-icon name="back" svgClass="w-4 h-4" style="color:#5b6885"></app-icon>
+          <span>Retirar a la banca</span>
+          <span class="cost ml-auto mr-2">
+            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Variant badge -->
+    <div class="absolute top-[20px] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+      <div class="px-3 py-0.5 rounded-full font-chunky text-[9px] tracking-[.3em]"
+           style="background:rgba(0,0,0,.6); color:var(--p-yellow); border:1px solid rgba(255,203,5,.4);">
+        VARIANTE · CLASSIC
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT SIDEBAR ── historial + chat ───────────────────────────── -->
+  <aside class="relative flex flex-col w-[308px]"
+         style="border-left:3px solid #1a1010; background:linear-gradient(180deg, #131e30 0%, #0a1020 100%)"
+         (click)="$event.stopPropagation()">
+    <div class="absolute inset-0 hex-bg pointer-events-none opacity-50"></div>
+
+    <!-- HISTORIAL -->
+    <div class="relative flex flex-col min-h-0 flex-[1_1_60%]">
+      <div class="px-4 py-3 flex items-center justify-between" style="border-bottom:2px solid rgba(255,203,5,.22)">
+        <div class="font-chunky text-[11px] tracking-[.24em]" style="color:var(--p-yellow)">
+          ◆ HISTORIAL
+        </div>
+        <div class="font-mono text-[10px]" style="color:#5b6885">{{ log().length }} eventos</div>
+      </div>
+
+      <div #scrollRef class="flex-1 overflow-y-auto scroll px-3 py-2">
+        @for (l of log(); track $index) {
+          <div class="py-2 px-2 rounded-md mb-1"
+               [style.background]="$index === 0 ? 'rgba(255,203,5,.06)' : 'transparent'"
+               [style.borderLeft]="$index === 0 ? '2px solid var(--p-yellow)' : '2px solid transparent'">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="font-chunky text-[8px] px-1.5 py-0.5 rounded"
+                    [style.color]="getKindStyles(l.kind).color"
+                    style="background:#1a1010; letter-spacing:.08em">
+                T{{ l.t }}
+              </span>
+              <span class="font-chunky text-[8px] px-1.5 py-0.5 rounded"
+                    [style.color]="getKindStyles(l.kind).color"
+                    [style.borderColor]="getKindStyles(l.kind).color + '55'"
+                    style="background:rgba(255,255,255,.04); border:1px solid; letter-spacing:.08em">
+                {{ getKindStyles(l.kind).label }}
+              </span>
+              <span class="font-chunky text-[9px] tracking-wider truncate"
+                    [style.color]="l.mine ? 'var(--p-blue)' : 'var(--p-red)'">
+                {{ l.who }}
+              </span>
+            </div>
+            <div class="text-[12px] font-semibold leading-snug" style="color:#fff8e8">
+              {{ l.txt }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="relative flex flex-col min-h-0 flex-[1_1_40%]"
+         style="border-top:2px solid rgba(255,203,5,.22); background:rgba(0,0,0,.18)">
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="font-chunky text-[11px] tracking-[.24em]" style="color:var(--p-yellow)">
+          ◆ CHAT
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div class="dot-online"></div>
+          <span class="font-mono text-[9px]" style="color:#9aa9c7">en vivo</span>
+        </div>
+      </div>
+
+      <div #chatRef class="flex-1 overflow-y-auto scroll px-3 py-2 space-y-2">
+        @for (m of chat(); track $index) {
+          <div class="flex" [class.justify-end]="m.from === 'me'" [class.justify-start]="m.from !== 'me'">
+            <div class="flex items-end gap-1.5 max-w-[88%]">
+              @if (m.from !== 'me') {
+                <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
+                     style="background:var(--p-red); color:#fff; border:1.5px solid #1a1010">
+                  {{ opp().avatar }}
+                </div>
+              }
+              <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border-2 border-[#1a1010] shadow-[0_2px_0_#1a1010]"
+                   [style.background]="m.from === 'me' ? 'var(--p-yellow)' : '#fff8e8'"
+                   [style.borderRadius]="m.from === 'me' ? '14px 14px 4px 14px' : '14px 14px 14px 4px'"
+                   style="color:#1a1010">
+                {{ m.text }}
+              </div>
+              @if (m.from === 'me') {
+                <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
+                     style="background:var(--p-blue); color:#fff; border:1.5px solid #1a1010">
+                  {{ me().avatar }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="px-3 py-2.5" style="border-top:1.5px solid rgba(255,255,255,.06)">
+        <div class="font-chunky text-[8px] tracking-[.22em] mb-1.5" style="color:#5b6885">
+          QUICK CHAT
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          @for (q of quickChat; track q) {
+            <button (click)="sendChat(q)"
+                    class="px-2 py-1.5 rounded-md text-[11px] font-bold text-left transition hover:brightness-110"
+                    style="background:#fff8e8; color:#1a1010; border:2px solid #1a1010; box-shadow:0 2px 0 #1a1010">
+              {{ q }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>

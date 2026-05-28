@@ -1,1 +1,12 @@
-<router-outlet></router-outlet>
+<div class="h-full w-full relative">
+  @if (currentRoute() !== '/battle') {
+    <app-navbar></app-navbar>
+  }
+
+  <main
+    class="absolute inset-x-0 bottom-0"
+    [style.top.px]="currentRoute() === '/battle' ? 0 : 64"
+  >
+    <router-outlet></router-outlet>
+  </main>
+</div>
