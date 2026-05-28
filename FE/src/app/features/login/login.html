@@ -8,23 +8,30 @@
     <p class="text-white/60 mb-8 text-center text-sm font-body">Iniciá sesión para acceder a tu mazo y buscar partidas.</p>
     
     <div class="w-full flex flex-col gap-4">
+      <div *ngIf="errorMessage" class="bg-red-500/20 text-red-200 border border-red-500/50 rounded p-2 text-sm text-center">
+        {{ errorMessage }}
+      </div>
+      
       <div class="flex flex-col gap-1.5">
         <label class="text-xs text-white/60 uppercase tracking-wider font-bold font-body">Usuario</label>
-        <input type="text" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="Ej: AshRivero">
+        <input type="text" [(ngModel)]="username" name="username" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="Ej: AshRivero">
       </div>
       
       <div class="flex flex-col gap-1.5">
         <label class="text-xs text-white/60 uppercase tracking-wider font-bold font-body">Contraseña</label>
-        <input type="password" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="••••••••">
+        <input type="password" [(ngModel)]="password" name="password" (keyup.enter)="submit()" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="••••••••">
       </div>
       
-      <button class="battle-cta w-full mt-4 flex items-center justify-center font-display tracking-widest text-lg" (click)="login()" style="background: linear-gradient(180deg, #ee1515 0%, #c41010 100%); border: 2px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 12px 32px; box-shadow: 0 4px 15px rgba(238,21,21,0.3); text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-        INGRESAR
+      <button class="battle-cta w-full mt-4 flex items-center justify-center font-display tracking-widest text-lg" (click)="submit()" style="background: linear-gradient(180deg, #ee1515 0%, #c41010 100%); border: 2px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 12px 32px; box-shadow: 0 4px 15px rgba(238,21,21,0.3); text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+        {{ isRegistering ? 'REGISTRARSE' : 'INGRESAR' }}
       </button>
     </div>
     
     <div class="mt-8 text-xs text-white/40 font-body">
-      ¿No tenés cuenta? <span class="text-[#ee1515] hover:text-white cursor-pointer transition-colors">Registrate acá</span>
+      {{ isRegistering ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?' }} 
+      <span class="text-[#ee1515] hover:text-white cursor-pointer transition-colors" (click)="toggleMode()">
+        {{ isRegistering ? 'Iniciá sesión acá' : 'Registrate acá' }}
+      </span>
     </div>
   </div>
 </div>
