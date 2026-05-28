@@ -176,19 +176,23 @@ public class ProfileServiceImpl implements ProfileService {
                 // Si la carta viene vacía, elimina ese slot de la vitrina
                 existingOpt.ifPresent(userShowcaseRepository::delete);
             } else {
-                // Verificar si la carta existe en base de datos
-                if (cardRepository.existsById(slot.getCardId())) {
-                    if (existingOpt.isPresent()) {
-                        final UserShowcaseEntity showcase = existingOpt.get();
-                        showcase.setCardId(slot.getCardId());
-                        userShowcaseRepository.save(showcase);
-                    } else {
-                        userShowcaseRepository.save(UserShowcaseEntity.builder()
-                                .user(user)
-                                .cardId(slot.getCardId())
-                                .slotPosition(slot.getSlotPosition())
-                                .build());
-                    }
+                // Verificar si la carta existe en base de datos y si el usuario la posee
+                if (!cardRepository.existsById(slot.getCardId())) {
+                    throw new IllegalArgumentException("La carta no existe: " + slot.getCardId());
+                }
+                if (!deckRepository.existsByUserIdAndCardId(user.getId(), slot.getCardId())) {
+                    throw new IllegalArgumentException("La carta no pertenece a la colección del usuario: " + slot.getCardId());
+                }
+                if (existingOpt.isPresent()) {
+                    final UserShowcaseEntity showcase = existingOpt.get();
+                    showcase.setCardId(slot.getCardId());
+                    userShowcaseRepository.save(showcase);
+                } else {
+                    userShowcaseRepository.save(UserShowcaseEntity.builder()
+                            .user(user)
+                            .cardId(slot.getCardId())
+                            .slotPosition(slot.getSlotPosition())
+                            .build());
                 }
             }
         }
