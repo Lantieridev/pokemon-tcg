@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Client } from '@stomp/stompjs';
+import { Client, IMessage, Frame } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AuthService } from './auth.service';
 import { Observable, Subject } from 'rxjs';
@@ -30,7 +30,7 @@ export class WebSocketService {
       connectHeaders: {
         Authorization: `Bearer ${token}`
       },
-      debug: (str) => {
+      debug: (str: string) => {
         // console.log(str);
       },
       reconnectDelay: 5000,
@@ -38,10 +38,10 @@ export class WebSocketService {
       heartbeatOutgoing: 4000,
     });
 
-    this.stompClient.onConnect = (frame) => {
+    this.stompClient.onConnect = (frame: Frame) => {
       console.log('Connected to WS: ' + frame);
       const topic = `/topic/match/${matchId}/player/${username}`;
-      this.stompClient!.subscribe(topic, (message) => {
+      this.stompClient!.subscribe(topic, (message: IMessage) => {
         if (message.body) {
           const body = JSON.parse(message.body);
           this.messageSubject.next(body);
@@ -49,7 +49,7 @@ export class WebSocketService {
       });
     };
 
-    this.stompClient.onStompError = (frame) => {
+    this.stompClient.onStompError = (frame: Frame) => {
       console.error('Broker reported error: ' + frame.headers['message']);
       console.error('Additional details: ' + frame.body);
     };

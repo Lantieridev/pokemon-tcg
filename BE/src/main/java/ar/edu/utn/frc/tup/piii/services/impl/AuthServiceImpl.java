@@ -61,9 +61,13 @@ public class AuthServiceImpl implements AuthService {
         // Generate token
         String jwt = jwtUtil.generateToken(request.getUsername());
 
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new java.util.NoSuchElementException("User not found: " + request.getUsername()));
+
         return AuthResponseDTO.builder()
                 .token(jwt)
                 .username(request.getUsername())
+                .userId(user.getId())
                 .build();
     }
 }

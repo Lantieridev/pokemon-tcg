@@ -78,12 +78,22 @@ export class MatchStore {
 
   private mapPokemon(dto: any) {
     if (!dto) return null;
+    let status = 'none';
+    if (dto.statusConditions && dto.statusConditions.length > 0) {
+      const cond = dto.statusConditions[0].toLowerCase();
+      if (cond === 'dormido') status = 'asleep';
+      else if (cond === 'confundido') status = 'confused';
+      else if (cond === 'quemado') status = 'burned';
+      else if (cond === 'envenenado') status = 'poisoned';
+      else if (cond === 'paralizado') status = 'paralyzed';
+    }
     return {
+      card: dto.cardId || 'unknown',
       cardId: dto.cardId || 'unknown',
       name: dto.name || 'Unknown',
       energies: dto.attachedEnergies?.map((e: string) => e.toLowerCase()) || [],
       damage: (dto.damageCounters || 0) * 10,
-      status: 'none'
+      status: status
     };
   }
 }

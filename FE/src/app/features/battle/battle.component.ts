@@ -1,29 +1,20 @@
-import { ChangeDetectionStrategy, Component, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, ViewChild, ElementRef, AfterViewChecked, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FieldPokemonComponent } from '../../shared/ui/field-pokemon/field-pokemon.component';
 import { EnergyPipComponent } from '../../shared/ui/energy-pip/energy-pip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { CARDS } from '../../shared/data/cards.mock';
+import { MatchStore } from '../../core/store/match.store';
+import { WebSocketService } from '../../core/services/websocket.service';
 
 const INITIAL_LOG = [
-  { t:8, who:'BrockSteel', kind:'attack', txt:'Alakazam ataca con Confuse Ray', mine:false },
-  { t:8, who:'BrockSteel', kind:'energy', txt:'Energía Psíquica adjuntada a Alakazam', mine:false },
-  { t:7, who:'AshRivero',  kind:'attack', txt:'Charizard usa Lanzallamas · 80 daño', mine:true },
-  { t:7, who:'AshRivero',  kind:'discard',txt:'2 Energías Fuego descartadas', mine:true },
-  { t:7, who:'AshRivero',  kind:'energy', txt:'Energía Fuego adjuntada', mine:true },
-  { t:6, who:'BrockSteel', kind:'prize',  txt:'Toma 1 carta de premio', mine:false },
-  { t:6, who:'BrockSteel', kind:'ko',     txt:'¡Machamp KO!', mine:false },
-  { t:5, who:'AshRivero',  kind:'attack', txt:'Hitmonchan ataca · 40 daño', mine:true },
-  { t:5, who:'AshRivero',  kind:'draw',   txt:'Robó carta', mine:true },
-  { t:4, who:'BrockSteel', kind:'bench',  txt:'Subió Gyarados a la banca', mine:false },
+  { t:1, who:'System', kind:'bench', txt:'Partida iniciada', mine:true }
 ];
 
 const INITIAL_CHAT = [
   { from:'opp', text:'¡Buena suerte!', t:'19:42' },
   { from:'me',  text:'¡Buena suerte!', t:'19:42' },
-  { from:'opp', text:'¡Buena jugada!', t:'19:46' },
-  { from:'me',  text:'¡Gracias!',      t:'19:46' },
-  { from:'opp', text:'Estuvo cerca…',  t:'19:51' },
 ];
 
 const QUICK_CHAT = [
@@ -43,61 +34,79 @@ const QUICK_CHAT = [
   styleUrl: './battle.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BattleComponent implements AfterViewChecked {
+export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   Math = Math;
   cards = CARDS;
+
+  private store = inject(MatchStore);
+  private wsService = inject(WebSocketService);
+  private router = inject(Router);
   
   @ViewChild('scrollRef') scrollRef!: ElementRef;
   @ViewChild('chatRef') chatRef!: ElementRef;
 
-  me = signal({
-    name: 'AshRivero', tag: 'LIGA ORO · 1842', avatar: 'AR',
-    active: { card: 'charizard', energies: ['fire','fire','fire'], damage: 40, status: 'none' },
-    bench: [
-      { card: 'blastoise',  energies: ['water','water'],           damage: 10 },
-      { card: 'pikachu',    energies: ['lightning'],               damage: 0 },
-      { card: 'venusaur',   energies: ['grass','grass','grass'],   damage: 0 },
-      { card: 'hitmonchan', energies: ['fighting'],                damage: 20 },
-      { card: 'mewtwo',     energies: ['psychic','psychic'],       damage: 0 },
-    ],
-    prizes: [true, true, true, true, false, false],
-    deckCount: 28,
-    discard: ['charmander','potion','e_fire'],
-    hand: ['e_fire','blastoise','bill','e_water','charmeleon','proforak','e_lightning','e_grass','potion'],
+  // Bind properties to MatchStore computed properties with non-nullable fallback for TS template compiler
+  me = computed(() => this.store.me() || {
+    name: 'AshRivero', tag: 'LIGA ORO', avatar: 'AR',
+    active: null,
+    bench: [] as any[],
+    prizes: Array(6).fill(true) as boolean[],
+    deckCount: 60,
+    discard: [] as string[],
+    hand: [] as string[],
+    handCount: 0,
+    discardCount: 0
   });
 
-  opp = signal({
-    name: 'BrockSteel', tag: 'LIGA DIAMANTE · 2104', avatar: 'BS',
-    active: { card: 'alakazam', energies: ['psychic','psychic'], damage: 30, status: 'none' },
-    bench: [
-      { card: 'gyarados',  energies: ['water','water','water'], damage: 20 },
-      { card: 'ninetales', energies: ['fire','fire'],            damage: 0 },
-      { card: 'machamp',   energies: ['fighting','fighting'],   damage: 50 },
-      { card: 'raichu',    energies: ['lightning'],              damage: 0 },
-    ],
-    prizes: [true, true, true, true, true, false],
-    deckCount: 24,
-    discardCount: 7,
-    handCount: 5,
+  opp = computed(() => this.store.opp() || {
+    name: 'GarryBot', tag: 'LIGA PLATA', avatar: 'GB',
+    active: null,
+    bench: [] as any[],
+    prizes: Array(6).fill(true) as boolean[],
+    deckCount: 60,
+    handCount: 0,
+    discardCount: 0
   });
 
-  turn = signal({ number: 8, owner: 'me', timer: 47 });
+  turn = computed(() => this.store.turn() || { number: 0, owner: 'me', timer: 60 });
+
   log = signal(INITIAL_LOG);
   chat = signal(INITIAL_CHAT);
   quickChat = QUICK_CHAT;
 
   menu = signal<any>(null);
 
-  get isMyTurn() { return this.turn().owner === 'me'; }
+  ngOnInit() {
+    if (!this.store.isLoaded()) {
+      this.router.navigate(['/lobby']);
+      return;
+    }
+    const matchId = this.store.matchId();
+    if (matchId) {
+      this.wsService.connect(matchId).subscribe(state => {
+        this.store.updateState(state);
+        this.log.update(l => [
+          ...l, 
+          { t: state.version, who: 'System', kind: 'draw', txt: `Nueva actualización de estado (V${state.version})`, mine: true }
+        ]);
+      });
+    }
+  }
 
-  get myEmptyBench() { return Array(Math.max(0, 5 - this.me().bench.length)).fill(0); }
-  get oppEmptyBench() { return Array(Math.max(0, 5 - this.opp().bench.length)).fill(0); }
+  ngOnDestroy() {
+    this.wsService.disconnect();
+  }
+
+  get isMyTurn() { return this.turn()?.owner === 'me'; }
+
+  get myEmptyBench() { return Array(Math.max(0, 5 - (this.me()?.bench?.length || 0))).fill(0); }
+  get oppEmptyBench() { return Array(Math.max(0, 5 - (this.opp()?.bench?.length || 0))).fill(0); }
 
   // Array for hand count
-  get oppHandArray() { return Array(this.opp().handCount).fill(0); }
+  get oppHandArray() { return Array(this.opp()?.handCount || 0).fill(0); }
   
   get handCount() { return 6; } // Normal density
-  get visibleHand() { return this.me().hand.slice(0, this.handCount); }
+  get visibleHand() { return this.me()?.hand?.slice(0, this.handCount) || []; }
   get spread() { return 6; }
 
   ngAfterViewChecked() {
