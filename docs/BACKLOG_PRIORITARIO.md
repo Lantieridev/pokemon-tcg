@@ -33,25 +33,24 @@ Estas tareas corresponden a los requerimientos funcionales más críticos (RF-01
 - `[ ]` **Añadir el Log Inmutable de Partida**
   - Conectar el `gameStatePersistence.logAction(...)` al final de cada turno/jugada.
 
-## 🌐 Fase 3: APIs REST para Vistas (Login, Deck, Perfil)
+## 🌐 Fase 3: APIs REST y Conexión en Angular (Fullstack)
 
-Para que el Frontend que estamos armando pueda integrarse y guardar datos reales, es **obligatorio** que el equipo Backend disponibilice estos endpoints REST:
+Para darle más libertad y ownership al equipo, ustedes no solo van a armar los endpoints en el Backend, sino que **también van a realizar la integración (wiring) en los servicios de Angular**. Nosotros les dejamos las vistas y componentes visuales listos, ustedes hacen las peticiones HTTP y conectan los datos:
 
-- `[ ]` **Auth & Login API**
-  - `POST /api/auth/login` (Recibe email/password, devuelve token JWT o sesión).
-  - `POST /api/auth/register` (Crea nuevos jugadores).
-- `[ ]` **Perfil y Estadísticas (Reforzado por consigna)**
-  - `GET /api/users/{id}/profile` (Devuelve historial de partidas, datos del jugador, avatar).
+- `[ ]` **Auth & Login**
+  - **Backend:** `POST /api/auth/login` y `register`.
+  - **Frontend:** Conectar el formulario de `login.html` usando `HttpClient`.
+- `[ ]` **Perfil y Estadísticas**
+  - **Backend:** `GET /api/users/{id}/profile`.
+  - **Frontend:** Llenar los datos mockeados en `profile.html` con los datos reales del usuario.
 - `[ ]` **Gestión de Mazos (RF-04)**
-  - `GET /api/decks` (Lista los mazos del jugador logueado).
-  - `POST /api/decks` y `PUT /api/decks/{id}` (Guarda el mazo creado en el Deck Builder, el backend debe re-validar que tenga 60 cartas exactas, 1 AS TÁCTICO, etc.).
+  - **Frontend (API Externa):** Implementar el fetch a `pokemontcg.io (v2)` para buscar las cartas del set `xy1` y cachearlas en el navegador (localStorage).
+  - **Backend:** `GET /api/decks`, `POST /api/decks`, y re-validación de 60 cartas.
+  - **Frontend:** Conectar el botón "Guardar" del Deck Builder a sus propios endpoints.
 
-## 💻 Fase 4: Integración Front-End (Angular)
+## 💻 Fase 4: Integración del Tablero (WebSocket)
 
-- `[/]` **Perfeccionar Interfaces (Mockeadas)**
-  - `[x]` Layout Principal y Tablero (clon 1:1 de `claude design`)
-  - `[x]` Solucionar solapamiento/colisiones del mouse (hitbox fix) al hacer hover sobre las cartas en mano (`.fan-card::before`).
-  - `[x]` Deshabilitar interacciones ilegales locales (ej. clic en el banco enemigo).
-  - `[ ]` Menús Desplegables Condicionales de acción (Evolucionar, Bajar a Banca, etc.) según estado local.
+- `[/]` **Perfeccionar Interfaces (Completado por UI Team)**
+  - `[x]` Tablero reparado y funcional visualmente.
 - `[ ]` **Reemplazar Estado Mock por STOMP**
-  - Una vez que la "Prioridad Inmediata" del Backend esté lista, borrar los fixtures falsos del `MatchStore` y suscribirse a STOMP real.
+  - Una vez que el Broadcast esté listo, borrar los fixtures del `MatchStore` y suscribirse a STOMP real en Angular.
