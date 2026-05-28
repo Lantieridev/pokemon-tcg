@@ -62,6 +62,26 @@ public class UserEntity {
     @Builder.Default
     private Boolean showRecidivismWarning = false;
 
+    @Column(name = "perfect_wins")
+    @Builder.Default
+    private Integer perfectWins = 0;
+
+    @Column(name = "comeback_wins")
+    @Builder.Default
+    private Integer comebackWins = 0;
+
+    @Column(name = "total_kos")
+    @Builder.Default
+    private Integer totalKos = 0;
+
+    @Column(name = "trainer_cards_played")
+    @Builder.Default
+    private Integer trainerCardsPlayed = 0;
+
+    @Column(name = "total_damage_dealt")
+    @Builder.Default
+    private Integer totalDamageDealt = 0;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_unlocked_titles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "title_name")
