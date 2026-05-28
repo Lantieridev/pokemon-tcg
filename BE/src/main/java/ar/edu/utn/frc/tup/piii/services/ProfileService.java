@@ -9,5 +9,8 @@ public interface ProfileService {
     void updateProfile(String username, UpdateProfileRequestDTO request);
     void updateShowcase(String username, UpdateShowcaseRequestDTO request);
     void updateShowcaseDeck(String username, Long deckId);
-    void awardXpAndCheckAchievements(Long userId, boolean won);
+    void awardXpAndCheckAchievements(Long userId, boolean won, boolean isPerfectWin, boolean isComebackWin, int kos);
+    void trackDamageDealt(String username, int damage);
+    void trackTrainerCardPlayed(String username);
+    java.util.List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> getAchievementsProgress(String username);
 }
