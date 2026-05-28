@@ -3,10 +3,15 @@ package ar.edu.utn.frc.tup.piii.controllers;
 import ar.edu.utn.frc.tup.piii.dtos.HonorRequest;
 import ar.edu.utn.frc.tup.piii.dtos.HonorType;
 import ar.edu.utn.frc.tup.piii.dtos.UserStatusResponse;
+import ar.edu.utn.frc.tup.piii.dtos.UserProfileResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UpdateProfileRequestDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UpdateShowcaseRequestDTO;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
+import ar.edu.utn.frc.tup.piii.services.ProfileService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,11 +36,16 @@ public class UserController {
     private final MuteService muteService;
     private final HonorService honorService;
     private final PenaltyService penaltyService;
+    private final ProfileService profileService;
 
-    public UserController(final MuteService muteService, final HonorService honorService, final PenaltyService penaltyService) {
+    public UserController(final MuteService muteService,
+                          final HonorService honorService,
+                          final PenaltyService penaltyService,
+                          final ProfileService profileService) {
         this.muteService = Objects.requireNonNull(muteService, "muteService must not be null");
         this.honorService = Objects.requireNonNull(honorService, "honorService must not be null");
         this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
+        this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
     }
 
     /**
@@ -142,5 +152,52 @@ public class UserController {
                 .pendingNotifications(notifications)
                 .showRecidivismWarning(showWarning)
                 .build());
+    }
+
+    /**
+     * Retrieves the consolidated user profile.
+     *
+     * @param username the username to fetch
+     * @return the profile DTO
+     */
+    @GetMapping("/{username}/profile")
+    public ResponseEntity<UserProfileResponseDTO> getUserProfile(@PathVariable final String username) {
+        try {
+            return ResponseEntity.ok(profileService.getProfile(username));
+        } catch (final IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Updates the authenticated user's profile customization.
+     *
+     * @param request   the update details
+     * @param principal the authenticated principal
+     * @return 200 OK or 400 Bad Request
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<Void> updateProfile(@RequestBody final UpdateProfileRequestDTO request, final Principal principal) {
+        if (principal == null || request == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        profileService.updateProfile(principal.getName(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Updates the authenticated user's showcase slots.
+     *
+     * @param request   the slots update details
+     * @param principal the authenticated principal
+     * @return 200 OK or 400 Bad Request
+     */
+    @PutMapping("/profile/showcase")
+    public ResponseEntity<Void> updateShowcase(@RequestBody final UpdateShowcaseRequestDTO request, final Principal principal) {
+        if (principal == null || request == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        profileService.updateShowcase(principal.getName(), request);
+        return ResponseEntity.ok().build();
     }
 }

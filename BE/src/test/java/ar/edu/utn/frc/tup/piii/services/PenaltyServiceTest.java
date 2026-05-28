@@ -1,6 +1,12 @@
 package ar.edu.utn.frc.tup.piii.services;
 
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserPenaltyEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserPendingNotificationEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.ChatReportRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserPenaltyRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserPendingNotificationRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.impl.PenaltyServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,8 +14,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -20,16 +28,91 @@ class PenaltyServiceTest {
     @Mock
     private ChatReportRepository chatReportRepository;
 
+    private UserPenaltyRepository userPenaltyRepository;
+    private UserPendingNotificationRepository userPendingNotificationRepository;
+    private UserRepository userRepository;
+
     private PenaltyService penaltyService;
+
+    private List<UserPenaltyEntity> penaltiesDb;
+    private List<UserPendingNotificationEntity> notificationsDb;
+    private UserEntity userEntity;
 
     @BeforeEach
     void setUp() {
-        penaltyService = new PenaltyServiceImpl(chatReportRepository);
+        userPenaltyRepository = mock(UserPenaltyRepository.class);
+        userPendingNotificationRepository = mock(UserPendingNotificationRepository.class);
+        userRepository = mock(UserRepository.class);
+
+        penaltiesDb = new ArrayList<>();
+        notificationsDb = new ArrayList<>();
+
+        userEntity = UserEntity.builder()
+                .id(1L)
+                .username("toxicuser")
+                .showRecidivismWarning(false)
+                .build();
+
+        // Mocks de UserRepository
+        lenient().when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(userEntity));
+        lenient().when(userRepository.findById(anyLong())).thenReturn(Optional.of(userEntity));
+        lenient().when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
+            userEntity = invocation.getArgument(0);
+            return userEntity;
+        });
+
+        // Simular save de penalties
+        lenient().when(userPenaltyRepository.save(any(UserPenaltyEntity.class))).thenAnswer(invocation -> {
+            final UserPenaltyEntity p = invocation.getArgument(0);
+            if (p.getId() == null) {
+                p.setId((long) (penaltiesDb.size() + 1));
+                penaltiesDb.add(p);
+            } else {
+                // Actualizar elemento existente
+                for (int i = 0; i < penaltiesDb.size(); i++) {
+                    if (penaltiesDb.get(i).getId().equals(p.getId())) {
+                        penaltiesDb.set(i, p);
+                        break;
+                    }
+                }
+            }
+            return p;
+        });
+
+        // Simular find de penalties
+        lenient().when(userPenaltyRepository.findByUser(any(UserEntity.class))).thenAnswer(invocation ->
+                penaltiesDb.stream().filter(p -> p.getIsActive() || p.getIsPending()).collect(Collectors.toList())
+        );
+        lenient().when(userPenaltyRepository.findByUserAndIsActiveTrue(any(UserEntity.class))).thenAnswer(invocation ->
+                penaltiesDb.stream().filter(UserPenaltyEntity::getIsActive).collect(Collectors.toList())
+        );
+        lenient().when(userPenaltyRepository.findByUserUsernameAndIsActiveTrue(anyString())).thenAnswer(invocation ->
+                penaltiesDb.stream().filter(UserPenaltyEntity::getIsActive).collect(Collectors.toList())
+        );
+
+        // Simular save de notifications
+        lenient().when(userPendingNotificationRepository.save(any(UserPendingNotificationEntity.class))).thenAnswer(invocation -> {
+            final UserPendingNotificationEntity n = invocation.getArgument(0);
+            n.setId((long) (notificationsDb.size() + 1));
+            notificationsDb.add(n);
+            return n;
+        });
+
+        // Simular find de notifications
+        lenient().when(userPendingNotificationRepository.findByUserUsername(anyString())).thenAnswer(invocation ->
+                new ArrayList<>(notificationsDb)
+        );
+        lenient().doAnswer(invocation -> {
+            notificationsDb.clear();
+            return null;
+        }).when(userPendingNotificationRepository).deleteAll(anyList());
+
+        penaltyService = new PenaltyServiceImpl(chatReportRepository, userPenaltyRepository, userPendingNotificationRepository, userRepository);
     }
 
     @Test
     void shouldNotBePenalizedWithLessThanThreeReports() {
-        final String username = "testuser";
+        final String username = "toxicuser";
         when(chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username)).thenReturn(2L);
 
         penaltyService.checkAndApplyPenalty(username);

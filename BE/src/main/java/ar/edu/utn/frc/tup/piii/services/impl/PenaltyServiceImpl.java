@@ -1,55 +1,39 @@
 package ar.edu.utn.frc.tup.piii.services.impl;
 
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserPenaltyEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserPendingNotificationEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.ChatReportRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserPenaltyRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserPendingNotificationRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class PenaltyServiceImpl implements PenaltyService {
 
     private final ChatReportRepository chatReportRepository;
+    private final UserPenaltyRepository userPenaltyRepository;
+    private final UserPendingNotificationRepository userPendingNotificationRepository;
+    private final UserRepository userRepository;
 
-    // In-memory active suspensions (bans)
-    private final Map<String, LocalDateTime> suspensions = new ConcurrentHashMap<>();
-
-    // In-memory active muted matches remaining
-    private final Map<String, Integer> mutedMatches = new ConcurrentHashMap<>();
-
-    // In-memory permanent bans
-    private final Map<String, Boolean> permaBans = new ConcurrentHashMap<>();
-
-    // In-memory pending penalties (deferred until match finishes)
-    private final Map<String, PendingPenalty> pendingPenalties = new ConcurrentHashMap<>();
-
-    // In-memory lobby notifications
-    private final Map<String, List<String>> pendingNotifications = new ConcurrentHashMap<>();
-
-    // In-memory recidivism warning flags
-    private final Map<String, Boolean> recidivismWarnings = new ConcurrentHashMap<>();
-
-    // Track the last report count for which the user was penalized
-    private final Map<String, Long> lastPenalizedCount = new ConcurrentHashMap<>();
-
-    private static class PendingPenalty {
-        final String type; // "MUTE", "BAN", "PERMA"
-        final Object value; // Integer, LocalDateTime or null
-
-        PendingPenalty(final String type, final Object value) {
-            this.type = type;
-            this.value = value;
-        }
-    }
-
-    public PenaltyServiceImpl(final ChatReportRepository chatReportRepository) {
+    public PenaltyServiceImpl(final ChatReportRepository chatReportRepository,
+                              final UserPenaltyRepository userPenaltyRepository,
+                              final UserPendingNotificationRepository userPendingNotificationRepository,
+                              final UserRepository userRepository) {
         this.chatReportRepository = Objects.requireNonNull(chatReportRepository, "chatReportRepository must not be null");
+        this.userPenaltyRepository = Objects.requireNonNull(userPenaltyRepository, "userPenaltyRepository must not be null");
+        this.userPendingNotificationRepository = Objects.requireNonNull(userPendingNotificationRepository, "userPendingNotificationRepository must not be null");
+        this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
     }
 
     @Override
@@ -63,44 +47,74 @@ public class PenaltyServiceImpl implements PenaltyService {
         }
 
         // Check active suspension
-        final LocalDateTime suspensionExpiration = suspensions.get(username);
-        if (suspensionExpiration != null) {
-            if (LocalDateTime.now().isBefore(suspensionExpiration)) {
-                return true;
-            } else {
-                // Suspension expired just now
-                suspensions.remove(username);
-                recidivismWarnings.put(username, true);
+        final List<UserPenaltyEntity> activePenalties = userPenaltyRepository.findByUserUsernameAndIsActiveTrue(username);
+        for (final UserPenaltyEntity penalty : activePenalties) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                continue;
             }
-        }
 
-        // Check active mute matches remaining
-        final Integer remainingMutes = mutedMatches.get(username);
-        if (remainingMutes != null && remainingMutes > 0) {
-            return true;
+            if ("BAN".equalsIgnoreCase(penalty.getPenaltyType()) && penalty.getExpiration() != null) {
+                if (LocalDateTime.now().isBefore(penalty.getExpiration())) {
+                    return true;
+                } else {
+                    // Suspension expired just now
+                    penalty.setIsActive(false);
+                    userPenaltyRepository.save(penalty);
+
+                    userRepository.findByUsername(username).ifPresent(user -> {
+                        user.setShowRecidivismWarning(true);
+                        userRepository.save(user);
+                    });
+                }
+            }
+
+            if ("MUTE".equalsIgnoreCase(penalty.getPenaltyType())) {
+                final Integer remainingMutes = penalty.getMatchesRemaining();
+                if (remainingMutes != null && remainingMutes > 0) {
+                    return true;
+                }
+            }
         }
 
         return false;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public LocalDateTime getPenaltyExpiration(final String username) {
         if (username == null) {
             return null;
         }
-        final LocalDateTime expiration = suspensions.get(username);
-        if (expiration != null && LocalDateTime.now().isBefore(expiration)) {
-            return expiration;
+        final List<UserPenaltyEntity> active = userPenaltyRepository.findByUserUsernameAndIsActiveTrue(username);
+        for (final UserPenaltyEntity penalty : active) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                continue;
+            }
+            if ("BAN".equalsIgnoreCase(penalty.getPenaltyType()) && penalty.getExpiration() != null) {
+                if (LocalDateTime.now().isBefore(penalty.getExpiration())) {
+                    return penalty.getExpiration();
+                }
+            }
         }
         return null;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Integer getMatchesPenalizedRemaining(final String username) {
         if (username == null) {
             return 0;
         }
-        return mutedMatches.getOrDefault(username, 0);
+        final List<UserPenaltyEntity> active = userPenaltyRepository.findByUserUsernameAndIsActiveTrue(username);
+        for (final UserPenaltyEntity penalty : active) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                continue;
+            }
+            if ("MUTE".equalsIgnoreCase(penalty.getPenaltyType()) && penalty.getMatchesRemaining() != null) {
+                return penalty.getMatchesRemaining();
+            }
+        }
+        return 0;
     }
 
     @Override
@@ -109,7 +123,7 @@ public class PenaltyServiceImpl implements PenaltyService {
             return "NONE";
         }
         if (isPermanentlyBanned(username)) {
-            return "BAN"; // treated as permanent ban
+            return "BAN"; // treated as permanent ban in original
         }
         if (getPenaltyExpiration(username) != null) {
             return "BAN";
@@ -121,40 +135,60 @@ public class PenaltyServiceImpl implements PenaltyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isPermanentlyBanned(final String username) {
         if (username == null) {
             return false;
         }
-        return permaBans.getOrDefault(username, false);
+        final List<UserPenaltyEntity> active = userPenaltyRepository.findByUserUsernameAndIsActiveTrue(username);
+        for (final UserPenaltyEntity penalty : active) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                continue;
+            }
+            if ("PERMA".equalsIgnoreCase(penalty.getPenaltyType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<String> getPendingNotifications(final String username) {
         if (username == null) {
             return List.of();
         }
-        return pendingNotifications.getOrDefault(username, List.of());
+        return userPendingNotificationRepository.findByUserUsername(username).stream()
+                .map(UserPendingNotificationEntity::getMessage)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void clearPendingNotifications(final String username) {
         if (username != null) {
-            pendingNotifications.remove(username);
+            final List<UserPendingNotificationEntity> notifications = userPendingNotificationRepository.findByUserUsername(username);
+            userPendingNotificationRepository.deleteAll(notifications);
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean shouldShowRecidivismWarning(final String username) {
         if (username == null) {
             return false;
         }
-        return recidivismWarnings.getOrDefault(username, false);
+        return userRepository.findByUsername(username)
+                .map(UserEntity::getShowRecidivismWarning)
+                .orElse(false);
     }
 
     @Override
     public void clearRecidivismWarning(final String username) {
         if (username != null) {
-            recidivismWarnings.remove(username);
+            userRepository.findByUsername(username).ifPresent(user -> {
+                user.setShowRecidivismWarning(false);
+                userRepository.save(user);
+            });
         }
     }
 
@@ -164,27 +198,64 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
+        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return;
+        }
+        final UserEntity user = userOpt.get();
+
         final long reportCount = chatReportRepository.countByReportedUsernameAndIsValidatedTrue(username);
         if (reportCount >= 3) {
-            final Long lastCount = lastPenalizedCount.get(username);
-            // Penalize only if never penalized at this count
-            if (lastCount == null || reportCount > lastCount) {
-                lastPenalizedCount.put(username, reportCount);
+            // Determine penalty severity
+            String targetType = null;
+            Integer targetMatches = null;
+            LocalDateTime targetExpiration = null;
 
-                PendingPenalty pending = null;
-                if (reportCount >= 20) {
-                    pending = new PendingPenalty("PERMA", null);
-                } else if (reportCount >= 12) {
-                    pending = new PendingPenalty("BAN", LocalDateTime.now().plusDays(7));
-                } else if (reportCount >= 8) {
-                    pending = new PendingPenalty("BAN", LocalDateTime.now().plusDays(3));
-                } else if (reportCount >= 5) {
-                    pending = new PendingPenalty("MUTE", 3);
-                } else {
-                    pending = new PendingPenalty("MUTE", 1);
+            if (reportCount >= 20) {
+                targetType = "PERMA";
+            } else if (reportCount >= 12) {
+                targetType = "BAN";
+                targetExpiration = LocalDateTime.now().plusDays(7);
+            } else if (reportCount >= 8) {
+                targetType = "BAN";
+                targetExpiration = LocalDateTime.now().plusDays(3);
+            } else if (reportCount >= 5) {
+                targetType = "MUTE";
+                targetMatches = 3;
+            } else {
+                targetType = "MUTE";
+                targetMatches = 1;
+            }
+
+            // Check if we already applied or queued a penalty of this severity level
+            final List<UserPenaltyEntity> existingPenalties = userPenaltyRepository.findByUserAndIsActiveTrue(user);
+            boolean alreadyHasIt = false;
+            for (final UserPenaltyEntity existing : existingPenalties) {
+                if (existing.getPenaltyType().equalsIgnoreCase(targetType)) {
+                    if ("MUTE".equals(targetType) && Objects.equals(existing.getMatchesRemaining(), targetMatches)) {
+                        alreadyHasIt = true;
+                        break;
+                    }
+                    if ("BAN".equals(targetType) && existing.getExpiration() != null) {
+                        alreadyHasIt = true;
+                        break;
+                    }
+                    if ("PERMA".equals(targetType)) {
+                        alreadyHasIt = true;
+                        break;
+                    }
                 }
+            }
 
-                pendingPenalties.put(username, pending);
+            if (!alreadyHasIt) {
+                userPenaltyRepository.save(UserPenaltyEntity.builder()
+                        .user(user)
+                        .penaltyType(targetType)
+                        .matchesRemaining(targetMatches)
+                        .expiration(targetExpiration)
+                        .isActive(false) // Not active yet
+                        .isPending(true)  // Queued until match finishes
+                        .build());
             }
         }
     }
@@ -195,40 +266,56 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
+        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return;
+        }
+        final UserEntity user = userOpt.get();
+
         // 1. Consolidate pending penalty if exists
         boolean consolidatedNew = false;
-        final PendingPenalty pending = pendingPenalties.remove(username);
-        if (pending != null) {
-            consolidatedNew = true;
-            final List<String> notifications = pendingNotifications.computeIfAbsent(username, k -> new CopyOnWriteArrayList<>());
-            switch (pending.type) {
-                case "PERMA" -> {
-                    permaBans.put(username, true);
-                    notifications.add("Tu cuenta ha sido permanentemente suspendida (Baneo Permanente) por acumulación de reportes de comportamiento inapropiado.");
+        final List<UserPenaltyEntity> penalties = userPenaltyRepository.findByUser(user);
+
+        for (final UserPenaltyEntity penalty : penalties) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                consolidatedNew = true;
+                penalty.setIsPending(false);
+                penalty.setIsActive(true);
+                userPenaltyRepository.save(penalty);
+
+                String msg = "";
+                switch (penalty.getPenaltyType().toUpperCase()) {
+                    case "PERMA" -> msg = "Tu cuenta ha sido permanentemente suspendida (Baneo Permanente) por acumulación de reportes de comportamiento inapropiado.";
+                    case "BAN" -> msg = "Tu cuenta ha sido suspendida temporalmente por comportamiento antideportivo. Expiración: " + penalty.getExpiration();
+                    case "MUTE" -> msg = "Has sido silenciado del chat por las próximas " + penalty.getMatchesRemaining() + " partidas debido a comportamiento antideportivo.";
                 }
-                case "BAN" -> {
-                    final LocalDateTime expiration = (LocalDateTime) pending.value;
-                    suspensions.put(username, expiration);
-                    notifications.add("Tu cuenta ha sido suspendida temporalmente por comportamiento antideportivo. Expiración: " + expiration);
-                }
-                case "MUTE" -> {
-                    final Integer matches = (Integer) pending.value;
-                    mutedMatches.put(username, matches);
-                    notifications.add("Has sido silenciado del chat por las próximas " + matches + " partidas debido a comportamiento antideportivo.");
-                }
+
+                userPendingNotificationRepository.save(UserPendingNotificationEntity.builder()
+                        .user(user)
+                        .message(msg)
+                        .build());
             }
         }
 
         // 2. Decrement remaining muted matches if not currently suspended, match was completed legitimately, and it was not just consolidated
         if (!consolidatedNew && isPenalized(username) && getPenaltyType(username).equals("MUTE")) {
             if (completedLegitimately) {
-                final int remaining = getMatchesPenalizedRemaining(username);
-                if (remaining > 1) {
-                    mutedMatches.put(username, remaining - 1);
-                } else {
-                    mutedMatches.remove(username);
-                    // Mute ended, flag warning
-                    recidivismWarnings.put(username, true);
+                for (final UserPenaltyEntity penalty : penalties) {
+                    if (!Boolean.TRUE.equals(penalty.getIsPending()) && Boolean.TRUE.equals(penalty.getIsActive()) && "MUTE".equalsIgnoreCase(penalty.getPenaltyType())) {
+                        final int remaining = penalty.getMatchesRemaining() != null ? penalty.getMatchesRemaining() : 0;
+                        if (remaining > 1) {
+                            penalty.setMatchesRemaining(remaining - 1);
+                            userPenaltyRepository.save(penalty);
+                        } else {
+                            penalty.setMatchesRemaining(0);
+                            penalty.setIsActive(false);
+                            userPenaltyRepository.save(penalty);
+
+                            // Mute ended, flag warning
+                            user.setShowRecidivismWarning(true);
+                            userRepository.save(user);
+                        }
+                    }
                 }
             }
         }

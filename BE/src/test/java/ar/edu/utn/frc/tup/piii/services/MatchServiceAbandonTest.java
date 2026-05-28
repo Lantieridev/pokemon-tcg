@@ -9,6 +9,8 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,6 +52,8 @@ class MatchServiceAbandonTest {
     private PlayerPerspectiveMapper mapper;
     private ScheduledExecutorService scheduler;
     private PenaltyService penaltyService;
+    private ProfileService profileService;
+    private UserRepository userRepository;
 
     private MatchService matchService;
     private MatchSession session;
@@ -63,6 +68,8 @@ class MatchServiceAbandonTest {
         mapper = mock(PlayerPerspectiveMapper.class);
         scheduler = mock(ScheduledExecutorService.class);
         penaltyService = mock(PenaltyService.class);
+        profileService = mock(ProfileService.class);
+        userRepository = mock(UserRepository.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -74,6 +81,7 @@ class MatchServiceAbandonTest {
         session.start();
 
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
                 MATCH_ID, 1L, 0, "ACTIVE",
@@ -83,7 +91,7 @@ class MatchServiceAbandonTest {
 
         matchService = new MatchService(
                 registry, facade, ruleValidator, persistence, mapper, messaging,
-                scheduler, penaltyService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
