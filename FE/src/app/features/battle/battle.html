@@ -1,3 +1,4 @@
+@if (me() && opp()) {
 <div class="absolute inset-0 flex" (click)="closeMenu()">
   <div class="relative flex-1 overflow-hidden playmat-classic">
     <div class="playmat-texture"></div>
@@ -116,10 +117,17 @@
                style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me().deckCount }}</div>
         </div>
         <div class="relative">
-          <img [src]="cards[me().discard[me().discard.length - 1]].img"
-               alt="discard" class="card-img" style="width: 70px; height: 98px; filter:saturate(.65) brightness(.75)" />
+          @if (me() && me().discard && me().discard.length > 0) {
+            <img [src]="cards[me().discard[me().discard.length - 1]]?.img || 'https://images.pokemontcg.io/xy1/1_hires.png'"
+                 alt="discard" class="card-img" style="width: 70px; height: 98px; filter:saturate(.65) brightness(.75)" />
+          } @else {
+            <div class="rounded-md flex items-center justify-center shadow-inner"
+                 style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+              <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+            </div>
+          }
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me().discard.length }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.discard?.length || 0 }}</div>
           <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
                style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
         </div>
@@ -153,17 +161,19 @@
       </div>
 
       <!-- OPPONENT ACTIVE -->
-      <div style="transform: rotate(180deg)">
-        <app-field-pokemon
-          [cardId]="opp().active.card"
-          [energies]="opp().active.energies"
-          [damage]="opp().active.damage"
-          [status]="opp().active.status"
-          [width]="140"
-          [glow]="true"
-          direction="down">
-        </app-field-pokemon>
-      </div>
+      @if (opp().active; as activeOpp) {
+        <div style="transform: rotate(180deg)">
+          <app-field-pokemon
+            [cardId]="activeOpp.card"
+            [energies]="activeOpp.energies"
+            [damage]="activeOpp.damage"
+            [status]="activeOpp.status"
+            [width]="140"
+            [glow]="true"
+            direction="down">
+          </app-field-pokemon>
+        </div>
+      }
 
       <!-- STADIUM -->
       <div class="flex flex-col items-center gap-2 my-1">
@@ -186,17 +196,19 @@
       </div>
 
       <!-- MY ACTIVE -->
-      <div (click)="openMenu($event, me().active)">
-        <app-field-pokemon
-          [cardId]="me().active.card"
-          [energies]="me().active.energies"
-          [damage]="me().active.damage"
-          [status]="me().active.status"
-          [width]="148"
-          [glow]="true"
-          direction="up">
-        </app-field-pokemon>
-      </div>
+      @if (me().active; as activeMe) {
+        <div (click)="openMenu($event, activeMe)">
+          <app-field-pokemon
+            [cardId]="activeMe.card"
+            [energies]="activeMe.energies"
+            [damage]="activeMe.damage"
+            [status]="activeMe.status"
+            [width]="148"
+            [glow]="true"
+            direction="up">
+          </app-field-pokemon>
+        </div>
+      }
 
       <!-- MY BENCH -->
       <div class="flex items-start gap-3">
@@ -262,18 +274,18 @@
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
         @for (c of visibleHand; track $index) {
           <div class="fan-card" [style.--i]="$index" [style.--n]="handCount" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index" draggable="true">
-            <img [src]="cards[c].img" [alt]="cards[c].name" class="card-img w-full h-full" draggable="false" />
+            <img [src]="cards[c]?.img || 'https://images.pokemontcg.io/xy1/1_hires.png'" [alt]="cards[c]?.name || 'Carta'" class="card-img w-full h-full" draggable="false" />
           </div>
         }
       </div>
     </div>
 
     <!-- Context menu -->
-    @if (menu()) {
+    @if (menu() && cards[menu().cardId]) {
       <div class="context-menu"
            [style.left.px]="menu().x" [style.top.px]="menu().y" style="transform: translate(20px, -50%)"
            (click)="$event.stopPropagation()">
-        <div class="label">{{ cards[menu().cardId].name }} · HP {{ cards[menu().cardId].hp! - menu().damage }}/{{ cards[menu().cardId].hp }}</div>
+        <div class="label">{{ cards[menu().cardId]?.name }} · HP {{ (cards[menu().cardId]?.hp || 0) - menu().damage }}/{{ cards[menu().cardId]?.hp || 0 }}</div>
 
         <div class="item" (click)="closeMenu()">
           <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
@@ -424,3 +436,11 @@
     </div>
   </aside>
 </div>
+} @else {
+  <div class="absolute inset-0 flex items-center justify-center bg-[#0d0a1c] text-white">
+    <div class="text-center animate-fade">
+      <div class="w-10 h-10 rounded-full border-4 border-t-transparent border-yellow-500 animate-spin mx-auto mb-4"></div>
+      <div class="font-display font-semibold text-sm tracking-wider text-white/50">CONECTANDO AL TABLERO...</div>
+    </div>
+  </div>
+}

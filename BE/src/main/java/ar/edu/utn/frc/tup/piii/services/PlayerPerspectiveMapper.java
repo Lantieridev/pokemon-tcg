@@ -68,13 +68,16 @@ public final class PlayerPerspectiveMapper {
         final BattlePokemonState activePokemon = session.getBoard().getActivePokemon(playerIndex);
         final List<BattlePokemonDTO> benchDtos = session.getBoard().getBenchedPokemon(playerIndex)
                 .stream()
-                .map(this::toPokemonDto)
+                .map(p -> toPokemonDto(p, List.of()))
                 .collect(Collectors.toList());
         final List<String> hand = session.getBoard().getHandOf(playerIndex);
 
+        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
+                .activeEffects().stream().map(Enum::name).toList() : List.of();
+
         return new GameStateResponseDTO.PlayerView(
                 playerId,
-                activePokemon != null ? toPokemonDto(activePokemon) : null,
+                activePokemon != null ? toPokemonDto(activePokemon, activeConditions) : null,
                 benchDtos,
                 hand,
                 session.getBoard().getDeckSize(playerIndex),
@@ -86,20 +89,23 @@ public final class PlayerPerspectiveMapper {
         final BattlePokemonState activePokemon = session.getBoard().getActivePokemon(opponentIndex);
         final List<BattlePokemonDTO> benchDtos = session.getBoard().getBenchedPokemon(opponentIndex)
                 .stream()
-                .map(this::toPokemonDto)
+                .map(p -> toPokemonDto(p, List.of()))
                 .collect(Collectors.toList());
         final int handSize = session.getBoard().getHandOf(opponentIndex).size();
 
+        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
+                .activeEffects().stream().map(Enum::name).toList() : List.of();
+
         return new GameStateResponseDTO.OpponentView(
                 playerId,
-                activePokemon != null ? toPokemonDto(activePokemon) : null,
+                activePokemon != null ? toPokemonDto(activePokemon, activeConditions) : null,
                 benchDtos,
                 handSize,
                 session.getBoard().getDeckSize(opponentIndex),
                 session.getBoard().getRemainingPrizes(opponentIndex));
     }
 
-    private BattlePokemonDTO toPokemonDto(final BattlePokemonState pokemon) {
+    private BattlePokemonDTO toPokemonDto(final BattlePokemonState pokemon, final List<String> statusConditions) {
         final List<AttackDTO> attackDtos = pokemon.getAttacks() == null ? List.of() :
                 pokemon.getAttacks().stream()
                         .map(a -> new AttackDTO(a.name(), a.baseDamage(), a.requiredEnergies()))
@@ -116,6 +122,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.getAttachedEnergies(),
                 pokemon.getRetreatCost(),
                 pokemon.hasToolAttached(),
-                attackDtos);
+                attackDtos,
+                statusConditions);
     }
 }

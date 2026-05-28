@@ -3,13 +3,15 @@ package ar.edu.utn.frc.tup.piii.dtos.auth;
 public class AuthResponseDTO {
     private String token;
     private String username;
+    private Long userId;
 
     public AuthResponseDTO() {
     }
 
-    public AuthResponseDTO(String token, String username) {
+    public AuthResponseDTO(String token, String username, Long userId) {
         this.token = token;
         this.username = username;
+        this.userId = userId;
     }
 
     public String getToken() {
@@ -28,6 +30,14 @@ public class AuthResponseDTO {
         this.username = username;
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
     public static AuthResponseDTOBuilder builder() {
         return new AuthResponseDTOBuilder();
     }
@@ -35,6 +45,7 @@ public class AuthResponseDTO {
     public static class AuthResponseDTOBuilder {
         private String token;
         private String username;
+        private Long userId;
 
         public AuthResponseDTOBuilder token(String token) {
             this.token = token;
@@ -46,8 +57,13 @@ public class AuthResponseDTO {
             return this;
         }
 
+        public AuthResponseDTOBuilder userId(Long userId) {
+            this.userId = userId;
+            return this;
+        }
+
         public AuthResponseDTO build() {
-            return new AuthResponseDTO(token, username);
+            return new AuthResponseDTO(token, username, userId);
         }
     }
 }

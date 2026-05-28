@@ -10,13 +10,15 @@ export class AuthService {
   private http = inject(HttpClient);
   private readonly API_URL = 'http://localhost:8081/api/auth';
   
-  public currentUser = signal<{ username: string, token: string } | null>(null);
+  public currentUser = signal<{ username: string, token: string, userId?: number } | null>(null);
 
   constructor() {
     const token = localStorage.getItem('jwt');
     const username = localStorage.getItem('username');
+    const userIdStr = localStorage.getItem('userId');
     if (token && username) {
-      this.currentUser.set({ username, token });
+      const userId = userIdStr ? parseInt(userIdStr, 10) : undefined;
+      this.currentUser.set({ username, token, userId });
     }
   }
 
@@ -26,6 +28,10 @@ export class AuthService {
 
   get username() {
     return this.currentUser()?.username;
+  }
+
+  get userId() {
+    return this.currentUser()?.userId;
   }
 
   async ensureDevUserAuthenticated(username: string = 'AshRivero', password: string = 'password123'): Promise<void> {
@@ -45,11 +51,12 @@ export class AuthService {
   }
 
   public login(username: string, password: string): Observable<any> {
-    return this.http.post<{ token: string, username: string }>(`${this.API_URL}/login`, { username, password })
+    return this.http.post<{ token: string, username: string, userId: number }>(`${this.API_URL}/login`, { username, password })
       .pipe(
         tap(res => {
           localStorage.setItem('jwt', res.token);
           localStorage.setItem('username', res.username);
+          localStorage.setItem('userId', res.userId.toString());
           this.currentUser.set(res);
         })
       );
