@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.dtos.HonorType;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
+import ar.edu.utn.frc.tup.piii.services.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,13 +40,16 @@ class UserControllerTest {
     private PenaltyService penaltyService;
 
     @Mock
+    private ProfileService profileService;
+
+    @Mock
     private Principal principal;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        final UserController userController = new UserController(muteService, honorService, penaltyService);
+        final UserController userController = new UserController(muteService, honorService, penaltyService, profileService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 

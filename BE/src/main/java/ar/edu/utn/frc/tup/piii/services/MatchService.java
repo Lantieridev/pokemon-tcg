@@ -12,6 +12,10 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
+import ar.edu.utn.frc.tup.piii.services.ProfileService;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -54,6 +58,8 @@ public final class MatchService {
     private final ScheduledExecutorService abandonmentScheduler;
     private final long abandonTimeoutSeconds;
     private final PenaltyService penaltyService;
+    private final ProfileService profileService;
+    private final UserRepository userRepository;
 
     // Track turns of each player in a match in-memory
     private final java.util.Map<String, String> lastActorInMatch = new java.util.concurrent.ConcurrentHashMap<>();
@@ -61,16 +67,6 @@ public final class MatchService {
 
     /**
      * Constructs a MatchService with all required collaborators.
-     *
-     * @param registry              holds all active sessions (never null)
-     * @param facade                translates DTOs to engine actions (never null)
-     * @param ruleValidator         validates engine actions (never null)
-     * @param persistence           persists state snapshots (never null)
-     * @param perspectiveMapper     builds per-player response DTOs (never null)
-     * @param messaging             sends WebSocket messages (never null)
-     * @param abandonmentScheduler  schedules disconnect timeout tasks (never null)
-     * @param penaltyService        manages turn penalties (never null)
-     * @param abandonTimeoutSeconds seconds before a disconnected player forfeits
      */
     public MatchService(final MatchSessionRegistry registry,
                         final GameFacade facade,
@@ -80,6 +76,8 @@ public final class MatchService {
                         final SimpMessagingTemplate messaging,
                         final ScheduledExecutorService abandonmentScheduler,
                         final PenaltyService penaltyService,
+                        final ProfileService profileService,
+                        final UserRepository userRepository,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -90,6 +88,8 @@ public final class MatchService {
         this.abandonmentScheduler = Objects.requireNonNull(abandonmentScheduler,
                 "abandonmentScheduler must not be null");
         this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
+        this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
+        this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -137,8 +137,13 @@ public final class MatchService {
             persistence.save(snapshot);
 
             if (session.getState() == MatchSessionState.FINISHED) {
+                final String winnerId = determineWinner(session);
                 // Legitimate match finish, counts for mute decrement for all penalized players in the match
                 for (final String participantId : session.getPlayerIds()) {
+                    final boolean won = participantId.equals(winnerId);
+                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                        profileService.awardXpAndCheckAchievements(user.getId(), won);
+                    });
                     penaltyService.registerMatchFinished(participantId, true);
                 }
                 // Clean up tracking
@@ -202,8 +207,13 @@ public final class MatchService {
                 final java.util.Map<String, Integer> turnsMap = playerTurnsInMatch.getOrDefault(matchId, java.util.Collections.emptyMap());
                 boolean completedLegitimately;
 
-                // For each player, evaluate if it is a legitimate match completion to decrement mute
+                // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
                 for (final String participantId : session.getPlayerIds()) {
+                    final boolean won = !participantId.equals(forfeitingPlayerId);
+                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                        profileService.awardXpAndCheckAchievements(user.getId(), won);
+                    });
+
                     if (participantId.equals(forfeitingPlayerId)) {
                         // The penalized user who forfeited does NOT get a decrement
                         completedLegitimately = false;
@@ -235,5 +245,43 @@ public final class MatchService {
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdA(), viewA);
         messaging.convertAndSend(
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdB(), viewB);
+    }
+
+    private String determineWinner(final MatchSession session) {
+        final MatchBoard board = session.getBoard();
+        final String playerA = session.getPlayerIdA();
+        final String playerB = session.getPlayerIdB();
+
+        // 1. Condición de Premios (Prize cards)
+        if (board.getRemainingPrizes(0) == 0) {
+            return playerA;
+        }
+        if (board.getRemainingPrizes(1) == 0) {
+            return playerB;
+        }
+
+        // 2. Condición de Bancarrota de Pokémon (Active + Bench)
+        final boolean hasActiveA = board.getActivePokemon(0) != null;
+        final boolean hasBenchA = !board.getBenchedPokemon(0).isEmpty();
+        final boolean hasActiveB = board.getActivePokemon(1) != null;
+        final boolean hasBenchB = !board.getBenchedPokemon(1).isEmpty();
+
+        if (!hasActiveA && !hasBenchA) {
+            return playerB;
+        }
+        if (!hasActiveB && !hasBenchB) {
+            return playerA;
+        }
+
+        // 3. Condición de Deck out
+        if (board.getDeckSize(0) == 0) {
+            return playerB;
+        }
+        if (board.getDeckSize(1) == 0) {
+            return playerA;
+        }
+
+        // Fallback
+        return playerA;
     }
 }
