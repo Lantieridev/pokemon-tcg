@@ -33,7 +33,20 @@ Estas tareas corresponden a los requerimientos funcionales más críticos (RF-01
 - `[ ]` **Añadir el Log Inmutable de Partida**
   - Conectar el `gameStatePersistence.logAction(...)` al final de cada turno/jugada.
 
-## 💻 Fase 3: Integración Front-End (Angular)
+## 🌐 Fase 3: APIs REST para Vistas (Login, Deck, Perfil)
+
+Para que el Frontend que estamos armando pueda integrarse y guardar datos reales, es **obligatorio** que el equipo Backend disponibilice estos endpoints REST:
+
+- `[ ]` **Auth & Login API**
+  - `POST /api/auth/login` (Recibe email/password, devuelve token JWT o sesión).
+  - `POST /api/auth/register` (Crea nuevos jugadores).
+- `[ ]` **Perfil y Estadísticas (Reforzado por consigna)**
+  - `GET /api/users/{id}/profile` (Devuelve historial de partidas, datos del jugador, avatar).
+- `[ ]` **Gestión de Mazos (RF-04)**
+  - `GET /api/decks` (Lista los mazos del jugador logueado).
+  - `POST /api/decks` y `PUT /api/decks/{id}` (Guarda el mazo creado en el Deck Builder, el backend debe re-validar que tenga 60 cartas exactas, 1 AS TÁCTICO, etc.).
+
+## 💻 Fase 4: Integración Front-End (Angular)
 
 - `[/]` **Perfeccionar Interfaces (Mockeadas)**
   - `[x]` Layout Principal y Tablero (clon 1:1 de `claude design`)
