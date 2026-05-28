@@ -85,6 +85,11 @@ public class ProfileServiceImpl implements ProfileService {
                 .matchesWon(matchesWon)
                 .matchesLost(matchesLost)
                 .winRate(winRate)
+                .perfectWins(user.getPerfectWins() != null ? user.getPerfectWins() : 0)
+                .comebackWins(user.getComebackWins() != null ? user.getComebackWins() : 0)
+                .totalKos(user.getTotalKos() != null ? user.getTotalKos() : 0)
+                .trainerCardsPlayed(user.getTrainerCardsPlayed() != null ? user.getTrainerCardsPlayed() : 0)
+                .totalDamageDealt(user.getTotalDamageDealt() != null ? user.getTotalDamageDealt() : 0)
                 .build();
 
         // 2. Honores recibidos
@@ -223,7 +228,7 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public void awardXpAndCheckAchievements(final Long userId, final boolean won) {
+    public void awardXpAndCheckAchievements(final Long userId, final boolean won, final boolean isPerfectWin, final boolean isComebackWin, final int kos) {
         if (userId == null) {
             return;
         }
@@ -232,6 +237,15 @@ public class ProfileServiceImpl implements ProfileService {
             return;
         }
         final UserEntity user = userOpt.get();
+
+        // Increment statistics
+        if (isPerfectWin) {
+            user.setPerfectWins((user.getPerfectWins() != null ? user.getPerfectWins() : 0) + 1);
+        }
+        if (isComebackWin) {
+            user.setComebackWins((user.getComebackWins() != null ? user.getComebackWins() : 0) + 1);
+        }
+        user.setTotalKos((user.getTotalKos() != null ? user.getTotalKos() : 0) + kos);
 
         // 1. Asignar XP
         final int xpGained = won ? 50 : 25;
@@ -406,5 +420,107 @@ public class ProfileServiceImpl implements ProfileService {
             user.setShowcasedDeck(deck);
         }
         userRepository.save(user);
+    }
+
+    @Override
+    public void trackDamageDealt(final String username, final int damage) {
+        if (username == null) {
+            return;
+        }
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setTotalDamageDealt((user.getTotalDamageDealt() != null ? user.getTotalDamageDealt() : 0) + damage);
+            userRepository.save(user);
+        });
+    }
+
+    @Override
+    public void trackTrainerCardPlayed(final String username) {
+        if (username == null) {
+            return;
+        }
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setTrainerCardsPlayed((user.getTrainerCardsPlayed() != null ? user.getTrainerCardsPlayed() : 0) + 1);
+            userRepository.save(user);
+        });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> getAchievementsProgress(final String username) {
+        if (username == null) {
+            return java.util.Collections.emptyList();
+        }
+        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Usuario no encontrado: " + username);
+        }
+        final UserEntity user = userOpt.get();
+
+        // 1. Estadísticas necesarias
+        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+        int matchesWon = 0;
+        int completedMatches = 0;
+        for (final MatchEntity m : matches) {
+            if (m.getWinner() != null && m.getWinner().getUsername().equalsIgnoreCase(username)) {
+                matchesWon++;
+            }
+            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+                completedMatches++;
+            }
+        }
+
+        final Map<HonorType, Integer> honors = honorService.getHonors(username);
+        final int totalHonors = honors.values().stream().mapToInt(Integer::intValue).sum();
+        final int uniqueCardsCount = deckRepository.countUniqueCardsByUserId(user.getId());
+
+        Set<String> unlocked = user.getUnlockedTitles();
+        if (unlocked == null) {
+            unlocked = new java.util.HashSet<>();
+        }
+
+        final List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> list = new java.util.ArrayList<>();
+
+        // Novato, Entrenador (Defecto)
+        list.add(createProgressDTO("Novato", "DEFECTO", unlocked.contains("Novato"), "Título inicial por defecto", 1, 1));
+        list.add(createProgressDTO("Entrenador", "DEFECTO", unlocked.contains("Entrenador"), "Título inicial por defecto", 1, 1));
+
+        // Nivel (5, 10)
+        list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", user.getLevel(), 5));
+        list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", user.getLevel(), 10));
+
+        // Victorias (5, 20, 50, 100)
+        list.add(createProgressDTO("Ganador Prometedor", "VICTORIAS", unlocked.contains("Ganador Prometedor"), "Ganar 5 partidas", matchesWon, 5));
+        list.add(createProgressDTO("Ganador Implacable", "VICTORIAS", unlocked.contains("Ganador Implacable"), "Ganar 20 partidas", matchesWon, 20));
+        list.add(createProgressDTO("Campeón del Tablero", "VICTORIAS", unlocked.contains("Campeón del Tablero"), "Ganar 50 partidas", matchesWon, 50));
+        list.add(createProgressDTO("Leyenda del Tablero", "VICTORIAS", unlocked.contains("Leyenda del Tablero"), "Ganar 100 partidas", matchesWon, 100));
+
+        // Partidas completas (10, 25, 50, 100)
+        list.add(createProgressDTO("Combatiente", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente"), "Jugar 10 partidas completas", completedMatches, 10));
+        list.add(createProgressDTO("Combatiente Tenaz", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente Tenaz"), "Jugar 25 partidas completas", completedMatches, 25));
+        list.add(createProgressDTO("Veterano de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Veterano de Batallas"), "Jugar 50 partidas completas", completedMatches, 50));
+        list.add(createProgressDTO("Leyenda de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Leyenda de Batallas"), "Jugar 100 partidas completas", completedMatches, 100));
+
+        // Colección (30, 50, 100, 150)
+        list.add(createProgressDTO("Coleccionista Novato", "COLECCION", unlocked.contains("Coleccionista Novato"), "Tener 30 cartas distintas en tus mazos", uniqueCardsCount, 30));
+        list.add(createProgressDTO("Coleccionista Experto", "COLECCION", unlocked.contains("Coleccionista Experto"), "Tener 50 cartas distintas en tus mazos", uniqueCardsCount, 50));
+        list.add(createProgressDTO("Coleccionista de Élite", "COLECCION", unlocked.contains("Coleccionista de Élite"), "Tener 100 cartas distintas en tus mazos", uniqueCardsCount, 100));
+        list.add(createProgressDTO("Maestro Coleccionista", "COLECCION", unlocked.contains("Maestro Coleccionista"), "Tener 150 cartas distintas en tus mazos", uniqueCardsCount, 150));
+
+        // Honores (5)
+        list.add(createProgressDTO("Compañero Amigable", "HONORES", unlocked.contains("Compañero Amigable"), "Recibir 5 honores de otros jugadores", totalHonors, 5));
+
+        return list;
+    }
+
+    private ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO createProgressDTO(
+            final String title, final String category, final boolean unlocked, final String req, final int progress, final int target) {
+        return ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO.builder()
+                .title(title)
+                .category(category)
+                .unlocked(unlocked)
+                .requirement(req)
+                .progress(Math.min(progress, target))
+                .target(target)
+                .build();
     }
 }
