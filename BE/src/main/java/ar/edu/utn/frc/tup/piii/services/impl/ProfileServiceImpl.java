@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.CardEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserShowcaseEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.DeckEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
@@ -108,6 +109,14 @@ public class ProfileServiceImpl implements ProfileService {
         // 4. XP necesario para el próximo nivel
         final int xpToNext = getXpNeededForNextLevel(user.getLevel());
 
+        UserProfileResponseDTO.ShowcasedDeck showcasedDeckDto = null;
+        if (user.getShowcasedDeck() != null) {
+            showcasedDeckDto = UserProfileResponseDTO.ShowcasedDeck.builder()
+                    .id(user.getShowcasedDeck().getId())
+                    .name(user.getShowcasedDeck().getName())
+                    .build();
+        }
+
         return UserProfileResponseDTO.builder()
                 .username(user.getUsername())
                 .createdAt(user.getCreatedAt())
@@ -121,6 +130,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .honors(honors)
                 .unlockedTitles(user.getUnlockedTitles())
                 .showcase(showcaseSlots)
+                .showcasedDeck(showcasedDeckDto)
                 .build();
     }
 
@@ -291,5 +301,29 @@ public class ProfileServiceImpl implements ProfileService {
         if (changed) {
             user.setUnlockedTitles(titles);
         }
+    }
+
+    @Override
+    public void updateShowcaseDeck(final String username, final Long deckId) {
+        if (username == null) {
+            return;
+        }
+        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Usuario no encontrado: " + username);
+        }
+        final UserEntity user = userOpt.get();
+
+        if (deckId == null) {
+            user.setShowcasedDeck(null);
+        } else {
+            final DeckEntity deck = deckRepository.findById(deckId)
+                    .orElseThrow(() -> new IllegalArgumentException("Mazo no encontrado: " + deckId));
+            if (!deck.getUser().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("El mazo no pertenece al usuario.");
+            }
+            user.setShowcasedDeck(deck);
+        }
+        userRepository.save(user);
     }
 }

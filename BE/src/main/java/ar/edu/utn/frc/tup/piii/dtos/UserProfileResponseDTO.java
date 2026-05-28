@@ -29,6 +29,7 @@ public class UserProfileResponseDTO {
     private Map<HonorType, Integer> honors;
     private Set<String> unlockedTitles;
     private List<ShowcaseSlot> showcase;
+    private ShowcasedDeck showcasedDeck;
 
     @Data
     @NoArgsConstructor
@@ -49,5 +50,14 @@ public class UserProfileResponseDTO {
         private Integer slotPosition;
         private String cardId;
         private String cardName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ShowcasedDeck {
+        private Long id;
+        private String name;
     }
 }

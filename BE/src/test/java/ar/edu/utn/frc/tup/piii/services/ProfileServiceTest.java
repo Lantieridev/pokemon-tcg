@@ -6,6 +6,7 @@ import ar.edu.utn.frc.tup.piii.dtos.UpdateShowcaseRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.UserProfileResponseDTO;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserShowcaseEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.DeckEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
@@ -294,6 +295,67 @@ public class ProfileServiceTest {
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
             profileService.updateShowcase("lucas", request);
+        });
+    }
+
+    @Test
+    public void testUpdateShowcaseDeckSuccess() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .build();
+        final DeckEntity deck = DeckEntity.builder()
+                .id(100L)
+                .user(user)
+                .name("My Fire Deck")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(deckRepository.findById(100L)).thenReturn(Optional.of(deck));
+
+        profileService.updateShowcaseDeck("lucas", 100L);
+
+        verify(userRepository, times(1)).save(user);
+        assertEquals(deck, user.getShowcasedDeck());
+    }
+
+    @Test
+    public void testUpdateShowcaseDeckNullSuccess() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .showcasedDeck(DeckEntity.builder().id(100L).build())
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+
+        profileService.updateShowcaseDeck("lucas", null);
+
+        verify(userRepository, times(1)).save(user);
+        org.junit.jupiter.api.Assertions.assertNull(user.getShowcasedDeck());
+    }
+
+    @Test
+    public void testUpdateShowcaseDeckNotOwned() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .build();
+        final UserEntity otherUser = UserEntity.builder()
+                .id(2L)
+                .username("other")
+                .build();
+        final DeckEntity deck = DeckEntity.builder()
+                .id(100L)
+                .user(otherUser)
+                .name("Other's Deck")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(deckRepository.findById(100L)).thenReturn(Optional.of(deck));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            profileService.updateShowcaseDeck("lucas", 100L);
         });
     }
 }

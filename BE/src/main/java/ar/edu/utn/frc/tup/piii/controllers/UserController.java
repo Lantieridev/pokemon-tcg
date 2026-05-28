@@ -6,6 +6,7 @@ import ar.edu.utn.frc.tup.piii.dtos.UserStatusResponse;
 import ar.edu.utn.frc.tup.piii.dtos.UserProfileResponseDTO;
 import ar.edu.utn.frc.tup.piii.dtos.UpdateProfileRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.UpdateShowcaseRequestDTO;
+import ar.edu.utn.frc.tup.piii.dtos.UpdateShowcaseDeckRequestDTO;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
@@ -198,6 +199,22 @@ public class UserController {
             return ResponseEntity.badRequest().build();
         }
         profileService.updateShowcase(principal.getName(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Updates the authenticated user's showcased deck.
+     *
+     * @param request   the showcased deck update details
+     * @param principal the authenticated principal
+     * @return 200 OK or 400 Bad Request
+     */
+    @PutMapping("/profile/showcase/deck")
+    public ResponseEntity<Void> updateShowcaseDeck(@RequestBody final UpdateShowcaseDeckRequestDTO request, final Principal principal) {
+        if (principal == null || request == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        profileService.updateShowcaseDeck(principal.getName(), request.getDeckId());
         return ResponseEntity.ok().build();
     }
 }
