@@ -54,3 +54,19 @@ Para darle más libertad y ownership al equipo, ustedes no solo van a armar los 
   - `[x]` Tablero reparado y funcional visualmente.
 - `[ ]` **Reemplazar Estado Mock por STOMP**
   - Una vez que el Broadcast esté listo, borrar los fixtures del `MatchStore` y suscribirse a STOMP real en Angular.
+
+## ⭐ Fase 5: Features de Valor Agregado (Puntos Extra)
+
+Para darle mucho más "cuerpo" a la aplicación y lucirse en la defensa (además de sumar puntos extra explícitos en la rúbrica) sin meterse en mecánicas demasiado raras, sugerimos agregar esto cuando las fases anteriores estén estables:
+
+- `[ ]` **Chat In-Game (+2 pts)**
+  - Un canal STOMP adicional (ej: `/topic/match/{id}/chat`) paralelo al del tablero.
+  - Componente visual flotante o lateral para mandarse mensajes durante la partida.
+- `[ ]` **Ranking y Ligas (+1 pt)**
+  - Cuando una partida termina en el estado `FINISHED`, actualizar un puntaje MMR en la tabla de usuarios.
+  - Mostrar el Rango (Bronce, Plata, Oro) en el Perfil y en el Lobby.
+- `[ ]` **Modo Espectador**
+  - Permitir a un tercer cliente suscribirse al `/topic/match/{id}` pero sin permisos para enviar acciones.
+  - Como el backend ya emite el DTO filtrado para la "perspectiva" de cada jugador (ocultando la mano del rival), crear una "Spectator Perspective" que oculte ambas manos pero muestre el tablero completo.
+- `[ ]` **Selección de Mazos Temáticos Base (+10 pts)**
+  - Ya que el backend precargó las cartas, armar 6 mazos "Pre-construidos" en la base de datos que los usuarios puedan elegir directamente en el Lobby sin necesidad de armar uno propio en el Deck Builder. Ideal para testear el juego rápido.
