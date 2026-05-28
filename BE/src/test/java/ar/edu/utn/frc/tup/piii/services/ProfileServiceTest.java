@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.dtos.UserProfileResponseDTO;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserShowcaseEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.DeckEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
@@ -357,5 +358,62 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
             profileService.updateShowcaseDeck("lucas", 100L);
         });
+    }
+
+    @Test
+    public void testCheckAndUnlockTitlesVariousMilestones() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .level(10)
+                .xp(10)
+                .unlockedTitles(new HashSet<>())
+                .build();
+
+        final List<MatchEntity> matches = new java.util.ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            matches.add(MatchEntity.builder()
+                    .winner(user)
+                    .status("FINISHED")
+                    .build());
+        }
+        for (int i = 0; i < 50; i++) {
+            matches.add(MatchEntity.builder()
+                    .winner(UserEntity.builder().id(2L).username("other").build())
+                    .status("FINISHED")
+                    .build());
+        }
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(matchRepository.findMatchesByUsername("lucas")).thenReturn(matches);
+        when(userShowcaseRepository.findByUserUsernameOrderBySlotPositionAsc("lucas")).thenReturn(Collections.emptyList());
+        when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
+        when(deckRepository.countUniqueCardsByUserId(1L)).thenReturn(100);
+
+        final UserProfileResponseDTO response = profileService.getProfile("lucas");
+
+        assertNotNull(response);
+        final Set<String> titles = response.getUnlockedTitles();
+        assertNotNull(titles);
+
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Novato"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Entrenador"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Estratega en Crecimiento"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Maestro de Cartas"));
+
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Ganador Prometedor"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Ganador Implacable"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Campeón del Tablero"));
+        org.junit.jupiter.api.Assertions.assertFalse(titles.contains("Leyenda del Tablero"));
+
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Combatiente"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Combatiente Tenaz"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Veterano de Batallas"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Leyenda de Batallas"));
+
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista Novato"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista Experto"));
+        org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista de Élite"));
+        org.junit.jupiter.api.Assertions.assertFalse(titles.contains("Maestro Coleccionista"));
     }
 }
