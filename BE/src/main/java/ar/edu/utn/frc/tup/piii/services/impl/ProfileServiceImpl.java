@@ -12,8 +12,10 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.ProfileService;
+import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,17 +37,23 @@ public class ProfileServiceImpl implements ProfileService {
     private final MatchRepository matchRepository;
     private final CardRepository cardRepository;
     private final HonorService honorService;
+    private final DeckRepository deckRepository;
+    private final ProfanityFilterService profanityFilterService;
 
     public ProfileServiceImpl(final UserRepository userRepository,
                               final UserShowcaseRepository userShowcaseRepository,
                               final MatchRepository matchRepository,
                               final CardRepository cardRepository,
-                              final HonorService honorService) {
+                              final HonorService honorService,
+                              final DeckRepository deckRepository,
+                              final ProfanityFilterService profanityFilterService) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.userShowcaseRepository = Objects.requireNonNull(userShowcaseRepository, "userShowcaseRepository must not be null");
         this.matchRepository = Objects.requireNonNull(matchRepository, "matchRepository must not be null");
         this.cardRepository = Objects.requireNonNull(cardRepository, "cardRepository must not be null");
         this.honorService = Objects.requireNonNull(honorService, "honorService must not be null");
+        this.deckRepository = Objects.requireNonNull(deckRepository, "deckRepository must not be null");
+        this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
     }
 
     @Override
@@ -128,6 +136,13 @@ public class ProfileServiceImpl implements ProfileService {
                 user.setAvatarIcon(request.getAvatarIcon());
             }
             if (request.getDescription() != null) {
+                if (request.getDescription().length() > 150) {
+                    throw new IllegalArgumentException("La descripción no puede superar los 150 caracteres.");
+                }
+                final List<String> profanities = profanityFilterService.getProfaneWords(request.getDescription());
+                if (!profanities.isEmpty()) {
+                    throw new IllegalArgumentException("La descripción contiene palabras no permitidas: " + String.join(", ", profanities));
+                }
                 user.setDescription(request.getDescription());
             }
             if (request.getActiveTitle() != null) {

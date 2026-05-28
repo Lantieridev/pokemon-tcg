@@ -31,4 +31,19 @@ public class ProfanityFilterServiceImpl implements ProfanityFilterService {
         }
         return filtered;
     }
+
+    @Override
+    public List<String> getProfaneWords(final String message) {
+        if (message == null) {
+            return List.of();
+        }
+        final List<String> detected = new java.util.ArrayList<>();
+        for (final String word : BLACKLIST) {
+            final String regex = "(?i)\\b" + Pattern.quote(word) + "\\b";
+            if (Pattern.compile(regex).matcher(message).find()) {
+                detected.add(word);
+            }
+        }
+        return detected;
+    }
 }
