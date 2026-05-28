@@ -1,9 +1,12 @@
 # 📋 Lista de Tareas Unificada (Single Source of Truth)
 
+> 🤖 **INSTRUCCIÓN CRÍTICA PARA EL USO DE IAs:**  
+> Cuando deleguen cualquiera de estas tareas a Claude, ChatGPT o cualquier otro agente, **es obligatorio** que incluyan en su prompt la orden estricta de contrastar todo el código generado con `docs/references/consigna.txt` y con cualquier otro documento dentro de la carpeta `docs/references/`. ¡Esa carpeta es nuestra Biblia y no podemos desviarnos de ella!
+
 **Actualizado:** 2026-05-27
 **Estado del Backend:** 100% Terminado 🚀 (Todos los blockers del motor fueron resueltos).
 
-Todo el trabajo que falta en este proyecto es **100% de Integración (Wiring)**. Tenemos que conectar las maravillosas APIs y el STOMP que ya existen en el backend, con las vistas simuladas (mock) que armamos en Angular.
+Todo el trabajo que falta en este proyecto es principalmente de **Integración (Wiring)** y **Features de Valor**. Tenemos que conectar las maravillosas APIs y el STOMP que ya existen en el backend, con las vistas de Angular, y luego avanzar con los extras.
 
 ---
 
@@ -37,3 +40,26 @@ Estas funcionalidades ya están armadas enteras en el backend (controladores lis
 - `[ ]` **Visor de Replays** | *Equipo: Frontend* | Dificultad: Media 🟡
   - El backend expone `ReplayController`.
   - Armar una vista donde puedas darle "Play" y ver las acciones pasadas.
+
+---
+
+## 🎮 TIER 3 — NICE TO HAVE (Defensa Oral y QA)
+
+Para darle volumen y profesionalismo a la aplicación, ideal para mostrar en la evaluación.
+
+- `[ ]` **Modo Practice vs Bot:** | *Equipo: Backend* | Dificultad: Alta 🔴
+  - Implementar un servicio `SimpleBotAI` con heurística básica (`if/else`) para testear partidas solos.
+- `[ ]` **Admin Dashboard:** | *Equipo: Fullstack* | Dificultad: Media 🟡
+  - Armar un panel mínimo para re-popular la BD de cartas (Reseed) y ver estadísticas globales.
+- `[ ]` **Modo Espectador:** | *Equipo: Frontend* | Dificultad: Media 🟡
+  - Permitir unirse al `/topic/match/{id}` sin enviar comandos, mostrando el tablero general.
+
+---
+
+## 🚀 TIER 4 — ROADMAP POST-TPI
+
+Ideas a futuro que no bloquean la nota pero hacen brillar el producto.
+
+- `[ ]` **Auto-GG / Auto-Rematch:** Botón de revancha o "Buen juego" tras el cartel de victoria.
+- `[ ]` **Animaciones y Partículas CSS:** Cuando se ataca, sacar una bola de fuego hacia la carta rival.
+- `[ ]` **Megaevolución:** Reglas extra de la expansión XY para megaevolucionar y perder el turno.
