@@ -139,7 +139,7 @@ public class ProfileServiceTest {
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
         // Gana partida (+50 XP) -> Total 130 XP -> Nivel 2 y queda con 30 XP
-        profileService.awardXpAndCheckAchievements(1L, true);
+        profileService.awardXpAndCheckAchievements(1L, true, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(2, user.getLevel());
@@ -161,7 +161,7 @@ public class ProfileServiceTest {
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
         // Pierde partida (+25 XP) -> Total 35 XP -> Sigue nivel 1
-        profileService.awardXpAndCheckAchievements(1L, false);
+        profileService.awardXpAndCheckAchievements(1L, false, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(1, user.getLevel());
@@ -415,5 +415,64 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista Experto"));
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista de Élite"));
         org.junit.jupiter.api.Assertions.assertFalse(titles.contains("Maestro Coleccionista"));
+    }
+
+    @Test
+    public void testExtendedStatsAndAchievementsProgress() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .level(3)
+                .xp(10)
+                .perfectWins(2)
+                .comebackWins(1)
+                .totalKos(5)
+                .trainerCardsPlayed(12)
+                .totalDamageDealt(450)
+                .unlockedTitles(new HashSet<>(List.of("Novato", "Entrenador")))
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
+        when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
+        when(deckRepository.countUniqueCardsByUserId(1L)).thenReturn(10);
+
+        // Test tracking damage and trainer cards
+        profileService.trackDamageDealt("lucas", 50);
+        profileService.trackTrainerCardPlayed("lucas");
+
+        verify(userRepository, times(2)).save(user);
+        assertEquals(500, user.getTotalDamageDealt());
+        assertEquals(13, user.getTrainerCardsPlayed());
+
+        // Test award XP with match stats
+        profileService.awardXpAndCheckAchievements(1L, true, true, true, 3);
+        assertEquals(3, user.getPerfectWins());
+        assertEquals(2, user.getComebackWins());
+        assertEquals(8, user.getTotalKos());
+
+        // Test achievement progress DTOs
+        final List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> progress = profileService.getAchievementsProgress("lucas");
+        assertNotNull(progress);
+        assertEquals(17, progress.size());
+
+        final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO novato = progress.stream()
+                .filter(p -> p.getTitle().equals("Novato"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(novato);
+        org.junit.jupiter.api.Assertions.assertTrue(novato.getUnlocked());
+        assertEquals(1, novato.getProgress());
+        assertEquals(1, novato.getTarget());
+
+        final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO estratega = progress.stream()
+                .filter(p -> p.getTitle().equals("Estratega en Crecimiento"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(estratega);
+        org.junit.jupiter.api.Assertions.assertFalse(estratega.getUnlocked());
+        assertEquals(3, estratega.getProgress());
+        assertEquals(5, estratega.getTarget());
     }
 }

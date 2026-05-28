@@ -157,4 +157,27 @@ class UserControllerTest {
         verify(penaltyService).clearPendingNotifications(targetUser);
         verify(penaltyService).clearRecidivismWarning(targetUser);
     }
+
+    @Test
+    void shouldReturnAchievementsSuccessfully() throws Exception {
+        final String username = "lucas";
+        final java.util.List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> progressList = java.util.List.of(
+                ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO.builder()
+                        .title("Novato")
+                        .category("DEFECTO")
+                        .unlocked(true)
+                        .requirement("Título inicial por defecto")
+                        .progress(1)
+                        .target(1)
+                        .build()
+        );
+
+        when(profileService.getAchievementsProgress(username)).thenReturn(progressList);
+
+        mockMvc.perform(get("/api/users/{username}/profile/achievements", username))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Novato"))
+                .andExpect(jsonPath("$[0].category").value("DEFECTO"))
+                .andExpect(jsonPath("$[0].unlocked").value(true));
+    }
 }
