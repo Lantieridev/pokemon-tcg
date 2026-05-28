@@ -119,6 +119,13 @@ public final class MatchService {
 
             facade.apply(session, action);
 
+            // Track action-specific stats
+            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction attackAction) {
+                profileService.trackDamageDealt(playerId, attackAction.attack().baseDamage());
+            } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+                profileService.trackTrainerCardPlayed(playerId);
+            }
+
             // Turn Tracking
             final String lastActor = lastActorInMatch.get(matchId);
             if (lastActor == null) {
@@ -138,11 +145,20 @@ public final class MatchService {
 
             if (session.getState() == MatchSessionState.FINISHED) {
                 final String winnerId = determineWinner(session);
+                final int winnerIndex = session.indexOf(winnerId);
+                final int loserIndex = 1 - winnerIndex;
+                final MatchBoard board = session.getBoard();
+
+                final int loserPrizesAtEnd = board.getRemainingPrizes(loserIndex);
+                final boolean isPerfectWin = (loserPrizesAtEnd == 6);
+                final boolean isComebackWin = (loserPrizesAtEnd == 1);
+
                 // Legitimate match finish, counts for mute decrement for all penalized players in the match
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = participantId.equals(winnerId);
+                    final int kos = won ? (6 - board.getRemainingPrizes(loserIndex)) : (6 - board.getRemainingPrizes(winnerIndex));
                     userRepository.findByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won);
+                        profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
                     });
                     penaltyService.registerMatchFinished(participantId, true);
                 }
@@ -211,7 +227,7 @@ public final class MatchService {
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = !participantId.equals(forfeitingPlayerId);
                     userRepository.findByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won);
+                        profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
                     });
 
                     if (participantId.equals(forfeitingPlayerId)) {
