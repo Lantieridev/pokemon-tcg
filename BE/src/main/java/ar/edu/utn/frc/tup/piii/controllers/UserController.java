@@ -171,6 +171,21 @@ public class UserController {
     }
 
     /**
+     * Retrieves the achievements and titles progress for a user.
+     *
+     * @param username the username to fetch achievements for
+     * @return the list of achievements progress DTOs
+     */
+    @GetMapping("/{username}/profile/achievements")
+    public ResponseEntity<java.util.List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO>> getUserAchievements(@PathVariable final String username) {
+        try {
+            return ResponseEntity.ok(profileService.getAchievementsProgress(username));
+        } catch (final IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
      * Updates the authenticated user's profile customization.
      *
      * @param request   the update details
