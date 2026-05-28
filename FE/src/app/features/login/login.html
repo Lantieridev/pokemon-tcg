@@ -1,0 +1,30 @@
+<div class="absolute inset-0 flex items-center justify-center" style="background: radial-gradient(circle at 18% 22%, rgba(59,91,167,.22), transparent 45%), radial-gradient(circle at 82% 78%, rgba(238,21,21,.13), transparent 55%), linear-gradient(180deg, #131e30 0%, #0a1020 100%);">
+  <div class="bg-[#111a28] rounded-2xl border border-white/10 p-8 shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 backdrop-blur-sm">
+    <h1 class="font-display text-4xl text-[#3b5ba7] mb-2 drop-shadow-md tracking-wider text-center" style="-webkit-text-stroke: 1px #fff;">
+      POKÉMON
+      <span class="block text-2xl text-white/90 mt-1" style="-webkit-text-stroke: 0px;">TCG WEB</span>
+    </h1>
+    
+    <p class="text-white/60 mb-8 text-center text-sm font-body">Iniciá sesión para acceder a tu mazo y buscar partidas.</p>
+    
+    <div class="w-full flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs text-white/60 uppercase tracking-wider font-bold font-body">Usuario</label>
+        <input type="text" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="Ej: AshRivero">
+      </div>
+      
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs text-white/60 uppercase tracking-wider font-bold font-body">Contraseña</label>
+        <input type="password" class="bg-black/50 border border-white/20 rounded-xl px-4 py-3 text-white font-body focus:outline-none focus:border-[#3b5ba7] focus:ring-1 focus:ring-[#3b5ba7] transition-all" placeholder="••••••••">
+      </div>
+      
+      <button class="battle-cta w-full mt-4 flex items-center justify-center font-display tracking-widest text-lg" (click)="login()" style="background: linear-gradient(180deg, #ee1515 0%, #c41010 100%); border: 2px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 12px 32px; box-shadow: 0 4px 15px rgba(238,21,21,0.3); text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+        INGRESAR
+      </button>
+    </div>
+    
+    <div class="mt-8 text-xs text-white/40 font-body">
+      ¿No tenés cuenta? <span class="text-[#ee1515] hover:text-white cursor-pointer transition-colors">Registrate acá</span>
+    </div>
+  </div>
+</div>
