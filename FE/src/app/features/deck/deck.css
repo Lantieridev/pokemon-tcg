@@ -1,0 +1,540 @@
+/* ─── Layout principal ───────────────────────────────────────────────────── */
+.deck-layout {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(180deg, #0d1521 0%, #080f1c 100%);
+  color: #fff;
+  font-family: var(--font-body, sans-serif);
+  overflow: hidden;
+}
+
+/* ─── Panel izquierdo: colección ─────────────────────────────────────────── */
+.collection-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid rgba(255, 203, 5, 0.2);
+  overflow: hidden;
+}
+
+/* ─── Panel derecho: mazo ────────────────────────────────────────────────── */
+.deck-panel {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* ─── Header de panel ────────────────────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid rgba(255, 203, 5, 0.2);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--p-yellow, #ffcb05);
+}
+
+.card-count-badge {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+/* ─── Filtros ────────────────────────────────────────────────────────────── */
+.filters-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.search-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: rgba(255, 203, 5, 0.5);
+}
+
+.type-tabs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.type-tab {
+  flex: 1;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.type-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.type-tab--active {
+  background: rgba(255, 203, 5, 0.15);
+  color: var(--p-yellow, #ffcb05);
+  border-color: rgba(255, 203, 5, 0.4);
+}
+
+/* ─── Estado cargando / error ────────────────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+.spinner-lg {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255, 203, 5, 0.3);
+  border-top-color: var(--p-yellow, #ffcb05);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state {
+  padding: 1rem;
+  color: #ff7070;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ─── Grid de cartas ─────────────────────────────────────────────────────── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.cards-grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.cards-grid::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.cards-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 203, 5, 0.3);
+  border-radius: 3px;
+}
+
+.card-item {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  padding: 0.35rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.card-item:hover:not(.card-item--maxed) {
+  background: rgba(255, 203, 5, 0.1);
+  border-color: rgba(255, 203, 5, 0.4);
+  transform: translateY(-2px);
+}
+
+.card-item--maxed {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.card-img-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 3.5;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.3rem;
+  display: block;
+}
+
+.card-count-badge-overlay {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--p-yellow, #ffcb05);
+  color: #1a1010;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #1a1010;
+  padding: 0 3px;
+}
+
+.card-maxed-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.card-name {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.1;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-subtype {
+  font-size: 0.55rem;
+  text-align: center;
+  opacity: 0.75;
+}
+
+/* ─── Panel del mazo ─────────────────────────────────────────────────────── */
+.deck-counter {
+  font-size: 0.9rem;
+  font-weight: 900;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 2px solid;
+}
+
+.deck-count-num {
+  font-size: 1.1rem;
+}
+
+.deck-count-sep {
+  opacity: 0.5;
+  margin: 0 2px;
+}
+
+.deck-counter--valid {
+  color: #5ad27a;
+  border-color: rgba(90, 210, 122, 0.4);
+  background: rgba(90, 210, 122, 0.1);
+}
+
+.deck-counter--invalid {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.deck-name-row {
+  padding: 0.5rem 0.75rem;
+  flex-shrink: 0;
+}
+
+.deck-name-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.deck-name-input:focus {
+  border-color: rgba(255, 203, 5, 0.5);
+}
+
+/* Stats */
+.deck-stats {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0 0.75rem 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Validaciones */
+.validation-errors {
+  padding: 0 0.75rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.validation-error {
+  font-size: 0.7rem;
+  color: #ff9070;
+  background: rgba(255, 100, 50, 0.1);
+  border-left: 2px solid #ff7050;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+/* Lista del mazo */
+.deck-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+}
+
+.deck-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.deck-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 203, 5, 0.2);
+  border-radius: 2px;
+}
+
+.deck-empty {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+  padding: 2rem;
+  border: 2px dashed rgba(255, 203, 5, 0.2);
+  border-radius: 0.75rem;
+  margin-top: 1rem;
+}
+
+.deck-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.1s;
+}
+
+.deck-entry:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.35rem;
+}
+
+.deck-entry-img {
+  width: 32px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 0.2rem;
+  flex-shrink: 0;
+}
+
+.deck-entry-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.deck-entry-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-entry-sub {
+  font-size: 0.58rem;
+  opacity: 0.7;
+}
+
+.deck-entry-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.qty-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: rgba(255, 203, 5, 0.2);
+  border-color: rgba(255, 203, 5, 0.5);
+}
+
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.qty-num {
+  font-size: 0.8rem;
+  font-weight: 900;
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.remove-all-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: rgba(238, 21, 21, 0.15);
+  border: 1px solid rgba(238, 21, 21, 0.3);
+  color: rgba(238, 21, 21, 0.7);
+  font-size: 0.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.remove-all-btn:hover {
+  background: rgba(238, 21, 21, 0.3);
+  color: #ff7070;
+}
+
+/* Acciones */
+.deck-actions {
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-clear {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-clear:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  background: linear-gradient(180deg, #ee1515 0%, #c41010 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.6rem;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  box-shadow: 0 3px 12px rgba(238, 21, 21, 0.35);
+}
+
+.btn-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-save:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.save-success {
+  font-size: 0.75rem;
+  color: #5ad27a;
+  text-align: center;
+  font-weight: 700;
+}
+
+.save-error {
+  font-size: 0.72rem;
+  color: #ff7070;
+  text-align: center;
+}
+
+.spinner-sm {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}

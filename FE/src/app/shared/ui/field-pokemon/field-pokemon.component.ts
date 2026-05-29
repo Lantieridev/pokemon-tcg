@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EnergyCascadeComponent } from '../energy-cascade/energy-cascade.component';
 import { DamageTokensComponent } from '../damage-tokens/damage-tokens.component';
+import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
 import { CARDS } from '../../data/cards.mock';
 
 @Component({
@@ -37,6 +38,8 @@ import { CARDS } from '../../data/cards.mock';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FieldPokemonComponent {
+  private tcgService = inject(PokemonTcgService);
+
   @Input({ required: true }) cardId!: string;
   @Input() energies: string[] = [];
   @Input() damage: number = 0;
@@ -46,11 +49,20 @@ export class FieldPokemonComponent {
   @Input() direction: 'up' | 'down' = 'down';
 
   get card() {
+    const allCards = this.tcgService.cards();
+    const found = allCards.find(c => c.id === this.cardId);
+    if (found) {
+      return {
+        id: found.id,
+        name: found.name,
+        type: found.types?.[0]?.toLowerCase() ?? 'colorless',
+        img: found.images?.small ?? found.images?.large ?? ''
+      };
+    }
     return CARDS[this.cardId];
   }
 
   get rot(): number {
-    if (this.direction === 'up') return 180;
     if (this.status === 'asleep') return 90;
     if (this.status === 'confused') return 180;
     return 0;

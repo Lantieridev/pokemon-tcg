@@ -7,21 +7,21 @@
     <div class="absolute top-3 left-4 right-4 z-30 flex items-center gap-3">
       <!-- Player HUD Opponent -->
       <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
-           [class.opacity-90]="isMyTurn"
+           [class.opacity-90]="isMyTurn()"
            style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
-           [style.boxShadow]="!isMyTurn ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
+           [style.boxShadow]="!isMyTurn() ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
         <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
              style="background:var(--p-red); color:#fff; border:2px solid #1a1010;">
-          {{ opp().avatar }}
+          {{ opp()?.avatar }}
         </div>
         <div class="leading-tight">
-          <div class="font-display text-[13px] flex items-center gap-2">{{ opp().name }}</div>
-          <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ opp().tag }}</div>
+          <div class="font-display text-[13px] flex items-center gap-2">{{ opp()?.name }}</div>
+          <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ opp()?.tag }}</div>
         </div>
         <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
         <div class="leading-tight text-right">
-          <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="!isMyTurn ? 'var(--p-red)' : '#5b6885'">
-            {{ !isMyTurn ? 'SU TURNO' : 'ESPERANDO' }}
+          <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="!isMyTurn() ? 'var(--p-red)' : '#5b6885'">
+            {{ !isMyTurn() ? 'SU TURNO' : 'ESPERANDO' }}
           </div>
           <div class="font-display text-lg tnum" style="color:#1a1010">
             {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
@@ -33,7 +33,7 @@
         <span class="font-chunky text-[10px] tracking-[.2em]" style="color:var(--p-yellow)">
           Mano del rival
         </span>
-        <span class="font-display text-base tnum" style="color:#fff">{{ opp().handCount }}</span>
+        <span class="font-display text-base tnum" style="color:#fff">{{ opp()?.handCount }}</span>
       </div>
 
       <div class="flex-1"></div>
@@ -46,11 +46,11 @@
 
     <!-- Opponent hand silhouette arc -->
     <div class="absolute top-[68px] left-1/2 -translate-x-1/2 z-10 flex">
-      @for (h of oppHandArray; track $index) {
+      @for (h of oppHandArray(); track $index) {
         <div class="card-back"
              [style.width.px]="50" [style.height.px]="72"
              [style.marginLeft.px]="$index === 0 ? 0 : -28"
-             [style.transform]="'rotate(' + (($index - (opp().handCount - 1) / 2) * 6) + 'deg) translateY(' + (Math.abs($index - (opp().handCount - 1) / 2) * 2) + 'px)'"
+             [style.transform]="'rotate(' + (($index - ((opp()?.handCount ?? 0) - 1) / 2) * 6) + 'deg) translateY(' + (Math.abs($index - ((opp()?.handCount ?? 0) - 1) / 2) * 2) + 'px)'"
              style="transform-origin: 50% 200%;"></div>
       }
     </div>
@@ -62,7 +62,7 @@
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of opp().prizes; track $index) {
+          @for (alive of opp()?.prizes; track $index) {
             <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
@@ -74,7 +74,7 @@
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of me().prizes; track $index) {
+          @for (alive of me()?.prizes; track $index) {
             <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
@@ -93,7 +93,7 @@
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp().deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.deckCount }}</div>
         </div>
         <div class="relative">
           <div class="rounded-md flex items-center justify-center"
@@ -101,7 +101,7 @@
             <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
           </div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp().discardCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.discardCount }}</div>
           <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
                style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
         </div>
@@ -114,12 +114,12 @@
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me().deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.deckCount }}</div>
         </div>
         <div class="relative">
-          @if (me() && me().discard && me().discard.length > 0) {
-            <img [src]="cards[me().discard[me().discard.length - 1]]?.img || 'https://images.pokemontcg.io/xy1/1_hires.png'"
-                 alt="discard" class="card-img" style="width: 70px; height: 98px; filter:saturate(.65) brightness(.75)" />
+          @if (me()! && me()!.discard && me()!.discard.length > 0) {
+            <!-- Muestra la última carta del descarte como imagen placeholder -->
+            <div class="rounded-md" style="width:70px; height:98px; background:rgba(255,203,5,.15); border:1px solid rgba(255,203,5,.4);"></div>
           } @else {
             <div class="rounded-md flex items-center justify-center shadow-inner"
                  style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
@@ -139,7 +139,7 @@
       
       <!-- OPPONENT BENCH -->
       <div class="flex items-end gap-3" style="transform: rotate(180deg)">
-        @for (b of oppEmptyBench; track $index) {
+        @for (b of oppEmptyBench(); track $index) {
           <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 86px; height: 120.4px;">
             <div class="w-full h-full rounded-md flex items-center justify-center"
                  style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
@@ -147,12 +147,13 @@
             </div>
           </div>
         }
-        @for (b of opp().bench; track $index) {
+        @for (b of opp()!.bench; track $index) {
           <div>
             <app-field-pokemon
-              [cardId]="b.card"
+              [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
+              [status]="b.status"
               [width]="86"
               direction="down">
             </app-field-pokemon>
@@ -161,10 +162,16 @@
       </div>
 
       <!-- OPPONENT ACTIVE -->
-      @if (opp().active; as activeOpp) {
-        <div style="transform: rotate(180deg)">
+      @if (opp()!.active; as activeOpp) {
+        <div class="active-pokemon-wrapper" style="transform: rotate(180deg)">
+          @if (oppActiveIsBurned()) {
+            <div class="token-burned" title="Oponente Quemado">🔥</div>
+          }
+          @if (oppActiveIsPoisoned()) {
+            <div class="token-poisoned" title="Oponente Envenenado">☠</div>
+          }
           <app-field-pokemon
-            [cardId]="activeOpp.card"
+            [cardId]="activeOpp.cardId"
             [energies]="activeOpp.energies"
             [damage]="activeOpp.damage"
             [status]="activeOpp.status"
@@ -196,10 +203,19 @@
       </div>
 
       <!-- MY ACTIVE -->
-      @if (me().active; as activeMe) {
-        <div (click)="openMenu($event, activeMe)">
+      @if (me()!.active; as activeMe) {
+        <div class="active-pokemon-wrapper" 
+             [class.target-highlight]="selectedHandCard() !== null"
+             (click)="selectedHandCard() ? selectTarget(null) : openMenu($event, activeMe)">
+          <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
+          @if (myActiveIsBurned()) {
+            <div class="token-burned" title="Quemado">🔥</div>
+          }
+          @if (myActiveIsPoisoned()) {
+            <div class="token-poisoned" title="Envenenado">☠</div>
+          }
           <app-field-pokemon
-            [cardId]="activeMe.card"
+            [cardId]="activeMe.cardId"
             [energies]="activeMe.energies"
             [damage]="activeMe.damage"
             [status]="activeMe.status"
@@ -210,12 +226,14 @@
         </div>
       }
 
+
       <!-- MY BENCH -->
       <div class="flex items-start gap-3">
-        @for (b of me().bench; track $index) {
-          <div (click)="openMenu($event, b)">
+        @for (b of me()!.bench; track $index) {
+          <div [class.target-highlight]="selectedHandCard() !== null"
+               (click)="selectedHandCard() ? selectTarget($index) : openMenu($event, b)">
             <app-field-pokemon
-              [cardId]="b.card"
+              [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
               [width]="94"
@@ -223,7 +241,7 @@
             </app-field-pokemon>
           </div>
         }
-        @for (b of myEmptyBench; track $index) {
+        @for (b of myEmptyBench(); track $index) {
           <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 94px; height: 131.6px;">
             <div class="w-full h-full rounded-md flex items-center justify-center"
                  style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
@@ -240,21 +258,21 @@
       <div class="flex items-end justify-between px-4 pb-3 pointer-events-auto">
         <!-- Player HUD Me -->
         <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
-             [class.opacity-90]="!isMyTurn"
+             [class.opacity-90]="!isMyTurn()"
              style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
-             [style.boxShadow]="isMyTurn ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
+             [style.boxShadow]="isMyTurn() ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
           <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
                style="background:var(--p-blue); color:#fff; border:2px solid #1a1010;">
-            {{ me().avatar }}
+            {{ me()?.avatar }}
           </div>
           <div class="leading-tight">
-            <div class="font-display text-[13px] flex items-center gap-2">{{ me().name }}</div>
-            <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ me().tag }}</div>
+            <div class="font-display text-[13px] flex items-center gap-2">{{ me()?.name }}</div>
+            <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ me()?.tag }}</div>
           </div>
           <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
           <div class="leading-tight text-right">
-            <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="isMyTurn ? 'var(--p-red)' : '#5b6885'">
-              {{ isMyTurn ? 'SU TURNO' : 'ESPERANDO' }}
+            <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="isMyTurn() ? 'var(--p-red)' : '#5b6885'">
+              {{ isMyTurn() ? 'SU TURNO' : 'ESPERANDO' }}
             </div>
             <div class="font-display text-lg tnum" style="color:#1a1010">
               {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
@@ -263,7 +281,15 @@
         </div>
 
         <div class="flex items-end gap-3">
-          <button class="battle-cta" style="font-size: 22px; padding:12px 28px 12px 18px">
+          <!-- Botón Fin de Turno — habilitado solo en fase MAIN y turno del jugador -->
+          <button
+            id="btn-end-turn"
+            class="battle-cta"
+            style="font-size: 22px; padding:12px 28px 12px 18px"
+            [disabled]="!canEndTurn()"
+            [style.opacity]="canEndTurn() ? '1' : '0.45'"
+            (click)="endTurn()"
+          >
             <span class="pb-icon" style="width: 34px; height: 34px; border-width: 2px"></span>
             <span>FIN TURNO</span>
           </button>
@@ -272,58 +298,65 @@
 
       <!-- Fan hand -->
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
-        @for (c of visibleHand; track $index) {
-          <div class="fan-card" [style.--i]="$index" [style.--n]="handCount" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index" draggable="true">
-            <img [src]="cards[c]?.img || 'https://images.pokemontcg.io/xy1/1_hires.png'" [alt]="cards[c]?.name || 'Carta'" class="card-img w-full h-full" draggable="false" />
+        @for (c of handCards(); track c.id) {
+          <div class="fan-card" 
+               [class.fan-card--selected]="isSelected(c.id)"
+               [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
+               (click)="playCard(c)"
+               draggable="true">
+            @if (getCardImage(c)) {
+              <img [src]="getCardImage(c)" [alt]="c.name" class="w-full h-full object-cover rounded-md border border-[#1a1010]" />
+            } @else {
+              <div class="card-back w-full h-full" style="border-radius: 6px;"></div>
+            }
           </div>
         }
       </div>
     </div>
 
-    <!-- Context menu -->
-    @if (menu() && cards[menu().cardId]) {
+    <!-- Context menu dinámico con datos reales del Pokémon -->
+    @if (menu() && me()?.active) {
       <div class="context-menu"
            [style.left.px]="menu().x" [style.top.px]="menu().y" style="transform: translate(20px, -50%)"
            (click)="$event.stopPropagation()">
-        <div class="label">{{ cards[menu().cardId]?.name }} · HP {{ (cards[menu().cardId]?.hp || 0) - menu().damage }}/{{ cards[menu().cardId]?.hp || 0 }}</div>
+        <div class="label">
+          {{ menu().pokemon?.name || me()?.active?.name }}
+          · HP {{ me()!.active!.maxHp - me()!.active!.damage }}/{{ me()!.active!.maxHp }}
+        </div>
 
-        <div class="item" (click)="closeMenu()">
-          <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
-          <span>Lanzallamas</span>
-          <span class="cost ml-auto mr-2">
-            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
-            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
-            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
-          </span>
-          <span class="key">100</span>
-        </div>
-        <div class="item" (click)="closeMenu()">
-          <app-icon name="bolt" svgClass="w-4 h-4" style="color:#b5a07a"></app-icon>
-          <span>Cuerpo en Llamas</span>
-          <span class="cost ml-auto mr-2">
-            <app-energy-pip type="fire" [size]="14"></app-energy-pip>
-            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
-          </span>
-          <span class="key">30</span>
-        </div>
+        <!-- Ataques disponibles del Pokémon activo -->
+        @for (atk of me()!.active!.attacks; track $index) {
+          <div class="item"
+               [class.opacity-50]="!canAttack()"
+               (click)="attack($index)">
+            <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
+            <span>{{ atk.name }}</span>
+            <span class="cost ml-auto mr-2">
+              @for (e of atk.energyCost; track $index) {
+                <app-energy-pip [type]="e" [size]="14"></app-energy-pip>
+              }
+            </span>
+            <span class="key">{{ atk.baseDamage || '—' }}</span>
+          </div>
+        }
 
         <div class="label">Acciones</div>
-        <div class="item" (click)="closeMenu()">
-          <app-icon name="heart" svgClass="w-4 h-4" style="color:#1f8a5b"></app-icon>
-          <span>Habilidad: Garras Ardientes</span>
-          <span class="key">PASIVA</span>
-        </div>
-        <div class="item" (click)="closeMenu()">
+        <!-- Retirar — habilitado según fase -->
+        <div class="item"
+             [class.opacity-50]="!canRetreat()"
+             (click)="retreat(0, [])">
           <app-icon name="back" svgClass="w-4 h-4" style="color:#5b6885"></app-icon>
           <span>Retirar a la banca</span>
           <span class="cost ml-auto mr-2">
-            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
-            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
-            <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+            @for (i of [].constructor(me()!.active!.retreatCost); track $index) {
+              <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+            }
           </span>
         </div>
       </div>
     }
+
+
 
     <!-- Variant badge -->
     <div class="absolute top-[20px] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
@@ -399,7 +432,7 @@
               @if (m.from !== 'me') {
                 <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
                      style="background:var(--p-red); color:#fff; border:1.5px solid #1a1010">
-                  {{ opp().avatar }}
+                  {{ opp()?.avatar }}
                 </div>
               }
               <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border-2 border-[#1a1010] shadow-[0_2px_0_#1a1010]"
@@ -411,7 +444,7 @@
               @if (m.from === 'me') {
                 <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
                      style="background:var(--p-blue); color:#fff; border:1.5px solid #1a1010">
-                  {{ me().avatar }}
+                  {{ me()?.avatar }}
                 </div>
               }
             </div>
