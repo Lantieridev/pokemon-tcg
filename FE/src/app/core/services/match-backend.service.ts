@@ -2,33 +2,58 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { GameStateResponseDTO, DeckResponseDTO, DeckSummaryDTO } from '../models/game-state.models';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class MatchBackendService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private readonly API_URL = 'http://localhost:8081/api/matches';
+  private readonly MATCHES_URL = 'http://localhost:8081/api/matches';
+  private readonly DECKS_URL = 'http://localhost:8081/api/decks';
 
-  private getHeaders(): HttpHeaders {
-    const token = this.authService.token;
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
+  /**
+   * GET /api/matches/{matchId}/state
+   * Requiere header X-Player-Id (además del JWT que inyecta el interceptor).
+   * El backend verifica que principal.getName() === playerId (seguridad).
+   */
+  getMatchState(matchId: string): Observable<GameStateResponseDTO> {
+    const username = this.authService.username ?? '';
+    return this.http.get<GameStateResponseDTO>(
+      `${this.MATCHES_URL}/${matchId}/state`,
+      { headers: new HttpHeaders({ 'X-Player-Id': username }) }
+    );
+  }
+
+  /**
+   * POST /api/matches
+   * Crea una nueva partida entre dos jugadores.
+   */
+  createMatch(
+    playerAId: string,
+    playerBId: string,
+    deckAId: number,
+    deckBId: number
+  ): Observable<{ matchId: string }> {
+    return this.http.post<{ matchId: string }>(this.MATCHES_URL, {
+      playerAId,
+      playerBId,
+      deckAId,
+      deckBId,
     });
   }
 
-  public createMatch(playerAId: string, playerBId: string, deckAId: number, deckBId: number): Observable<{ matchId: string }> {
-    const body = { playerAId, playerBId, deckAId, deckBId };
-    return this.http.post<{ matchId: string }>(this.API_URL, body, { headers: this.getHeaders() });
+  /**
+   * GET /api/decks
+   * Lista todos los mazos del usuario.
+   */
+  getDecks(): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(this.DECKS_URL);
   }
 
-  public getMatchState(matchId: string): Observable<any> {
-    const username = this.authService.username;
-    let headers = this.getHeaders();
-    if (username) {
-      headers = headers.append('X-Player-Id', username);
-    }
-    return this.http.get<any>(`${this.API_URL}/${matchId}/state`, { headers });
+  /**
+   * GET /api/decks/{id}
+   */
+  getDeck(id: number): Observable<DeckResponseDTO> {
+    return this.http.get<DeckResponseDTO>(`${this.DECKS_URL}/${id}`);
   }
 }

@@ -350,6 +350,9 @@ public final class MatchSession {
      * @return active player index, or -1
      */
     public int getActivePlayerIndex() {
+        if (turnManager != null) {
+            return turnManager.activePlayerIndex();
+        }
         return activePlayerIndex;
     }
 
