@@ -11,7 +11,7 @@ export const routes: Routes = [
     path: 'lobby',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/lobby/lobby.component').then((m) => m.LobbyComponent),
+      import('./features/lobby-aurora/lobby-aurora.component').then((m) => m.LobbyAuroraComponent),
   },
   {
     path: 'battle/:matchId',
@@ -33,7 +33,7 @@ export const routes: Routes = [
   {
     path: 'deck',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/deck/deck').then((m) => m.Deck),
+    loadComponent: () => import('./features/deck-aurora/deck-aurora.component').then((m) => m.DeckAuroraComponent),
   },
   {
     path: 'social',
@@ -45,7 +45,7 @@ export const routes: Routes = [
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/profile/profile').then((m) => m.Profile),
+      import('./features/profile-aurora/profile-aurora.component').then((m) => m.ProfileAuroraComponent),
   },
   {
     path: 'simulator',

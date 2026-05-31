@@ -5,6 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { IconComponent } from '../../../shared/ui/icon/icon.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -21,7 +22,6 @@ export class NavbarComponent {
     { id: 'lobby',   label: 'Inicio',  icon: 'home',  path: '/' },
     { id: 'deck',    label: 'Mazos',   icon: 'cards', path: '/deck' },
     { id: 'social',  label: 'Social',  icon: 'users', path: '/social' },
-    { id: 'profile', label: 'Perfil',  icon: 'user',  path: '/profile' },
     { id: 'admin',   label: 'Admin',   icon: 'shield', path: '/admin', adminOnly: true },
   ];
 
@@ -39,5 +39,27 @@ export class NavbarComponent {
     const url = (this.currentPath() as string) || '/';
     if (path === '/') return url === '/';
     return url.startsWith(path);
+  }
+
+  // --- Auth & Dropdown ---
+  private authService = inject(AuthService);
+  isUserMenuOpen = false;
+
+  get username(): string {
+    return this.authService.username ?? 'Invitado';
+  }
+
+  get userInitial(): string {
+    return this.username.charAt(0).toUpperCase();
+  }
+
+  toggleUserMenu() {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+  }
+
+  logout() {
+    this.authService.logout();
+    this.isUserMenuOpen = false;
+    this.router.navigate(['/']);
   }
 }

@@ -11,6 +11,8 @@ public interface DeckService {
 
     List<DeckSummaryDTO> getAll();
 
+    List<DeckSummaryDTO> getByUserId(Long userId);
+
     DeckResponseDTO getById(Long id);
 
     DeckResponseDTO create(DeckRequestDTO request);

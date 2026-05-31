@@ -23,6 +23,15 @@ export class LobbyComponent {
   private wsService = inject(WebSocketService);
   private matchStore = inject(MatchStore);
 
+  get username(): string {
+    return this.authService.username ?? 'Invitado';
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/']);
+  }
+
   isSearching = signal(false);
 
   formats = [

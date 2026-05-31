@@ -24,6 +24,9 @@ public class UserProfileResponseDTO {
     private Integer level;
     private Integer xp;
     private Integer xpToNextLevel;
+    private Integer mmr;
+    private Integer pokecoins;
+    private Integer battlePoints;
 
     private Statistics statistics;
     private Map<HonorType, Integer> honors;

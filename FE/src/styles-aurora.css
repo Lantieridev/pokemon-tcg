@@ -1,0 +1,234 @@
+/* =========================================================
+   POKÉMON TCG — Premium lobby system (Aurora)
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&display=swap');
+
+.scene{
+  width:100%;height:100%;position:relative;overflow:hidden;
+  font-family:'Manrope',system-ui,sans-serif;
+  color:var(--txt);background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.01em;
+}
+
+/* ---------- vibe palettes ---------- */
+.v-aurora{
+  --bg:#0a1730; --bg2:#132342; --surface:rgba(255,255,255,.05);
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.16);
+  --txt:#eaf0ff; --mut:#93a3c4; --dim:#5e6e90;
+  --accent:#ff2e3e; --accent-dk:#cc2531; --accent-soft:rgba(255,46,62,.14);
+  --display:'Instrument Serif',serif; --num:'Space Mono',monospace;
+  --on-accent:#ffffff;
+  --m1:#1f6f8c; --m2:#3a2e8c; --m3:#7a2e6b; --m4:#1fa89a;
+  --accent2:#ffce32;
+}
+
+/* ---------- backdrops ---------- */
+.bd-glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(80px);opacity:.5}
+.bd-vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 35%, transparent 50%, rgba(0,0,0,.55) 100%)}
+.bd-noise{position:absolute;inset:0;pointer-events:none;opacity:.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* aurora mesh blobs */
+.mesh{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.mesh span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:screen;animation:drift 16s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,-3%) scale(1.12)}66%{transform:translate(-3%,4%) scale(.95)}}
+
+/* ---------- type ---------- */
+.eyebrow{font-family:var(--num);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--mut)}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.display{font-family:var(--display)}
+
+/* ---------- BATALLAR CTA ---------- */
+.cta{position:relative;display:inline-flex;align-items:center;gap:16px;cursor:pointer;border:none;
+  border-radius:18px;padding:0 26px;height:78px;width:440px;justify-content:space-between;
+  font-family:var(--display);font-weight:700;color:var(--on-accent);
+  background:linear-gradient(180deg,var(--accent),var(--accent-dk));
+  box-shadow:0 18px 50px -16px var(--accent), inset 0 1px 0 rgba(255,255,255,.3);
+  transition:transform .18s cubic-bezier(.2,.8,.3,1),filter .18s,box-shadow .18s;overflow:hidden}
+.cta:hover{transform:translateY(-3px);filter:brightness(1.06);box-shadow:0 26px 60px -16px var(--accent),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta:active{transform:translateY(-1px) scale(.99)}
+.cta__title{font-size:27px;letter-spacing:.02em;line-height:1}
+.cta__sub{font-family:'Manrope';font-weight:700;font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.72;margin-top:3px}
+.cta::after{content:"";position:absolute;top:0;left:-130%;width:55%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.4),transparent);transform:skewX(-16deg)}
+.cta:hover::after{animation:sweep 1s ease}
+@keyframes sweep{from{left:-130%}to{left:170%}}
+.cta__arrow{width:20px;height:20px;flex:0 0 auto}
+
+/* searching state */
+.cta--searching{cursor:default;background:linear-gradient(180deg,var(--bg2),var(--bg));
+  color:var(--txt);box-shadow:inset 0 0 0 1px var(--line-2),0 18px 50px -22px var(--accent);width:440px;padding:0 20px;gap:16px;justify-content:flex-start}
+.cta--searching:hover{transform:none;filter:none}
+.cta-orbit{position:relative;width:30px;height:30px;flex:0 0 auto}
+.cta-orbit i{position:absolute;inset:0;border-radius:50%;border:2px solid var(--line);}
+.cta-orbit i::after{content:"";position:absolute;top:-3px;left:50%;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 12px var(--accent);transform:translateX(-50%);transform-origin:50% 18px}
+.cta-orbit i{animation:orbit 1s linear infinite}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.cta-time{font-family:var(--num);font-size:24px;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+
+.ghost-btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;border:1px solid var(--line-2);
+  background:var(--surface);color:var(--txt);border-radius:14px;height:56px;padding:0 22px;
+  font-family:'Manrope';font-weight:700;font-size:14px;letter-spacing:.01em;transition:border-color .15s,background .15s,transform .15s}
+.ghost-btn:hover{border-color:var(--txt);background:rgba(255,255,255,.06);transform:translateY(-2px)}
+.ghost-btn.sm{height:44px;padding:0 16px;font-size:13px;border-radius:12px}
+
+.cancel-link{background:none;border:none;cursor:pointer;color:var(--mut);font-family:'Manrope';
+  font-weight:700;font-size:13px;letter-spacing:.04em;padding:6px 4px;transition:color .15s}
+.cancel-link:hover{color:var(--txt)}
+
+/* ---------- nav rail / topbar ---------- */
+.rail{display:flex;flex-direction:column;gap:6px;align-items:center}
+.rail-ico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  color:var(--mut);cursor:pointer;position:relative;transition:color .15s,background .15s}
+.rail-ico:hover{color:var(--txt);background:var(--surface)}
+.rail-ico.on{color:var(--on-accent);background:var(--accent)}
+.rail-ico.on svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
+.rail-ico svg{width:22px;height:22px}
+
+.chip{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);
+  border-radius:999px;padding:6px 14px 6px 6px}
+.avatar{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:700;font-size:15px;color:#fff;
+  background:linear-gradient(140deg,var(--accent),var(--accent-dk));position:relative}
+.avatar.ring{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--accent)}
+
+/* keyframes */
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-soft{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fu{animation:fadeup .6s cubic-bezier(.2,.8,.3,1)}
+
+/* live dot */
+.live{width:8px;height:8px;border-radius:50%;background:#46e08a;box-shadow:0 0 0 0 rgba(70,224,138,.5);animation:live 2s infinite}
+@keyframes live{0%{box-shadow:0 0 0 0 rgba(70,224,138,.5)}70%{box-shadow:0 0 0 6px rgba(70,224,138,0)}100%{box-shadow:0 0 0 0 rgba(70,224,138,0)}}
+
+/* ===================================================================
+   AMBIENT LIFE — sparks, energy ring, card aura, pokéball motif, beacon
+   =================================================================== */
+.sparks{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.spark{position:absolute;width:calc(10px*var(--s,1));height:calc(10px*var(--s,1));
+  background:var(--sc,var(--accent2));opacity:0;
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M12 0c1 6 5 10 12 12-7 2-11 6-12 12-1-6-5-10-12-12 7-2 11-6 12-12z'/></svg>") center/contain no-repeat;
+  mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M12 0c1 6 5 10 12 12-7 2-11 6-12 12-1-6-5-10-12-12 7-2 11-6 12-12z'/></svg>") center/contain no-repeat;
+  filter:drop-shadow(0 0 5px var(--sc,var(--accent2)));
+  animation:twinkle var(--d,5s) ease-in-out infinite}
+@keyframes twinkle{
+  0%{opacity:0;transform:translateY(6px) scale(.3) rotate(0deg)}
+  45%{opacity:.95}
+  100%{opacity:0;transform:translateY(-22px) scale(1) rotate(35deg)}}
+
+/* rotating energy ring (pokéball-ish field) */
+.energy-ring{position:absolute;border-radius:50%;pointer-events:none}
+.energy-ring::before,.energy-ring::after{content:"";position:absolute;inset:0;border-radius:50%;
+  border:2px dashed var(--accent);opacity:.3;animation:spin 26s linear infinite}
+.energy-ring::after{inset:13%;border-style:dotted;border-color:var(--accent2);opacity:.22;
+  animation-duration:18s;animation-direction:reverse}
+
+/* pulsing aura behind the featured card */
+.card-aura{position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, var(--accent), transparent 62%);
+  filter:blur(48px);opacity:.4;animation:aura 4.6s ease-in-out infinite}
+@keyframes aura{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:.62;transform:scale(1.1)}}
+
+/* faint line-art pokéball motif, very slow rotation */
+.poke-motif{position:absolute;pointer-events:none;opacity:.06;color:var(--txt);
+  animation:spin 70s linear infinite}
+
+/* BATALLAR beacon — periodic "come play" pulse (single, focal) */
+.cta-beacon{position:absolute;inset:0;border-radius:18px;pointer-events:none;
+  box-shadow:0 0 0 0 var(--accent);animation:beacon 3.8s ease-out infinite}
+@keyframes beacon{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}
+  70%{box-shadow:0 0 0 18px color-mix(in srgb,var(--accent) 0%,transparent)}
+  100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 0%,transparent)}}
+
+/* name energy gradient (red→yellow type pop) */
+.name-energy{background:linear-gradient(100deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 16px color-mix(in srgb,var(--accent) 45%,transparent))}
+
+/* ---------- type energy symbols ---------- */
+.etype{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 34% 28%, color-mix(in srgb,var(--c) 70%,#fff), var(--c) 70%);
+  box-shadow:inset 0 -2px 4px rgba(0,0,0,.35), 0 0 10px color-mix(in srgb,var(--c) 45%,transparent);
+  border:1.5px solid rgba(0,0,0,.3)}
+.etype svg{width:62%;height:62%;color:rgba(0,0,0,.62)}
+
+/* ---------- active-deck dock ---------- */
+.deck-dock{position:absolute;left:64px;right:64px;bottom:24px;height:100px;display:flex;align-items:center;
+  padding:0 14px 0 24px;border-radius:20px;border:1px solid var(--line);background:var(--surface);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  box-shadow:0 14px 40px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06)}
+.deck-dock::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;
+  background:linear-gradient(var(--accent),var(--accent-dk))}
+.dock-cards{display:flex;align-items:flex-end;padding:0 10px}
+.dock-card{width:62px;aspect-ratio:5/7;border-radius:7px;overflow:hidden;flex:0 0 auto;
+  border:1.5px solid rgba(255,255,255,.28);box-shadow:0 10px 22px -8px rgba(0,0,0,.75);
+  transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);
+  will-change:transform;background:#0d1424;position:relative}
+.dock-card:not(:first-child){margin-left:-20px}
+.dock-card img{width:100%;height:100%;object-fit:cover;display:block}
+.dock-ph{position:absolute;inset:0;background:linear-gradient(160deg,#34507e,#161f33)}
+.dock-count{font-family:var(--num);font-size:11px;color:var(--mut);letter-spacing:.04em;white-space:nowrap}
+
+/* ---------- interactive 3D holo card ---------- */
+.holo{position:relative;flex:0 0 auto;perspective:1000px}
+.holo--float{animation:floaty 6s ease-in-out infinite}
+.holo__rot{position:relative;border-radius:18px;overflow:hidden;will-change:transform;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) rotate(var(--base-rot,0deg));
+  transition:transform .25s cubic-bezier(.2,.8,.3,1);
+  box-shadow:0 34px 60px -22px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.14) inset}
+.holo__img{display:block;width:100%}
+/* holofoil sheen — subtle rainbow that shifts with the pointer */
+.holo__foil{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  opacity:calc(var(--o,0)*.55);transition:opacity .3s;mix-blend-mode:color-dodge;
+  background:
+    repeating-linear-gradient(110deg,
+      rgba(255,0,132,.20) 0 8%, rgba(252,164,0,.20) 8% 16%, rgba(255,255,0,.20) 16% 24%,
+      rgba(0,255,140,.20) 24% 32%, rgba(0,207,255,.20) 32% 40%, rgba(204,76,250,.20) 40% 48%);
+  background-size:280% 280%;background-position:var(--bx,50%) var(--by,50%)}
+/* glare — soft spotlight at the cursor */
+.holo__glare{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  opacity:var(--o,0);transition:opacity .3s;mix-blend-mode:overlay;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
+    rgba(255,255,255,.6), rgba(255,255,255,.08) 30%, rgba(255,255,255,0) 50%)}
+
+/* deck dock as a fanned hand */
+.dock-card{transform:rotate(var(--r,0deg)) translateY(var(--ty,0px));transform-origin:bottom center}
+.dock-card:hover{transform:translateY(-20px) rotate(var(--r,0deg)) scale(1.08);z-index:40 !important;
+  box-shadow:0 26px 40px -12px rgba(0,0,0,.8)}
+
+/* spinning pokéball loader (searching state) */
+.pokespin{width:30px;height:30px;border-radius:50%;flex:0 0 auto;position:relative;
+  background:linear-gradient(#ee1515 0 50%, #f4f4f4 50% 100%);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.65), 0 2px 8px rgba(0,0,0,.4);
+  animation:spin 1s linear infinite}
+.pokespin::before{content:"";position:absolute;top:50%;left:0;right:0;height:3px;background:#161616;transform:translateY(-50%)}
+.pokespin::after{content:"";position:absolute;top:50%;left:50%;width:10px;height:10px;border-radius:50%;
+  background:#fff;border:2px solid #161616;transform:translate(-50%,-50%)}
+
+/* topbar economy + daily booster */
+.topcur{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);font-family:var(--num);font-size:13px;color:var(--txt)}
+.gem{width:13px;height:13px;flex:0 0 auto;background:linear-gradient(160deg,#fff6,var(--accent2));
+  clip-path:polygon(50% 0,100% 38%,50% 100%,0 38%);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent2) 60%,transparent))}
+.pack-chip{position:relative;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 15px;border-radius:999px;
+  border:1px solid var(--accent);color:var(--txt);background:color-mix(in srgb,var(--accent) 16%,transparent);
+  font-family:'Manrope';font-weight:700;font-size:12.5px;letter-spacing:.02em;cursor:pointer;
+  box-shadow:0 0 16px -5px var(--accent);animation:packpulse 2.6s ease-in-out infinite}
+@keyframes packpulse{0%,100%{box-shadow:0 0 13px -6px var(--accent)}50%{box-shadow:0 0 22px -2px var(--accent)}}
+.pack{width:13px;height:16px;flex:0 0 auto;border-radius:2px;background:linear-gradient(160deg,var(--accent),var(--accent-dk));
+  border:1px solid rgba(255,255,255,.5);position:relative}
+.pack::after{content:"";position:absolute;left:0;right:0;top:5px;height:2px;background:rgba(255,255,255,.55)}
+.pack-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ff3b47;
+  border:1.5px solid var(--bg);box-shadow:0 0 6px #ff3b47}
+
+/* streak fire */
+.streak-fire{color:var(--accent);filter:drop-shadow(0 2px 6px color-mix(in srgb,var(--accent) 50%,transparent));transition:color .3s, transform .3s;animation:flicker 2s infinite alternate;}
+.streak-fire.hot{color:var(--accent2);filter:drop-shadow(0 2px 10px color-mix(in srgb,var(--accent2) 60%,transparent));animation:flicker-hot 1.5s infinite alternate;}
+@keyframes flicker{0%{opacity:.8;transform:scale(.95) rotate(-2deg)}100%{opacity:1;transform:scale(1.05) rotate(2deg)}}
+@keyframes flicker-hot{0%{opacity:.9;transform:scale(1.15) rotate(-4deg)}100%{opacity:1;transform:scale(1.3) rotate(4deg)}}

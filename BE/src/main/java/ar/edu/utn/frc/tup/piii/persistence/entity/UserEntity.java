@@ -62,6 +62,16 @@ public class UserEntity {
     @Builder.Default
     private Boolean showRecidivismWarning = false;
 
+    @Builder.Default
+    private Integer mmr = 1000;
+
+    @Builder.Default
+    private Integer pokecoins = 0;
+
+    @Column(name = "battle_points")
+    @Builder.Default
+    private Integer battlePoints = 0;
+
     @Column(name = "perfect_wins")
     @Builder.Default
     private Integer perfectWins = 0;
