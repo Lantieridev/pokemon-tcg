@@ -44,7 +44,7 @@ export class AuthService {
     }
   }
 
-  private login(username: string, password: string): Observable<any> {
+  public login(username: string, password: string): Observable<any> {
     return this.http.post<{ token: string, username: string }>(`${this.API_URL}/login`, { username, password })
       .pipe(
         tap(res => {
@@ -55,7 +55,7 @@ export class AuthService {
       );
   }
 
-  private register(username: string, password: string): Observable<any> {
+  public register(username: string, password: string): Observable<any> {
     return this.http.post(`${this.API_URL}/register`, { username, email: `${username}@pokemon.com`, password });
   }
 }
