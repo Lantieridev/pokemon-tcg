@@ -370,18 +370,16 @@ public class ProfileServiceTest {
                 .unlockedTitles(new HashSet<>())
                 .build();
 
-        final List<MatchEntity> matches = new java.util.ArrayList<>();
+        final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = new java.util.ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            matches.add(MatchEntity.builder()
-                    .winner(user)
-                    .status("FINISHED")
-                    .build());
+            matches.add(new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(
+                    (long) i, "FINISHED", "lucas", "other", "lucas", java.time.LocalDateTime.now()
+            ));
         }
-        for (int i = 0; i < 50; i++) {
-            matches.add(MatchEntity.builder()
-                    .winner(UserEntity.builder().id(2L).username("other").build())
-                    .status("FINISHED")
-                    .build());
+        for (int i = 50; i < 100; i++) {
+            matches.add(new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(
+                    (long) i, "FINISHED", "lucas", "other", "other", java.time.LocalDateTime.now()
+            ));
         }
 
         when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));

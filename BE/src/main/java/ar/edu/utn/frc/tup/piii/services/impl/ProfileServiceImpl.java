@@ -67,11 +67,11 @@ public class ProfileServiceImpl implements ProfileService {
         final UserEntity user = userOpt.get();
 
         // 1. Estadísticas de partidas
-        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+        final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = matchRepository.findMatchesByUsername(username);
         int matchesPlayed = matches.size();
         int matchesWon = 0;
-        for (final MatchEntity m : matches) {
-            if (m.getWinner() != null && m.getWinner().getUsername().equalsIgnoreCase(username)) {
+        for (final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto m : matches) {
+            if (m.winnerUsername() != null && m.winnerUsername().equalsIgnoreCase(username)) {
                 matchesWon++;
             }
         }
@@ -98,8 +98,8 @@ public class ProfileServiceImpl implements ProfileService {
 
         // 2.1. Calcular partidas terminadas totalmente
         int completedMatchesPlayed = 0;
-        for (final MatchEntity m : matches) {
-            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+        for (final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto m : matches) {
+            if (m.status() != null && (m.status().equalsIgnoreCase("FINISHED") || m.status().equalsIgnoreCase("COMPLETED"))) {
                 completedMatchesPlayed++;
             }
         }
@@ -260,14 +260,14 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         // 3. Chequear y Desbloquear Títulos
-        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(user.getUsername());
+        final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = matchRepository.findMatchesByUsername(user.getUsername());
         int matchesWon = 0;
         int completedMatchesPlayed = 0;
-        for (final MatchEntity m : matches) {
-            if (m.getWinner() != null && m.getWinner().getId().equals(userId)) {
+        for (final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto m : matches) {
+            if (m.winnerUsername() != null && m.winnerUsername().equalsIgnoreCase(user.getUsername())) {
                 matchesWon++;
             }
-            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+            if (m.status() != null && (m.status().equalsIgnoreCase("FINISHED") || m.status().equalsIgnoreCase("COMPLETED"))) {
                 completedMatchesPlayed++;
             }
         }
@@ -457,14 +457,14 @@ public class ProfileServiceImpl implements ProfileService {
         final UserEntity user = userOpt.get();
 
         // 1. Estadísticas necesarias
-        final List<MatchEntity> matches = matchRepository.findMatchesByUsername(username);
+        final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = matchRepository.findMatchesByUsername(username);
         int matchesWon = 0;
         int completedMatches = 0;
-        for (final MatchEntity m : matches) {
-            if (m.getWinner() != null && m.getWinner().getUsername().equalsIgnoreCase(username)) {
+        for (final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto m : matches) {
+            if (m.winnerUsername() != null && m.winnerUsername().equalsIgnoreCase(username)) {
                 matchesWon++;
             }
-            if (m.getStatus() != null && (m.getStatus().equalsIgnoreCase("FINISHED") || m.getStatus().equalsIgnoreCase("COMPLETED"))) {
+            if (m.status() != null && (m.status().equalsIgnoreCase("FINISHED") || m.status().equalsIgnoreCase("COMPLETED"))) {
                 completedMatches++;
             }
         }
