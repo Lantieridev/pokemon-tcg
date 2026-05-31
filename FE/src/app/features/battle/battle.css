@@ -1,1 +1,90 @@
-/* Component specific styles */
+/* ─── Condiciones especiales: rotación/estado visual de la carta activa ─────
+ * El backend envía statusConditions[] con strings: ASLEEP, CONFUSED, PARALYZED, BURNED, POISONED
+ * El FieldPokemonComponent maneja ASLEEP/CONFUSED/PARALYZED vía [status] input.
+ * BURNED y POISONED se representan con tokens/badges en el template.
+ */
+
+/* Token de estado: Quemado (llama naranja) */
+.token-burned {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #ff7a3d, #ff4400);
+  border-radius: 50%;
+  border: 2px solid #1a1010;
+  box-shadow: 0 0 8px rgba(255, 100, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  z-index: 20;
+  animation: pulse-fire 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-fire {
+  from { box-shadow: 0 0 6px rgba(255, 100, 0, 0.6); }
+  to   { box-shadow: 0 0 14px rgba(255, 100, 0, 0.9); }
+}
+
+/* Token de estado: Envenenado (veneno morado) */
+.token-poisoned {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #9b59b6, #6c3483);
+  border-radius: 50%;
+  border: 2px solid #1a1010;
+  box-shadow: 0 0 8px rgba(155, 89, 182, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  z-index: 20;
+  animation: pulse-poison 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-poison {
+  from { box-shadow: 0 0 6px rgba(155, 89, 182, 0.5); }
+  to   { box-shadow: 0 0 14px rgba(155, 89, 182, 0.9); }
+}
+
+/* Wrapper con posición relativa para los tokens */
+.active-pokemon-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* Efecto de selección de carta en la mano */
+.fan-card--selected {
+  transform: translateY(-25px) scale(1.1) !important;
+  box-shadow: 0 0 15px var(--p-yellow), 0 0 25px var(--p-yellow);
+  border: 3px solid var(--p-yellow) !important;
+  z-index: 50 !important;
+}
+
+/* Resaltado de objetivos válidos en el campo */
+.target-highlight {
+  cursor: pointer;
+  position: relative;
+}
+
+.target-highlight::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 3px dashed #2ecc71;
+  border-radius: 8px;
+  box-shadow: 0 0 12px #2ecc71;
+  animation: pulse-target 1s infinite alternate;
+  pointer-events: none;
+  z-index: 30;
+}
+
+@keyframes pulse-target {
+  from { opacity: 0.5; box-shadow: 0 0 6px #2ecc71; }
+  to   { opacity: 1; box-shadow: 0 0 16px #2ecc71; }
+}

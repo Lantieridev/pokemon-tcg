@@ -32,5 +32,6 @@ public record BattlePokemonDTO(
         List<PokemonType> attachedEnergies,
         int retreatCost,
         boolean hasToolAttached,
-        List<AttackDTO> attacks) {
+        List<AttackDTO> attacks,
+        List<String> statusConditions) {
 }

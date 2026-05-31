@@ -1,58 +1,105 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+
+type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, CommonModule],
+  standalone: true,
+  imports: [FormsModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
-  private router = inject(Router);
   private authService = inject(AuthService);
+  private router = inject(Router);
 
-  username = '';
-  password = '';
-  isRegistering = false;
-  errorMessage = '';
+  // ── Estado del formulario (Signals) ──────────────────────────────────────
+  mode = signal<AuthMode>('login');
+  username = signal('');
+  email = signal('');
+  password = signal('');
+  loading = signal(false);
+  errorMsg = signal<string | null>(null);
 
-  toggleMode() {
-    this.isRegistering = !this.isRegistering;
-    this.errorMessage = '';
+  get isLogin() {
+    return this.mode() === 'login';
   }
 
+  toggleMode() {
+    this.mode.update((m) => (m === 'login' ? 'register' : 'login'));
+    this.errorMsg.set(null);
+  }
+
+  /** Envía el formulario según el modo actual */
   submit() {
-    if (!this.username || !this.password) {
-      this.errorMessage = 'Por favor completa todos los campos.';
+    this.errorMsg.set(null);
+
+    const u = this.username().trim();
+    const p = this.password().trim();
+
+    if (!u || !p) {
+      this.errorMsg.set('Completá usuario y contraseña.');
       return;
     }
 
-    if (this.isRegistering) {
-      this.authService.register(this.username, this.password).subscribe({
+    this.loading.set(true);
+
+    if (this.isLogin) {
+      this.authService.login(u, p).subscribe({
         next: () => {
-          // Si el registro fue exitoso, hacemos login automáticamente
-          this.login();
+          this.loading.set(false);
+          this.router.navigate(['/lobby']);
         },
         error: (err) => {
-          this.errorMessage = err.error || 'Error al registrar. Intenta nuevamente.';
-        }
+          this.loading.set(false);
+          this.errorMsg.set(
+            err.status === 400
+              ? 'Usuario o contraseña incorrectos.'
+              : 'Error de conexión. Intentá más tarde.'
+          );
+        },
       });
     } else {
-      this.login();
-    }
-  }
-
-  private login() {
-    this.authService.login(this.username, this.password).subscribe({
-      next: () => {
-        this.router.navigate(['/lobby']);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || err.error || 'Credenciales inválidas.';
+      const e = this.email().trim();
+      if (!e) {
+        this.loading.set(false);
+        this.errorMsg.set('El email es requerido para registrarse.');
+        return;
       }
-    });
+
+      this.authService.register(u, e, p).subscribe({
+        next: () => {
+          // Registro exitoso → login automático
+          this.authService.login(u, p).subscribe({
+            next: () => {
+              this.loading.set(false);
+              this.router.navigate(['/lobby']);
+            },
+            error: () => {
+              this.loading.set(false);
+              this.errorMsg.set('Registro exitoso. Iniciá sesión manualmente.');
+              this.mode.set('login');
+            },
+          });
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.errorMsg.set(
+            typeof err.error === 'string'
+              ? err.error
+              : 'No se pudo registrar. El usuario puede ya existir.'
+          );
+        },
+      });
+    }
   }
 }

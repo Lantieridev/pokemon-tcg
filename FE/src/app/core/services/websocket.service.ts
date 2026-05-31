@@ -1,79 +1,143 @@
 import { Injectable, inject } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { AuthService } from './auth.service';
 import { Observable, Subject } from 'rxjs';
+import { AuthService } from './auth.service';
+import { MatchStore } from '../store/match.store';
+import { GameStateResponseDTO, ActionRequestDTO } from '../models/game-state.models';
 
-@Injectable({
-  providedIn: 'root'
-})
+/**
+ * Servicio STOMP para la comunicación en tiempo real del tablero de juego.
+ *
+ * Protocolo (WebSocketConfig.java):
+ *  - Endpoint: /ws (SockJS)
+ *  - Suscripción: /topic/match/{matchId}/player/{playerId}
+ *  - Publicación: /app/match/{matchId}/action con header "playerId"
+ *  - Auth: STOMP CONNECT header "Authorization: Bearer {jwt}"
+ */
+@Injectable({ providedIn: 'root' })
 export class WebSocketService {
   private authService = inject(AuthService);
-  private stompClient: Client | null = null;
-  private messageSubject = new Subject<any>();
+  private matchStore = inject(MatchStore);
 
-  public connect(matchId: string): Observable<any> {
+  private stompClient: Client | null = null;
+  private messageSubject = new Subject<GameStateResponseDTO>();
+  private currentMatchId: string | null = null;
+
+  /** Observable de actualizaciones del GameState */
+  readonly gameState$ = this.messageSubject.asObservable();
+
+  /**
+   * Conecta al WebSocket y se suscribe al canal del jugador.
+   * Automáticamente actualiza el MatchStore con cada estado recibido.
+   *
+   * @param matchId - ID de la partida
+   * @returns Observable<GameStateResponseDTO> para usos adicionales
+   */
+  connect(matchId: string): Observable<GameStateResponseDTO> {
     const token = this.authService.token;
     const username = this.authService.username;
 
     if (!token || !username) {
-      throw new Error('Must be authenticated to connect to WS');
+      throw new Error('Debes estar autenticado para conectarte al tablero.');
     }
 
-    // Disconnect previous connection if any
+    // Desconectar sesión previa si existe
     if (this.stompClient) {
       this.stompClient.deactivate();
     }
 
+    this.currentMatchId = matchId;
+
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
       connectHeaders: {
-        Authorization: `Bearer ${token}`
-      },
-      debug: (str) => {
-        // console.log(str);
+        Authorization: `Bearer ${token}`,
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      debug: () => {
+        // Descomentar para debug: console.log(str)
+      },
     });
 
-    this.stompClient.onConnect = (frame) => {
-      console.log('Connected to WS: ' + frame);
+    this.stompClient.onConnect = () => {
+      console.log(`[WS] Conectado a partida ${matchId} como ${username}`);
+
+      // Suscripción al canal privado del jugador (Niebla de guerra)
       const topic = `/topic/match/${matchId}/player/${username}`;
       this.stompClient!.subscribe(topic, (message) => {
         if (message.body) {
-          const body = JSON.parse(message.body);
-          this.messageSubject.next(body);
+          try {
+            const body = JSON.parse(message.body) as GameStateResponseDTO;
+            // Actualizar el store automáticamente
+            this.matchStore.updateState(body);
+            this.messageSubject.next(body);
+          } catch (err) {
+            console.error('[WS] Error parseando GameState:', err);
+          }
         }
       });
     };
 
     this.stompClient.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-      console.error('Additional details: ' + frame.body);
+      console.error('[WS] Error STOMP:', frame.headers['message'], frame.body);
+    };
+
+    this.stompClient.onDisconnect = () => {
+      console.log('[WS] Desconectado del tablero');
     };
 
     this.stompClient.activate();
 
-    return this.messageSubject.asObservable();
+    return this.gameState$;
   }
 
-  public sendAction(matchId: string, actionPayload: any) {
+  /**
+   * Envía una acción del jugador al backend.
+   *
+   * IMPORTANTE: El backend valida que el header "playerId" coincida
+   * con el principal autenticado (GameWebSocketController.java).
+   *
+   * @param matchId - ID de la partida
+   * @param action - ActionRequestDTO tipado
+   */
+  sendAction(matchId: string, action: ActionRequestDTO): void {
     const username = this.authService.username;
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.publish({
-        destination: `/app/match/${matchId}/action`,
-        headers: { playerId: username! },
-        body: JSON.stringify(actionPayload)
-      });
+
+    if (!this.stompClient?.connected) {
+      console.warn('[WS] Intentando enviar acción sin conexión activa');
+      return;
     }
+
+    if (!username) {
+      console.error('[WS] Sin usuario autenticado');
+      return;
+    }
+
+    this.stompClient.publish({
+      destination: `/app/match/${matchId}/action`,
+      headers: { playerId: username },
+      body: JSON.stringify(action),
+    });
   }
 
-  public disconnect() {
+  /** Desconecta el cliente STOMP y resetea el store */
+  disconnect(): void {
     if (this.stompClient) {
       this.stompClient.deactivate();
       this.stompClient = null;
     }
+    this.currentMatchId = null;
+    this.matchStore.reset();
+  }
+
+  get isConnected(): boolean {
+    return this.stompClient?.connected ?? false;
+  }
+
+  get matchId(): string | null {
+    return this.currentMatchId;
   }
 }
