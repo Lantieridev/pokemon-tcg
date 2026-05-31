@@ -8,12 +8,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface DeckRepository extends JpaRepository<DeckEntity, Long> {
 
     @EntityGraph(attributePaths = {"cards", "cards.card"})
     Optional<DeckEntity> findById(Long id);
+
+    @EntityGraph(attributePaths = {"cards", "cards.card"})
+    List<DeckEntity> findByUserId(Long userId);
 
     @Query("SELECT COUNT(dc) > 0 FROM DeckCardEntity dc WHERE dc.deck.user.id = :userId AND dc.id.cardId = :cardId")
     boolean existsByUserIdAndCardId(@Param("userId") Long userId, @Param("cardId") String cardId);

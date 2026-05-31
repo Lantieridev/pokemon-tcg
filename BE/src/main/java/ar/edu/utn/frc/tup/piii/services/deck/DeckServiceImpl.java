@@ -55,6 +55,13 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
+    public List<DeckSummaryDTO> getByUserId(final Long userId) {
+        return deckRepository.findByUserId(userId).stream()
+                .map(this::toSummaryDTO)
+                .toList();
+    }
+
+    @Override
     public DeckResponseDTO getById(final Long id) {
         return deckRepository.findById(id)
                 .map(this::toResponseDTO)

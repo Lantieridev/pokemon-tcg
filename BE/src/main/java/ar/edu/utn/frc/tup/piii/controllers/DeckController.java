@@ -31,6 +31,11 @@ public final class DeckController {
         return ResponseEntity.ok(deckService.getAll());
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<DeckSummaryDTO>> getByUserId(@PathVariable final Long userId) {
+        return ResponseEntity.ok(deckService.getByUserId(userId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<DeckResponseDTO> getById(@PathVariable final Long id) {
         return ResponseEntity.ok(deckService.getById(id));

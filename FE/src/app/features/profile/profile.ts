@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CARDS } from '../../shared/data/cards.mock';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
+import { AuthService } from '../../core/services/auth.service';
+import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
 
 @Component({
   selector: 'app-profile',
@@ -10,7 +12,29 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
-export class Profile {
+export class Profile implements OnInit {
+  private authService = inject(AuthService);
+  private profileService = inject(ProfileService);
+
+  profileData: UserProfileResponseDTO | null = null;
+
+  get username(): string {
+    return this.authService.username ?? 'Invitado';
+  }
+
+  get userInitial(): string {
+    return this.username.charAt(0).toUpperCase();
+  }
+
+  ngOnInit(): void {
+    if (this.username !== 'Invitado') {
+      this.profileService.getProfile(this.username).subscribe({
+        next: (data) => this.profileData = data,
+        error: (err) => console.error('Error fetching profile', err)
+      });
+    }
+  }
+
   cards = CARDS;
 
   matches = [

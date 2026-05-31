@@ -2,10 +2,22 @@
 .deck-layout {
   display: flex;
   height: 100vh;
-  background: linear-gradient(180deg, #0d1521 0%, #080f1c 100%);
-  color: #fff;
-  font-family: var(--font-body, sans-serif);
+  background: var(--night);
+  color: var(--ink);
+  font-family: 'Nunito', system-ui, sans-serif;
   overflow: hidden;
+  position: relative;
+}
+
+/* Hex texture de fondo — consistente con el resto del proyecto */
+.deck-layout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(circle at center, rgba(255,255,255,.04) 1.5px, transparent 1.6px);
+  background-size: 36px 36px;
 }
 
 /* ─── Panel izquierdo: colección ─────────────────────────────────────────── */
@@ -13,8 +25,10 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  border-right: 2px solid rgba(255, 203, 5, 0.2);
+  border-right: 3px solid #1a1010;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Panel derecho: mazo ────────────────────────────────────────────────── */
@@ -22,8 +36,11 @@
   width: 340px;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--night-2);
+  border-left: 3px solid #1a1010;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 /* ─── Header de panel ────────────────────────────────────────────────────── */
@@ -32,23 +49,31 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1rem;
-  border-bottom: 2px solid rgba(255, 203, 5, 0.2);
+  border-bottom: 3px solid #1a1010;
   flex-shrink: 0;
+  background: var(--night-3);
 }
 
+/* Título — usa Russo One como el resto del proyecto */
 .panel-title {
+  font-family: 'Russo One', 'Bowlby One', sans-serif;
   font-size: 0.7rem;
-  font-weight: 900;
-  letter-spacing: 0.2em;
-  color: var(--p-yellow, #ffcb05);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--p-yellow);
 }
 
+/* Badge de conteo — pastilla sólida estilo 3DS */
 .card-count-badge {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.6rem;
+  color: var(--ink-night);
+  background: var(--p-yellow);
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
+  border: 2px solid #1a1010;
+  box-shadow: 0 2px 0 #1a1010;
+  letter-spacing: 0.04em;
 }
 
 /* ─── Filtros ────────────────────────────────────────────────────────────── */
@@ -57,24 +82,33 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 2px solid #1a1010;
   flex-shrink: 0;
+  background: var(--night-2);
 }
 
 .search-input {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 0.6rem;
+  background: var(--night);
+  border: 2px solid #1a1010;
+  border-radius: 8px;
   padding: 0.5rem 0.75rem;
-  color: #fff;
+  color: var(--ink);
   font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 600;
   outline: none;
   width: 100%;
-  transition: border-color 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.4);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .search-input:focus {
-  border-color: rgba(255, 203, 5, 0.5);
+  border-color: var(--p-yellow);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.4), 0 0 0 2px rgba(255,203,5,.25);
+}
+
+.search-input::placeholder {
+  color: var(--ink-faint);
 }
 
 .type-tabs {
@@ -82,27 +116,31 @@
   gap: 0.35rem;
 }
 
+/* Tabs — patrón .nav-tab del design system */
 .type-tab {
   flex: 1;
   padding: 0.3rem 0.4rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  border-radius: 0.4rem;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.5);
-  border: 1px solid transparent;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 8px 8px 0 0;
+  background: var(--night);
+  color: var(--ink-dim);
+  border: 2px solid #1a1010;
+  border-bottom: none;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.12s, background 0.12s;
 }
 
 .type-tab:hover {
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--ink);
 }
 
 .type-tab--active {
-  background: rgba(255, 203, 5, 0.15);
-  color: var(--p-yellow, #ffcb05);
-  border-color: rgba(255, 203, 5, 0.4);
+  background: var(--p-yellow);
+  color: var(--ink-night);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.15);
 }
 
 /* ─── Estado cargando / error ────────────────────────────────────────────── */
@@ -112,28 +150,35 @@
   align-items: center;
   gap: 1rem;
   padding: 3rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-family: 'Russo One', sans-serif;
+  letter-spacing: 0.1em;
 }
 
 .spinner-lg {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid rgba(255, 203, 5, 0.3);
-  border-top-color: var(--p-yellow, #ffcb05);
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 3px solid rgba(255,203,5,.2);
+  border-top-color: var(--p-yellow);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: deck-spin 0.8s linear infinite;
 }
 
-@keyframes spin {
+@keyframes deck-spin {
   to { transform: rotate(360deg); }
 }
 
 .error-state {
   padding: 1rem;
-  color: #ff7070;
-  font-size: 0.85rem;
+  color: var(--p-red);
+  font-size: 0.8rem;
+  font-weight: 700;
   text-align: center;
+  background: rgba(238,21,21,.08);
+  border: 2px solid var(--p-red);
+  border-radius: 10px;
+  margin: 1rem;
 }
 
 /* ─── Grid de cartas ─────────────────────────────────────────────────────── */
@@ -146,26 +191,25 @@
   flex: 1;
 }
 
-.cards-grid::-webkit-scrollbar {
-  width: 5px;
-}
-
-.cards-grid::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
+.cards-grid::-webkit-scrollbar { width: 6px; }
+.cards-grid::-webkit-scrollbar-track { background: transparent; }
 .cards-grid::-webkit-scrollbar-thumb {
-  background: rgba(255, 203, 5, 0.3);
-  border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  border-radius: 6px;
+}
+.cards-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,.2);
 }
 
+/* Ítem de carta — panel sólido con hard shadow estilo 3DS */
 .card-item {
   cursor: pointer;
-  border-radius: 0.5rem;
+  border-radius: 10px;
   padding: 0.35rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.15s;
+  background: var(--night-3);
+  border: 2px solid #1a1010;
+  box-shadow: 0 3px 0 #1a1010;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -174,14 +218,19 @@
 }
 
 .card-item:hover:not(.card-item--maxed) {
-  background: rgba(255, 203, 5, 0.1);
-  border-color: rgba(255, 203, 5, 0.4);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 0 #1a1010;
+}
+
+.card-item:active:not(.card-item--maxed) {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #1a1010;
 }
 
 .card-item--maxed {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+  box-shadow: 0 2px 0 #1a1010;
 }
 
 .card-img-wrapper {
@@ -190,51 +239,54 @@
   aspect-ratio: 2.5 / 3.5;
 }
 
-.card-img {
+/* Reutiliza .card-img del design system global */
+.card-item .card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 0.3rem;
+  border-radius: 4.5%;
   display: block;
 }
 
+/* Badge de cantidad — token estilo Pokéball */
 .card-count-badge-overlay {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  background: var(--p-yellow, #ffcb05);
-  color: #1a1010;
+  bottom: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  background: var(--p-yellow);
+  color: var(--ink-night);
   border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 900;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #1a1010;
+  border: 2px solid #1a1010;
   padding: 0 3px;
+  box-shadow: 0 2px 0 #1a1010;
 }
 
 .card-maxed-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(13,21,33,.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.3rem;
-  font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.7);
+  border-radius: 4.5%;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-dim);
 }
 
 .card-name {
   font-size: 0.62rem;
   font-weight: 700;
   text-align: center;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
   line-height: 1.1;
   width: 100%;
   overflow: hidden;
@@ -245,39 +297,40 @@
 .card-subtype {
   font-size: 0.55rem;
   text-align: center;
-  opacity: 0.75;
+  color: var(--ink-dim);
 }
 
-/* ─── Panel del mazo ─────────────────────────────────────────────────────── */
+/* ─── Contador del mazo — pastilla sólida estilo .menu-chip ─────────────── */
 .deck-counter {
-  font-size: 0.9rem;
-  font-weight: 900;
-  padding: 0.2rem 0.6rem;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.7rem;
   border-radius: 999px;
-  border: 2px solid;
+  border: 2.5px solid #1a1010;
+  box-shadow: 0 3px 0 #1a1010;
+  letter-spacing: 0.04em;
 }
 
 .deck-count-num {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .deck-count-sep {
-  opacity: 0.5;
+  color: var(--ink-faint);
   margin: 0 2px;
 }
 
 .deck-counter--valid {
-  color: #5ad27a;
-  border-color: rgba(90, 210, 122, 0.4);
-  background: rgba(90, 210, 122, 0.1);
+  background: #5ad27a;
+  color: #0a2a15;
 }
 
 .deck-counter--invalid {
-  color: rgba(255, 255, 255, 0.6);
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--night-3);
+  color: var(--ink-dim);
 }
 
+/* ─── Nombre del mazo ────────────────────────────────────────────────────── */
 .deck-name-row {
   padding: 0.5rem 0.75rem;
   flex-shrink: 0;
@@ -285,39 +338,51 @@
 
 .deck-name-input {
   width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
+  background: var(--night);
+  border: 2px solid #1a1010;
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  color: var(--ink);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
   outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.4);
+  transition: border-color 0.15s;
 }
 
 .deck-name-input:focus {
-  border-color: rgba(255, 203, 5, 0.5);
+  border-color: var(--p-yellow);
 }
 
-/* Stats */
+.deck-name-input::placeholder {
+  color: var(--ink-faint);
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: 0;
+}
+
+/* ─── Stats del mazo — chips sólidos ────────────────────────────────────── */
 .deck-stats {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
   padding: 0 0.75rem 0.5rem;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 
 .stat-chip {
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--night-3);
+  color: var(--ink-dim);
+  border: 1.5px solid #1a1010;
+  box-shadow: 0 2px 0 #1a1010;
 }
 
-/* Validaciones */
+/* ─── Errores de validación ──────────────────────────────────────────────── */
 .validation-errors {
   padding: 0 0.75rem 0.5rem;
   display: flex;
@@ -327,60 +392,63 @@
 }
 
 .validation-error {
-  font-size: 0.7rem;
-  color: #ff9070;
-  background: rgba(255, 100, 50, 0.1);
-  border-left: 2px solid #ff7050;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--p-red);
+  background: rgba(238,21,21,.1);
+  border: 1.5px solid var(--p-red);
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
 }
 
-/* Lista del mazo */
+/* ─── Lista del mazo ─────────────────────────────────────────────────────── */
 .deck-list {
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem 0.75rem;
 }
 
-.deck-list::-webkit-scrollbar {
-  width: 4px;
-}
-
+.deck-list::-webkit-scrollbar { width: 4px; }
 .deck-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 203, 5, 0.2);
-  border-radius: 2px;
+  background: rgba(255,255,255,.1);
+  border-radius: 4px;
 }
 
+/* Estado vacío — dashed border con tipografía del DS */
 .deck-empty {
   text-align: center;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 0.8rem;
-  padding: 2rem;
-  border: 2px dashed rgba(255, 203, 5, 0.2);
-  border-radius: 0.75rem;
+  color: var(--ink-faint);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 2rem 1rem;
+  border: 2.5px dashed rgba(255,203,5,.25);
+  border-radius: 12px;
   margin-top: 1rem;
+  line-height: 1.8;
 }
 
 .deck-entry {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.3rem 0.25rem;
+  border-bottom: 1px solid var(--line);
   transition: background 0.1s;
+  border-radius: 6px;
 }
 
 .deck-entry:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.35rem;
+  background: rgba(255,255,255,.04);
 }
 
 .deck-entry-img {
-  width: 32px;
-  height: 44px;
+  width: 30px;
+  height: 42px;
   object-fit: cover;
-  border-radius: 0.2rem;
+  border-radius: 4.5%;
   flex-shrink: 0;
+  border: 1.5px solid #1a1010;
 }
 
 .deck-entry-info {
@@ -391,16 +459,17 @@
 }
 
 .deck-entry-name {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .deck-entry-sub {
-  font-size: 0.58rem;
-  opacity: 0.7;
+  font-size: 0.57rem;
+  color: var(--ink-dim);
 }
 
 .deck-entry-controls {
@@ -409,132 +478,175 @@
   gap: 0.2rem;
 }
 
+/* Botones +/− — pastilla sólida pequeña estilo 3DS */
 .qty-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-  font-size: 0.9rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid #1a1010;
+  background: var(--night-3);
+  color: var(--ink);
+  font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  box-shadow: 0 2px 0 #1a1010;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
 }
 
 .qty-btn:hover:not(:disabled) {
-  background: rgba(255, 203, 5, 0.2);
-  border-color: rgba(255, 203, 5, 0.5);
+  background: var(--p-yellow);
+  color: var(--ink-night);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #1a1010;
+}
+
+.qty-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 0 0 #1a1010;
 }
 
 .qty-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .qty-num {
-  font-size: 0.8rem;
-  font-weight: 900;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.75rem;
   min-width: 1.2rem;
   text-align: center;
+  color: var(--ink);
 }
 
+/* Botón eliminar — .menu-chip.red compacto */
 .remove-all-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  background: rgba(238, 21, 21, 0.15);
-  border: 1px solid rgba(238, 21, 21, 0.3);
-  color: rgba(238, 21, 21, 0.7);
-  font-size: 0.6rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: var(--p-red);
+  border: 2px solid #1a1010;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 900;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  box-shadow: 0 2px 0 #1a1010;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .remove-all-btn:hover {
-  background: rgba(238, 21, 21, 0.3);
-  color: #ff7070;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #1a1010;
 }
 
-/* Acciones */
+.remove-all-btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* ─── Acciones del mazo ───────────────────────────────────────────────────── */
 .deck-actions {
   padding: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 3px solid #1a1010;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   flex-shrink: 0;
+  background: var(--night-3);
 }
 
+/* "Vaciar" — menu-chip secundario */
 .btn-clear {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5rem;
-  padding: 0.4rem;
-  font-size: 0.75rem;
+  background: var(--night-2);
+  border: 2px solid #1a1010;
+  color: var(--ink-dim);
+  border-radius: 8px;
+  padding: 0.45rem;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s;
+  box-shadow: 0 3px 0 #1a1010;
+  transition: transform 0.1s, box-shadow 0.1s, color 0.12s;
 }
 
 .btn-clear:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #1a1010;
+  color: var(--ink);
 }
 
+.btn-clear:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #1a1010;
+}
+
+/* "Guardar Mazo" — .menu-chip.red estilo 3DS */
 .btn-save {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.7rem;
-  background: linear-gradient(180deg, #ee1515 0%, #c41010 100%);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.6rem;
+  padding: 0.65rem;
+  background: var(--p-red);
+  border: 3px solid #1a1010;
+  border-radius: 10px;
   color: #fff;
-  font-weight: 800;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: opacity 0.2s;
-  box-shadow: 0 3px 12px rgba(238, 21, 21, 0.35);
-}
-
-.btn-save:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
+  box-shadow: 0 5px 0 #1a1010;
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .btn-save:hover:not(:disabled) {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #1a1010;
 }
 
+.btn-save:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1a1010;
+}
+
+.btn-save:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: 0 2px 0 #1a1010;
+}
+
+/* Feedback */
 .save-success {
-  font-size: 0.75rem;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
   color: #5ad27a;
   text-align: center;
-  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .save-error {
-  font-size: 0.72rem;
-  color: #ff7070;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--p-red);
   text-align: center;
 }
 
 .spinner-sm {
-  width: 0.8rem;
-  height: 0.8rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid rgba(255,255,255,.3);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: deck-spin 0.7s linear infinite;
   display: inline-block;
 }

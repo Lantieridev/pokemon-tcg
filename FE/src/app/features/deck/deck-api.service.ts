@@ -31,4 +31,12 @@ export class DeckApiService {
     const body: DeckRequestDTO = { userId, name: deckName, cards };
     return this.http.post<DeckResponseDTO>(this.API_URL, body);
   }
+
+  /**
+   * GET /api/decks/user/{userId}
+   * Devuelve los mazos armados por el usuario.
+   */
+  getDecksByUserId(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/user/${userId}`);
+  }
 }
