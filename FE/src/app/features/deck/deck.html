@@ -1,182 +1,191 @@
-<div class="absolute inset-0 grid grid-cols-[1fr_440px] gap-0 overflow-hidden"
-     style="background: radial-gradient(circle at 20% 30%, rgba(120,80,200,.13), transparent 50%), linear-gradient(180deg, #0d0a1c 0%, #08070d 100%)">
+<div class="deck-layout">
 
-  <!-- ── LEFT: binder grid ─────────────────────────────────── -->
-  <div class="flex flex-col min-h-0">
-    <!-- Filters bar -->
-    <div class="px-8 py-5 border-b border-white/8 flex items-center gap-3">
-      <div class="font-display font-bold text-2xl mr-4 text-white">Colección</div>
-      <div class="font-mono text-[11px] text-white/40">{{ filtered().length }} de {{ allCards.length }} cartas</div>
+  <!-- ── PANEL IZQUIERDO: Colección XY1 ────────────────────────────────── -->
+  <div class="collection-panel">
 
-      <div class="ml-6 flex items-center gap-1.5">
-        @for (k of ['all','pokemon','trainer','energy']; track k) {
-          <button (click)="setKind($any(k))"
-            [class]="'px-3 py-1.5 rounded-md text-xs font-mono tracking-widest transition ' +
-              (filters().kind === k ? 'bg-white/10 text-white border border-white/15' : 'text-white/40 hover:text-white border border-transparent')">
-            {{ k | uppercase }}
-          </button>
-        }
-      </div>
-
-      <div class="flex-1"></div>
-
-      <div class="relative flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/8 w-72">
-        <app-icon name="search" svgClass="w-4 h-4 text-white/30"></app-icon>
-        <input
-          [ngModel]="filters().search"
-          (ngModelChange)="setSearch($event)"
-          placeholder="Buscar carta..."
-          class="bg-transparent outline-none text-sm flex-1 text-white placeholder:text-white/30"
-        />
-      </div>
+    <!-- Header -->
+    <div class="panel-header">
+      <h2 class="panel-title">◆ CATÁLOGO XY1</h2>
+      <span class="card-count-badge">{{ filteredCards().length }} cartas</span>
     </div>
 
-    <!-- Type chips + HP filter -->
-    <div class="px-8 py-3 flex items-center gap-4 border-b border-white/5">
-      <span class="font-mono text-[10px] text-white/30 tracking-widest">TIPO</span>
-      <div class="flex items-center gap-1.5">
-        @for (t of ['fire','water','grass','lightning','psychic','fighting']; track t) {
-          <button (click)="toggleType(t)"
-            [class]="'px-2.5 py-1 rounded-md flex items-center gap-1.5 text-[11px] font-semibold transition ' +
-              (filters().types.has(t) ? 'text-white' : 'text-white/40 hover:text-white')"
-            [style.background]="filters().types.has(t) ? 'rgba(' + typeColors[t].rgb + ',0.18)' : 'rgba(255,255,255,.03)'"
-            [style.border]="'1px solid ' + (filters().types.has(t) ? typeColors[t].hex : 'rgba(255,255,255,.08)')">
-            <app-energy-pip [type]="t" [size]="14"></app-energy-pip>
-            <span class="capitalize">{{ t }}</span>
-          </button>
-        }
-      </div>
+    <!-- Filtros -->
+    <div class="filters-bar">
+      <!-- Búsqueda -->
+      <input
+        id="deck-search"
+        class="search-input"
+        type="text"
+        placeholder="Buscar carta..."
+        [ngModel]="filters().search"
+        (ngModelChange)="setFilter('search', $event)"
+      />
 
-      <span class="ml-4 font-mono text-[10px] text-white/30 tracking-widest">HP</span>
-      <div class="flex items-center gap-1.5">
-        @for (o of [{id:'any', l:'Todos'}, {id:'low', l:'≤ 60'}, {id:'mid', l:'70–90'}, {id:'high', l:'≥ 100'}]; track o.id) {
-          <button (click)="setHp($any(o.id))"
-            [class]="'px-2.5 py-1 rounded-md text-[11px] font-mono transition ' +
-              (filters().hp === o.id ? 'bg-white/10 text-white border border-white/15' : 'text-white/40 hover:text-white border border-transparent')">
-            {{ o.l }}
-          </button>
-        }
-      </div>
-    </div>
-
-    <!-- Binder grid -->
-    <div class="flex-1 overflow-y-auto px-8 py-6"
-         (dragover)="allowDrop($event)"
-         (drop)="handleDropCollection($event)">
-      <div class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(132px, 1fr))">
-        @for (c of filtered(); track c.id) {
+      <!-- Tipo -->
+      <div class="type-tabs">
+        @for (t of ['all', 'Pokémon', 'Trainer', 'Energy']; track t) {
           <button
-            draggable="true"
-            (dragstart)="handleDragStart($event, c.id)"
-            (click)="addCard(c.id)"
-            (mouseenter)="hover.set(c.id)"
-            (mouseleave)="hover.set(null)"
-            [disabled]="!c.energy && getCardCount(c.id) >= 4"
-            [class]="'relative group transition transform ' + (!c.energy && getCardCount(c.id) >= 4 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-105 hover:-translate-y-1')">
-            <img [src]="c.img" [alt]="c.name" class="w-full rounded-md shadow-md" draggable="false" />
-            
-            @if (getCardCount(c.id) > 0) {
-              <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm border-2 border-black/80 text-black shadow-lg"
-                   style="background: linear-gradient(135deg, #e3c878, #876311);">
-                ×{{ getCardCount(c.id) }}
-              </div>
-            }
-          </button>
+            class="type-tab"
+            [class.type-tab--active]="filters().supertype === t"
+            (click)="setSupertype(t)"
+          >{{ t === 'all' ? 'Todos' : t }}</button>
         }
       </div>
     </div>
-  </div>
 
-  <!-- ── RIGHT: active deck list ───────────────────────────── -->
-  <div class="border-l border-white/8 flex flex-col min-h-0 bg-black/40"
-       style="background: linear-gradient(180deg, rgba(30,22,55,.4), rgba(8,7,13,.7))"
-       (dragover)="allowDrop($event)"
-       (drop)="handleDropDeck($event)">
-
-    <!-- Deck header -->
-    <div class="px-6 py-5 border-b border-white/8">
-      <div class="flex items-center justify-between mb-1">
-        <input [(ngModel)]="deckName" class="bg-transparent text-white outline-none font-display font-bold text-xl flex-1 hover:bg-white/5 rounded px-1 py-0.5 transition" />
-        <button class="text-white/30 hover:text-white"><app-icon name="close" svgClass="w-4 h-4"></app-icon></button>
+    <!-- Loading / Error -->
+    @if (tcgService.isLoading()) {
+      <div class="loading-state">
+        <div class="spinner-lg"></div>
+        <p>Cargando catálogo XY1...</p>
       </div>
-      <div class="flex items-center gap-2 text-xs text-white">
-        <app-energy-pip type="fire" [size]="14"></app-energy-pip>
-        <app-energy-pip type="lightning" [size]="14"></app-energy-pip>
-        <span class="text-white/50">Fuego / Eléctrico</span>
-        <span class="text-white/20">·</span>
-        <span [class]="'font-mono ' + (stats().total === 60 ? 'text-[#5ad27a]' : 'text-[#ff7a3d]')">
-          {{ stats().total }} / 60
-        </span>
-      </div>
-
-      <!-- Composition bar -->
-      <div class="mt-3 flex h-1.5 rounded-full overflow-hidden bg-white/5">
-        <div [style.width.%]="(stats().counts.pokemon/60)*100" style="background:#ff7a3d"></div>
-        <div [style.width.%]="(stats().counts.trainer/60)*100" style="background:#c87bff"></div>
-        <div [style.width.%]="(stats().counts.energy/60)*100" style="background:#ffcc33"></div>
-      </div>
-      <div class="mt-2 flex items-center justify-between text-[10px] font-mono text-white/80">
-        <span><span class="text-[#ff7a3d]">●</span> Pokémon <span class="text-white">{{ stats().counts.pokemon }}</span></span>
-        <span><span class="text-[#c87bff]">●</span> Entrenador <span class="text-white">{{ stats().counts.trainer }}</span></span>
-        <span><span class="text-[#ffcc33]">●</span> Energía <span class="text-white">{{ stats().counts.energy }}</span></span>
-      </div>
-    </div>
-
-    <!-- Deck list -->
-    <div class="flex-1 overflow-y-auto px-3 py-3 text-white">
-      @for (item of deckGrouped(); track item[0]) {
-        <div class="group flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-white/5 transition border-l-2"
-             [style.borderLeftColor]="getCard(item[0]).energy ? '#ffcc33' : getCard(item[0]).type === 'trainer' ? '#c87bff' : (typeColors[getCard(item[0]).type]?.hex || '#fff')">
-          <img [src]="getCard(item[0]).img" alt="" class="w-9 h-12 rounded-sm shadow-sm" />
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-semibold truncate flex items-center gap-2">
-              {{ getCard(item[0]).name }}
-              @if (!getCard(item[0]).energy && getCard(item[0]).type !== 'trainer') {
-                <span class="font-mono text-[9px] text-white/30">HP {{ getCard(item[0]).hp }}</span>
+    } @else if (tcgService.loadError()) {
+      <div class="error-state">⚠ {{ tcgService.loadError() }}</div>
+    } @else {
+      <!-- Grid de cartas -->
+      <div
+        class="cards-grid"
+        (dragover)="allowDrop($event)"
+        (drop)="handleDropDeck($event)"
+      >
+        @for (card of filteredCards(); track card.id) {
+          <div
+            class="card-item"
+            [class.card-item--maxed]="!canAdd(card)"
+            (mouseenter)="hover.set(card.id)"
+            (mouseleave)="hover.set(null)"
+            (click)="addCard(card)"
+            draggable="true"
+            (dragstart)="handleDragStart($event, card)"
+            [title]="card.name"
+          >
+            <div class="card-img-wrapper">
+              <img
+                [src]="getCardImage(card)"
+                [alt]="card.name"
+                class="card-img"
+                loading="lazy"
+              />
+              <!-- Badge cantidad en mazo -->
+              @if (getCardCount(card.id) > 0) {
+                <span class="card-count-badge-overlay">{{ getCardCount(card.id) }}</span>
+              }
+              <!-- Overlay maxed -->
+              @if (!canAdd(card)) {
+                <div class="card-maxed-overlay">MAX</div>
               }
             </div>
-            <div class="text-[10px] font-mono text-white/30 capitalize tracking-widest">
-              {{ getCard(item[0]).energy ? 'energy' : getCard(item[0]).type === 'trainer' ? 'trainer' : 'pokemon' }}
+            <div class="card-name">{{ card.name }}</div>
+            <div class="card-subtype" [style.color]="getTypeColor(card.types)">
+              {{ card.subtypes[0] ?? card.supertype }}
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <button class="w-6 h-6 rounded text-white/50 hover:bg-white/10 flex items-center justify-center" (click)="removeCard(item[0])">−</button>
-            <span class="w-6 text-center font-display font-bold text-sm">{{ item[1] }}</span>
-            <button class="w-6 h-6 rounded text-white/50 hover:bg-white/10 flex items-center justify-center" (click)="addCard(item[0])">+</button>
-          </div>
-        </div>
-      }
-      @if (deckGrouped().length === 0) {
-        <div class="py-12 text-center text-white/30 text-sm">
-          <app-icon name="cards" svgClass="w-12 h-12 mx-auto mb-3 opacity-40"></app-icon>
-          Arrastrá cartas desde la izquierda
-        </div>
-      }
-    </div>
-
-    <!-- Bottom: save / play -->
-    <div class="px-6 py-4 border-t border-white/8 flex flex-col gap-2">
-      <div class="flex items-center gap-3">
-        <button class="flex-1 py-3 rounded-xl text-sm font-display font-semibold border border-white/10 text-white hover:bg-white/5 transition">
-          Guardar borrador
-        </button>
-        <button (click)="saveDeck()" [disabled]="stats().total !== 60 || isSaving()" [class]="'flex-1 py-3 rounded-xl text-sm font-display font-bold tracking-wide transition ' +
-          (stats().total === 60 ? 'bg-gradient-to-b from-[#e3c878] to-[#876311] text-[#1a0c12] hover:brightness-110 shadow-[0_10px_24px_-6px_rgba(227,200,120,.45)]' : 'bg-white/5 text-white/30 cursor-not-allowed')">
-          {{ isSaving() ? 'GUARDANDO...' : 'GUARDAR MAZO' }}
-        </button>
+        }
       </div>
-      @if (saveMessage()) {
-        <div [class]="'text-xs text-center font-bold ' + (saveMessage().includes('Error') ? 'text-red-400' : 'text-green-400')">
-          {{ saveMessage() }}
-        </div>
-      }
-    </div>
+    }
+
   </div>
 
-  <!-- ── Hover preview (big card on left) ─────────────────── -->
-  @if (hover()) {
-    <div class="absolute left-8 bottom-8 z-50 pointer-events-none animate-fade">
-      <img [src]="getCard(hover()!).img" [alt]="getCard(hover()!).name" style="width: 280px; filter: drop-shadow(0 30px 50px rgba(0,0,0,.7))" class="rounded-xl" />
+  <!-- ── PANEL DERECHO: Mazo en construcción ───────────────────────────── -->
+  <div class="deck-panel">
+
+    <!-- Header del mazo -->
+    <div class="panel-header">
+      <h2 class="panel-title">◆ TU MAZO</h2>
+      <!-- Contador 45/60 -->
+      <div class="deck-counter" [class.deck-counter--valid]="isValid()" [class.deck-counter--invalid]="!isValid()">
+        <span class="deck-count-num">{{ totalCount() }}</span>
+        <span class="deck-count-sep">/</span>
+        <span>60</span>
+      </div>
     </div>
-  }
+
+    <!-- Nombre del mazo -->
+    <div class="deck-name-row">
+      <input
+        id="deck-name-input"
+        class="deck-name-input"
+        type="text"
+        placeholder="Nombre del mazo..."
+        [ngModel]="deckName()"
+        (ngModelChange)="deckStore.deckName.set($event)"
+      />
+    </div>
+
+    <!-- Stats -->
+    <div class="deck-stats">
+      <span class="stat-chip stat-pokemon">🔴 Pokémon {{ deckStats().pokemon }}</span>
+      <span class="stat-chip stat-trainer">🟡 Entrenador {{ deckStats().trainer }}</span>
+      <span class="stat-chip stat-energy">⚡ Energía {{ deckStats().energy }}</span>
+    </div>
+
+    <!-- Errores de validación -->
+    @if (validation().errors.length > 0) {
+      <div class="validation-errors">
+        @for (err of validation().errors; track $index) {
+          <div class="validation-error">⚠ {{ err }}</div>
+        }
+      </div>
+    }
+
+    <!-- Lista de cartas del mazo -->
+    <div class="deck-list">
+      @if (deckGrouped().length === 0) {
+        <div class="deck-empty">
+          <p>Arrastrá cartas aquí o hacé click en el catálogo.</p>
+        </div>
+      } @else {
+        @for (entry of deckGrouped(); track entry.card.id) {
+          <div class="deck-entry">
+            <img
+              [src]="getCardImage(entry.card)"
+              [alt]="entry.card.name"
+              class="deck-entry-img"
+            />
+            <div class="deck-entry-info">
+              <span class="deck-entry-name">{{ entry.card.name }}</span>
+              <span class="deck-entry-sub" [style.color]="getTypeColor(entry.card.types)">
+                {{ entry.card.subtypes[0] ?? entry.card.supertype }}
+              </span>
+            </div>
+            <div class="deck-entry-controls">
+              <button class="qty-btn qty-minus" (click)="removeCard(entry.card.id)">−</button>
+              <span class="qty-num">{{ entry.count }}</span>
+              <button
+                class="qty-btn qty-plus"
+                [disabled]="!canAdd(entry.card)"
+                (click)="addCard(entry.card)"
+              >+</button>
+            </div>
+            <button class="remove-all-btn" (click)="removeAll(entry.card.id)" title="Eliminar todas">✕</button>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Acciones -->
+    <div class="deck-actions">
+      <button class="btn-clear" (click)="clearDeck()">Vaciar</button>
+
+      @if (saveSuccess()) {
+        <div class="save-success">✓ ¡Mazo guardado!</div>
+      } @else if (saveError()) {
+        <div class="save-error">⚠ {{ saveError() }}</div>
+      }
+
+      <button
+        id="btn-save-deck"
+        class="btn-save"
+        [disabled]="!isValid() || saveLoading()"
+        (click)="saveDeck()"
+      >
+        @if (saveLoading()) {
+          <span class="spinner-sm"></span> Guardando...
+        } @else {
+          💾 GUARDAR MAZO
+        }
+      </button>
+    </div>
+
+  </div>
 </div>
