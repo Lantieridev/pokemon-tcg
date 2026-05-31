@@ -12,4 +12,12 @@ public interface ProfanityFilterService {
      * @return the filtered message
      */
     String filter(String message);
+
+    /**
+     * Detects offensive words in a message and returns them.
+     *
+     * @param message the message to check
+     * @return list of detected offensive words
+     */
+    java.util.List<String> getProfaneWords(String message);
 }

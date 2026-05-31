@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.dtos.HonorType;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.MuteService;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
+import ar.edu.utn.frc.tup.piii.services.ProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,13 +40,16 @@ class UserControllerTest {
     private PenaltyService penaltyService;
 
     @Mock
+    private ProfileService profileService;
+
+    @Mock
     private Principal principal;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        final UserController userController = new UserController(muteService, honorService, penaltyService);
+        final UserController userController = new UserController(muteService, honorService, penaltyService, profileService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 
@@ -152,5 +156,28 @@ class UserControllerTest {
 
         verify(penaltyService).clearPendingNotifications(targetUser);
         verify(penaltyService).clearRecidivismWarning(targetUser);
+    }
+
+    @Test
+    void shouldReturnAchievementsSuccessfully() throws Exception {
+        final String username = "lucas";
+        final java.util.List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> progressList = java.util.List.of(
+                ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO.builder()
+                        .title("Novato")
+                        .category("DEFECTO")
+                        .unlocked(true)
+                        .requirement("Título inicial por defecto")
+                        .progress(1)
+                        .target(1)
+                        .build()
+        );
+
+        when(profileService.getAchievementsProgress(username)).thenReturn(progressList);
+
+        mockMvc.perform(get("/api/users/{username}/profile/achievements", username))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Novato"))
+                .andExpect(jsonPath("$[0].category").value("DEFECTO"))
+                .andExpect(jsonPath("$[0].unlocked").value(true));
     }
 }

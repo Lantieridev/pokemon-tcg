@@ -47,4 +47,25 @@ class ProfanityFilterServiceTest {
         final String expected = "***** and ********";
         assertEquals(expected, profanityFilterService.filter(rawMessage));
     }
+
+    @Test
+    void shouldDetectProfanities() {
+        final String message = "Eres un noob y un idiota";
+        final java.util.List<String> expected = java.util.List.of("noob", "idiota");
+        final java.util.List<String> actual = profanityFilterService.getProfaneWords(message);
+        assertEquals(expected.size(), actual.size());
+        org.junit.jupiter.api.Assertions.assertTrue(actual.containsAll(expected));
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoProfanity() {
+        final String message = "Hola amigo, que tal";
+        final java.util.List<String> actual = profanityFilterService.getProfaneWords(message);
+        org.junit.jupiter.api.Assertions.assertTrue(actual.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenMessageIsNull() {
+        org.junit.jupiter.api.Assertions.assertTrue(profanityFilterService.getProfaneWords(null).isEmpty());
+    }
 }
