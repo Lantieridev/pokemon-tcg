@@ -18,6 +18,10 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
+import ar.edu.utn.frc.tup.piii.services.ProfileService;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -59,6 +63,8 @@ public final class MatchService {
     private final ScheduledExecutorService abandonmentScheduler;
     private final long abandonTimeoutSeconds;
     private final PenaltyService penaltyService;
+    private final ProfileService profileService;
+    private final UserRepository userRepository;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -70,6 +76,8 @@ public final class MatchService {
      * @param messaging             sends WebSocket messages (never null)
      * @param abandonmentScheduler  schedules disconnect timeout tasks (never null)
      * @param penaltyService        manages turn penalties (never null)
+     * @param profileService        manages user profiles and XP (never null)
+     * @param userRepository        repository for User entities (never null)
      * @param abandonTimeoutSeconds seconds before a disconnected player forfeits
      */
     public MatchService(final MatchSessionRegistry registry,
@@ -79,6 +87,8 @@ public final class MatchService {
                         final SimpMessagingTemplate messaging,
                         final ScheduledExecutorService abandonmentScheduler,
                         final PenaltyService penaltyService,
+                        final ProfileService profileService,
+                        final UserRepository userRepository,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -88,6 +98,8 @@ public final class MatchService {
         this.abandonmentScheduler = Objects.requireNonNull(abandonmentScheduler,
                 "abandonmentScheduler must not be null");
         this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
+        this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
+        this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -146,6 +158,13 @@ public final class MatchService {
 
             final TurnManager turnManager = session.getTurnManager();
 
+            // Track action-specific stats
+            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction attackAction) {
+                profileService.trackDamageDealt(playerId, attackAction.attack().baseDamage());
+            } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+                profileService.trackTrainerCardPlayed(playerId);
+            }
+
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
 
@@ -158,8 +177,22 @@ public final class MatchService {
             persistence.logAction(matchId, turnNumber, playerId, dto.type().name(), resultDetail);
 
             if (session.getState() == MatchSessionState.FINISHED) {
+                final String winnerId = determineWinner(session);
+                final int winnerIndex = session.indexOf(winnerId);
+                final int loserIndex = 1 - winnerIndex;
+                final MatchBoard board = session.getBoard();
+
+                final int loserPrizesAtEnd = board.getRemainingPrizes(loserIndex);
+                final boolean isPerfectWin = (loserPrizesAtEnd == 6);
+                final boolean isComebackWin = (loserPrizesAtEnd == 1);
+
                 // Legitimate match finish, counts for mute decrement for all penalized players in the match
                 for (final String participantId : session.getPlayerIds()) {
+                    final boolean won = participantId.equals(winnerId);
+                    final int kos = won ? (6 - board.getRemainingPrizes(loserIndex)) : (6 - board.getRemainingPrizes(winnerIndex));
+                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                        profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
+                    });
                     penaltyService.registerMatchFinished(participantId, true);
                 }
             }
@@ -355,8 +388,13 @@ public final class MatchService {
                 final int turnsA = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(0) : 0;
                 final int turnsB = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(1) : 0;
 
-                // For each player, evaluate if it is a legitimate match completion to decrement mute
+                // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
                 for (final String participantId : session.getPlayerIds()) {
+                    final boolean won = !participantId.equals(forfeitingPlayerId);
+                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                        profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
+                    });
+
                     if (participantId.equals(forfeitingPlayerId)) {
                         // The penalized user who forfeited does NOT get a decrement
                         completedLegitimately = false;
@@ -388,5 +426,43 @@ public final class MatchService {
             return 0;
         }
         return session.getTurnManager().getTurnCount(0) + session.getTurnManager().getTurnCount(1);
+    }
+
+    private String determineWinner(final MatchSession session) {
+        final MatchBoard board = session.getBoard();
+        final String playerA = session.getPlayerIdA();
+        final String playerB = session.getPlayerIdB();
+
+        // 1. Condición de Premios (Prize cards)
+        if (board.getRemainingPrizes(0) == 0) {
+            return playerA;
+        }
+        if (board.getRemainingPrizes(1) == 0) {
+            return playerB;
+        }
+
+        // 2. Condición de Bancarrota de Pokémon (Active + Bench)
+        final boolean hasActiveA = board.getActivePokemon(0) != null;
+        final boolean hasBenchA = !board.getBenchedPokemon(0).isEmpty();
+        final boolean hasActiveB = board.getActivePokemon(1) != null;
+        final boolean hasBenchB = !board.getBenchedPokemon(1).isEmpty();
+
+        if (!hasActiveA && !hasBenchA) {
+            return playerB;
+        }
+        if (!hasActiveB && !hasBenchB) {
+            return playerA;
+        }
+
+        // 3. Condición de Deck out
+        if (board.getDeckSize(0) == 0) {
+            return playerB;
+        }
+        if (board.getDeckSize(1) == 0) {
+            return playerA;
+        }
+
+        // Fallback
+        return playerA;
     }
 }
