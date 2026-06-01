@@ -113,19 +113,23 @@ public final class MatchCreationService {
         sem1.setPlayerRuntime(runtime1);
 
         // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
-        runtime0.recordPokemonEntered(slot0.getActivePokemon());
+        if (slot0.getActivePokemon() != null) {
+            runtime0.recordPokemonEntered(slot0.getActivePokemon());
+        }
         bench0.getAll().forEach(runtime0::recordPokemonEntered);
-        runtime1.recordPokemonEntered(slot1.getActivePokemon());
+        if (slot1.getActivePokemon() != null) {
+            runtime1.recordPokemonEntered(slot1.getActivePokemon());
+        }
         bench1.getAll().forEach(runtime1::recordPokemonEntered);
 
         // --- Build MatchBoard (immutable snapshot fields only) ---
         final PlayerState ps0 = new PlayerState(
                 slot0.getActivePokemon(), bench0.getAll(),
-                List.of(), slot0.getActivePokemon().getAttacks(),
+                List.of(), slot0.getActivePokemon() != null ? slot0.getActivePokemon().getAttacks() : List.of(),
                 deck0.size(), slot0.getPrizes().size(), Map.of());
         final PlayerState ps1 = new PlayerState(
                 slot1.getActivePokemon(), bench1.getAll(),
-                List.of(), slot1.getActivePokemon().getAttacks(),
+                List.of(), slot1.getActivePokemon() != null ? slot1.getActivePokemon().getAttacks() : List.of(),
                 deck1.size(), slot1.getPrizes().size(), Map.of());
         final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
         board.bindRuntimes(runtimes);

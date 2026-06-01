@@ -6,6 +6,7 @@ import ar.edu.utn.frc.tup.piii.engine.manager.EvolveExecutor;
 import ar.edu.utn.frc.tup.piii.engine.manager.RetreatExecutor;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
+import ar.edu.utn.frc.tup.piii.engine.model.Attack;
 import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
@@ -494,8 +495,13 @@ public final class GameFacade {
                                             dto.targetIndex() != null ? dto.targetIndex() : -1,
                                             dto.selectedEnergyIndices() != null ? dto.selectedEnergyIndices() : java.util.Collections.emptyList());
             case END_TURN            -> new EndTurnAction();
-            case PROMOTE_ACTIVE      -> new PromoteActiveAction(
-                                            dto.targetIndex() != null ? dto.targetIndex() : 0);
+            case PROMOTE_ACTIVE      -> {
+                Integer idx = dto.sourceIndex();
+                if (idx == null) {
+                    idx = dto.targetIndex();
+                }
+                yield new PromoteActiveAction(idx != null ? idx : 0);
+            }
             case SELECT_CARDS        -> new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(
                                             dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList(),
                                             session.getPendingSelectionRequest());
@@ -505,10 +511,16 @@ public final class GameFacade {
     private DeclareAttackAction buildDeclareAttack(final MatchBoard board,
                                                     final int playerIndex,
                                                     final ActionRequestDTO dto) {
+        final BattlePokemonState active = board.getActivePokemon(playerIndex);
+        if (active == null) {
+            throw new IllegalArgumentException("No active pokemon to attack");
+        }
         final int attackIndex = dto.attackIndex() != null ? dto.attackIndex() : 0;
-        return new DeclareAttackAction(
-                board.getActivePokemon(playerIndex),
-                board.getActiveAttacks(playerIndex).get(attackIndex));
+        final List<Attack> attacks = board.getActiveAttacks(playerIndex);
+        if (attackIndex < 0 || attackIndex >= attacks.size()) {
+            throw new IllegalArgumentException("Invalid attack index");
+        }
+        return new DeclareAttackAction(active, attacks.get(attackIndex));
     }
 
     private BattlePokemonState resolveEvolveTarget(final MatchBoard board,

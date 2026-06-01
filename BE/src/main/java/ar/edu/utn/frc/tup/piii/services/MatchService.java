@@ -286,12 +286,14 @@ public final class MatchService {
                 turnManager.endBetweenTurns();
             }
             case PromoteActiveAction ignored -> {
-                // Apply the promotion; session.clearAwaitingPromotion() is called after
+                final boolean wasAwaiting = session.isAwaitingPromotion();
                 facade.apply(session, action, turnManager);
-                session.clearAwaitingPromotion();
-                // Resume the deferred between-turns phase that was paused for this promotion
-                processBetweenTurns(session, turnManager);
-                turnManager.endBetweenTurns();
+                if (wasAwaiting) {
+                    session.clearAwaitingPromotion();
+                    // Resume the deferred between-turns phase that was paused for this promotion
+                    processBetweenTurns(session, turnManager);
+                    turnManager.endBetweenTurns();
+                }
             }
             default -> facade.apply(session, action, turnManager);
         }

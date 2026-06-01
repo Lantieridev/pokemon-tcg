@@ -21,7 +21,7 @@ CREATE TABLE user_showcase (
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     card_id VARCHAR(50) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
     slot_position INT NOT NULL CHECK (slot_position BETWEEN 1 AND 3),
-    PRIMARY KEY (user_id, slot_position)
+    CONSTRAINT user_showcase_pkey PRIMARY KEY (user_id, slot_position)
 );
 
 -- Tabla para la persistencia real de los honores otorgados
@@ -38,7 +38,7 @@ CREATE TABLE user_mutes (
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     muted_user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, muted_user_id)
+    CONSTRAINT user_mutes_pkey PRIMARY KEY (user_id, muted_user_id)
 );
 
 -- Tabla para persistencia de notificaciones pendientes

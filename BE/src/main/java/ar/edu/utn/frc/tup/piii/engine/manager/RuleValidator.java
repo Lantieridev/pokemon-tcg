@@ -197,6 +197,9 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateRetreat(final RetreatAction action) {
+        if (action.active() == null) {
+            return new ValidationResult.Invalid("no_active_pokemon");
+        }
         if (!getActiveStatusEffectManager().canRetreat()) {
             return new ValidationResult.Invalid(RETREAT_BLOCKED_BY_STATUS);
         }
@@ -387,6 +390,10 @@ public final class RuleValidator {
     private ValidationResult validatePromoteActive(final PromoteActiveAction action) {
         if (action.benchIndex() < 0) {
             return new ValidationResult.Invalid("invalid_bench_index");
+        }
+        final int size = benchStateProvider.getBenchSize(turnManager.activePlayerIndex());
+        if (action.benchIndex() >= size) {
+            return new ValidationResult.Invalid("bench_index_out_of_bounds");
         }
         return new ValidationResult.Valid();
     }

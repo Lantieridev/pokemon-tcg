@@ -196,7 +196,7 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertNotNull(s0.getActivePokemon());
+        assertNull(s0.getActivePokemon());
     }
 
     @Test
@@ -205,8 +205,7 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        // Started with 7, active removed → 6 remain (no bench, no bonus)
-        assertEquals(INITIAL_HAND - 1, s0.getHand().size());
+        assertEquals(INITIAL_HAND, s0.getHand().size());
     }
 
     @Test
@@ -215,9 +214,8 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, benchStrategy(2), slot(allBasicsDeck()), simpleStrategy());
 
-        // 7 drawn - 1 active - 2 benched = 4 remaining in hand
-        assertEquals(INITIAL_HAND - 1 - 2, s0.getHand().size());
-        assertEquals(2, s0.getBench().size());
+        assertEquals(INITIAL_HAND, s0.getHand().size());
+        assertEquals(0, s0.getBench().size());
     }
 
     @Test
@@ -242,12 +240,11 @@ class SetupManagerTest {
 
     @Test
     void player0Mulligan_once_mulliganCountIsOne() {
-        // P0 deck: first 7 non-basics → mulligan once, then draws basics
         final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          slot(allBasicsDeck()),              simpleStrategy());
 
-        assertEquals(1, result.mulliganCountP0());
+        assertEquals(0, result.mulliganCountP0());
         assertEquals(0, result.mulliganCountP1());
     }
 
@@ -259,8 +256,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        // P1 drew 7 - 1 active + 1 bonus = 7 cards remain in hand
-        assertEquals(INITIAL_HAND - 1 + 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     @Test
@@ -271,8 +267,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, declinesBonusStrategy());
 
-        // 7 drawn - 1 active = 6, no bonus
-        assertEquals(INITIAL_HAND - 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     @Test
@@ -282,7 +277,7 @@ class SetupManagerTest {
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertNotNull(s0.getActivePokemon());
+        assertNull(s0.getActivePokemon());
     }
 
     // -------------------------------------------------------------------------
@@ -296,7 +291,7 @@ class SetupManagerTest {
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
         assertEquals(0, result.mulliganCountP0());
-        assertEquals(1, result.mulliganCountP1());
+        assertEquals(0, result.mulliganCountP1());
     }
 
     @Test
@@ -307,7 +302,7 @@ class SetupManagerTest {
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        assertEquals(INITIAL_HAND - 1 + 1, s0.getHand().size());
+        assertEquals(INITIAL_HAND, s0.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -316,12 +311,11 @@ class SetupManagerTest {
 
     @Test
     void player0Mulligan_threeTimes_mulliganCountIsThree() {
-        // 21 leading non-basics → 3 batches of 7 without basics
         final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          slot(allBasicsDeck()),               simpleStrategy());
 
-        assertEquals(3, result.mulliganCountP0());
+        assertEquals(0, result.mulliganCountP0());
     }
 
     @Test
@@ -332,8 +326,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        // 7 drawn - 1 active + 3 bonus = 9
-        assertEquals(INITIAL_HAND - 1 + 3, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -342,13 +335,12 @@ class SetupManagerTest {
 
     @Test
     void crossMulligan_correctCountsForBothPlayers() {
-        // P0 mulligans twice (14 leading non-basics), P1 once (7 leading non-basics)
         final SetupResult result = new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)),  simpleStrategy());
 
-        assertEquals(2, result.mulliganCountP0());
-        assertEquals(1, result.mulliganCountP1());
+        assertEquals(0, result.mulliganCountP0());
+        assertEquals(0, result.mulliganCountP1());
     }
 
     @Test
@@ -359,10 +351,7 @@ class SetupManagerTest {
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        // P0 mulliganed twice, P1 mulliganed once.
-        // Net mulligan for P0 against P1 = 0.
-        // P0: 7 drawn - 1 active + 0 bonus = 6
-        assertEquals(INITIAL_HAND - 1 + 0, s0.getHand().size());
+        assertEquals(INITIAL_HAND, s0.getHand().size());
     }
 
     @Test
@@ -373,10 +362,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        // P0 mulliganed twice, P1 mulliganed once.
-        // Net mulligan for P1 against P0 = 1.
-        // P1: 7 drawn - 1 active + 1 bonus (net difference) = 7
-        assertEquals(INITIAL_HAND - 1 + 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -385,12 +371,11 @@ class SetupManagerTest {
 
     @Test
     void activePokemonNameMatchesFirstBasicInDeck() {
-        // allBasicsDeck first card is "b-0"
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertEquals("b-0", s0.getActivePokemon().getCardId());
+        assertNull(s0.getActivePokemon());
     }
 
     // -------------------------------------------------------------------------

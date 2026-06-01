@@ -22,18 +22,8 @@ import { RouterModule } from '@angular/router';
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
-      <!-- Topbar -->
-      <div style="position: sticky; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 10; background: linear-gradient(180deg, var(--bg) 0%, transparent 100%);">
-        <aurora-logo></aurora-logo>
-        <div style="display: flex; align-items: center; gap: 22px;">
-          <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
-            <a routerLink="/lobby" style="text-decoration: none; color: var(--mut);">Inicio</a>
-            <a routerLink="/deck" style="text-decoration: none; color: var(--mut);">Mazos</a>
-            <a routerLink="/profile" style="text-decoration: none; color: var(--txt);">Perfil</a>
-          </nav>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1200'"></aurora-trainer-chip>
-        </div>
-      </div>
+      <!-- Topbar spacer (Navbar is handled globally by app-navbar) -->
+      <div style="height: 92px; width: 100%; flex: 0 0 auto;"></div>
 
       <!-- Profile Content -->
       <div style="position: relative; max-width: 1000px; margin: 0 auto; padding: 40px 20px; z-index: 5; display: flex; flex-direction: column; gap: 40px;">

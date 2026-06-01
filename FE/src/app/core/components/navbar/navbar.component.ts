@@ -1,31 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IconComponent } from '../../../shared/ui/icon/icon.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ProfileService, UserProfileResponseDTO } from '../../services/profile.service';
+import { LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, IconComponent],
+  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   private router = inject(Router);
+  private authService = inject(AuthService);
+  private profileService = inject(ProfileService);
 
-  navItems = [
-    { id: 'lobby',   label: 'Inicio',  icon: 'home',  path: '/' },
-    { id: 'deck',    label: 'Mazos',   icon: 'cards', path: '/deck' },
-    { id: 'social',  label: 'Social',  icon: 'users', path: '/social' },
-    { id: 'admin',   label: 'Admin',   icon: 'shield', path: '/admin', adminOnly: true },
-  ];
-
-  conn = { online: true, ping: 38, region: 'SAE-1' };
+  profileData = signal<UserProfileResponseDTO | null>(null);
 
   currentPath = toSignal(
     this.router.events.pipe(
@@ -37,12 +33,10 @@ export class NavbarComponent {
 
   isActive(path: string): boolean {
     const url = (this.currentPath() as string) || '/';
-    if (path === '/') return url === '/';
+    if (path === '/lobby') return url === '/lobby' || url === '/';
     return url.startsWith(path);
   }
 
-  // --- Auth & Dropdown ---
-  private authService = inject(AuthService);
   isUserMenuOpen = false;
 
   get username(): string {
@@ -53,6 +47,15 @@ export class NavbarComponent {
     return this.username.charAt(0).toUpperCase();
   }
 
+  ngOnInit(): void {
+    if (this.username !== 'Invitado') {
+      this.profileService.getProfile(this.username).subscribe({
+        next: (data) => this.profileData.set(data),
+        error: (err) => console.error('Error fetching profile for navbar', err)
+      });
+    }
+  }
+
   toggleUserMenu() {
     this.isUserMenuOpen = !this.isUserMenuOpen;
   }
@@ -60,6 +63,7 @@ export class NavbarComponent {
   logout() {
     this.authService.logout();
     this.isUserMenuOpen = false;
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }
+
