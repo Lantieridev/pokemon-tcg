@@ -72,7 +72,7 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final List<String> hand = session.getBoard().getHandOf(playerIndex);
 
-        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
+        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(playerIndex) != null) ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
                 .activeEffects().stream().map(Enum::name).toList() : List.of();
 
         return new GameStateResponseDTO.PlayerView(
@@ -93,7 +93,7 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final int handSize = session.getBoard().getHandOf(opponentIndex).size();
 
-        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
+        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(opponentIndex) != null) ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
                 .activeEffects().stream().map(Enum::name).toList() : List.of();
 
         return new GameStateResponseDTO.OpponentView(

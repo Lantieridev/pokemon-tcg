@@ -91,37 +91,6 @@ public final class SetupManager {
         slot0.getHand().addCards(slot0.getDeck().drawMultiple(INITIAL_HAND_SIZE));
         slot1.getHand().addCards(slot1.getDeck().drawMultiple(INITIAL_HAND_SIZE));
 
-        // Step 2 — Mulligan loop (both players must have at least one Basic)
-        int mulligan0 = 0;
-        int mulligan1 = 0;
-        while (!slot0.getHand().hasBasicPokemon() || !slot1.getHand().hasBasicPokemon()) {
-            if (!slot0.getHand().hasBasicPokemon()) {
-                mulligan0++;
-                doMulligan(slot0);
-            }
-            if (!slot1.getHand().hasBasicPokemon()) {
-                mulligan1++;
-                doMulligan(slot1);
-            }
-        }
-
-        // Step 3 — place Active and Bench Pokémon
-        placeActive(slot0, strategy0);
-        placeActive(slot1, strategy1);
-        placeBench(slot0, strategy0);
-        placeBench(slot1, strategy1);
-
-        // Step 4 — bonus draws (after placement, per XY1 §1.3, canceling mulligans out)
-        final int netMulligans0 = Math.max(0, mulligan0 - mulligan1);
-        final int netMulligans1 = Math.max(0, mulligan1 - mulligan0);
-
-        if (netMulligans1 > 0 && strategy0.acceptBonusDraws(netMulligans1)) {
-            slot0.getHand().addCards(slot0.getDeck().drawMultiple(netMulligans1));
-        }
-        if (netMulligans0 > 0 && strategy1.acceptBonusDraws(netMulligans0)) {
-            slot1.getHand().addCards(slot1.getDeck().drawMultiple(netMulligans0));
-        }
-
         // Step 5 — set aside Prize cards
         slot0.addPrizes(slot0.getDeck().drawMultiple(prizeCount));
         slot1.addPrizes(slot1.getDeck().drawMultiple(prizeCount));
@@ -129,7 +98,7 @@ public final class SetupManager {
         // Step 6 — coin flip for first player
         final int firstPlayerIndex = coinFlipper.flip() ? 0 : 1;
 
-        return new SetupResult(firstPlayerIndex, mulligan0, mulligan1);
+        return new SetupResult(firstPlayerIndex, 0, 0);
     }
 
     // -------------------------------------------------------------------------

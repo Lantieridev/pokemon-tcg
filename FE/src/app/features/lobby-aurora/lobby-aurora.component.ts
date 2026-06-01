@@ -7,9 +7,13 @@ import {
 } from './ui/aurora-ui.components';
 import { HoloCardComponent, AuroraCardComponent } from './components/cards.components';
 import { DeckRailComponent } from './components/deck-rail.component';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
+import { MatchBackendService } from '../../core/services/match-backend.service';
+import { WebSocketService } from '../../core/services/websocket.service';
+import { MatchStore } from '../../core/store/match.store';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-lobby-aurora',
@@ -35,22 +39,7 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
       <aurora-sparks [n]="10" color="var(--accent2)"></aurora-sparks>
       <div class="bd-noise"></div><div class="bd-vignette"></div>
 
-      <!-- top bar -->
-      <div style="position: absolute; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 6;">
-        <aurora-logo></aurora-logo>
-        <div style="display: flex; align-items: center; gap: 22px;">
-          <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
-            <a routerLink="/lobby" style="text-decoration: none; color: var(--txt);">Inicio</a>
-            <a routerLink="/deck" style="text-decoration: none; color: var(--mut);">Mazos</a>
-            <a routerLink="/profile" style="text-decoration: none; color: var(--mut);">Perfil</a>
-          </nav>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData?.battlePoints ?? 0 }}</div>
-            <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData?.pokecoins ?? 0 }}</div>
-          </div>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1200'"></aurora-trainer-chip>
-        </div>
-      </div>
+      <!-- top bar (now handled by global app-navbar) -->
 
       <!-- hero -->
       <div style="position: absolute; left: 64px; right: 64px; top: 92px; bottom: 150px; display: flex; align-items: center;">
@@ -66,8 +55,8 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
             La arena está despierta. <b style="color: var(--txt); font-weight: 700;">12 480</b> entrenadores buscan rival ahora mismo.
           </p>
           <div class="fu" style="display: flex; align-items: center; gap: 16px; margin-top: 40px; animation-delay: .16s;">
-            <aurora-battle-cta title="BATALLAR" sub="Clasificatoria"></aurora-battle-cta>
-            <button class="ghost-btn"><aurora-icon n="sword" [s]="18"></aurora-icon> Casual</button>
+            <aurora-battle-cta title="BATALLAR" sub="Clasificatoria" (startBattle)="startMatch()"></aurora-battle-cta>
+            <button class="ghost-btn" (click)="startMatch()"><aurora-icon n="sword" [s]="18"></aurora-icon> Casual</button>
           </div>
 
           <!-- quiet rank strip -->
@@ -117,6 +106,10 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
 export class LobbyAuroraComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
+  private router = inject(Router);
+  private matchBackendService = inject(MatchBackendService);
+  private wsService = inject(WebSocketService);
+  private matchStore = inject(MatchStore);
 
   profileData: UserProfileResponseDTO | null = null;
 
@@ -134,6 +127,37 @@ export class LobbyAuroraComponent implements OnInit {
         next: (data) => this.profileData = data,
         error: (err) => console.error('Error fetching profile', err)
       });
+    }
+  }
+
+  async startMatch() {
+    try {
+      const currentUsername = this.authService.username ?? 'AshRivero';
+
+      // Intentamos obtener los mazos del usuario para usar su mazo real, o por defecto deckAId=1
+      let deckId = 1;
+      try {
+        const decks = await firstValueFrom(this.matchBackendService.getDecks());
+        if (decks && decks.length > 0) {
+          deckId = decks[0].id;
+        }
+      } catch (deckError) {
+        console.warn('Could not fetch user decks, defaulting to deck ID 1', deckError);
+      }
+
+      const res = await firstValueFrom(this.matchBackendService.createMatch(currentUsername, 'GarryBot', deckId, 1));
+      const matchId = res.matchId;
+
+      // Cargar estado inicial
+      const initialState = await firstValueFrom(this.matchBackendService.getMatchState(matchId));
+      if (initialState) this.matchStore.updateState(initialState);
+
+      // Conectar WebSocket
+      this.wsService.connect(matchId).subscribe();
+
+      this.router.navigate(['/battle', matchId]);
+    } catch (e) {
+      console.error('Failed to start match in Aurora Lobby', e);
     }
   }
 

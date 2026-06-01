@@ -1,4 +1,4 @@
-import { Component, Input, signal, HostListener, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, HostListener, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 
 @Component({
@@ -158,6 +158,7 @@ export class BallIconComponent {
 export class BattleCtaComponent {
   @Input() title: string = 'BATALLAR';
   @Input() sub: string = 'Clasificatoria · Liga Oro III';
+  @Output() startBattle = new EventEmitter<void>();
   
   searching = signal(false);
   secs = signal(0);
@@ -169,6 +170,7 @@ export class BattleCtaComponent {
     this.intervalId = setInterval(() => {
       this.secs.update(s => s + 1);
     }, 1000);
+    this.startBattle.emit();
   }
 
   stopSearch() {

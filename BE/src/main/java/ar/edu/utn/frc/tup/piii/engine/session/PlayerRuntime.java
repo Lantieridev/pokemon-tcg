@@ -61,7 +61,7 @@ public final class PlayerRuntime {
         this.bench = Objects.requireNonNull(bench, "bench must not be null");
         this.discardPile = Objects.requireNonNull(discardPile, "discardPile must not be null");
         this.statusEffectManager = Objects.requireNonNull(statusEffectManager, "statusEffectManager must not be null");
-        this.activePokemon = Objects.requireNonNull(activePokemon, "activePokemon must not be null");
+        this.activePokemon = activePokemon;
         this.prizePile = new ArrayList<>(Objects.requireNonNull(prizePile, "prizePile must not be null"));
     }
 
@@ -109,7 +109,7 @@ public final class PlayerRuntime {
     }
 
     public void setActivePokemon(final BattlePokemonState pokemon) {
-        this.activePokemon = Objects.requireNonNull(pokemon, "pokemon must not be null");
+        this.activePokemon = pokemon;
     }
 
     public void clearActivePokemon() {

@@ -338,7 +338,7 @@ public final class MatchSession {
      */
     public PlayerRuntime getPlayerRuntime(final int playerIndex) {
         if (playerRuntimes == null) {
-            throw new IllegalStateException("PlayerRuntime not initialized for this session");
+            return null;
         }
         return playerRuntimes.get(playerIndex);
     }
