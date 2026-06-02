@@ -352,11 +352,11 @@ class MatchPersistenceTest {
 
         // Seed matches:
         // Match 1: Alice vs Bob, finished, Alice wins
-        matchRepository.save(MatchEntity.builder().id(3001L).status("FINISHED").player1(alice).player2(bob).winner(alice).build());
+        matchRepository.save(MatchEntity.builder().id(3001L).status("FINISHED").player1(alice).player2(bob).winner(alice).createdAt(java.time.LocalDateTime.now().minusMinutes(10)).build());
         // Match 2: Bob vs Charlie, finished, Bob wins
-        matchRepository.save(MatchEntity.builder().id(3002L).status("FINISHED").player1(bob).player2(charlie).winner(bob).build());
+        matchRepository.save(MatchEntity.builder().id(3002L).status("FINISHED").player1(bob).player2(charlie).winner(bob).createdAt(java.time.LocalDateTime.now().minusMinutes(5)).build());
         // Match 3: Alice vs Charlie, ACTIVE (in progress), winner null
-        matchRepository.save(MatchEntity.builder().id(3003L).status("ACTIVE").player1(alice).player2(charlie).winner(null).build());
+        matchRepository.save(MatchEntity.builder().id(3003L).status("ACTIVE").player1(alice).player2(charlie).winner(null).createdAt(java.time.LocalDateTime.now()).build());
 
         // Get history for Alice: should contain Match 1 and Match 3, but NOT Match 2
         final Slice<MatchHistoryProjectionDto> rawHistoryAlice = matchRepository.findUserMatchHistory("user-x", PageRequest.of(0, 10));
