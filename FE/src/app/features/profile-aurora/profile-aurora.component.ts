@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, inject, OnInit, ViewEncapsulation, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -614,6 +614,7 @@ export class ProfileAuroraComponent implements OnInit {
   private profileService = inject(ProfileService);
   private deckApi = inject(DeckApiService);
   private tcgService = inject(PokemonTcgService);
+  private ngZone = inject(NgZone);
 
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
@@ -735,15 +736,26 @@ export class ProfileAuroraComponent implements OnInit {
   saveProfile(): void {
     if (this.savingProfile) return; // evitar doble click
     this.savingProfile = true;
+
     const activeTitleVal = this.editActiveTitle === 'Ninguno' ? '' : this.editActiveTitle;
     const payload = {
       description: this.editDescription.trim(),
       activeTitle: activeTitleVal,
       avatarIcon: this.editAvatarIcon
     };
+
+    // Timeout de seguridad: si el request tarda más de 10s, libera el botón
+    const safetyTimeout = setTimeout(() => {
+      if (this.savingProfile) {
+        this.savingProfile = false;
+        this.showToast('❌ El servidor tardó demasiado. Intentá de nuevo.', 'error');
+      }
+    }, 10000);
+
     this.profileService.updateProfile(payload).subscribe({
       next: () => {
-        // Actualizar datos localmente de forma inmediata (sin round-trip al servidor)
+        clearTimeout(safetyTimeout);
+        // Actualizar datos localmente de forma inmediata
         if (this.profileData) {
           this.profileData = {
             ...this.profileData,
@@ -762,10 +774,16 @@ export class ProfileAuroraComponent implements OnInit {
         });
       },
       error: (err) => {
+        clearTimeout(safetyTimeout);
         this.savingProfile = false;
-        const msg = err?.error?.message || err?.message || 'Error al guardar el perfil';
+        const status = err?.status;
+        let msg = err?.error?.message || err?.message || 'Error al guardar el perfil';
+        // Si es 401/403, la sesión expiró
+        if (status === 401 || status === 403) {
+          msg = 'Tu sesión expiró. Por favor, cerrá y volvé a iniciar sesión.';
+        }
         this.showToast('❌ ' + msg, 'error');
-        console.error('Error updating profile', err);
+        console.error('Error updating profile [status=' + status + ']', err);
       }
     });
   }
