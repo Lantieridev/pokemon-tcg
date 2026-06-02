@@ -1,5 +1,6 @@
 import { Component, Input, signal, HostListener, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'aurora-icon',
@@ -28,8 +29,9 @@ export class IconComponent {
 @Component({
   selector: 'aurora-logo',
   standalone: true,
+  imports: [RouterModule],
   template: `
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div routerLink="/lobby" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
       <div style="width: 26px; height: 26px; border-radius: 8px; position: relative; background: linear-gradient(140deg, var(--accent), var(--accent-dk)); display: flex; align-items: center; justify-content: center;">
         <div style="width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid var(--on-accent); position: relative;">
           <span style="position: absolute; left: -5px; right: -5px; top: 50%; height: 2.5px; background: var(--on-accent); transform: translateY(-50%);"></span>
@@ -106,7 +108,7 @@ export class LogoComponent {}
 })
 export class TrainerChipComponent {
   @Input() name: string = 'NOVA';
-  @Input() mmr: string = '1842';
+  @Input() mmr: string = '1000';
   @Input() initial: string = 'N';
 
   open = false;

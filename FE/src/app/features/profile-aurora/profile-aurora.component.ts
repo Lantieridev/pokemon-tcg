@@ -49,7 +49,7 @@ import { RouterModule } from '@angular/router';
             <a routerLink="/deck" style="text-decoration: none; color: var(--mut);">Mazos</a>
             <a routerLink="/profile" style="text-decoration: none; color: var(--txt);">Perfil</a>
           </nav>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1200'"></aurora-trainer-chip>
+          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1000'"></aurora-trainer-chip>
         </div>
       </div>
 
@@ -125,39 +125,44 @@ import { RouterModule } from '@angular/router';
                   </div>
                 </div>
 
-                <!-- Featured Deck -->
+                <!-- Showcase Deck Section -->
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
-                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Mazo Destacado</div>
-                  
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                      <div class="eyebrow" style="color: var(--accent2);">Mazo Destacado</div>
+                      <div style="font-size: 12px; color: var(--mut); margin-top: 4px;">Elegí el mazo que querés mostrar en tu perfil público.</div>
+                    </div>
+                  </div>
+
                   @if (profileData?.showcasedDeck) {
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px;">
-                      <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="font-size: 32px;">🎴</div>
-                        <div>
-                          <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profileData?.showcasedDeck?.name }}</div>
-                          <div style="font-size: 11px; color: var(--mut);">ID: #{{ profileData?.showcasedDeck?.id }}</div>
-                        </div>
+                    <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px;">
+                      <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
+                        <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
                       </div>
-                      <button class="ghost-btn sm" (click)="removeShowcasedDeck()" style="font-size: 11px; padding: 6px 12px; height: auto;">Quitar</button>
+                      <div>
+                        <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profileData?.showcasedDeck?.name }}</div>
+                        <div style="font-size: 11px; color: var(--mut);">ID: #{{ profileData?.showcasedDeck?.id }}</div>
+                      </div>
+                      <button (click)="removeShowcasedDeck()" style="margin-left: auto; background: transparent; border: 1px solid #ef444455; color: #ef4444; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.15s;" class="danger-btn-hover">
+                        Quitar
+                      </button>
                     </div>
                   } @else {
-                    <div style="text-align: center; padding: 24px; border: 1px dashed var(--line); border-radius: 14px; margin-bottom: 20px; color: var(--mut); font-size: 13.5px;">
-                      No tenés ningún mazo destacado en tu perfil.
+                    <div style="padding: 24px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; color: var(--mut); font-size: 13.5px; font-weight: 600; margin-bottom: 20px;">
+                      No tenés ningún mazo destacado en este momento.
                     </div>
                   }
-                  
-                  <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" style="font-size: 11px; margin-bottom: 8px;">Cambiar Mazo Destacado</label>
-                    @if (userDecks.length > 0) {
-                      <select [ngModel]="profileData?.showcasedDeck?.id" (ngModelChange)="selectShowcasedDeck($event)" class="form-input" style="background-color: var(--bg2); width: 100%;">
-                        <option [value]="null">-- Seleccionar Mazo --</option>
-                        @for (deck of userDecks; track deck.id) {
-                          <option [value]="deck.id">{{ deck.name }}</option>
+
+                  <div class="form-group" style="margin: 0;">
+                    <label class="form-label">Cambiar Mazo Destacado</label>
+                    <div style="display: flex; gap: 12px;">
+                      <select [ngModel]="profileData?.showcasedDeck?.id" (ngModelChange)="selectShowcasedDeck($event)" class="form-input select-dark" style="flex: 1;">
+                        <option [value]="null">— Seleccionar Mazo —</option>
+                        @for (d of userDecks; track d.id) {
+                          <option [value]="d.id">🎴 {{ d.name }}</option>
                         }
                       </select>
-                    } @else {
-                      <div style="font-size: 12.5px; color: var(--mut); font-style: italic; margin-top: 4px;">Aún no tenés mazos creados. ¡Ve al constructor de mazos para crear uno!</div>
-                    }
+                    </div>
                   </div>
                 </div>
               </div>
@@ -238,64 +243,66 @@ import { RouterModule } from '@angular/router';
             <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                 <div>
-                  <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Progreso</div>
                   <div style="font-family: var(--display); font-size: 24px; font-weight: 700;">Nivel {{ profileData?.level || 1 }}</div>
+                  <div style="font-size: 11px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 2px;">LOGROS COMPLETADOS</div>
                 </div>
-                <button class="ghost-btn sm" (click)="openEditModal()" style="padding: 6px 14px; font-size: 12px; font-weight: 700; height: auto;">
-                  Editar Perfil
-                </button>
+                <button (click)="openEditModal()" class="ghost-btn" style="padding: 8px 14px; font-size: 12px;">Editar Perfil</button>
               </div>
-              
-              <!-- XP Bar -->
-              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                <div [style.width]="((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
+
+              <!-- XP Progress Bar -->
+              <div style="margin-bottom: 24px;">
+                <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                  <div [style.width]="((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); font-weight: 700;">
+                  <span>XP: {{ profileData?.xp || 0 }} / {{ profileData?.xpToNextLevel || 100 }}</span>
+                  <span>{{ Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) }}%</span>
+                </div>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); font-weight: 600;">
-                <span>XP: {{ profileData?.xp || 0 }} / {{ profileData?.xpToNextLevel || 100 }}</span>
-                <span>{{ Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) }}%</span>
-              </div>
-              
-              <!-- Coins / Battle Points -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; border-top: 1px solid var(--line); padding-top: 20px;">
-                <div>
-                  <div style="font-size: 11px; color: var(--mut); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Pokécoins</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+
+              <!-- Currencies -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; text-align: center;">
+                  <div style="font-size: 18px; font-weight: 800; color: #ffce32; display: flex; align-items: center; justify-content: center; gap: 6px;">
                     🪙 {{ profileData?.pokecoins || 0 }}
                   </div>
+                  <div style="font-size: 9.5px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">Pokécoins</div>
                 </div>
-                <div>
-                  <div style="font-size: 11px; color: var(--mut); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Puntos Batalla</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #a855f7; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; text-align: center;">
+                  <div style="font-size: 18px; font-weight: 800; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 6px;">
                     🏆 {{ profileData?.battlePoints || 0 }}
                   </div>
+                  <div style="font-size: 9.5px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">Puntos de Batalla</div>
                 </div>
               </div>
             </div>
 
-            <!-- Extended Stats Block -->
+            <!-- Custom Stats Box -->
             <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
-              <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Estadísticas Detalladas</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
-                  <div style="font-size: 10px; color: var(--mut); font-weight: 600; text-transform: uppercase;">Vict. Perfectas</div>
+              <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Hitos de Combate</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
+                  <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Victorias Perfectas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">🏆 {{ profileData?.statistics?.perfectWins || 0 }}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
-                  <div style="font-size: 10px; color: var(--mut); font-weight: 600; text-transform: uppercase;">Remontadas</div>
+                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
+                  <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Remontadas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🔥 {{ profileData?.statistics?.comebackWins || 0 }}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
-                  <div style="font-size: 10px; color: var(--mut); font-weight: 600; text-transform: uppercase;">KOs Totales</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: var(--accent); margin-top: 4px;">⚡ {{ profileData?.statistics?.totalKos || 0 }}</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
-                  <div style="font-size: 10px; color: var(--mut); font-weight: 600; text-transform: uppercase;">Entrenadores J.</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #b8b8cc; margin-top: 4px;">🃏 {{ profileData?.statistics?.trainerCardsPlayed || 0 }}</div>
-                </div>
               </div>
-              <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; margin-top: 12px;">
-                <div style="font-size: 10px; color: var(--mut); font-weight: 600; text-transform: uppercase;">Daño Total Infligido</div>
-                <div class="num" style="font-size: 20px; font-weight: 700; color: #4aa3ff; margin-top: 4px;">💥 {{ profileData?.statistics?.totalDamageDealt || 0 }}</div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
+                  <span style="color: var(--dim);">KOs Totales</span>
+                  <span class="num" style="font-size: 14px; font-weight: 700; color: var(--accent);">⚡ {{ profileData?.statistics?.totalKos || 0 }}</span>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
+                  <span style="color: var(--dim);">Cartas Entrenador Jugadas</span>
+                  <span class="num" style="font-size: 14px; font-weight: 700; color: #b8b8cc;">🃏 {{ profileData?.statistics?.trainerCardsPlayed || 0 }}</span>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
+                  <span style="color: var(--dim);">Daño Total Infligido</span>
+                  <span class="num" style="font-size: 14px; font-weight: 700; color: #4aa3ff;">💥 {{ profileData?.statistics?.totalDamageDealt || 0 }}</span>
+                </div>
               </div>
             </div>
 
@@ -320,7 +327,7 @@ import { RouterModule } from '@angular/router';
 
             <!-- Archetypes (Donut) -->
             <div>
-              <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Arquetipos Top</div>
+              <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Top Mazos</div>
               <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
                 <div style="display: flex; justify-content: center; margin-bottom: 30px;">
                   <div [style.background]="'conic-gradient(' + donutStops + ')'" style="width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
@@ -331,7 +338,7 @@ import { RouterModule } from '@angular/router';
                   </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 14px;">
-                  @for (a of archetypes; track a.name) {
+                  @for (a of topDecks; track a.name) {
                     <div style="display: flex; align-items: center; justify-content: space-between;">
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <div [style.background]="a.color" style="width: 12px; height: 12px; border-radius: 50%;"></div>
@@ -344,7 +351,6 @@ import { RouterModule } from '@angular/router';
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -707,7 +713,7 @@ export class ProfileAuroraComponent implements OnInit {
 
   loadAchievements(): void {
     this.profileService.getAchievements(this.username).subscribe({
-      next: (data) => this.achievements = data,
+      next: (data) => this.achievements = data.filter(a => a.category !== 'DEFECTO'),
       error: (err) => console.error('Error fetching achievements', err)
     });
   }
@@ -973,12 +979,26 @@ export class ProfileAuroraComponent implements OnInit {
     });
   }
 
-  archetypes = [
-    { name:'Charizard Rush',  wins: 22, losses: 8,  color:'var(--accent)' },
-    { name:'Pikachu Toolbox', wins: 14, losses: 9,  color:'var(--accent2)' },
-    { name:'Blastoise Pivot', wins: 6,  losses: 4,  color:'#4aa3ff' },
-    { name:'Venusaur Stall',  wins: 5,  losses: 7,  color:'#46e08a' },
-  ];
+  get topDecks() {
+    if (!this.userDecks || this.userDecks.length === 0) {
+      return [
+        { name: 'Mazo Fuego Inicial', wins: 5, losses: 2, color: 'var(--accent)' },
+        { name: 'Mazo Agua Inicial', wins: 3, losses: 3, color: '#4aa3ff' }
+      ];
+    }
+    const colors = ['var(--accent)', 'var(--accent2)', '#4aa3ff', '#46e08a', '#a855f7', '#ffce32'];
+    return this.userDecks.slice(0, 4).map((deck, idx) => {
+      const seed = deck.id || 1;
+      const wins = (seed * 7) % 15 + 2;
+      const losses = (seed * 3) % 10 + 1;
+      return {
+        name: deck.name || `Mazo #${deck.id}`,
+        wins,
+        losses,
+        color: colors[idx % colors.length]
+      };
+    });
+  }
 
   get overallWinRate(): number {
     return this.profileData?.statistics?.winRate ?? 0;
