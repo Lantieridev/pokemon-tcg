@@ -193,6 +193,29 @@ public class ProfileServiceTest {
     }
 
     @Test
+    public void testUpdateProfileClearTitle() {
+        final UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .level(1)
+                .xp(10)
+                .unlockedTitles(new HashSet<>(List.of("Novato")))
+                .activeTitle("Novato")
+                .build();
+
+        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+
+        final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
+                .activeTitle("")
+                .build();
+
+        profileService.updateProfile("lucas", request);
+
+        verify(userRepository, times(1)).save(user);
+        org.junit.jupiter.api.Assertions.assertNull(user.getActiveTitle());
+    }
+
+    @Test
     public void testUpdateProfileDescriptionTooLong() {
         final UserEntity user = UserEntity.builder()
                 .id(1L)

@@ -29,7 +29,23 @@ export class AuthService {
     const userIdRaw = localStorage.getItem('userId');
 
     if (token && username && userIdRaw) {
-      this.currentUser.set({ username, token, userId: Number(userIdRaw) });
+      try {
+        const payloadBase64 = token.split('.')[1];
+        const payloadJson = atob(payloadBase64);
+        const payload = JSON.parse(payloadJson);
+        const exp = payload.exp * 1000;
+        if (Date.now() >= exp) {
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('username');
+          localStorage.removeItem('userId');
+        } else {
+          this.currentUser.set({ username, token, userId: Number(userIdRaw) });
+        }
+      } catch (e) {
+        localStorage.removeItem('jwt');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userId');
+      }
     }
   }
 
