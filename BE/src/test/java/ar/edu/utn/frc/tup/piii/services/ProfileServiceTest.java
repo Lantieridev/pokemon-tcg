@@ -239,7 +239,6 @@ public class ProfileServiceTest {
 
         when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.existsById("XY1_001")).thenReturn(true);
-        when(deckRepository.existsByUserIdAndCardId(1L, "XY1_001")).thenReturn(true);
         when(userShowcaseRepository.findByUserAndSlotPosition(user, 1)).thenReturn(Optional.empty());
 
         final UpdateShowcaseRequestDTO request = UpdateShowcaseRequestDTO.builder()
@@ -276,28 +275,7 @@ public class ProfileServiceTest {
         });
     }
 
-    @Test
-    public void testUpdateShowcaseCardNotOwned() {
-        final UserEntity user = UserEntity.builder()
-                .id(1L)
-                .username("lucas")
-                .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
-        when(cardRepository.existsById("XY1_001")).thenReturn(true);
-        when(deckRepository.existsByUserIdAndCardId(1L, "XY1_001")).thenReturn(false);
-
-        final UpdateShowcaseRequestDTO request = UpdateShowcaseRequestDTO.builder()
-                .slots(List.of(UpdateShowcaseRequestDTO.ShowcaseSlot.builder()
-                        .slotPosition(1)
-                        .cardId("XY1_001")
-                        .build()))
-                .build();
-
-        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            profileService.updateShowcase("lucas", request);
-        });
-    }
 
     @Test
     public void testUpdateShowcaseDeckSuccess() {

@@ -385,7 +385,7 @@ import { RouterModule } from '@angular/router';
 
           <!-- Filter / Information note -->
           <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 12.5px; color: var(--dim); line-height: 1.4;">
-            💡 Solo puedes exhibir cartas que pertenezcan a tu colección y formen parte de alguno de tus mazos guardados.
+            💡 Selecciona cualquier carta de la colección para destacarla en tu vitrina de perfil.
           </div>
 
           <div style="position: relative; margin-bottom: 20px;">
@@ -397,13 +397,8 @@ import { RouterModule } from '@angular/router';
             @if (filteredShowcaseCards.length === 0) {
               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--mut); text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
-                @if (allowedCardIds.size === 0) {
-                  <div style="font-weight: bold; margin-bottom: 6px;">No tienes cartas en tu colección</div>
-                  <div>Para exhibir cartas, primero crea un mazo en la sección "Mazos".</div>
-                } @else {
-                  <div style="font-weight: bold; margin-bottom: 6px;">No se encontraron cartas</div>
-                  <div>Intenta buscar con otro nombre. Recuerda que solo se muestran cartas usadas en tus mazos.</div>
-                }
+                <div style="font-weight: bold; margin-bottom: 6px;">No se encontraron cartas</div>
+                <div>Intenta buscar con otro nombre.</div>
               </div>
             } @else {
               <div class="card-select-grid scroll" style="flex: 1; overflow-y: auto;">
@@ -791,8 +786,6 @@ export class ProfileAuroraComponent implements OnInit {
   get filteredShowcaseCards() {
     const query = this.cardSearchQuery.toLowerCase().trim();
     return Object.values(CARDS).filter((card) => {
-      // Debería estar en la colección (mazos guardados del usuario)
-      if (!this.allowedCardIds.has(card.id)) return false;
       // Filtro de búsqueda por nombre
       if (query && !card.name.toLowerCase().includes(query)) return false;
       return true;

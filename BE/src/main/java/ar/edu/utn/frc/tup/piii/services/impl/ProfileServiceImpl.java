@@ -212,9 +212,6 @@ public class ProfileServiceImpl implements ProfileService {
                 if (!cardRepository.existsById(slot.getCardId())) {
                     throw new IllegalArgumentException("La carta no existe: " + slot.getCardId());
                 }
-                if (!deckRepository.existsByUserIdAndCardId(user.getId(), slot.getCardId())) {
-                    throw new IllegalArgumentException("La carta no pertenece a la colección del usuario: " + slot.getCardId());
-                }
                 if (existingOpt.isPresent()) {
                     final UserShowcaseEntity showcase = existingOpt.get();
                     showcase.setCardId(slot.getCardId());
