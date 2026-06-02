@@ -414,6 +414,7 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista Experto"));
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Coleccionista de Élite"));
         org.junit.jupiter.api.Assertions.assertFalse(titles.contains("Maestro Coleccionista"));
+        org.junit.jupiter.api.Assertions.assertEquals(50, response.getStatistics().getWinStreak());
     }
 
     @Test

@@ -51,7 +51,7 @@ class ProfanityFilterServiceTest {
     @Test
     void shouldDetectProfanities() {
         final String message = "Eres un noob y un idiota";
-        final java.util.List<String> expected = java.util.List.of("noob", "idiota");
+        final java.util.List<String> expected = java.util.List.of("noob", "n00b", "idiota");
         final java.util.List<String> actual = profanityFilterService.getProfaneWords(message);
         assertEquals(expected.size(), actual.size());
         org.junit.jupiter.api.Assertions.assertTrue(actual.containsAll(expected));
