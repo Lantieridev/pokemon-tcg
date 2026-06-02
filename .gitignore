@@ -33,6 +33,10 @@ build/
 .vscode/
 
 ### Custom Project Ignores ###
+# H2 file-based database (local dev data, NOT for version control)
+BE/data/
+*.mv.db
+*.trace.db
 # Agent Framework local cache (contains local absolute paths)
 .atl/
 
