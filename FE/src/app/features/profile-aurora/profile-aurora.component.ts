@@ -579,7 +579,7 @@ import { RouterModule } from '@angular/router';
             <!-- Custom Stats Box -->
             <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
               <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Hitos de Combate</div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Victorias Perfectas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">🏆 {{ profileData?.statistics?.perfectWins || 0 }}</div>
@@ -587,12 +587,6 @@ import { RouterModule } from '@angular/router';
                 <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Cartas Jugadas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🃏 {{ totalCardsPlayed }}</div>
-                </div>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
-                  <span style="color: var(--dim);">Cartas Entrenador Jugadas</span>
-                  <span class="num" style="font-size: 14px; font-weight: 700; color: #b8b8cc;">🃏 {{ profileData?.statistics?.trainerCardsPlayed || 0 }}</span>
                 </div>
               </div>
             </div>
