@@ -49,7 +49,7 @@ import { RouterModule } from '@angular/router';
             <a routerLink="/deck" style="text-decoration: none; color: var(--mut);">Mazos</a>
             <a routerLink="/profile" style="text-decoration: none; color: var(--txt);">Perfil</a>
           </nav>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1000'"></aurora-trainer-chip>
+          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() ?? ''"></aurora-trainer-chip>
         </div>
       </div>
 

@@ -48,7 +48,7 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
             <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData?.battlePoints ?? 0 }}</div>
             <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData?.pokecoins ?? 0 }}</div>
           </div>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1000'"></aurora-trainer-chip>
+          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() ?? ''"></aurora-trainer-chip>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
               <div style="font-weight: 800; font-size: 15px; margin-top: 3px;">Oro III</div>
             </div>
-            <aurora-stat [v]="(profileData?.mmr ?? 1000).toString()" k="MMR"></aurora-stat>
+            <aurora-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></aurora-stat>
             <aurora-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></aurora-stat>
             <div>
               <div class="num" style="display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--accent);">

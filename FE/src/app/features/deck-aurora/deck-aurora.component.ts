@@ -41,7 +41,7 @@ interface Filters {
             <a routerLink="/deck" style="text-decoration: none; color: var(--txt);">Mazos</a>
             <a routerLink="/profile" style="text-decoration: none; color: var(--mut);">Perfil</a>
           </nav>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() || '1000'"></aurora-trainer-chip>
+          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() ?? ''"></aurora-trainer-chip>
         </div>
       </div>
 
