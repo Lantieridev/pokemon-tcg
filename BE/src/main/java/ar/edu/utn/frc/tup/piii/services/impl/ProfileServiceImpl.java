@@ -178,8 +178,9 @@ public class ProfileServiceImpl implements ProfileService {
                 user.setDescription(request.getDescription());
             }
             if (request.getActiveTitle() != null) {
-                // Solo equipar si el título está desbloqueado
-                if (user.getUnlockedTitles().contains(request.getActiveTitle())) {
+                if (request.getActiveTitle().trim().isEmpty()) {
+                    user.setActiveTitle(null);
+                } else if (user.getUnlockedTitles().contains(request.getActiveTitle())) {
                     user.setActiveTitle(request.getActiveTitle());
                 }
             }
