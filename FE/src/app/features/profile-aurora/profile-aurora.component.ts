@@ -367,33 +367,49 @@ import { RouterModule } from '@angular/router';
             </div>
           </div>
 
-          <!-- Description selection -->
+          <!-- Description -->
           <div class="form-group">
             <label class="form-label">Descripción</label>
-            <textarea [(ngModel)]="editDescription" class="form-input" rows="3" maxlength="150" placeholder="Escribe tu descripción de entrenador..." style="resize: none;"></textarea>
-            <div style="text-align: right; font-size: 11px; color: var(--mut); margin-top: 4px;">
-              {{ editDescription.length }} / 150
+            <textarea
+              [(ngModel)]="editDescription"
+              (ngModelChange)="validateDescription()"
+              class="form-input"
+              [style.border-color]="descriptionError ? '#f87171' : ''"
+              rows="3" maxlength="150"
+              placeholder="Escribe tu descripción de entrenador..."
+              style="resize: none;"></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 6px;">
+              @if (descriptionError) {
+                <div style="font-size: 11.5px; color: #f87171; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                  ⚠️ {{ descriptionError }}
+                </div>
+              } @else {
+                <div></div>
+              }
+              <div [style.color]="editDescription.length >= 140 ? '#f87171' : 'var(--mut)'" style="font-size: 11px; flex-shrink: 0;">
+                {{ editDescription.length }} / 150
+              </div>
             </div>
           </div>
 
           <!-- Title selection -->
           <div class="form-group">
             <label class="form-label">Título Activo</label>
-            <select [(ngModel)]="editActiveTitle" class="form-input" style="background-color: var(--bg2);">
-              <option value="Ninguno">Ninguno</option>
+            <select [(ngModel)]="editActiveTitle" class="form-input select-dark">
+              <option value="Ninguno" class="select-option">— Ninguno —</option>
               @for (title of profileData?.unlockedTitles; track title) {
-                <option [value]="title">{{ title }}</option>
+                <option [value]="title" class="select-option">🏅 {{ title }}</option>
               }
             </select>
             @if (!profileData?.unlockedTitles || profileData?.unlockedTitles?.length === 0) {
-              <div style="font-size: 11.5px; color: var(--mut); margin-top: 6px; font-style: italic;">Aún no has desbloqueado títulos. Cumple logros para obtenerlos.</div>
+              <div style="font-size: 11.5px; color: var(--mut); margin-top: 6px; font-style: italic;">Aún no tenés títulos desbloqueados. Completá logros para obtenerlos.</div>
             }
           </div>
 
           <!-- Actions -->
           <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
             <button class="ghost-btn" (click)="closeEditModal()" [disabled]="savingProfile">Cancelar</button>
-            <button class="cta" (click)="saveProfile()" [disabled]="savingProfile" style="padding: 10px 24px; font-size: 13px;">
+            <button class="cta" (click)="saveProfile()" [disabled]="savingProfile || !!descriptionError" style="padding: 10px 24px; font-size: 13px;">
               @if (savingProfile) { Guardando... } @else { Guardar Cambios }
             </button>
           </div>
@@ -554,9 +570,27 @@ import { RouterModule } from '@angular/router';
         font-family: 'Manrope';
         font-size: 14.5px;
         transition: border-color 0.2s;
+        box-sizing: border-box;
       }
       .form-input:focus {
         border-color: var(--accent);
+      }
+      /* Fix select dropdown options - force dark background */
+      .select-dark {
+        background: #1a1a2e !important;
+        color: var(--txt) !important;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 14px center !important;
+        padding-right: 36px !important;
+      }
+      .select-option {
+        background: #1a1a2e;
+        color: #e8e8f0;
+        padding: 10px;
       }
       
       .avatar-option {
@@ -627,6 +661,7 @@ export class ProfileAuroraComponent implements OnInit {
   editActiveTitle = '';
   editAvatarIcon = '';
   savingProfile = false;
+  descriptionError = '';
   avatars = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
 
   // Toast notification state
@@ -719,11 +754,46 @@ export class ProfileAuroraComponent implements OnInit {
     this.editDescription = this.profileData?.description || '';
     this.editActiveTitle = this.profileData?.activeTitle || 'Ninguno';
     this.editAvatarIcon = this.profileData?.avatarIcon || 'ash';
+    this.descriptionError = '';
     this.showEditModal = true;
   }
 
   closeEditModal(): void {
     this.showEditModal = false;
+    this.descriptionError = '';
+  }
+
+  // Lista espejo de palabras bloqueadas (misma que el backend) para validación en tiempo real
+  private static readonly BLOCKED_WORDS = [
+    'tonto','idiota','estupido','estupido','imbecil','imbecil',
+    'bobo','burro','inutil','inutil','mierda','puta','perra',
+    'culo','pene','gilipollas','cono','cabron','cabron','pendejo',
+    'chinga','mamada','bastardo','hdp','hijodeputa','hijo de puta',
+    'malparido','marica','maricon','maricon','culero','tarado',
+    'mogolico','mogolico','subnormal','retrasado','mongolico','mongolico',
+    'loser','noob','cheat','cheater','idiot','stupid','moron',
+    'dumbass','asshole','bastard','bitch','shit','fuck','fucking',
+    'penis','dick','cock','cunt'
+  ];
+
+  validateDescription(): void {
+    const text = this.editDescription.trim().toLowerCase()
+      // normalizar acentos
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      // leet speak basico
+      .replace(/4/g,'a').replace(/3/g,'e').replace(/1/g,'i')
+      .replace(/0/g,'o').replace(/5/g,'s').replace(/7/g,'t');
+
+    const found = ProfileAuroraComponent.BLOCKED_WORDS.find(w => {
+      const normalized = w.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/4/g,'a').replace(/3/g,'e').replace(/1/g,'i')
+        .replace(/0/g,'o').replace(/5/g,'s').replace(/7/g,'t');
+      const regex = new RegExp('\\b' + normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+      return regex.test(text);
+    });
+
+    this.descriptionError = found ? `Palabra no permitida detectada. Por favor revisá tu descripción.` : '';
   }
 
   showToast(message: string, type: 'success' | 'error' = 'success'): void {
