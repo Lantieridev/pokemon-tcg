@@ -2,10 +2,10 @@ import { Component, inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { CARDS } from '../../shared/data/cards.mock';
 import { AuthService } from '../../core/services/auth.service';
-import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO } from '../../core/services/profile.service';
+import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO, MatchHistoryItemDTO } from '../../core/services/profile.service';
 import { DeckApiService } from '../deck/deck-api.service';
+import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
 import { RouterModule } from '@angular/router';
 
@@ -87,16 +87,20 @@ import { RouterModule } from '@angular/router';
               <div style="display: flex; flex-direction: column; gap: 30px;">
                 <!-- Card Showcase -->
                 <div>
-                  <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Vitrina de Cartas Destacadas</div>
+                  <div class="eyebrow" style="margin-bottom: 12px; color: var(--accent2);">Vitrina de Cartas Destacadas</div>
+                  <div style="font-size: 12px; color: var(--mut); margin-bottom: 16px;">💡 Puedes arrastrar y soltar cartas del buscador directamente en los slots, o hacer clic en ellos.</div>
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     @for (pos of [1, 2, 3]; track pos) {
                       @let slot = getShowcaseSlot(pos);
-                      <div class="showcase-slot" (click)="openCardSelector(pos)">
+                      <div class="showcase-slot" 
+                           (click)="openCardSelector(pos)"
+                           (dragover)="allowDrop($event)"
+                           (drop)="handleDropOnSlot($event, pos)">
                         @if (slot) {
                           <img [src]="getCardImageById(slot.cardId)" [alt]="slot.cardName" style="max-height: 100%; max-width: 100%; pointer-events: none;" />
                           <button class="remove-btn" (click)="removeCardFromShowcase(pos, $event)">×</button>
                         } @else {
-                          <div style="text-align: center; color: var(--mut); padding: 20px;">
+                          <div style="text-align: center; color: var(--mut); padding: 20px; pointer-events: none;">
                             <div style="font-size: 28px; margin-bottom: 8px;">+</div>
                             <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Vacío</div>
                           </div>
@@ -153,14 +157,14 @@ import { RouterModule } from '@angular/router';
                     <div style="text-align: center; color: var(--mut); padding: 40px;">No se encontraron logros.</div>
                   }
                   @for (ach of achievements; track ach.title) {
-                    <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px;" [style.opacity]="ach.unlocked ? '1' : '0.7'">
                       <div style="display: flex; align-items: flex-start; justify-content: space-between;">
                         <div>
                           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <span style="font-weight: 700; font-size: 15px; color: var(--txt);">{{ ach.title }}</span>
                             <span [style.background]="getCategoryColor(ach.category)" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; color: #111; text-transform: uppercase;">{{ ach.category }}</span>
                           </div>
-                          <div style="font-size: 12px; color: var(--mut); margin-top: 6px;">{{ ach.requirement }}</div>
+                          <div style="font-size: 12.5px; color: var(--mut); margin-top: 6px;">{{ ach.requirement }}</div>
                         </div>
                         <div style="font-size: 18px;">
                           {{ ach.unlocked ? '✅' : '🔒' }}
@@ -172,7 +176,7 @@ import { RouterModule } from '@angular/router';
                         <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
                           <div [style.width]="(Math.min(ach.progress, ach.target) / ach.target * 100) + '%'" [style.background]="ach.unlocked ? 'linear-gradient(90deg, #46e08a, #27ae60)' : 'linear-gradient(90deg, var(--accent), var(--accent2))'" style="height: 100%; border-radius: 3px;"></div>
                         </div>
-                        <span class="num" style="font-size: 12px; color: var(--dim); width: 60px; text-align: right;">{{ ach.progress }} / {{ ach.target }}</span>
+                        <span class="num" style="font-size: 12px; color: var(--dim); width: 65px; text-align: right;">{{ ach.progress }} / {{ ach.target }}</span>
                       </div>
                     </div>
                   }
@@ -180,25 +184,33 @@ import { RouterModule } from '@angular/router';
               </div>
             }
 
-            <!-- Tab content: Match History -->
+            <!-- Tab content: Match History (Real) -->
             @if (activeTab === 'history') {
               <div>
                 <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Historial Reciente</div>
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; backdrop-filter: blur(10px);">
-                  @for (m of matches; track m.id) {
-                    <div style="display: grid; grid-template-columns: 60px 1fr 1fr 80px 100px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.2s;" class="match-row-hover">
-                      <div [style.color]="m.w ? 'var(--accent)' : 'var(--mut)'" style="font-family: var(--display); font-size: 24px; font-weight: 700;">{{ m.w ? 'W' : 'L' }}</div>
-                      <div>
-                        <div style="font-weight: 700; font-size: 15px;">{{ m.deck }}</div>
-                        <div style="font-size: 11px; color: var(--mut); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">Tú</div>
+                  @if (loadingHistory) {
+                    <div style="text-align: center; padding: 40px; color: var(--mut);">Cargando historial de partidas...</div>
+                  } @else if (matchesHistory.length === 0) {
+                    <div style="text-align: center; padding: 40px; color: var(--mut);">No se registran partidas en tu historial.</div>
+                  } @else {
+                    @for (m of matchesHistory; track m.matchId) {
+                      <div style="display: grid; grid-template-columns: 60px 1fr 1fr 120px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.2s;" class="match-row-hover">
+                        <div [style.color]="m.result === 'WIN' ? '#46e08a' : 'var(--accent)'" style="font-family: var(--display); font-size: 24px; font-weight: 700;">
+                          {{ m.result === 'WIN' ? 'W' : 'L' }}
+                        </div>
+                        <div>
+                          <div style="font-weight: 700; font-size: 15px;">Partida #{{ m.matchId }}</div>
+                          <div style="font-size: 11px; color: var(--mut); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">{{ m.status }}</div>
+                        </div>
+                        <div>
+                          <div style="font-weight: 600; font-size: 14px; color: var(--dim);">vs {{ m.opponent }}</div>
+                        </div>
+                        <div style="text-align: right; color: var(--dim); font-size: 12px; font-weight: 600;">
+                          {{ m.date | date:'dd/MM/yyyy HH:mm' }}
+                        </div>
                       </div>
-                      <div>
-                        <div style="font-weight: 600; font-size: 14px; color: var(--dim);">vs {{ m.opp }}</div>
-                        <div style="font-size: 11px; color: var(--mut); margin-top: 4px;">Oponente: {{ m.vs }}</div>
-                      </div>
-                      <div class="num" [style.color]="m.w ? '#46e08a' : '#ff3b47'" style="font-size: 15px; font-weight: 700;">{{ m.lp > 0 ? '+' : '' }}{{ m.lp }} LP</div>
-                      <div style="text-align: right; color: var(--dim); font-size: 12px; font-weight: 600;">{{ m.ago }}</div>
-                    </div>
+                    }
                   }
                 </div>
               </div>
@@ -403,8 +415,11 @@ import { RouterModule } from '@angular/router';
             } @else {
               <div class="card-select-grid scroll" style="flex: 1; overflow-y: auto;">
                 @for (card of filteredShowcaseCards; track card.id) {
-                  <div class="card-select-item" (click)="selectCardForShowcase(card.id)">
-                    <img [src]="card.img" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain;" />
+                  <div class="card-select-item" 
+                       (click)="selectCardForShowcase(card.id)"
+                       draggable="true" 
+                       (dragstart)="handleDragStart($event, card.id)">
+                    <img [src]="card.images?.small || card.images?.large" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
                   </div>
                 }
               </div>
@@ -582,12 +597,11 @@ export class ProfileAuroraComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   private deckApi = inject(DeckApiService);
-  private http = inject(HttpClient);
+  private tcgService = inject(PokemonTcgService);
 
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
   userDecks: any[] = [];
-  allowedCardIds = new Set<string>();
   activeTab: 'showcase' | 'achievements' | 'history' = 'showcase';
 
   // Edit Profile form state
@@ -603,6 +617,10 @@ export class ProfileAuroraComponent implements OnInit {
   selectedSlotPosition: number | null = null;
   cardSearchQuery = '';
 
+  // Match History state
+  matchesHistory: MatchHistoryItemDTO[] = [];
+  loadingHistory = false;
+
   get username(): string {
     return this.authService.username ?? 'Invitado';
   }
@@ -612,6 +630,7 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.tcgService.loadCards();
     this.loadProfile();
   }
 
@@ -622,6 +641,7 @@ export class ProfileAuroraComponent implements OnInit {
           this.profileData = data;
           this.loadAchievements();
           this.loadUserDecks();
+          this.loadHistory();
         },
         error: (err) => console.error('Error fetching profile', err)
       });
@@ -639,27 +659,24 @@ export class ProfileAuroraComponent implements OnInit {
     const userId = this.authService.userId;
     if (userId) {
       this.deckApi.getDecksByUserId(userId).subscribe({
-        next: (decks) => {
-          this.userDecks = decks;
-          this.allowedCardIds.clear();
-          
-          // Fetch card IDs for all user decks to restrict showcase options to user's collection
-          decks.forEach((deck) => {
-            this.http.get<any>(`http://localhost:8081/api/decks/${deck.id}`).subscribe({
-              next: (fullDeck) => {
-                if (fullDeck && fullDeck.cards) {
-                  fullDeck.cards.forEach((c: any) => {
-                    this.allowedCardIds.add(c.cardId);
-                  });
-                }
-              },
-              error: (err) => console.error(`Error loading deck ${deck.id}`, err)
-            });
-          });
-        },
+        next: (decks) => this.userDecks = decks,
         error: (err) => console.error('Error fetching user decks', err)
       });
     }
+  }
+
+  loadHistory(): void {
+    this.loadingHistory = true;
+    this.profileService.getUserHistory(0, 10).subscribe({
+      next: (res) => {
+        this.matchesHistory = res.content || [];
+        this.loadingHistory = false;
+      },
+      error: (err) => {
+        console.error('Error fetching match history', err);
+        this.loadingHistory = false;
+      }
+    });
   }
 
   getAvatarEmoji(icon: string | undefined): string {
@@ -677,10 +694,9 @@ export class ProfileAuroraComponent implements OnInit {
 
   // Edit Profile Modal
   openEditModal(): void {
-    if (!this.profileData) return;
-    this.editDescription = this.profileData.description || '';
-    this.editActiveTitle = this.profileData.activeTitle || 'Ninguno';
-    this.editAvatarIcon = this.profileData.avatarIcon || 'ash';
+    this.editDescription = this.profileData?.description || '';
+    this.editActiveTitle = this.profileData?.activeTitle || 'Ninguno';
+    this.editAvatarIcon = this.profileData?.avatarIcon || 'ash';
     this.showEditModal = true;
   }
 
@@ -714,7 +730,8 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   getCardImageById(cardId: string): string {
-    return CARDS[cardId]?.img || '';
+    const card = this.tcgService.cards().find(c => c.id === cardId);
+    return card?.images?.small ?? card?.images?.large ?? '';
   }
 
   openCardSelector(slotPosition: number): void {
@@ -754,6 +771,32 @@ export class ProfileAuroraComponent implements OnInit {
     });
   }
 
+  // Showcase Drag & Drop support
+  handleDragStart(event: DragEvent, cardId: string): void {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('text/cardId', cardId);
+      event.dataTransfer.effectAllowed = 'copy';
+    }
+  }
+
+  allowDrop(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  handleDropOnSlot(event: DragEvent, slotPosition: number): void {
+    event.preventDefault();
+    if (!event.dataTransfer) return;
+    const cardId = event.dataTransfer.getData('text/cardId');
+    if (cardId) {
+      this.profileService.updateShowcase({
+        slots: [{ slotPosition, cardId }]
+      }).subscribe({
+        next: () => this.loadProfile(),
+        error: (err) => console.error('Error dropping card on showcase', err)
+      });
+    }
+  }
+
   // Showcased Deck
   selectShowcasedDeck(deckIdVal: any): void {
     const deckId = deckIdVal === 'null' || !deckIdVal ? null : Number(deckIdVal);
@@ -785,23 +828,12 @@ export class ProfileAuroraComponent implements OnInit {
 
   get filteredShowcaseCards() {
     const query = this.cardSearchQuery.toLowerCase().trim();
-    return Object.values(CARDS).filter((card) => {
+    return this.tcgService.cards().filter((card) => {
       // Filtro de búsqueda por nombre
       if (query && !card.name.toLowerCase().includes(query)) return false;
       return true;
     });
   }
-
-  cards = CARDS;
-
-  matches = [
-    { id:1, w:true,  deck:'Charizard Rush',  vs:'BrockSteel',  opp:'Alakazam Mill', turns:14, lp:+22, ago:'hace 2 h' },
-    { id:2, w:false, deck:'Charizard Rush',  vs:'GaryOak',     opp:'Blastoise Pivot', turns:21, lp:-18, ago:'hace 4 h' },
-    { id:3, w:true,  deck:'Pikachu Toolbox', vs:'MistyW',      opp:'Gyarados Burn',  turns:11, lp:+26, ago:'hace 5 h' },
-    { id:4, w:true,  deck:'Charizard Rush',  vs:'JessieR',     opp:'Meowth Greed',   turns:9,  lp:+24, ago:'hace 1 d' },
-    { id:5, w:false, deck:'Charizard Rush',  vs:'JamesK',      opp:'Weezing Toxic',  turns:17, lp:-22, ago:'hace 1 d' },
-    { id:6, w:true,  deck:'Pikachu Toolbox', vs:'BluKaz',      opp:'Charizard Rush', turns:13, lp:+25, ago:'hace 2 d' },
-  ];
 
   archetypes = [
     { name:'Charizard Rush',  wins: 22, losses: 8,  color:'var(--accent)' },
