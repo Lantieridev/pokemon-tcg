@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
@@ -167,6 +167,8 @@ export class DeckAuroraComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
 
+  private cdr = inject(ChangeDetectorRef);
+
   readonly filters = signal<Filters>({ search: '', supertype: 'all', subtype: '' });
   readonly saveLoading = signal(false);
   readonly saveSuccess = signal(false);
@@ -214,7 +216,10 @@ export class DeckAuroraComponent implements OnInit {
     this.tcgService.loadCards();
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
-        next: (data) => this.profileData = data,
+        next: (data) => {
+          this.profileData = data;
+          this.cdr.detectChanges();
+        },
         error: (err) => console.error('Error fetching profile', err)
       });
     }
