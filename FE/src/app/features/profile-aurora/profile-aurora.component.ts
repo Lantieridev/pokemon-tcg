@@ -25,6 +25,21 @@ import { RouterModule } from '@angular/router';
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
+      <!-- Toast notification -->
+      @if (toastMessage) {
+        <div
+          [style.background]="toastType === 'success' ? 'linear-gradient(135deg,#1a2a1a,#243024)' : 'linear-gradient(135deg,#2a1a1a,#302424)'"
+          [style.border]="toastType === 'success' ? '1px solid #4caf5088' : '1px solid #f4433688'"
+          [style.color]="toastType === 'success' ? '#81c784' : '#ef9a9a'"
+          style="
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+            z-index: 99999; padding: 14px 28px; border-radius: 12px; font-size: 14px;
+            font-weight: 600; letter-spacing: 0.01em; white-space: nowrap;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: toastIn 0.25s ease;">
+          {{ toastMessage }}
+        </div>
+      }
+
       <!-- Topbar -->
       <div style="position: sticky; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 10; background: linear-gradient(180deg, var(--bg) 0%, transparent 100%);">
         <aurora-logo></aurora-logo>
@@ -590,6 +605,7 @@ import { RouterModule } from '@angular/router';
       
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     </style>
   `
 })
@@ -611,6 +627,11 @@ export class ProfileAuroraComponent implements OnInit {
   editAvatarIcon = '';
   savingProfile = false;
   avatars = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
+
+  // Toast notification state
+  toastMessage = '';
+  toastType: 'success' | 'error' = 'success';
+  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Card selector modal state
   showCardSelector = false;
@@ -704,21 +725,46 @@ export class ProfileAuroraComponent implements OnInit {
     this.showEditModal = false;
   }
 
+  showToast(message: string, type: 'success' | 'error' = 'success'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => { this.toastMessage = ''; }, 3500);
+  }
+
   saveProfile(): void {
+    if (this.savingProfile) return; // evitar doble click
     this.savingProfile = true;
     const activeTitleVal = this.editActiveTitle === 'Ninguno' ? '' : this.editActiveTitle;
-    this.profileService.updateProfile({
-      description: this.editDescription,
+    const payload = {
+      description: this.editDescription.trim(),
       activeTitle: activeTitleVal,
       avatarIcon: this.editAvatarIcon
-    }).subscribe({
+    };
+    this.profileService.updateProfile(payload).subscribe({
       next: () => {
+        // Actualizar datos localmente de forma inmediata (sin round-trip al servidor)
+        if (this.profileData) {
+          this.profileData = {
+            ...this.profileData,
+            description: payload.description,
+            activeTitle: payload.activeTitle || this.profileData.activeTitle,
+            avatarIcon: payload.avatarIcon
+          };
+        }
         this.savingProfile = false;
         this.showEditModal = false;
-        this.loadProfile();
+        this.showToast('✅ Perfil guardado correctamente');
+        // Recarga en segundo plano para sincronizar otros datos
+        this.profileService.getProfile(this.username).subscribe({
+          next: (data) => { this.profileData = data; },
+          error: () => { /* silencioso, los datos locales ya se actualizaron */ }
+        });
       },
       error: (err) => {
         this.savingProfile = false;
+        const msg = err?.error?.message || err?.message || 'Error al guardar el perfil';
+        this.showToast('❌ ' + msg, 'error');
         console.error('Error updating profile', err);
       }
     });

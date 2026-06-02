@@ -8,7 +8,8 @@ import { throwError } from 'rxjs';
 /**
  * Interceptor funcional que inyecta el JWT en todas las peticiones
  * al backend local. NO agrega el header a llamadas externas (pokemontcg.io).
- * Si la respuesta es 401 o 403, limpia la sesión y redirige al login.
+ * Solo hace logout automático en 401 (token inválido o expirado).
+ * El 403 (Forbidden) se deja pasar al manejador de errores del componente.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -32,7 +33,8 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(preparedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (isBackendRequest && (error.status === 401 || error.status === 403)) {
+      // Solo logout en 401 (token inválido/expirado), no en 403
+      if (isBackendRequest && error.status === 401) {
         authService.logout();
         router.navigate(['/login']);
       }
