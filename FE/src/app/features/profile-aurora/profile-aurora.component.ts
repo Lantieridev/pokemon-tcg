@@ -705,6 +705,7 @@ export class ProfileAuroraComponent implements OnInit {
           this.loadAchievements();
           this.loadUserDecks();
           this.loadHistory();
+          this.cdr.detectChanges();
         },
         error: (err) => console.error('Error fetching profile', err)
       });
@@ -713,7 +714,10 @@ export class ProfileAuroraComponent implements OnInit {
 
   loadAchievements(): void {
     this.profileService.getAchievements(this.username).subscribe({
-      next: (data) => this.achievements = data.filter(a => a.category !== 'DEFECTO'),
+      next: (data) => {
+        this.achievements = data.filter(a => a.category !== 'DEFECTO');
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Error fetching achievements', err)
     });
   }
@@ -722,7 +726,10 @@ export class ProfileAuroraComponent implements OnInit {
     const userId = this.authService.userId;
     if (userId) {
       this.deckApi.getDecksByUserId(userId).subscribe({
-        next: (decks) => this.userDecks = decks,
+        next: (decks) => {
+          this.userDecks = decks;
+          this.cdr.detectChanges();
+        },
         error: (err) => console.error('Error fetching user decks', err)
       });
     }
@@ -734,10 +741,12 @@ export class ProfileAuroraComponent implements OnInit {
       next: (res) => {
         this.matchesHistory = res.content || [];
         this.loadingHistory = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error fetching match history', err);
         this.loadingHistory = false;
+        this.cdr.detectChanges();
       }
     });
   }

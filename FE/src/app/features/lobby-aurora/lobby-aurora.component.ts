@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, inject, OnInit } from '@angular/core';
+import { Component, ViewEncapsulation, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   LogoComponent, TrainerChipComponent, RankCrestComponent, 
@@ -60,7 +60,7 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
             <span class="live"></span><span class="eyebrow">Temporada 7 · Liga Oro III</span>
           </div>
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw" style="font-size: 90px; line-height: 0.98; letter-spacing: -0.015em; margin: 22px 0 0; animation-delay: .05s;">
-            Es tu hora,<br /><span class="name-energy" [style.font-style]="titleFont === 'sans' ? 'normal' : 'italic'">NOVA</span>.
+            Es tu hora,<br /><span class="name-energy" [style.font-style]="titleFont === 'sans' ? 'normal' : 'italic'">{{ username }}</span>.
           </h1>
           <p class="fu" style="color: var(--mut); font-size: 17px; line-height: 1.55; margin: 24px 0 0; max-width: 410px; animation-delay: .1s;">
             La arena está despierta. <b style="color: var(--txt); font-weight: 700;">12 480</b> entrenadores buscan rival ahora mismo.
@@ -115,6 +115,7 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
   `
 })
 export class LobbyAuroraComponent implements OnInit {
+  private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
 
@@ -131,7 +132,10 @@ export class LobbyAuroraComponent implements OnInit {
   ngOnInit(): void {
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
-        next: (data) => this.profileData = data,
+        next: (data) => {
+          this.profileData = data;
+          this.cdr.detectChanges();
+        },
         error: (err) => console.error('Error fetching profile', err)
       });
     }
