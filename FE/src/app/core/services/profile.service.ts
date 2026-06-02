@@ -19,8 +19,32 @@ export interface UserProfileResponseDTO {
     matchesWon: number;
     matchesLost: number;
     winRate: number;
+    perfectWins: number;
+    comebackWins: number;
+    totalKos: number;
+    trainerCardsPlayed: number;
+    totalDamageDealt: number;
   };
-  // other fields omitted for brevity
+  honors: Record<string, number>;
+  unlockedTitles: string[];
+  showcase: {
+    slotPosition: number;
+    cardId: string;
+    cardName: string;
+  }[];
+  showcasedDeck: {
+    id: number;
+    name: string;
+  } | null;
+}
+
+export interface UserAchievementProgressDTO {
+  title: string;
+  category: string; // "NIVEL", "VICTORIAS", "PARTIDAS_JUGADAS", "COLECCION", "HONORES", "DEFECTO"
+  unlocked: boolean;
+  requirement: string;
+  progress: number;
+  target: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,4 +55,21 @@ export class ProfileService {
   getProfile(username: string): Observable<UserProfileResponseDTO> {
     return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`);
   }
+
+  getAchievements(username: string): Observable<UserAchievementProgressDTO[]> {
+    return this.http.get<UserAchievementProgressDTO[]>(`${this.API_URL}/${username}/profile/achievements`);
+  }
+
+  updateProfile(request: { avatarIcon: string; description: string; activeTitle: string; }): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/profile`, request);
+  }
+
+  updateShowcase(request: { slots: { slotPosition: number; cardId: string; }[] }): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/profile/showcase`, request);
+  }
+
+  updateShowcaseDeck(deckId: number | null): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/profile/showcase/deck`, { deckId });
+  }
 }
+
