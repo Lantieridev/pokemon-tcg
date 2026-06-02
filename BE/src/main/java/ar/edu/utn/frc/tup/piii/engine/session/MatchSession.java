@@ -330,6 +330,15 @@ public final class MatchSession {
     }
 
     /**
+     * Returns true if player runtimes have been initialized for this session.
+     *
+     * @return true if initialized, false otherwise
+     */
+    public boolean hasPlayerRuntimes() {
+        return playerRuntimes != null;
+    }
+
+    /**
      * Returns the live runtime state for the specified player.
      *
      * @param playerIndex 0 or 1

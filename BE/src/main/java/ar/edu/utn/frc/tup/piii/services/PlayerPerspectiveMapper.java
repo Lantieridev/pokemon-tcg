@@ -40,7 +40,7 @@ public final class PlayerPerspectiveMapper {
         if (session.getPendingSelectionRequest() != null) {
             final var req = session.getPendingSelectionRequest();
             java.util.List<String> options = java.util.Collections.emptyList();
-            if (session.getActivePlayerIndex() == viewerIndex) {
+            if (session.getActivePlayerIndex() == viewerIndex && session.hasPlayerRuntimes()) {
                 final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = session.getPlayerRuntime(viewerIndex);
                 if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
                     options = runtime.getDeck().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
@@ -72,7 +72,7 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final List<String> hand = session.getBoard().getHandOf(playerIndex);
 
-        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
+        final List<String> activeConditions = (activePokemon != null && session.hasPlayerRuntimes()) ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
                 .activeEffects().stream().map(Enum::name).toList() : List.of();
 
         return new GameStateResponseDTO.PlayerView(
@@ -93,7 +93,7 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final int handSize = session.getBoard().getHandOf(opponentIndex).size();
 
-        final List<String> activeConditions = activePokemon != null ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
+        final List<String> activeConditions = (activePokemon != null && session.hasPlayerRuntimes()) ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
                 .activeEffects().stream().map(Enum::name).toList() : List.of();
 
         return new GameStateResponseDTO.OpponentView(
