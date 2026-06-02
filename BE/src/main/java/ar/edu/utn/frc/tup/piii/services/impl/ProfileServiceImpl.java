@@ -14,6 +14,13 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserCardStatEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEnergyStatEntity;
+import ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
+import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.services.HonorService;
 import ar.edu.utn.frc.tup.piii.services.ProfileService;
 import ar.edu.utn.frc.tup.piii.services.ProfanityFilterService;
@@ -40,6 +47,9 @@ public class ProfileServiceImpl implements ProfileService {
     private final HonorService honorService;
     private final DeckRepository deckRepository;
     private final ProfanityFilterService profanityFilterService;
+    private final UserCardStatRepository userCardStatRepository;
+    private final UserEnergyStatRepository userEnergyStatRepository;
+    private final CardMapper cardMapper;
 
     public ProfileServiceImpl(final UserRepository userRepository,
                               final UserShowcaseRepository userShowcaseRepository,
@@ -47,7 +57,10 @@ public class ProfileServiceImpl implements ProfileService {
                               final CardRepository cardRepository,
                               final HonorService honorService,
                               final DeckRepository deckRepository,
-                              final ProfanityFilterService profanityFilterService) {
+                              final ProfanityFilterService profanityFilterService,
+                              final UserCardStatRepository userCardStatRepository,
+                              final UserEnergyStatRepository userEnergyStatRepository,
+                              final CardMapper cardMapper) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.userShowcaseRepository = Objects.requireNonNull(userShowcaseRepository, "userShowcaseRepository must not be null");
         this.matchRepository = Objects.requireNonNull(matchRepository, "matchRepository must not be null");
@@ -55,6 +68,9 @@ public class ProfileServiceImpl implements ProfileService {
         this.honorService = Objects.requireNonNull(honorService, "honorService must not be null");
         this.deckRepository = Objects.requireNonNull(deckRepository, "deckRepository must not be null");
         this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
+        this.userCardStatRepository = Objects.requireNonNull(userCardStatRepository, "userCardStatRepository must not be null");
+        this.userEnergyStatRepository = Objects.requireNonNull(userEnergyStatRepository, "userEnergyStatRepository must not be null");
+        this.cardMapper = Objects.requireNonNull(cardMapper, "cardMapper must not be null");
     }
 
     @Override
@@ -151,6 +167,68 @@ public class ProfileServiceImpl implements ProfileService {
                     .build();
         }
 
+        // 5. Advanced statistics
+        final List<UserCardStatEntity> cardStatEntities = userCardStatRepository.findByUserId(user.getId());
+        final List<UserProfileResponseDTO.CardStatDTO> cardStatDTOs = new ArrayList<>();
+        int totalDmgDealt = 0;
+        int totalDmgReceived = 0;
+        int totalKOsMade = 0;
+        int totalKOsSuffered = 0;
+
+        for (final UserCardStatEntity statEntity : cardStatEntities) {
+            String cardName = "Carta Desconocida";
+            String pokemonType = "COLORLESS";
+            
+            final Optional<CardEntity> cardEntityOpt = cardRepository.findById(statEntity.getCardId());
+            if (cardEntityOpt.isPresent()) {
+                final CardEntity cardEntity = cardEntityOpt.get();
+                cardName = cardEntity.getName();
+                
+                try {
+                    final Card domainCard = cardMapper.map(cardEntity);
+                    if (domainCard instanceof PokemonCard pc) {
+                        pokemonType = pc.getPokemonType().name();
+                    }
+                } catch (Exception e) {
+                    // Fallback
+                }
+            }
+
+            totalDmgDealt += statEntity.getDamageDealt();
+            totalDmgReceived += statEntity.getDamageReceived();
+            totalKOsMade += statEntity.getKosMade();
+            totalKOsSuffered += statEntity.getKosSuffered();
+
+            cardStatDTOs.add(UserProfileResponseDTO.CardStatDTO.builder()
+                    .cardId(statEntity.getCardId())
+                    .cardName(cardName)
+                    .pokemonType(pokemonType)
+                    .timesPlayed(statEntity.getTimesPlayed())
+                    .damageDealt(statEntity.getDamageDealt())
+                    .damageReceived(statEntity.getDamageReceived())
+                    .kosMade(statEntity.getKosMade())
+                    .kosSuffered(statEntity.getKosSuffered())
+                    .build());
+        }
+
+        final List<UserEnergyStatEntity> energyStatEntities = userEnergyStatRepository.findByUserId(user.getId());
+        final List<UserProfileResponseDTO.EnergyStatDTO> energyStatDTOs = new ArrayList<>();
+        for (final UserEnergyStatEntity energyEntity : energyStatEntities) {
+            energyStatDTOs.add(UserProfileResponseDTO.EnergyStatDTO.builder()
+                    .energyType(energyEntity.getEnergyType())
+                    .count(energyEntity.getTimesPlayed())
+                    .build());
+        }
+
+        final UserProfileResponseDTO.AdvancedStatsDTO advancedStatsDTO = UserProfileResponseDTO.AdvancedStatsDTO.builder()
+                .pokemonStats(cardStatDTOs)
+                .energyStats(energyStatDTOs)
+                .totalDamageDealt(totalDmgDealt)
+                .totalDamageReceived(totalDmgReceived)
+                .totalKOsMade(totalKOsMade)
+                .totalKOsSuffered(totalKOsSuffered)
+                .build();
+
         return UserProfileResponseDTO.builder()
                 .username(user.getUsername())
                 .createdAt(user.getCreatedAt())
@@ -168,6 +246,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .unlockedTitles(user.getUnlockedTitles())
                 .showcase(showcaseSlots)
                 .showcasedDeck(showcasedDeckDto)
+                .advancedStats(advancedStatsDTO)
                 .build();
     }
 

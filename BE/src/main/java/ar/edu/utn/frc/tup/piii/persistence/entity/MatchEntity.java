@@ -41,6 +41,12 @@ public class MatchEntity {
     @Convert(converter = ar.edu.utn.frc.tup.piii.services.persistence.MatchSessionJsonConverter.class)
     private ar.edu.utn.frc.tup.piii.engine.session.MatchSession currentState;
 
+    @Column(name = "player1_stats_json", length = 20000)
+    private String player1StatsJson;
+
+    @Column(name = "player2_stats_json", length = 20000)
+    private String player2StatsJson;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -19,7 +19,7 @@ interface Filters {
 @Component({
   selector: 'app-deck-aurora',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, EnergyTypeComponent, NgOptimizedImage],
+  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, NgOptimizedImage],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">

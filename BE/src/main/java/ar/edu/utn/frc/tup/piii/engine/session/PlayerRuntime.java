@@ -29,6 +29,7 @@ public final class PlayerRuntime {
     private final StatusEffectManager statusEffectManager;
     private BattlePokemonState activePokemon;
     private final List<Card> prizePile;
+    private final MatchStatisticsTracker statisticsTracker = new MatchStatisticsTracker();
 
     /**
      * Tracks how many full turns each Pokémon has been in play.
@@ -257,5 +258,9 @@ public final class PlayerRuntime {
             }
         }
         return false;
+    }
+
+    public MatchStatisticsTracker getStatisticsTracker() {
+        return statisticsTracker;
     }
 }

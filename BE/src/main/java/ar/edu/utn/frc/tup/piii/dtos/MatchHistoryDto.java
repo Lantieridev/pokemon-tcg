@@ -7,5 +7,11 @@ public record MatchHistoryDto(
         String opponent,
         String status,
         String result,
-        LocalDateTime date
-) {}
+        LocalDateTime date,
+        String playerStatsJson,
+        String opponentStatsJson
+) {
+    public MatchHistoryDto(Long matchId, String opponent, String status, String result, LocalDateTime date) {
+        this(matchId, opponent, status, result, date, null, null);
+    }
+}

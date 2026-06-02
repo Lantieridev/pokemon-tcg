@@ -24,10 +24,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.springframework.stereotype.Component;
+
 /**
  * Maps a {@link CardEntity} (JPA/persistence) to the appropriate engine domain Card subtype.
  * Lives in the persistence layer — may reference JPA entities; engine classes must not depend on this.
  */
+@Component
 public final class CardMapper {
 
     private static final Map<String, PokemonType> TYPE_BY_NAME;

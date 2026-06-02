@@ -9,6 +9,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageModifier;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageResult;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,8 @@ public final class AttackContext {
     private final KnockoutHandler knockoutHandler;
     private final CoinFlipper coinFlipper;
     private final StadiumStateProvider stadiumProvider;
+    private final MatchStatisticsTracker attackerStats;
+    private final MatchStatisticsTracker defenderStats;
 
     // --- Mutable pipeline state ---
     private boolean attackBlocked;
@@ -55,6 +58,8 @@ public final class AttackContext {
         this.knockoutHandler = b.knockoutHandler;
         this.coinFlipper = b.coinFlipper;
         this.stadiumProvider = b.stadiumProvider;
+        this.attackerStats = b.attackerStats;
+        this.defenderStats = b.defenderStats;
     }
 
     // --- Immutable getters ---
@@ -165,6 +170,14 @@ public final class AttackContext {
         this.damageResult = result;
     }
 
+    public MatchStatisticsTracker getAttackerStats() {
+        return attackerStats;
+    }
+
+    public MatchStatisticsTracker getDefenderStats() {
+        return defenderStats;
+    }
+
     // --- Builder ---
 
     public static final class Builder {
@@ -179,6 +192,8 @@ public final class AttackContext {
         private String effectText = "";
         private List<BattlePokemonState> defenderBench = List.of();
         private StadiumStateProvider stadiumProvider = () -> null;
+        private MatchStatisticsTracker attackerStats = new MatchStatisticsTracker();
+        private MatchStatisticsTracker defenderStats = new MatchStatisticsTracker();
 
         /**
          * @param attacker              the attacking Pokémon (never null)
@@ -241,6 +256,20 @@ public final class AttackContext {
          */
         public Builder stadiumProvider(final StadiumStateProvider provider) {
             this.stadiumProvider = provider != null ? provider : () -> null;
+            return this;
+        }
+
+        public Builder attackerStats(final MatchStatisticsTracker stats) {
+            if (stats != null) {
+                this.attackerStats = stats;
+            }
+            return this;
+        }
+
+        public Builder defenderStats(final MatchStatisticsTracker stats) {
+            if (stats != null) {
+                this.defenderStats = stats;
+            }
             return this;
         }
 

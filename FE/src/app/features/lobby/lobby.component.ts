@@ -11,7 +11,7 @@ import { MatchStore } from '../../core/store/match.store';
 @Component({
   selector: 'app-lobby',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule],
   templateUrl: './lobby.html',
   styleUrl: './lobby.css',
   changeDetection: ChangeDetectionStrategy.OnPush

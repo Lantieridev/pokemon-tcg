@@ -114,9 +114,25 @@ public final class MatchCreationService {
 
         // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
         runtime0.recordPokemonEntered(slot0.getActivePokemon());
-        bench0.getAll().forEach(runtime0::recordPokemonEntered);
+        if (slot0.getActivePokemon() != null) {
+            runtime0.getStatisticsTracker().incrementPokemonPlayed(slot0.getActivePokemon().getCardId());
+        }
+        bench0.getAll().forEach(p -> {
+            runtime0.recordPokemonEntered(p);
+            if (p != null) {
+                runtime0.getStatisticsTracker().incrementPokemonPlayed(p.getCardId());
+            }
+        });
         runtime1.recordPokemonEntered(slot1.getActivePokemon());
-        bench1.getAll().forEach(runtime1::recordPokemonEntered);
+        if (slot1.getActivePokemon() != null) {
+            runtime1.getStatisticsTracker().incrementPokemonPlayed(slot1.getActivePokemon().getCardId());
+        }
+        bench1.getAll().forEach(p -> {
+            runtime1.recordPokemonEntered(p);
+            if (p != null) {
+                runtime1.getStatisticsTracker().incrementPokemonPlayed(p.getCardId());
+            }
+        });
 
         // --- Build MatchBoard (immutable snapshot fields only) ---
         final PlayerState ps0 = new PlayerState(

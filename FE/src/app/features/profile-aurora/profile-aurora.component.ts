@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
-import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO, MatchHistoryItemDTO } from '../../core/services/profile.service';
+import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO, MatchHistoryItemDTO, CardStatDTO, EnergyStatDTO } from '../../core/services/profile.service';
 import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
@@ -94,6 +94,7 @@ import { RouterModule } from '@angular/router';
             <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
               <button (click)="activeTab = 'showcase'" [class.active-tab]="activeTab === 'showcase'" class="tab-btn">Vitrina y Mazo</button>
               <button (click)="activeTab = 'achievements'" [class.active-tab]="activeTab === 'achievements'" class="tab-btn">Logros y Títulos</button>
+              <button (click)="activeTab = 'stats'" [class.active-tab]="activeTab === 'stats'" class="tab-btn">Estadísticas</button>
               <button (click)="activeTab = 'history'" [class.active-tab]="activeTab === 'history'" class="tab-btn">Historial de Partidas</button>
             </div>
 
@@ -173,8 +174,8 @@ import { RouterModule } from '@angular/router';
               <div>
                 <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">
                   Logros y Títulos de Entrenador
-                  <div style="font-size: 13.5px; color: var(--mut); margin-top: 6px; font-family: Space Grotesk, sans-serif; text-transform: none; letter-spacing: normal;">
-                    Logros completados: {{ unlockedAchievementsCount }} de {{ achievements.length }}
+                  <div style="font-size: 14.5px; color: var(--mut); margin-top: 6px; font-family: Space Grotesk, sans-serif; text-transform: none; letter-spacing: normal;">
+                    {{ unlockedAchievementsCount }}/{{ achievements.length }}
                   </div>
                 </div>
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;" class="scroll">
@@ -220,9 +221,9 @@ import { RouterModule } from '@angular/router';
                     <div style="text-align: center; padding: 40px; color: var(--mut);">No se registran partidas en tu historial.</div>
                   } @else {
                     @for (m of matchesHistory; track m.matchId) {
-                      <div style="display: grid; grid-template-columns: 60px 1fr 1fr 120px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.2s;" class="match-row-hover">
-                        <div [style.color]="m.result === 'WIN' ? '#46e08a' : 'var(--accent)'" style="font-family: var(--display); font-size: 24px; font-weight: 700;">
-                          {{ m.result === 'WIN' ? 'W' : 'L' }}
+                      <div (click)="toggleMatchExpand(m.matchId)" style="display: grid; grid-template-columns: 60px 1fr 1fr 120px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.2s;" class="match-row-hover">
+                        <div [style.color]="m.result === 'WIN' || m.result === 'VICTORY' ? '#46e08a' : 'var(--accent)'" style="font-family: var(--display); font-size: 24px; font-weight: 700;">
+                          {{ m.result === 'WIN' || m.result === 'VICTORY' ? 'W' : 'L' }}
                         </div>
                         <div>
                           <div style="font-weight: 700; font-size: 15px;">Partida #{{ m.matchId }}</div>
@@ -231,13 +232,323 @@ import { RouterModule } from '@angular/router';
                         <div>
                           <div style="font-weight: 600; font-size: 14px; color: var(--dim);">vs {{ m.opponent }}</div>
                         </div>
-                        <div style="text-align: right; color: var(--dim); font-size: 12px; font-weight: 600;">
-                          {{ m.date | date:'dd/MM/yyyy HH:mm' }}
+                        <div style="text-align: right; color: var(--dim); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                          <span>{{ m.date | date:'dd/MM/yyyy HH:mm' }}</span>
+                          <span style="font-size: 10px; opacity: 0.7;">{{ expandedMatches[m.matchId] ? '▲' : '▼' }}</span>
                         </div>
                       </div>
+
+                      @if (expandedMatches[m.matchId]) {
+                        @let stats = parseMatchStats(m.playerStatsJson);
+                        <div style="background: rgba(255,255,255,0.015); border-bottom: 1px solid var(--line); padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.2s ease-out;">
+                          
+                          @if (!stats) {
+                            <div style="text-align: center; color: var(--mut); font-size: 13px; font-style: italic;">
+                              No hay detalles de estadísticas registrados para esta partida.
+                            </div>
+                          } @else {
+                            <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1.6fr; gap: 24px;">
+                              
+                              <!-- Damage comparison -->
+                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                                <div class="eyebrow" style="color: var(--accent2); font-size: 10.5px;">Daño de la Partida</div>
+                                
+                                @let pDmg = sumValues(stats.pokemonDamageDealt);
+                                @let oDmg = sumValues(stats.pokemonDamageReceived);
+                                @let totDmg = pDmg + oDmg;
+                                @let pDmgPct = totDmg > 0 ? (pDmg / totDmg * 100) : 50;
+                                
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                                  <span style="color: #4aa3ff;">💥 {{ pDmg }} Hecho</span>
+                                  <span style="color: #ff7a3d;">🛡️ {{ oDmg }} Recibido</span>
+                                </div>
+                                <div style="height: 8px; background: #ff7a3d; border-radius: 4px; overflow: hidden; display: flex;">
+                                  <div [style.width.%]="pDmgPct" style="height: 100%; background: #4aa3ff;"></div>
+                                </div>
+                                <div style="font-size: 11px; color: var(--mut); text-align: center;">
+                                  Dominancia de daño: {{ pDmgPct.toFixed(0) }}%
+                                </div>
+                              </div>
+
+                              <!-- KOs and Energies -->
+                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                                <div class="eyebrow" style="color: var(--accent2); font-size: 10.5px;">KOs y Energías</div>
+                                
+                                @let pKos = sumValues(stats.pokemonKOsMade);
+                                @let pKosSuffered = sumValues(stats.pokemonKOsSuffered);
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600;">
+                                  <span style="color: var(--dim);">KOs Realizados:</span>
+                                  <span class="num" style="color: #46e08a;">⚡ {{ pKos }}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600;">
+                                  <span style="color: var(--dim);">KOs Sufridos:</span>
+                                  <span class="num" style="color: #ff3b47;">💀 {{ pKosSuffered }}</span>
+                                </div>
+
+                                <div style="border-top: 1px dashed var(--line); padding-top: 8px;">
+                                  <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Energías Unidas</div>
+                                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    @let energies = getEnergyList(stats.energyAttachedCounts);
+                                    @if (energies.length === 0) {
+                                      <span style="font-size: 11px; color: var(--mut); font-style: italic;">Ninguna</span>
+                                    } @else {
+                                      @for (e of energies; track e.type) {
+                                        <span [style.background]="getTypeColor(e.type)" style="font-size: 10.5px; font-weight: 700; color: #111; padding: 2px 6px; border-radius: 6px; display: flex; align-items: center; gap: 3px;">
+                                          {{ getEnergyIconEmoji(e.type) }} {{ e.count }}
+                                        </span>
+                                      }
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+
+                              <!-- MVP Card -->
+                              @let mvp = getMatchMvp(stats);
+                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 14px;">
+                                @if (mvp) {
+                                  @let mvpImgUrl = getCardImageById(mvp.cardId);
+                                  <div style="width: 50px; height: 70px; flex-shrink: 0; background: rgba(255,255,255,0.02); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
+                                    @if (mvpImgUrl) {
+                                      <img [src]="mvpImgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                    } @else {
+                                      <span style="font-size: 24px;">🃏</span>
+                                    }
+                                  </div>
+                                  <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                    <div class="eyebrow" style="color: #ffce32; font-size: 10.5px; letter-spacing: 0.1em; display: flex; align-items: center; gap: 4px;">
+                                      👑 MVP
+                                    </div>
+                                    <div style="font-weight: 700; font-size: 13.5px; color: var(--txt); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                      {{ mvp.name }}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--mut); font-weight: 600;">
+                                      🔥 {{ mvp.damage }} Daño | ⚡ {{ mvp.kos }} KOs
+                                    </div>
+                                  </div>
+                                } @else {
+                                  <div style="flex: 1; text-align: center; color: var(--mut); font-size: 12px; font-style: italic; padding: 10px;">
+                                    Sin MVP destacado
+                                  </div>
+                                }
+                              </div>
+
+                            </div>
+                          }
+                        </div>
+                      }
                     }
                   }
                 </div>
+              </div>
+            }
+
+            <!-- Tab content: Advanced Stats -->
+            @if (activeTab === 'stats') {
+              <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- Global Stats Summary -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                  <!-- Daño Panel -->
+                  <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                    <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Balance de Daño</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                      <div>
+                        <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Daño Realizado</div>
+                        <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #4aa3ff;">
+                          💥 {{ profileData?.advancedStats?.totalDamageDealt || 0 }}
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Daño Recibido</div>
+                        <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #ff7a3d;">
+                          🛡️ {{ profileData?.advancedStats?.totalDamageReceived || 0 }}
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Compare Bar -->
+                    @let totalDmg = (profileData?.advancedStats?.totalDamageDealt || 0) + (profileData?.advancedStats?.totalDamageReceived || 0);
+                    @let dmgPct = totalDmg > 0 ? ((profileData?.advancedStats?.totalDamageDealt || 0) / totalDmg * 100) : 50;
+                    <div style="height: 10px; background: #ff7a3d; border-radius: 5px; overflow: hidden; display: flex;">
+                      <div [style.width.%]="dmgPct" style="height: 100%; background: #4aa3ff; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); margin-top: 6px; font-weight: 700;">
+                      <span>{{ dmgPct.toFixed(0) }}% Infligido</span>
+                      <span>{{ (100 - dmgPct).toFixed(0) }}% Recibido</span>
+                    </div>
+                  </div>
+
+                  <!-- KOs Panel -->
+                  <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                    <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Derribos (KOs)</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                      <div>
+                        <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">KOs Realizados</div>
+                        <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #46e08a;">
+                          ⚡ {{ profileData?.advancedStats?.totalKOsMade || 0 }}
+                        </div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">KOs Sufridos</div>
+                        <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #ff3b47;">
+                          💀 {{ profileData?.advancedStats?.totalKOsSuffered || 0 }}
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Compare Bar -->
+                    @let totalKos = (profileData?.advancedStats?.totalKOsMade || 0) + (profileData?.advancedStats?.totalKOsSuffered || 0);
+                    @let koPct = totalKos > 0 ? ((profileData?.advancedStats?.totalKOsMade || 0) / totalKos * 100) : 50;
+                    <div style="height: 10px; background: #ff3b47; border-radius: 5px; overflow: hidden; display: flex;">
+                      <div [style.width.%]="koPct" style="height: 100%; background: #46e08a; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); margin-top: 6px; font-weight: 700;">
+                      <span>{{ koPct.toFixed(0) }}% Favorables</span>
+                      <span>{{ (100 - koPct).toFixed(0) }}% Sufridos</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Top Played Pokemons (with Element Filter) -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                      <div class="eyebrow" style="color: var(--accent2);">Top 5 Pokémon Más Jugados</div>
+                      <div style="font-size: 12px; color: var(--mut); margin-top: 4px;">Filtra por tipo de energía para ver tus preferidos.</div>
+                    </div>
+                    <select [(ngModel)]="elementFilter" class="form-input select-dark" style="width: 160px; padding: 8px 12px; font-size: 13px;">
+                      <option value="ALL">🔍 Todos los tipos</option>
+                      <option value="FIRE">🔥 Fuego</option>
+                      <option value="WATER">💧 Agua</option>
+                      <option value="GRASS">🌿 Planta</option>
+                      <option value="LIGHTNING">⚡ Rayo</option>
+                      <option value="PSYCHIC">🔮 Psíquico</option>
+                      <option value="FIGHTING">👊 Lucha</option>
+                      <option value="DARKNESS">🌙 Siniestro</option>
+                      <option value="METAL">🔩 Metal</option>
+                      <option value="FAIRY">🎀 Hada</option>
+                      <option value="DRAGON">🐉 Dragón</option>
+                      <option value="COLORLESS">⚪ Normal</option>
+                    </select>
+                  </div>
+
+                  @let topPlayed = getTopPlayedPokemons();
+                  @if (topPlayed.length === 0) {
+                    <div style="text-align: center; color: var(--mut); padding: 40px; font-weight: 600;">
+                      No hay registros de Pokémon jugados para este tipo.
+                    </div>
+                  } @else {
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                      @for (p of topPlayed; track p.cardId; let idx = $index) {
+                        <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px;">
+                          <!-- Card Image thumbnail -->
+                          @let imgUrl = getCardImageById(p.cardId);
+                          <div style="width: 45px; height: 63px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
+                            @if (imgUrl) {
+                              <img [src]="imgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            } @else {
+                              <span style="font-size: 20px;">🃏</span>
+                            }
+                          </div>
+                          <!-- Info -->
+                          <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                              <span style="font-weight: 700; font-size: 14.5px; color: var(--txt);">
+                                #{{ idx + 1 }} {{ p.cardName }}
+                              </span>
+                              <span class="num" style="font-size: 13.5px; font-weight: 800; color: var(--accent2);">
+                                {{ p.timesPlayed }} partidas
+                              </span>
+                            </div>
+                            <!-- Bar -->
+                            @let maxPlays = topPlayed[0].timesPlayed || 1;
+                            @let playPct = (p.timesPlayed / maxPlays * 100);
+                            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                              <div [style.width.%]="playPct" [style.background]="getTypeColor(p.pokemonType)" style="height: 100%; border-radius: 3px; transition: width 0.3s;"></div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Top Attackers -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Top 5 Pokémon Atacantes (Daño Infligido)</div>
+                  @let topAttackers = getTopAttackers();
+                  @if (topAttackers.length === 0) {
+                    <div style="text-align: center; color: var(--mut); padding: 40px; font-weight: 600;">
+                      No hay registros de daño infligido.
+                    </div>
+                  } @else {
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                      @for (p of topAttackers; track p.cardId; let idx = $index) {
+                        <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px;">
+                          <!-- Card Image thumbnail -->
+                          @let imgUrl = getCardImageById(p.cardId);
+                          <div style="width: 45px; height: 63px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
+                            @if (imgUrl) {
+                              <img [src]="imgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                            } @else {
+                              <span style="font-size: 20px;">🃏</span>
+                            }
+                          </div>
+                          <!-- Info -->
+                          <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                              <span style="font-weight: 700; font-size: 14.5px; color: var(--txt);">
+                                #{{ idx + 1 }} {{ p.cardName }}
+                              </span>
+                              <span class="num" style="font-size: 13.5px; font-weight: 800; color: #4aa3ff;">
+                                {{ p.damageDealt }} daño
+                              </span>
+                            </div>
+                            <!-- Bar -->
+                            @let maxDmg = topAttackers[0].damageDealt || 1;
+                            @let dmgPct = (p.damageDealt / maxDmg * 100);
+                            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                              <div [style.width.%]="dmgPct" style="height: 100%; background: linear-gradient(90deg, #4aa3ff, #00c6ff); border-radius: 3px; transition: width 0.3s;"></div>
+                            </div>
+                            <div style="display: flex; gap: 12px; margin-top: 4px; font-size: 11px; color: var(--mut); font-weight: 600;">
+                              <span>KOs hechos: {{ p.kosMade }}</span>
+                              <span>·</span>
+                              <span>Daño Recibido: {{ p.damageReceived }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <!-- Elemental Energy Usage -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Uso de Energías Elementales</div>
+                  @let energyStats = getEnergyStats();
+                  @if (energyStats.length === 0) {
+                    <div style="text-align: center; color: var(--mut); padding: 40px; font-weight: 600;">
+                      No hay registros de energías unidas.
+                    </div>
+                  } @else {
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                      @for (e of energyStats; track e.energyType) {
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+                          <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 13.5px;">
+                            <span style="display: flex; align-items: center; gap: 6px;">
+                              {{ getEnergyIconEmoji(e.energyType) }} {{ getEnergyLabel(e.energyType) }}
+                            </span>
+                            <span class="num" style="color: var(--dim);">{{ e.count }} unidas</span>
+                          </div>
+                          @let maxEnergyCount = energyStats[0].count || 1;
+                          @let energyPct = (e.count / maxEnergyCount * 100);
+                          <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                            <div [style.width.%]="energyPct" [style.background]="getTypeColor(e.energyType)" style="height: 100%; border-radius: 3px; transition: width 0.3s;"></div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
               </div>
             }
           </div>
@@ -413,8 +724,8 @@ import { RouterModule } from '@angular/router';
 
     <!-- MODAL: CARD SELECTOR FOR SHOWCASE -->
     @if (showCardSelector) {
-      <div class="modal-backdrop" (click)="closeCardSelector()">
-        <div class="modal-card modal-card-lg" (click)="$event.stopPropagation()">
+      <div class="modal-backdrop">
+        <div class="modal-card modal-card-lg">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="font-family: var(--display); font-size: 24px; font-weight: 700; margin: 0;">Seleccionar Carta para Vitrina</h2>
             <button (click)="closeCardSelector()" style="background: transparent; border: none; color: var(--txt); font-size: 24px; cursor: pointer;">&times;</button>
@@ -444,7 +755,7 @@ import { RouterModule } from '@angular/router';
                        (click)="selectCardForShowcase(card.id)"
                        draggable="true" 
                        (dragstart)="handleDragStart($event, card.id)">
-                    <img [src]="card.images?.small || card.images?.large" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
+                    <img [src]="card.images.small || card.images.large" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
                   </div>
                 }
               </div>
@@ -647,7 +958,7 @@ export class ProfileAuroraComponent implements OnInit {
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
   userDecks: any[] = [];
-  activeTab: 'showcase' | 'achievements' | 'history' = 'showcase';
+  activeTab: 'showcase' | 'achievements' | 'history' | 'stats' = 'showcase';
 
   // Edit Profile form state
   showEditModal = false;
@@ -671,6 +982,10 @@ export class ProfileAuroraComponent implements OnInit {
   // Match History state
   matchesHistory: MatchHistoryItemDTO[] = [];
   loadingHistory = false;
+  expandedMatches: Record<number, boolean> = {};
+
+  // Stats tab state
+  elementFilter = 'ALL';
 
   get username(): string {
     return this.authService.username ?? 'Invitado';
@@ -1020,6 +1335,127 @@ export class ProfileAuroraComponent implements OnInit {
     if (total === 0) return 'var(--line) 0% 100%';
     const wSpan = (w / total) * 100;
     return `var(--accent) 0% ${wSpan}%, var(--mut) ${wSpan}% 100%`;
+  }
+
+  // Helpers for advanced stats and match history accordion
+  toggleMatchExpand(matchId: number): void {
+    this.expandedMatches[matchId] = !this.expandedMatches[matchId];
+  }
+
+  parseMatchStats(jsonStr: string | undefined): any {
+    if (!jsonStr) return null;
+    try {
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Failed to parse match stats JSON', e);
+      return null;
+    }
+  }
+
+  sumValues(map: Record<string, number> | undefined | null): number {
+    if (!map) return 0;
+    return Object.values(map).reduce((sum, val) => sum + (val || 0), 0);
+  }
+
+  getEnergyList(attachedMap: Record<string, number> | undefined | null): { type: string; count: number }[] {
+    if (!attachedMap) return [];
+    return Object.entries(attachedMap).map(([type, count]) => ({ type, count })).filter(e => e.count > 0);
+  }
+
+  getMatchMvp(stats: any): { cardId: string; name: string; damage: number; kos: number } | null {
+    if (!stats || !stats.pokemonDamageDealt || Object.keys(stats.pokemonDamageDealt).length === 0) {
+      return null;
+    }
+    let maxDmgCardId = '';
+    let maxDmg = -1;
+    for (const cardId of Object.keys(stats.pokemonDamageDealt)) {
+      const dmg = stats.pokemonDamageDealt[cardId] || 0;
+      if (dmg > maxDmg) {
+        maxDmg = dmg;
+        maxDmgCardId = cardId;
+      }
+    }
+    if (!maxDmgCardId) return null;
+    
+    const card = this.tcgService.cards().find(c => c.id === maxDmgCardId);
+    const name = card?.name || maxDmgCardId;
+    const kos = stats.pokemonKOsMade?.[maxDmgCardId] || 0;
+    return { cardId: maxDmgCardId, name, damage: maxDmg, kos };
+  }
+
+  getTypeColor(type: string): string {
+    if (!type) return 'var(--mut)';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return '#ff7a3d';
+      case 'WATER': return '#4aa3ff';
+      case 'GRASS': return '#46e08a';
+      case 'LIGHTNING': return '#ffce32';
+      case 'PSYCHIC': return '#a855f7';
+      case 'FIGHTING': return '#c27c50';
+      case 'DARKNESS': return '#64748b';
+      case 'METAL': return '#b8b8cc';
+      case 'FAIRY': return '#f472b6';
+      case 'DRAGON': return '#fb7185';
+      case 'COLORLESS': return '#94a3b8';
+      default: return 'var(--mut)';
+    }
+  }
+
+  getEnergyIconEmoji(type: string): string {
+    if (!type) return '⚪';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return '🔥';
+      case 'WATER': return '💧';
+      case 'GRASS': return '🌿';
+      case 'LIGHTNING': return '⚡';
+      case 'PSYCHIC': return '🔮';
+      case 'FIGHTING': return '👊';
+      case 'DARKNESS': return '🌙';
+      case 'METAL': return '🔩';
+      case 'FAIRY': return '🎀';
+      case 'DRAGON': return '🐉';
+      case 'COLORLESS': return '⚪';
+      default: return '⚪';
+    }
+  }
+
+  getEnergyLabel(type: string): string {
+    if (!type) return 'Desconocido';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return 'Fuego';
+      case 'WATER': return 'Agua';
+      case 'GRASS': return 'Planta';
+      case 'LIGHTNING': return 'Rayo';
+      case 'PSYCHIC': return 'Psíquico';
+      case 'FIGHTING': return 'Lucha';
+      case 'DARKNESS': return 'Siniestro';
+      case 'METAL': return 'Metal';
+      case 'FAIRY': return 'Hada';
+      case 'DRAGON': return 'Dragón';
+      case 'COLORLESS': return 'Normal';
+      default: return type;
+    }
+  }
+
+  getTopPlayedPokemons(): CardStatDTO[] {
+    if (!this.profileData?.advancedStats?.pokemonStats) return [];
+    let stats = this.profileData.advancedStats.pokemonStats;
+    if (this.elementFilter && this.elementFilter !== 'ALL') {
+      stats = stats.filter(s => s.pokemonType?.toUpperCase() === this.elementFilter.toUpperCase());
+    }
+    return [...stats].sort((a, b) => b.timesPlayed - a.timesPlayed).slice(0, 5);
+  }
+
+  getTopAttackers(): CardStatDTO[] {
+    if (!this.profileData?.advancedStats?.pokemonStats) return [];
+    const stats = this.profileData.advancedStats.pokemonStats;
+    return [...stats].sort((a, b) => b.damageDealt - a.damageDealt).slice(0, 5);
+  }
+
+  getEnergyStats(): EnergyStatDTO[] {
+    if (!this.profileData?.advancedStats?.energyStats) return [];
+    const stats = this.profileData.advancedStats.energyStats;
+    return [...stats].sort((a, b) => b.count - a.count);
   }
 
   Math = Math;

@@ -2,6 +2,31 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface CardStatDTO {
+  cardId: string;
+  cardName: string;
+  pokemonType: string;
+  timesPlayed: number;
+  damageDealt: number;
+  damageReceived: number;
+  kosMade: number;
+  kosSuffered: number;
+}
+
+export interface EnergyStatDTO {
+  energyType: string;
+  count: number;
+}
+
+export interface AdvancedStatsDTO {
+  pokemonStats: CardStatDTO[];
+  energyStats: EnergyStatDTO[];
+  totalDamageDealt: number;
+  totalDamageReceived: number;
+  totalKOsMade: number;
+  totalKOsSuffered: number;
+}
+
 export interface UserProfileResponseDTO {
   username: string;
   createdAt: string;
@@ -37,6 +62,7 @@ export interface UserProfileResponseDTO {
     id: number;
     name: string;
   } | null;
+  advancedStats: AdvancedStatsDTO | null;
 }
 
 export interface UserAchievementProgressDTO {
@@ -54,6 +80,8 @@ export interface MatchHistoryItemDTO {
   status: string;
   result: string;
   date: string;
+  playerStatsJson?: string;
+  opponentStatsJson?: string;
 }
 
 export interface SliceMatchHistoryResponseDTO {
@@ -93,4 +121,3 @@ export class ProfileService {
     return this.http.get<SliceMatchHistoryResponseDTO>(`${this.API_URL}/me/history?page=${page}&size=${size}`);
   }
 }
-

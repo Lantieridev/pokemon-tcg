@@ -153,6 +153,11 @@ public final class GameFacade {
         runtime.getBench().place(placed);
         // Register the newly placed Pokémon so evolution restriction tracking starts at 0 turns.
         runtime.recordPokemonEntered(placed);
+
+        // Track stats!
+        if (runtime.getStatisticsTracker() != null) {
+            runtime.getStatisticsTracker().incrementPokemonPlayed(card.getCardId());
+        }
         
         // Sweet Veil: remove Asleep condition from the active Pokémon if Sweet Veil enters play.
         if (placed.getAbilities().stream().anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)) {
@@ -164,6 +169,11 @@ public final class GameFacade {
         final EnergyCard energyCard = findEnergyInHand(runtime, action.energyType());
         runtime.getHand().removeCard(energyCard.getCardId());
         action.target().attachEnergy(energyCard);
+
+        // Track stats!
+        if (runtime.getStatisticsTracker() != null) {
+            runtime.getStatisticsTracker().incrementEnergyAttached(action.energyType());
+        }
 
         // Rainbow Energy: place 1 damage counter (10 HP) on the Pokémon when attached from hand.
         if (energyCard.isProvidesAllTypes()) {
@@ -181,6 +191,11 @@ public final class GameFacade {
             // (inside the mutation guard) so a no-op call cannot accidentally
             // mark an unrelated Pokémon as freshly placed.
             runtime.recordPokemonEntered(action.target());
+
+            // Track stats!
+            if (runtime.getStatisticsTracker() != null) {
+                runtime.getStatisticsTracker().incrementPokemonPlayed(newCard.getCardId());
+            }
         }
         
         if (action.target() == runtime.getActivePokemon()) {
@@ -226,6 +241,8 @@ public final class GameFacade {
         )
         .defenderBench(defender.getBench().getAll())
         .stadiumProvider(session.getBoard())
+        .attackerStats(attacker.getStatisticsTracker())
+        .defenderStats(defender.getStatisticsTracker())
         .build();
 
         attackPipeline.execute(ctx);
