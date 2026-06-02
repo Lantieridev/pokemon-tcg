@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewEncapsulation, NgZone } from '@angular/core';
+import { Component, inject, OnInit, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -614,7 +614,7 @@ export class ProfileAuroraComponent implements OnInit {
   private profileService = inject(ProfileService);
   private deckApi = inject(DeckApiService);
   private tcgService = inject(PokemonTcgService);
-  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
@@ -734,7 +734,7 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   saveProfile(): void {
-    if (this.savingProfile) return; // evitar doble click
+    if (this.savingProfile) return;
     this.savingProfile = true;
 
     const activeTitleVal = this.editActiveTitle === 'Ninguno' ? '' : this.editActiveTitle;
@@ -749,13 +749,15 @@ export class ProfileAuroraComponent implements OnInit {
       if (this.savingProfile) {
         this.savingProfile = false;
         this.showToast('❌ El servidor tardó demasiado. Intentá de nuevo.', 'error');
+        this.cdr.detectChanges();
       }
     }, 10000);
 
     this.profileService.updateProfile(payload).subscribe({
       next: () => {
         clearTimeout(safetyTimeout);
-        // Actualizar datos localmente de forma inmediata
+
+        // 1. Actualizar datos localmente de inmediato
         if (this.profileData) {
           this.profileData = {
             ...this.profileData,
@@ -764,25 +766,27 @@ export class ProfileAuroraComponent implements OnInit {
             avatarIcon: payload.avatarIcon
           };
         }
+
+        // 2. Cerrar el modal y liberar el botón
         this.savingProfile = false;
         this.showEditModal = false;
+
+        // 3. Forzar actualización del DOM
+        this.cdr.detectChanges();
+
+        // 4. Mostrar toast de éxito
         this.showToast('✅ Perfil guardado correctamente');
-        // Recarga en segundo plano para sincronizar otros datos
-        this.profileService.getProfile(this.username).subscribe({
-          next: (data) => { this.profileData = data; },
-          error: () => { /* silencioso, los datos locales ya se actualizaron */ }
-        });
       },
       error: (err) => {
         clearTimeout(safetyTimeout);
         this.savingProfile = false;
         const status = err?.status;
         let msg = err?.error?.message || err?.message || 'Error al guardar el perfil';
-        // Si es 401/403, la sesión expiró
         if (status === 401 || status === 403) {
-          msg = 'Tu sesión expiró. Por favor, cerrá y volvé a iniciar sesión.';
+          msg = 'Tu sesión expiró. Cerrá sesión (arriba a la derecha) y volvé a entrar.';
         }
         this.showToast('❌ ' + msg, 'error');
+        this.cdr.detectChanges();
         console.error('Error updating profile [status=' + status + ']', err);
       }
     });
