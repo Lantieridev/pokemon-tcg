@@ -8,5 +8,11 @@ public record MatchHistoryProjectionDto(
         String player1Username,
         String player2Username,
         String winnerUsername,
-        LocalDateTime createdAt
-) {}
+        LocalDateTime createdAt,
+        String player1StatsJson,
+        String player2StatsJson
+) {
+    public MatchHistoryProjectionDto(Long id, String status, String player1Username, String player2Username, String winnerUsername, LocalDateTime createdAt) {
+        this(id, status, player1Username, player2Username, winnerUsername, createdAt, null, null);
+    }
+}

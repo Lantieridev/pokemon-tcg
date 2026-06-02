@@ -33,6 +33,7 @@ public class UserProfileResponseDTO {
     private Set<String> unlockedTitles;
     private List<ShowcaseSlot> showcase;
     private ShowcasedDeck showcasedDeck;
+    private AdvancedStatsDTO advancedStats;
 
     @Data
     @NoArgsConstructor
@@ -68,5 +69,42 @@ public class UserProfileResponseDTO {
     public static class ShowcasedDeck {
         private Long id;
         private String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CardStatDTO {
+        private String cardId;
+        private String cardName;
+        private String pokemonType;
+        private int timesPlayed;
+        private int damageDealt;
+        private int damageReceived;
+        private int kosMade;
+        private int kosSuffered;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class EnergyStatDTO {
+        private String energyType;
+        private int count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AdvancedStatsDTO {
+        private List<CardStatDTO> pokemonStats;
+        private List<EnergyStatDTO> energyStats;
+        private int totalDamageDealt;
+        private int totalDamageReceived;
+        private int totalKOsMade;
+        private int totalKOsSuffered;
     }
 }

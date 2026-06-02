@@ -74,6 +74,26 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         // Award prizes to the attacker (taken from their prize pile into hand)
         attacker.takePrizes(prizesToTake);
 
+        // Record KO in statistics trackers
+        PlayerRuntime owner = null;
+        PlayerRuntime opponentPlayer = null;
+        if (playerRuntimes.size() > 0 && (knocked.equals(playerRuntimes.get(0).getActivePokemon()) || playerRuntimes.get(0).getBench().getAll().contains(knocked))) {
+            owner = playerRuntimes.get(0);
+            if (playerRuntimes.size() > 1) {
+                opponentPlayer = playerRuntimes.get(1);
+            }
+        } else if (playerRuntimes.size() > 1 && (knocked.equals(playerRuntimes.get(1).getActivePokemon()) || playerRuntimes.get(1).getBench().getAll().contains(knocked))) {
+            owner = playerRuntimes.get(1);
+            opponentPlayer = playerRuntimes.get(0);
+        }
+
+        if (owner != null && owner.getStatisticsTracker() != null && knocked != null) {
+            owner.getStatisticsTracker().incrementKOsSuffered(knocked.getCardId());
+        }
+        if (opponentPlayer != null && opponentPlayer.getStatisticsTracker() != null && opponentPlayer.getActivePokemon() != null) {
+            opponentPlayer.getStatisticsTracker().incrementKOsMade(opponentPlayer.getActivePokemon().getCardId());
+        }
+
         // Remove from turnsInPlay tracking — this Pokémon is no longer in play
         defender.removePokemonFromPlay(knocked);
 

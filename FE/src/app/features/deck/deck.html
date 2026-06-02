@@ -77,7 +77,7 @@
             </div>
             <div class="card-name">{{ card.name }}</div>
             <div class="card-subtype" [style.color]="getTypeColor(card.types)">
-              {{ card.subtypes[0] ?? card.supertype }}
+              {{ card.subtypes[0] || card.supertype }}
             </div>
           </div>
         }
@@ -145,7 +145,7 @@
             <div class="deck-entry-info">
               <span class="deck-entry-name">{{ entry.card.name }}</span>
               <span class="deck-entry-sub" [style.color]="getTypeColor(entry.card.types)">
-                {{ entry.card.subtypes[0] ?? entry.card.supertype }}
+                {{ entry.card.subtypes[0] || entry.card.supertype }}
               </span>
             </div>
             <div class="deck-entry-controls">

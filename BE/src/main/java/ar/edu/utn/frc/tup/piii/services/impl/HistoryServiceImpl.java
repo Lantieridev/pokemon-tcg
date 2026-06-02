@@ -54,12 +54,25 @@ public class HistoryServiceImpl implements HistoryService {
             result = "IN_PROGRESS";
         }
 
+        // Determine player and opponent stats JSONs
+        String playerStatsJson;
+        String opponentStatsJson;
+        if (username.equals(projection.player1Username())) {
+            playerStatsJson = projection.player1StatsJson();
+            opponentStatsJson = projection.player2StatsJson();
+        } else {
+            playerStatsJson = projection.player2StatsJson();
+            opponentStatsJson = projection.player1StatsJson();
+        }
+
         return new MatchHistoryDto(
                 projection.id(),
                 opponent,
                 projection.status(),
                 result,
-                projection.createdAt()
+                projection.createdAt(),
+                playerStatsJson,
+                opponentStatsJson
         );
     }
 }

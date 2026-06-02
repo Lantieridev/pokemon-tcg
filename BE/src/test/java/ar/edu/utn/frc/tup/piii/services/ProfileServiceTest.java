@@ -40,6 +40,9 @@ public class ProfileServiceTest {
     private HonorService honorService;
     private DeckRepository deckRepository;
     private ProfanityFilterService profanityFilterService;
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository userCardStatRepository;
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository userEnergyStatRepository;
+    private ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper cardMapper;
     private ProfileService profileService;
 
     @BeforeEach
@@ -51,6 +54,9 @@ public class ProfileServiceTest {
         honorService = mock(HonorService.class);
         deckRepository = mock(DeckRepository.class);
         profanityFilterService = mock(ProfanityFilterService.class);
+        userCardStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository.class);
+        userEnergyStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository.class);
+        cardMapper = mock(ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper.class);
 
         profileService = new ProfileServiceImpl(
                 userRepository,
@@ -59,7 +65,10 @@ public class ProfileServiceTest {
                 cardRepository,
                 honorService,
                 deckRepository,
-                profanityFilterService
+                profanityFilterService,
+                userCardStatRepository,
+                userEnergyStatRepository,
+                cardMapper
         );
     }
 

@@ -1,12 +1,18 @@
 package ar.edu.utn.frc.tup.piii.services.persistence;
 
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserCardStatEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEnergyStatEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -24,13 +30,22 @@ public class AsyncPersistenceListener {
     private final MatchRepository matchRepository;
     private final MatchLogRepository matchLogRepository;
     private final UserRepository userRepository;
+    private final UserCardStatRepository userCardStatRepository;
+    private final UserEnergyStatRepository userEnergyStatRepository;
+    private final ObjectMapper objectMapper;
 
     public AsyncPersistenceListener(final MatchRepository matchRepository,
                                     final MatchLogRepository matchLogRepository,
-                                    final UserRepository userRepository) {
+                                    final UserRepository userRepository,
+                                    final UserCardStatRepository userCardStatRepository,
+                                    final UserEnergyStatRepository userEnergyStatRepository,
+                                    final ObjectMapper objectMapper) {
         this.matchRepository = Objects.requireNonNull(matchRepository);
         this.matchLogRepository = Objects.requireNonNull(matchLogRepository);
         this.userRepository = Objects.requireNonNull(userRepository);
+        this.userCardStatRepository = Objects.requireNonNull(userCardStatRepository);
+        this.userEnergyStatRepository = Objects.requireNonNull(userEnergyStatRepository);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Async
@@ -52,6 +67,27 @@ public class AsyncPersistenceListener {
         entity.setPlayer2(player2);
         entity.setWinner(winner);
         entity.setCurrentState(session);
+
+        // Serialize match-specific statistics
+        if (session.hasPlayerRuntimes()) {
+            final MatchStatisticsTracker tracker1 = session.getPlayerRuntime(0).getStatisticsTracker();
+            try {
+                entity.setPlayer1StatsJson(objectMapper.writeValueAsString(tracker1));
+            } catch (Exception e) {
+                log.error("Failed to serialize player 1 statistics", e);
+            }
+            // Update global statistics for player 1
+            updateGlobalStats(player1, tracker1);
+
+            final MatchStatisticsTracker tracker2 = session.getPlayerRuntime(1).getStatisticsTracker();
+            try {
+                entity.setPlayer2StatsJson(objectMapper.writeValueAsString(tracker2));
+            } catch (Exception e) {
+                log.error("Failed to serialize player 2 statistics", e);
+            }
+            // Update global statistics for player 2
+            updateGlobalStats(player2, tracker2);
+        }
 
         matchRepository.save(entity);
     }
@@ -82,6 +118,60 @@ public class AsyncPersistenceListener {
                 .build();
 
         matchLogRepository.save(logEntity);
+    }
+
+    private void updateGlobalStats(final UserEntity user, final MatchStatisticsTracker tracker) {
+        if (user == null || tracker == null) {
+            return;
+        }
+
+        // 1. Update Card Stats
+        java.util.Set<String> cardIds = new java.util.HashSet<>();
+        cardIds.addAll(tracker.getPokemonPlayedCounts().keySet());
+        cardIds.addAll(tracker.getPokemonDamageDealt().keySet());
+        cardIds.addAll(tracker.getPokemonDamageReceived().keySet());
+        cardIds.addAll(tracker.getPokemonKOsMade().keySet());
+        cardIds.addAll(tracker.getPokemonKOsSuffered().keySet());
+
+        for (String cardId : cardIds) {
+            if (cardId == null) continue;
+            UserCardStatEntity stat = userCardStatRepository.findByUserIdAndCardId(user.getId(), cardId);
+            if (stat == null) {
+                stat = UserCardStatEntity.builder()
+                        .user(user)
+                        .cardId(cardId)
+                        .timesPlayed(0)
+                        .damageDealt(0)
+                        .damageReceived(0)
+                        .kosMade(0)
+                        .kosSuffered(0)
+                        .build();
+            }
+            stat.setTimesPlayed(stat.getTimesPlayed() + tracker.getPokemonPlayedCounts().getOrDefault(cardId, 0));
+            stat.setDamageDealt(stat.getDamageDealt() + tracker.getPokemonDamageDealt().getOrDefault(cardId, 0));
+            stat.setDamageReceived(stat.getDamageReceived() + tracker.getPokemonDamageReceived().getOrDefault(cardId, 0));
+            stat.setKosMade(stat.getKosMade() + tracker.getPokemonKOsMade().getOrDefault(cardId, 0));
+            stat.setKosSuffered(stat.getKosSuffered() + tracker.getPokemonKOsSuffered().getOrDefault(cardId, 0));
+            userCardStatRepository.save(stat);
+        }
+
+        // 2. Update Energy Stats
+        for (java.util.Map.Entry<ar.edu.utn.frc.tup.piii.engine.model.PokemonType, Integer> entry : tracker.getEnergyAttachedCounts().entrySet()) {
+            ar.edu.utn.frc.tup.piii.engine.model.PokemonType type = entry.getKey();
+            int count = entry.getValue();
+            if (type == null || count <= 0) continue;
+            String typeName = type.name();
+            UserEnergyStatEntity stat = userEnergyStatRepository.findByUserIdAndEnergyType(user.getId(), typeName);
+            if (stat == null) {
+                stat = UserEnergyStatEntity.builder()
+                        .user(user)
+                        .energyType(typeName)
+                        .timesPlayed(0)
+                        .build();
+            }
+            stat.setTimesPlayed(stat.getTimesPlayed() + count);
+            userEnergyStatRepository.save(stat);
+        }
     }
 
     private Long parseOrHashId(final String id) {
