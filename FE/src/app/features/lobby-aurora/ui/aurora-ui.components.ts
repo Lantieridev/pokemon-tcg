@@ -57,7 +57,7 @@ export class LogoComponent {}
         <div class="avatar ring">{{ initial }}</div>
         <div style="line-height: 1.15;">
           <div style="font-weight: 800; font-size: 13.5px; letter-spacing: .01em;">{{ name }}</div>
-          <div class="num" style="font-size: 10.5px; color: var(--mut); letter-spacing: .04em;">{{ mmr }} MMR</div>
+          <div class="num" style="font-size: 10.5px; color: var(--mut); letter-spacing: .04em;">{{ mmr ? mmr + ' MMR' : '...' }}</div>
         </div>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
              style="margin-left: 4px; color: var(--mut); transition: transform 0.2s;"
@@ -108,7 +108,7 @@ export class LogoComponent {}
 })
 export class TrainerChipComponent {
   @Input() name: string = 'NOVA';
-  @Input() mmr: string = '1000';
+  @Input() mmr: string = '';
   @Input() initial: string = 'N';
 
   open = false;
