@@ -171,7 +171,12 @@ import { RouterModule } from '@angular/router';
             <!-- Tab content: Achievements -->
             @if (activeTab === 'achievements') {
               <div>
-                <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Logros y Títulos de Entrenador</div>
+                <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">
+                  Logros y Títulos de Entrenador
+                  <div style="font-size: 13.5px; color: var(--mut); margin-top: 6px; font-family: Space Grotesk, sans-serif; text-transform: none; letter-spacing: normal;">
+                    Logros completados: {{ unlockedAchievementsCount }} de {{ achievements.length }}
+                  </div>
+                </div>
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;" class="scroll">
                   @if (achievements.length === 0) {
                     <div style="text-align: center; color: var(--mut); padding: 40px;">No se encontraron logros.</div>
@@ -244,35 +249,18 @@ import { RouterModule } from '@angular/router';
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                 <div>
                   <div style="font-family: var(--display); font-size: 24px; font-weight: 700;">Nivel {{ profileData?.level || 1 }}</div>
-                  <div style="font-size: 11px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 2px;">LOGROS COMPLETADOS</div>
                 </div>
                 <button (click)="openEditModal()" class="ghost-btn" style="padding: 8px 14px; font-size: 12px;">Editar Perfil</button>
               </div>
 
               <!-- XP Progress Bar -->
-              <div style="margin-bottom: 24px;">
+              <div style="margin-bottom: 0;">
                 <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
                   <div [style.width]="((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); font-weight: 700;">
                   <span>XP: {{ profileData?.xp || 0 }} / {{ profileData?.xpToNextLevel || 100 }}</span>
                   <span>{{ Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) }}%</span>
-                </div>
-              </div>
-
-              <!-- Currencies -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; text-align: center;">
-                  <div style="font-size: 18px; font-weight: 800; color: #ffce32; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    🪙 {{ profileData?.pokecoins || 0 }}
-                  </div>
-                  <div style="font-size: 9.5px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">Pokécoins</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; text-align: center;">
-                  <div style="font-size: 18px; font-weight: 800; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    🏆 {{ profileData?.battlePoints || 0 }}
-                  </div>
-                  <div style="font-size: 9.5px; color: var(--mut); font-weight: 700; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">Puntos de Batalla</div>
                 </div>
               </div>
             </div>
@@ -357,8 +345,8 @@ import { RouterModule } from '@angular/router';
 
     <!-- MODAL: EDIT PROFILE -->
     @if (showEditModal) {
-      <div class="modal-backdrop" (click)="closeEditModal()">
-        <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-backdrop">
+        <div class="modal-card">
           <h2 style="font-family: var(--display); font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px;">Editar Perfil de Entrenador</h2>
           
           <!-- Avatar Icon selection -->
@@ -690,6 +678,10 @@ export class ProfileAuroraComponent implements OnInit {
 
   get userInitial(): string {
     return this.username.charAt(0).toUpperCase();
+  }
+
+  get unlockedAchievementsCount(): number {
+    return this.achievements.filter(a => a.unlocked).length;
   }
 
   ngOnInit(): void {

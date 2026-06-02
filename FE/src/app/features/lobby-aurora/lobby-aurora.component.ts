@@ -143,7 +143,9 @@ export class LobbyAuroraComponent implements OnInit {
 
   fog = 0.62;
   titleFont = 'serif';
-  streak = 4; // Racha no devuelta por API, queda mockeada por diseño
+  get streak(): number {
+    return this.profileData?.statistics?.winStreak ?? 0;
+  }
   
   get displayFont() {
     return this.titleFont === 'sans' ? "'Space Grotesk',sans-serif" : "'Instrument Serif',serif";

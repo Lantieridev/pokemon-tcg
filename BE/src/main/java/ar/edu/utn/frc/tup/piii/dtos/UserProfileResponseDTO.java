@@ -48,6 +48,7 @@ public class UserProfileResponseDTO {
         private Integer totalKos;
         private Integer trainerCardsPlayed;
         private Integer totalDamageDealt;
+        private Integer winStreak;
     }
 
     @Data

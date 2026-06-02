@@ -24,6 +24,7 @@ export interface UserProfileResponseDTO {
     totalKos: number;
     trainerCardsPlayed: number;
     totalDamageDealt: number;
+    winStreak: number;
   };
   honors: Record<string, number>;
   unlockedTitles: string[];

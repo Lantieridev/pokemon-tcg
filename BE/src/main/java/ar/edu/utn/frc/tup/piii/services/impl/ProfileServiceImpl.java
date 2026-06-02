@@ -80,6 +80,20 @@ public class ProfileServiceImpl implements ProfileService {
         // Redondear a dos decimales
         winRate = Math.round(winRate * 100.0) / 100.0;
 
+        // Calcular racha de victorias actual
+        int winStreak = 0;
+        for (final ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto m : matches) {
+            if (m.status() != null && (m.status().equalsIgnoreCase("FINISHED") || m.status().equalsIgnoreCase("COMPLETED"))) {
+                if (m.winnerUsername() != null) {
+                    if (m.winnerUsername().equalsIgnoreCase(username)) {
+                        winStreak++;
+                    } else {
+                        break; // Se cortó la racha
+                    }
+                }
+            }
+        }
+
         final UserProfileResponseDTO.Statistics stats = UserProfileResponseDTO.Statistics.builder()
                 .matchesPlayed(matchesPlayed)
                 .matchesWon(matchesWon)
@@ -90,6 +104,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .totalKos(user.getTotalKos() != null ? user.getTotalKos() : 0)
                 .trainerCardsPlayed(user.getTrainerCardsPlayed() != null ? user.getTrainerCardsPlayed() : 0)
                 .totalDamageDealt(user.getTotalDamageDealt() != null ? user.getTotalDamageDealt() : 0)
+                .winStreak(winStreak)
                 .build();
 
         // 2. Honores recibidos
