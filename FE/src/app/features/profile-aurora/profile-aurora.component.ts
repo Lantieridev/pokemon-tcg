@@ -411,7 +411,7 @@ import { RouterModule } from '@angular/router';
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <div>
-                      <div class="eyebrow" style="color: var(--accent2);">Top 5 Pokémon Más Jugados</div>
+                      <div class="eyebrow" style="color: var(--accent2);">Pokémon más jugados</div>
                       <div style="font-size: 12px; color: var(--mut); margin-top: 4px;">Filtra por tipo de energía para ver tus preferidos.</div>
                     </div>
                     <select [(ngModel)]="elementFilter" class="form-input select-dark" style="width: 160px; padding: 8px 12px; font-size: 13px;">
@@ -473,7 +473,7 @@ import { RouterModule } from '@angular/router';
 
                 <!-- Top Attackers -->
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
-                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Top 5 Pokémon Atacantes (Daño Infligido)</div>
+                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Daño infligido por Pokémon</div>
                   @let topAttackers = getTopAttackers();
                   @if (topAttackers.length === 0) {
                     <div style="text-align: center; color: var(--mut); padding: 40px; font-weight: 600;">
@@ -585,22 +585,14 @@ import { RouterModule } from '@angular/router';
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">🏆 {{ profileData?.statistics?.perfectWins || 0 }}</div>
                 </div>
                 <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
-                  <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Remontadas</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🔥 {{ profileData?.statistics?.comebackWins || 0 }}</div>
+                  <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Cartas Jugadas</div>
+                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🃏 {{ totalCardsPlayed }}</div>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
-                  <span style="color: var(--dim);">KOs Totales</span>
-                  <span class="num" style="font-size: 14px; font-weight: 700; color: var(--accent);">⚡ {{ profileData?.statistics?.totalKos || 0 }}</span>
-                </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
                   <span style="color: var(--dim);">Cartas Entrenador Jugadas</span>
                   <span class="num" style="font-size: 14px; font-weight: 700; color: #b8b8cc;">🃏 {{ profileData?.statistics?.trainerCardsPlayed || 0 }}</span>
-                </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 8px 10px; background: rgba(255,255,255,0.01); border-radius: 8px;">
-                  <span style="color: var(--dim);">Daño Total Infligido</span>
-                  <span class="num" style="font-size: 14px; font-weight: 700; color: #4aa3ff;">💥 {{ profileData?.statistics?.totalDamageDealt || 0 }}</span>
                 </div>
               </div>
             </div>
@@ -626,7 +618,7 @@ import { RouterModule } from '@angular/router';
 
             <!-- Archetypes (Donut) -->
             <div>
-              <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Top Mazos</div>
+              <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Mazos más usados</div>
               <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
                 <div style="display: flex; justify-content: center; margin-bottom: 30px;">
                   <div [style.background]="'conic-gradient(' + donutStops + ')'" style="width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
@@ -1314,6 +1306,12 @@ export class ProfileAuroraComponent implements OnInit {
         color: colors[idx % colors.length]
       };
     });
+  }
+
+  get totalCardsPlayed(): number {
+    const pokemonCount = this.profileData?.advancedStats?.pokemonStats?.reduce((sum, p) => sum + (p.timesPlayed || 0), 0) || 0;
+    const trainerCount = this.profileData?.statistics?.trainerCardsPlayed || 0;
+    return pokemonCount + trainerCount;
   }
 
   get overallWinRate(): number {
