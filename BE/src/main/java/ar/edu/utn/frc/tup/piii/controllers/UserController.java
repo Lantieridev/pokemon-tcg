@@ -193,12 +193,16 @@ public class UserController {
      * @return 200 OK or 400 Bad Request
      */
     @PutMapping("/profile")
-    public ResponseEntity<Void> updateProfile(@RequestBody final UpdateProfileRequestDTO request, final Principal principal) {
+    public ResponseEntity<Object> updateProfile(@RequestBody final UpdateProfileRequestDTO request, final Principal principal) {
         if (principal == null || request == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Solicitud inválida"));
         }
-        profileService.updateProfile(principal.getName(), request);
-        return ResponseEntity.ok().build();
+        try {
+            profileService.updateProfile(principal.getName(), request);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 
     /**
