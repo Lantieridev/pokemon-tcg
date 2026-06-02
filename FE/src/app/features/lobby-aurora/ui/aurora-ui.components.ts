@@ -46,21 +46,82 @@ export class LogoComponent {}
 @Component({
   selector: 'aurora-trainer-chip',
   standalone: true,
+  imports: [CommonModule],
   template: `
-    <div class="chip">
-      <div class="avatar ring">{{ initial }}</div>
-      <div style="line-height: 1.15;">
-        <div style="font-weight: 800; font-size: 13.5px; letter-spacing: .01em;">{{ name }}</div>
-        <div class="num" style="font-size: 10.5px; color: var(--mut); letter-spacing: .04em;">{{ mmr }} MMR</div>
+    <div style="position: relative;">
+      <div class="chip" (click)="toggle()" style="cursor: pointer; user-select: none;"
+           [style.outline]="open ? '2px solid var(--accent)' : 'none'"
+           [style.outline-offset]="'2px'">
+        <div class="avatar ring">{{ initial }}</div>
+        <div style="line-height: 1.15;">
+          <div style="font-weight: 800; font-size: 13.5px; letter-spacing: .01em;">{{ name }}</div>
+          <div class="num" style="font-size: 10.5px; color: var(--mut); letter-spacing: .04em;">{{ mmr }} MMR</div>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+             style="margin-left: 4px; color: var(--mut); transition: transform 0.2s;"
+             [style.transform]="open ? 'rotate(180deg)' : 'rotate(0deg)'">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
       </div>
+
+      @if (open) {
+        <!-- Backdrop para cerrar al click afuera -->
+        <div style="position: fixed; inset: 0; z-index: 9998;" (click)="open = false"></div>
+
+        <!-- Dropdown menu -->
+        <div style="
+          position: absolute; right: 0; top: calc(100% + 8px);
+          min-width: 180px; background: var(--bg2, #1a1a2e);
+          border: 1px solid var(--line, rgba(255,255,255,0.1));
+          border-radius: 12px; padding: 8px;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+          z-index: 9999; animation: chipDrop 0.15s ease;">
+          <div style="padding: 8px 12px 10px; border-bottom: 1px solid var(--line, rgba(255,255,255,0.08)); margin-bottom: 6px;">
+            <div style="font-size: 12px; color: var(--mut); margin-bottom: 2px;">Sesión activa</div>
+            <div style="font-weight: 700; font-size: 14px;">{{ name }}</div>
+          </div>
+          <button
+            (click)="logout()"
+            style="
+              width: 100%; padding: 9px 12px; border: none; border-radius: 8px;
+              background: rgba(239,68,68,0.12); color: #f87171;
+              font-size: 13px; font-weight: 600; cursor: pointer; text-align: left;
+              display: flex; align-items: center; gap: 8px;
+              transition: background 0.15s;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
+      }
     </div>
-  `
+  `,
+  styles: [`
+    @keyframes chipDrop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  `]
 })
 export class TrainerChipComponent {
   @Input() name: string = 'NOVA';
   @Input() mmr: string = '1842';
   @Input() initial: string = 'N';
+
+  open = false;
+
+  toggle() { this.open = !this.open; }
+
+  logout() {
+    this.open = false;
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    window.location.href = '/login';
+  }
 }
+
 
 @Component({
   selector: 'aurora-stat',
