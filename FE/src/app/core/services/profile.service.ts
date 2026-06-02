@@ -47,6 +47,22 @@ export interface UserAchievementProgressDTO {
   target: number;
 }
 
+export interface MatchHistoryItemDTO {
+  matchId: number;
+  opponent: string;
+  status: string;
+  result: string;
+  date: string;
+}
+
+export interface SliceMatchHistoryResponseDTO {
+  content: MatchHistoryItemDTO[];
+  first: boolean;
+  last: boolean;
+  number: number;
+  size: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private http = inject(HttpClient);
@@ -70,6 +86,10 @@ export class ProfileService {
 
   updateShowcaseDeck(deckId: number | null): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/profile/showcase/deck`, { deckId });
+  }
+
+  getUserHistory(page = 0, size = 10): Observable<SliceMatchHistoryResponseDTO> {
+    return this.http.get<SliceMatchHistoryResponseDTO>(`${this.API_URL}/me/history?page=${page}&size=${size}`);
   }
 }
 
