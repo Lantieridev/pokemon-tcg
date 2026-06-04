@@ -410,8 +410,9 @@ body{
 .status-token.confused{ background: linear-gradient(180deg, #ffcc33, #8a5a00); color:#2a1700; }
 .status-token.paralyzed{background: linear-gradient(180deg, #facc15, #92400e); color:#1a1000; }
 
-.rotate-asleep   { transform: rotate(90deg); }
+.rotate-asleep   { transform: rotate(-90deg); }
 .rotate-confused { transform: rotate(180deg); }
+.rotate-paralyzed{ transform: rotate(90deg); }
 
 /* ─── Glow rings ─────────────────────────────────────────────────────────── */
 .glow{ position:absolute; inset:-8px; border-radius: 12%; pointer-events:none; z-index:-2; }

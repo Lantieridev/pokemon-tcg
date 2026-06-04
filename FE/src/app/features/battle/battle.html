@@ -181,6 +181,7 @@
               [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
+              [maxHp]="b.maxHp"
               [status]="b.status"
               [width]="70"
               direction="up">
@@ -203,6 +204,7 @@
             [cardId]="activeOpp.cardId"
             [energies]="activeOpp.energies"
             [damage]="activeOpp.damage"
+            [maxHp]="activeOpp.maxHp"
             [status]="activeOpp.status"
             [width]="110"
             [glow]="true"
@@ -247,6 +249,7 @@
             [cardId]="activeMe.cardId"
             [energies]="activeMe.energies"
             [damage]="activeMe.damage"
+            [maxHp]="activeMe.maxHp"
             [status]="activeMe.status"
             [width]="120"
             [glow]="true"
@@ -280,6 +283,7 @@
               [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
+              [maxHp]="b.maxHp"
               [width]="80"
               direction="up">
             </app-field-pokemon>
@@ -394,6 +398,18 @@
         }
 
         <div class="label">Acciones</div>
+        <!-- Usar Habilidad — si el Pokémon tiene abilities -->
+        @if (menu().pokemon?.abilities) {
+          @for (ab of menu().pokemon.abilities; track $index) {
+            <div class="item"
+                 [class.opacity-50]="!isMyTurn()"
+                 (click)="useAbility(menu().pokemon.cardId)">
+              <app-icon name="star" svgClass="w-4 h-4" style="color:var(--p-yellow)"></app-icon>
+              <span>{{ ab.name || 'Habilidad' }}</span>
+              <span class="key">HAB</span>
+            </div>
+          }
+        }
         <!-- Retirar — habilitado según fase -->
         <div class="item"
              [class.opacity-50]="!canRetreat()"
@@ -544,6 +560,58 @@
            (click)="closeZoom()">
         <img [src]="url" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10"
              style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6)); pointer-events: none;" />
+      </div>
+    </div>
+  }
+
+  <!-- Card Selection Modal (PendingSelectionRequest) -->
+  @if (pendingSelection(); as sel) {
+    <app-card-selection-modal
+      [title]="sel.sourceEffect || 'Selecciona cartas'"
+      [cardIds]="sel.options"
+      [maxSelections]="sel.maxSelections"
+      [sourceLabel]="sel.source || 'MAZO'"
+      (confirm)="confirmSelection($event)"
+      (cancel)="cancelSelection()">
+    </app-card-selection-modal>
+  }
+
+  <!-- Game Over Overlay -->
+  @if (isFinished() && me() && opp()) {
+    <div class="fixed inset-0 z-[60] flex items-center justify-center" style="background: rgba(0,0,0,.88); backdrop-filter: blur(12px);">
+      <div class="flex flex-col items-center gap-6 text-center animate-fade">
+        <!-- Result icon -->
+        <div class="w-24 h-24 rounded-full flex items-center justify-center"
+             [style.background]="gameResult() === 'VICTORIA' ? 'linear-gradient(135deg, #ffcb05, #e6a700)' : 'linear-gradient(135deg, #ee1515, #8d1212)'"
+             style="border: 4px solid #fff; box-shadow: 0 0 60px rgba(255,203,5,.4);">
+          @if (gameResult() === 'VICTORIA') {
+            <app-icon name="trophy" svgClass="w-12 h-12" style="color:#1a1010"></app-icon>
+          } @else {
+            <app-icon name="close" svgClass="w-12 h-12" style="color:#fff"></app-icon>
+          }
+        </div>
+
+        <!-- Result text -->
+        <div class="font-display text-5xl tracking-wider"
+             [style.color]="gameResult() === 'VICTORIA' ? '#ffcb05' : '#ee1515'"
+             style="text-shadow: 0 4px 20px rgba(0,0,0,.8);">
+          {{ gameResult() }}
+        </div>
+
+        <div class="font-chunky text-sm tracking-widest uppercase" style="color: rgba(255,255,255,.5);">
+          Partida finalizada
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 mt-4">
+          <button class="px-8 py-3 rounded-2xl font-chunky text-sm tracking-wider uppercase transition-all"
+                  style="background: #ffcb05; color: #1a1010; border: 3px solid #1a1010; box-shadow: 0 4px 0 #1a1010;"
+                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 0 #1a1010'"
+                  onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 0 #1a1010'"
+                  (click)="onLeave()">
+            Volver al Lobby
+          </button>
+        </div>
       </div>
     </div>
   }
