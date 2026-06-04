@@ -377,11 +377,6 @@
           · HP {{ menu().pokemon?.maxHp - menu().pokemon?.damage }}/{{ menu().pokemon?.maxHp }}
         </div>
 
-        <div class="item" (click)="zoomCard(getCardImageUrl(menu().pokemon.cardId)); closeMenu()">
-          <app-icon name="search" svgClass="w-4 h-4" style="color:var(--p-blue)"></app-icon>
-          <span>Ver Detalle (Zoom)</span>
-        </div>
-
         <!-- Ataques disponibles del Pokémon activo -->
         @for (atk of me()!.active!.attacks; track $index) {
           <div class="item"
