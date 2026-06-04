@@ -45,6 +45,7 @@ public final class MatchSession {
     private TurnManager turnManager;
     private RuleValidator ruleValidator;
     private String winnerId;
+    private long version = 1L;
 
     /**
      * Set when a player's Active Pokémon has been knocked out and they must promote
@@ -511,5 +512,21 @@ public final class MatchSession {
      */
     public void setWinnerId(final String winnerId) {
         this.winnerId = winnerId;
+    }
+
+    /**
+     * Returns the dynamic version of the match session.
+     *
+     * @return dynamic version counter
+     */
+    public long getVersion() {
+        return version;
+    }
+
+    /**
+     * Increments the dynamic version counter by 1.
+     */
+    public void incrementVersion() {
+        this.version++;
     }
 }

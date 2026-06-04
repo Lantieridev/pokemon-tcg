@@ -71,7 +71,7 @@
     </div>
 
     <!-- LEFT COLUMN — both players' prize cards stacked -->
-    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
+    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-4 items-center">
       <!-- Opponent Prizes -->
       <div class="flex flex-col items-center gap-2">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
@@ -84,6 +84,17 @@
           }
         </div>
       </div>
+
+      <!-- ESTADIO -->
+      <div class="flex flex-col items-center gap-1.5">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
+        <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
+            <div class="text-center">
+              <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
+            </div>
+        </div>
+      </div>
+
       <!-- My Prizes -->
       <div class="flex flex-col items-center gap-2">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
@@ -163,14 +174,14 @@
           </div>
         }
         @for (b of opp()!.bench; track $index) {
-          <div>
+          <div (click)="zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
             <app-field-pokemon
               [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
               [status]="b.status"
               [width]="70"
-              direction="down">
+              direction="up">
             </app-field-pokemon>
           </div>
         }
@@ -178,7 +189,8 @@
 
       <!-- OPPONENT ACTIVE -->
       @if (opp()!.active; as activeOpp) {
-        <div class="active-pokemon-wrapper" style="transform: rotate(180deg)">
+        <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
+             (click)="zoomCard(getCardImageUrl(activeOpp.cardId))">
           @if (oppActiveIsBurned()) {
             <div class="token-burned" title="Oponente Quemado">🔥</div>
           }
@@ -192,7 +204,7 @@
             [status]="activeOpp.status"
             [width]="110"
             [glow]="true"
-            direction="down">
+            direction="up">
           </app-field-pokemon>
         </div>
       } @else {
@@ -205,23 +217,11 @@
         </div>
       }
 
-      <!-- STADIUM -->
+      <!-- TURNO INDICATOR -->
       <div class="flex flex-col items-center gap-2 my-1">
         <div class="px-4 py-1 rounded-full"
              style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
           <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
-        </div>
-        <div class="relative flex flex-col items-center">
-          <div class="flex items-center gap-3">
-            <div class="h-px w-24" style="background:linear-gradient(90deg, transparent, rgba(255,203,5,.5))"></div>
-            <div class="flex items-center justify-center relative w-[100px] h-[70px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
-                <div class="text-center">
-                  <div class="font-chunky text-[9px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Estadio</div>
-                  <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-                </div>
-            </div>
-            <div class="h-px w-24" style="background:linear-gradient(90deg, rgba(255,203,5,.5), transparent)"></div>
-          </div>
         </div>
       </div>
 
@@ -230,6 +230,7 @@
         <div class="active-pokemon-wrapper" 
              [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
              (click)="selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe)"
+             (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
              (dragover)="onDragOver($event)"
              (drop)="onDropPokemon($event, 'active', null)">
           <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
@@ -268,6 +269,7 @@
           <div [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
                [class.pulse-promote]="!me()!.active"
                (click)="!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b))"
+               (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
                (dragover)="onDragOver($event)"
                (drop)="onDropPokemon($event, 'bench', $index)">
             <app-field-pokemon
@@ -343,10 +345,11 @@
       <!-- Fan hand -->
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
         @for (c of handCards(); track $index) {
-          <div class="fan-card" 
+          <div class="fan-card cursor-pointer" 
                [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
                (click)="playCard(c, $index)"
+               (dblclick)="zoomCard(getCardImage(c))"
                draggable="true"
                (dragstart)="onDragStart($event, c, $index)">
             @if (getCardImage(c)) {
@@ -527,6 +530,18 @@
       </div>
     </div>
   </aside>
+
+  <!-- Fullscreen Card Zoom Modal Overlay -->
+  @if (zoomedCardUrl(); as url) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+         (click)="closeZoom()">
+      <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+           (click)="closeZoom()">
+        <img [src]="url" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+             style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6)); pointer-events: none;" />
+      </div>
+    </div>
+  }
 </div>
 } @else {
   <div class="absolute inset-0 flex items-center justify-center bg-[#0d0a1c] text-white">

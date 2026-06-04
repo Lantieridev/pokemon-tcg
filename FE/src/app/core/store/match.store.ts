@@ -102,7 +102,7 @@ export class MatchStore {
   });
 
   readonly turn = computed(() => ({
-    number: this.version(),
+    number: this.state()?.turnNumber ?? 1,
     owner: this.isMyTurn() ? 'me' : 'opp',
     timer: this.timeLeft(),
   }));

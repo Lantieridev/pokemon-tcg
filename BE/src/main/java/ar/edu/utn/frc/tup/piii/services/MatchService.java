@@ -168,6 +168,8 @@ public final class MatchService {
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
 
+            session.incrementVersion();
+
             final int turnNumber = getCurrentTurnNumber(session);
             final GameStateSnapshot snapshot = new GameStateSnapshot(
                     matchId, turnNumber, session.getPlayerIds());
@@ -362,6 +364,7 @@ public final class MatchService {
             lock.lock();
             try {
                 session.finish();
+                session.incrementVersion();
                 // Determine the winner (the other player)
                 String winnerUsername = null;
                 if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {

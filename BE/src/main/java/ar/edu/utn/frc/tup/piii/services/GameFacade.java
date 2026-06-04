@@ -200,6 +200,8 @@ public final class GameFacade {
         final BattlePokemonState oldActive = runtime.getActivePokemon();
         runtime.setActivePokemon(newActive);
         runtime.getBench().place(oldActive);
+        // Reset turns in play to 0 so retreated Pokémon cannot evolve on the bench in the same turn
+        runtime.recordPokemonEntered(oldActive);
     }
 
     private void applyPromoteActive(final PromoteActiveAction action, final PlayerRuntime runtime) {

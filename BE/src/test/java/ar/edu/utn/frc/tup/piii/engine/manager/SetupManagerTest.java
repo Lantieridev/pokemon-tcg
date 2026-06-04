@@ -163,8 +163,8 @@ class SetupManagerTest {
                 slot(allBasicsDeck()), simpleStrategy(),
                 slot(allBasicsDeck()), simpleStrategy());
 
-        assertEquals(0, result.mulliganCountP0());
-        assertEquals(0, result.mulliganCountP1());
+        assertEquals(0, result.mulligansP0().size());
+        assertEquals(0, result.mulligansP1().size());
     }
 
     @Test
@@ -196,7 +196,7 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertNull(s0.getActivePokemon());
+        assertNotNull(s0.getActivePokemon());
     }
 
     @Test
@@ -205,7 +205,7 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertEquals(INITIAL_HAND, s0.getHand().size());
+        assertEquals(INITIAL_HAND - 1, s0.getHand().size());
     }
 
     @Test
@@ -214,8 +214,8 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, benchStrategy(2), slot(allBasicsDeck()), simpleStrategy());
 
-        assertEquals(INITIAL_HAND, s0.getHand().size());
-        assertEquals(0, s0.getBench().size());
+        assertEquals(INITIAL_HAND - 3, s0.getHand().size());
+        assertEquals(2, s0.getBench().size());
     }
 
     @Test
@@ -244,8 +244,8 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          slot(allBasicsDeck()),              simpleStrategy());
 
-        assertEquals(0, result.mulliganCountP0());
-        assertEquals(0, result.mulliganCountP1());
+        assertEquals(1, result.mulligansP0().size());
+        assertEquals(0, result.mulligansP1().size());
     }
 
     @Test
@@ -277,7 +277,7 @@ class SetupManagerTest {
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertNull(s0.getActivePokemon());
+        assertNotNull(s0.getActivePokemon());
     }
 
     // -------------------------------------------------------------------------
@@ -290,8 +290,8 @@ class SetupManagerTest {
                 .execute(slot(allBasicsDeck()),              simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        assertEquals(0, result.mulliganCountP0());
-        assertEquals(0, result.mulliganCountP1());
+        assertEquals(0, result.mulligansP0().size());
+        assertEquals(1, result.mulligansP1().size());
     }
 
     @Test
@@ -315,7 +315,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          slot(allBasicsDeck()),               simpleStrategy());
 
-        assertEquals(0, result.mulliganCountP0());
+        assertEquals(3, result.mulligansP0().size());
     }
 
     @Test
@@ -326,7 +326,7 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        assertEquals(INITIAL_HAND, s1.getHand().size());
+        assertEquals(INITIAL_HAND - 1 + 3, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -339,8 +339,8 @@ class SetupManagerTest {
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)),  simpleStrategy());
 
-        assertEquals(0, result.mulliganCountP0());
-        assertEquals(0, result.mulliganCountP1());
+        assertEquals(2, result.mulligansP0().size());
+        assertEquals(1, result.mulligansP1().size());
     }
 
     @Test
@@ -351,7 +351,7 @@ class SetupManagerTest {
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        assertEquals(INITIAL_HAND, s0.getHand().size());
+        assertEquals(INITIAL_HAND - 1, s0.getHand().size());
     }
 
     @Test
@@ -375,7 +375,7 @@ class SetupManagerTest {
 
         new SetupManager(HEADS, d -> { }, 6).execute(s0, simpleStrategy(), slot(allBasicsDeck()), simpleStrategy());
 
-        assertNull(s0.getActivePokemon());
+        assertEquals("Basic-b-0", s0.getActivePokemon().getName());
     }
 
     // -------------------------------------------------------------------------

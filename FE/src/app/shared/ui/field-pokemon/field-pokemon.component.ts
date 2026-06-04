@@ -59,7 +59,35 @@ export class FieldPokemonComponent {
         img: found.images?.small ?? found.images?.large ?? ''
       };
     }
-    return CARDS[this.cardId];
+
+    // Try mock fallback
+    const mock = CARDS['e_' + this.cardId.toLowerCase()] || CARDS[this.cardId.toLowerCase()] || CARDS[this.cardId];
+    if (mock) {
+      return {
+        id: this.cardId,
+        name: mock.name,
+        type: mock.type,
+        img: mock.img
+      };
+    }
+
+    // Parse format (e.g. xy1-108)
+    const parts = this.cardId.split('-');
+    if (parts.length === 2) {
+      return {
+        id: this.cardId,
+        name: 'Pokémon',
+        type: 'colorless',
+        img: `https://images.pokemontcg.io/${parts[0]}/${parts[1]}.png`
+      };
+    }
+
+    return {
+      id: this.cardId,
+      name: 'Pokémon',
+      type: 'colorless',
+      img: 'https://images.pokemontcg.io/xy1/130.png'
+    };
   }
 
   get rot(): number {

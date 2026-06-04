@@ -53,10 +53,14 @@ public final class PlayerPerspectiveMapper {
             requestDto = new PendingSelectionRequestDTO(req.sourceEffect(), req.target() != null ? req.target().getCardId() : null, req.maxSelections(), req.source(), options);
         }
 
+        final int turnNumber = session.getTurnManager() != null ?
+                (session.getTurnManager().getTurnCount(0) + session.getTurnManager().getTurnCount(1)) : 0;
+
         return new GameStateResponseDTO(
                 session.getMatchId(),
-                INITIAL_VERSION,
-                session.getActivePlayerIndex(),
+                session.getVersion(),
+                turnNumber,
+                session.getActivePlayerIndex() == -1 ? -1 : (session.getActivePlayerIndex() == viewerIndex ? 0 : 1),
                 session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name(),
                 requestDto,
                 self,
