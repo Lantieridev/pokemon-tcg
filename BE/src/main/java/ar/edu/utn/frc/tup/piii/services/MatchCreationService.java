@@ -25,7 +25,18 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
+import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -49,15 +60,19 @@ public final class MatchCreationService {
 
     private final MatchSessionRegistry registry;
     private final SimpMessagingTemplate messaging;
+    private final ChatService chatService;
 
     /**
-     * @param registry  stores active sessions (never null)
-     * @param messaging used to broadcast the initial game state after setup (never null)
+     * @param registry    stores active sessions (never null)
+     * @param messaging   used to broadcast the initial game state after setup (never null)
+     * @param chatService used to broadcast setup events like mulligans
      */
     public MatchCreationService(final MatchSessionRegistry registry,
-                                 final SimpMessagingTemplate messaging) {
+                                 final SimpMessagingTemplate messaging,
+                                 final ChatService chatService) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
+        this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
     }
 
     /**
@@ -99,6 +114,18 @@ public final class MatchCreationService {
         final PlayerSetupSlot slot1 = new PlayerSetupSlot(deck1, hand1, bench1);
         final AutoSetupStrategy strategy = new AutoSetupStrategy();
         final SetupResult setupResult = setupManager.execute(slot0, strategy, slot1, strategy);
+
+        // --- Broadcast Mulligans ---
+        for (final List<Card> handCards : setupResult.mulligansP0()) {
+            final String cardNames = handCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+            chatService.addMessage(matchId, new ChatMessageResponse(
+                    "Sistema", "Mulligan de " + playerAId + ": " + cardNames, LocalDateTime.now()));
+        }
+        for (final List<Card> handCards : setupResult.mulligansP1()) {
+            final String cardNames = handCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+            chatService.addMessage(matchId, new ChatMessageResponse(
+                    "Sistema", "Mulligan de " + playerBId + ": " + cardNames, LocalDateTime.now()));
+        }
 
         // --- Build PlayerRuntimes with prize piles from setup ---
         final PlayerRuntime runtime0 = new PlayerRuntime(

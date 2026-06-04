@@ -89,6 +89,7 @@ export interface PendingSelectionRequest {
 export interface GameStateResponseDTO {
   matchId: string;
   version: number;
+  turnNumber: number;
   activePlayerIndex: number;  // 0 o 1
   currentPhase: TurnPhase;
   pendingSelectionRequest: PendingSelectionRequest | null;

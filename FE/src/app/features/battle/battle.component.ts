@@ -82,6 +82,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly menu = signal<any>(null);
   readonly isConnecting = signal(true);
   readonly connectionError = signal<string | null>(null);
+  readonly zoomedCardUrl = signal<string | null>(null);
   readonly selectedHandCard = signal<PokemonTcgCard | null>(null);
   readonly selectedHandIndex = signal<number | null>(null);
   readonly draggedCard = signal<PokemonTcgCard | null>(null);
@@ -157,6 +158,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   private matchId!: string;
   private wsSub?: Subscription;
+  private lastAutoEndedVersion = -1;
 
   @ViewChild('scrollRef') scrollRef!: ElementRef;
   @ViewChild('chatRef') chatRef!: ElementRef;
@@ -166,9 +168,13 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       const turnState = this.turn();
       const myTurn = this.isMyTurn();
       const hasActive = this.me()?.active !== null;
+      const currentVersion = turnState.number;
       if (myTurn && hasActive && turnState.timer === 0 && this.canEndTurn()) {
-        console.log('[Battle] Timer reached 0. Ending turn automatically.');
-        this.endTurn();
+        if (this.lastAutoEndedVersion !== currentVersion) {
+          this.lastAutoEndedVersion = currentVersion;
+          console.log(`[Battle] Timer reached 0 for version ${currentVersion}. Ending turn automatically.`);
+          this.endTurn();
+        }
       }
     });
   }
@@ -330,8 +336,37 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return 'COLORLESS';
   }
 
+  getCardImageUrl(cardId: string): string {
+    if (!cardId) return 'https://images.pokemontcg.io/xy1/130.png';
+    const allCards = this.tcgService.cards();
+    const found = allCards.find(c => c.id === cardId);
+    if (found) {
+      return found.images?.large || found.images?.small || '';
+    }
+    // Try mock fallback
+    const mock = CARDS['e_' + cardId.toLowerCase()] || CARDS[cardId.toLowerCase()] || CARDS[cardId];
+    if (mock && mock.img) {
+      return mock.img;
+    }
+    // Parse format (e.g. xy1-108)
+    const parts = cardId.split('-');
+    if (parts.length === 2) {
+      return `https://images.pokemontcg.io/${parts[0]}/${parts[1]}.png`;
+    }
+    return 'https://images.pokemontcg.io/xy1/130.png';
+  }
+
   getCardImage(card: PokemonTcgCard): string {
-    return card.images?.small ?? card.images?.large ?? '';
+    return this.getCardImageUrl(card.id);
+  }
+
+  zoomCard(url: string): void {
+    if (!url) return;
+    this.zoomedCardUrl.set(url);
+  }
+
+  closeZoom(): void {
+    this.zoomedCardUrl.set(null);
   }
 
   isSelected(index: number): boolean {
