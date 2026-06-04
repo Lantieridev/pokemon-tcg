@@ -73,7 +73,7 @@ import { CARDS } from '../../data/cards.mock';
       }
 
       <app-energy-cascade [energies]="energies" [direction]="direction" [cardW]="width"></app-energy-cascade>
-      <app-damage-tokens [damage]="damage" [status]="status"></app-damage-tokens>
+      <app-damage-tokens [status]="status"></app-damage-tokens>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
