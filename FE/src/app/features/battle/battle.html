@@ -61,12 +61,14 @@
 
     <!-- Opponent hand silhouette arc -->
     <div class="opp-fan-hand z-40 pointer-events-none">
-      @for (h of oppHandArray(); track $index) {
-        <div class="card-back opp-fan-card"
+      @for (h of oppHandArrayAnimated(); track $index) {
+        <div class="opp-fan-card"
              [style.--i]="$index"
              [style.--n]="opp()?.handCount ?? 0"
              [style.--spread]="'6deg'"
-             [style.zIndex]="10 + $index"></div>
+             [style.zIndex]="10 + $index">
+          <div class="card-back w-full h-full opp-card-deal-wrapper"></div>
+        </div>
       }
     </div>
 
@@ -77,8 +79,8 @@
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of opp()?.prizes; track $index) {
-            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+          @for (alive of oppPrizesAnimated(); track $index) {
+            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
           }
@@ -100,8 +102,8 @@
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of me()?.prizes; track $index) {
-            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+          @for (alive of myPrizesAnimated(); track $index) {
+            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
           }
@@ -120,7 +122,7 @@
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
         </div>
         <div class="relative">
           <div class="rounded-md flex items-center justify-center"
@@ -142,7 +144,7 @@
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
         </div>
         <div class="relative">
           @if (me()! && me()!.discard && me()!.discard.length > 0) {
@@ -352,7 +354,7 @@
 
       <!-- Fan hand -->
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
-        @for (c of handCards(); track $index) {
+        @for (c of handCardsAnimated(); track $index) {
           <div class="fan-card cursor-pointer" 
                [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
@@ -361,11 +363,13 @@
                (contextmenu)="zoomCard(getCardImage(c)); $event.preventDefault()"
                draggable="true"
                (dragstart)="onDragStart($event, c, $index)">
-            @if (getCardImage(c)) {
-              <img [src]="getCardImage(c)" [alt]="c.name" class="w-full h-full object-cover rounded-md border border-[#1a1010]" />
-            } @else {
-              <div class="card-back w-full h-full" style="border-radius: 6px;"></div>
-            }
+            <div class="card-deal-wrapper w-full h-full">
+              @if (getCardImage(c)) {
+                <img [src]="getCardImage(c)" [alt]="c.name" class="w-full h-full object-cover rounded-md border border-[#1a1010]" />
+              } @else {
+                <div class="card-back w-full h-full" style="border-radius: 6px;"></div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -574,6 +578,34 @@
       (confirm)="confirmSelection($event)"
       (cancel)="cancelSelection()">
     </app-card-selection-modal>
+  }
+
+  <!-- Coin Flip Overlay -->
+  @if (animationStage() === 'coin-flip') {
+    <div class="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md">
+      <div class="coin-container">
+        <div class="coin" [class.flip-heads]="coinFlipResult() === 'heads'" [class.flip-tails]="coinFlipResult() === 'tails'">
+          <div class="coin-side front">
+            <span class="coin-symbol">⚡</span>
+          </div>
+          <div class="coin-side back">
+            <span class="coin-symbol">☠</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-12 text-center">
+        <h2 class="text-3xl font-display font-bold tracking-[0.2em] text-[#ffcb05] uppercase drop-shadow-[0_2px_10px_rgba(255,203,5,0.3)] animate-fade-in">Lanzamiento de Moneda</h2>
+        <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Determinando quién empieza la partida...</p>
+        
+        @if (coinFlipResult()) {
+          <div class="mt-8 px-6 py-2.5 rounded-2xl border border-white/10 bg-white/5 font-chunky text-sm tracking-wider uppercase animate-scale-up"
+               [style.color]="isMyTurn() ? '#5ad27a' : '#ee1515'"
+               [style.borderColor]="isMyTurn() ? 'rgba(90,210,122,0.2)' : 'rgba(238,21,21,0.2)'">
+            {{ isMyTurn() ? '¡Ganaste el coin flip! Empiezas tú' : 'Perdiste el coin flip. Empieza el rival' }}
+          </div>
+        }
+      </div>
+    </div>
   }
 
   <!-- Game Over Overlay -->

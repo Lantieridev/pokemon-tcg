@@ -142,25 +142,28 @@ public final class RuleValidator {
      * @return a non-null {@link ValidationResult}
      */
     public ValidationResult validate(final Action action) {
+        return validate(action, turnManager.activePlayerIndex());
+    }
+
+    public ValidationResult validate(final Action action, final int playerIndex) {
         return switch (action) {
-            case EvolveAction a             -> validateEvolve(a);
-            case RetreatAction a            -> validateRetreat(a);
-            case PlayTrainerAction a        -> validatePlayTrainer(a);
-            case AttachEnergyAction a       -> validateAttachEnergy(a);
-            case DeclareAttackAction a      -> validateDeclareAttack(a);
-            case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon(a);
-            case UseAbilityAction a         -> validateUseAbility(a);
+            case EvolveAction a             -> validateEvolve(a, playerIndex);
+            case RetreatAction a            -> validateRetreat(a, playerIndex);
+            case PlayTrainerAction a        -> validatePlayTrainer(a, playerIndex);
+            case AttachEnergyAction a       -> validateAttachEnergy(a, playerIndex);
+            case DeclareAttackAction a      -> validateDeclareAttack(a, playerIndex);
+            case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon(a, playerIndex);
+            case UseAbilityAction a         -> validateUseAbility(a, playerIndex);
             case EndTurnAction a            -> new ValidationResult.Valid();
-            case PromoteActiveAction a      -> validatePromoteActive(a);
-            case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction a -> validateSelectCards(a);
+            case PromoteActiveAction a      -> validatePromoteActive(a, playerIndex);
+            case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction a -> validateSelectCards(a, playerIndex);
         };
     }
 
-    private ValidationResult validateEvolve(final EvolveAction action) {
+    private ValidationResult validateEvolve(final EvolveAction action, final int playerIndex) {
         if (action.target() == null) {
             return new ValidationResult.Invalid("target_pokemon_required");
         }
-        final int playerIndex = turnManager.activePlayerIndex();
         if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
             return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
         }
@@ -196,14 +199,14 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateRetreat(final RetreatAction action) {
+    private ValidationResult validateRetreat(final RetreatAction action, final int playerIndex) {
         if (action.active() == null) {
             return new ValidationResult.Invalid("no_active_pokemon");
         }
-        if (!getActiveStatusEffectManager().canRetreat()) {
+        if (!getActiveStatusEffectManager(playerIndex).canRetreat()) {
             return new ValidationResult.Invalid(RETREAT_BLOCKED_BY_STATUS);
         }
-        if (benchStateProvider.getBenchSize(turnManager.activePlayerIndex()) == 0) {
+        if (benchStateProvider.getBenchSize(playerIndex) == 0) {
             return new ValidationResult.Invalid(EMPTY_BENCH_FOR_RETREAT);
         }
         MainPhase mainPhase = turnManager.requireMainPhase();
@@ -257,13 +260,12 @@ public final class RuleValidator {
         return pokemon.getAttachedEnergies().contains(PokemonType.FAIRY);
     }
 
-    private ValidationResult validatePlayTrainer(final PlayTrainerAction action) {
+    private ValidationResult validatePlayTrainer(final PlayTrainerAction action, final int playerIndex) {
         MainPhase mainPhase = turnManager.requireMainPhase();
         if (action.effectId() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
             if (action.target() == null) {
                 return new ValidationResult.Invalid("target_pokemon_required");
             }
-            final int playerIndex = turnManager.activePlayerIndex();
             if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
                 return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
             }
@@ -303,7 +305,7 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateAttachEnergy(final AttachEnergyAction action) {
+    private ValidationResult validateAttachEnergy(final AttachEnergyAction action, final int playerIndex) {
         if (action.target() == null) {
             return new ValidationResult.Invalid("target_pokemon_required");
         }
@@ -317,12 +319,11 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateDeclareAttack(final DeclareAttackAction action) {
-        final int activePlayerIndex = turnManager.activePlayerIndex();
-        if (turnManager.getStartingPlayerIndex() == activePlayerIndex && turnManager.isFirstTurnOfPlayer(activePlayerIndex)) {
+    private ValidationResult validateDeclareAttack(final DeclareAttackAction action, final int playerIndex) {
+        if (turnManager.getStartingPlayerIndex() == playerIndex && turnManager.isFirstTurnOfPlayer(playerIndex)) {
             return new ValidationResult.Invalid(CANNOT_ATTACK_FIRST_TURN);
         }
-        if (!getActiveStatusEffectManager().canAttack()) {
+        if (!getActiveStatusEffectManager(playerIndex).canAttack()) {
             return new ValidationResult.Invalid(ATTACK_BLOCKED_BY_STATUS);
         }
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
@@ -331,10 +332,9 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validatePlaceBasicPokemon(final PlaceBasicPokemonAction action) {
+    private ValidationResult validatePlaceBasicPokemon(final PlaceBasicPokemonAction action, final int playerIndex) {
         turnManager.requireMainPhase();
         
-        final int playerIndex = turnManager.activePlayerIndex();
         final java.util.Optional<ar.edu.utn.frc.tup.piii.engine.model.Card> maybeCard =
                 handStateProvider.getCardInHand(playerIndex, action.cardId());
 
@@ -351,7 +351,7 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateUseAbility(final UseAbilityAction action) {
+    private ValidationResult validateUseAbility(final UseAbilityAction action, final int playerIndex) {
         turnManager.requireMainPhase();
         
         final BattlePokemonState source = action.source();
@@ -387,11 +387,11 @@ public final class RuleValidator {
      * @param action the promote action (never null)
      * @return Valid if the bench index is ≥ 0; Invalid otherwise
      */
-    private ValidationResult validatePromoteActive(final PromoteActiveAction action) {
+    private ValidationResult validatePromoteActive(final PromoteActiveAction action, final int playerIndex) {
         if (action.benchIndex() < 0) {
             return new ValidationResult.Invalid("invalid_bench_index");
         }
-        final int size = benchStateProvider.getBenchSize(turnManager.activePlayerIndex());
+        final int size = benchStateProvider.getBenchSize(playerIndex);
         if (action.benchIndex() >= size) {
             return new ValidationResult.Invalid("bench_index_out_of_bounds");
         }
@@ -404,13 +404,13 @@ public final class RuleValidator {
      *
      * @return the active player's SEM (never null)
      */
-    private StatusEffectManager getActiveStatusEffectManager() {
-        final int idx = turnManager.activePlayerIndex();
-        if (idx < 0 || idx >= statusEffectManagers.size()) {
+    private StatusEffectManager getActiveStatusEffectManager(final int playerIndex) {
+        if (playerIndex < 0 || playerIndex >= statusEffectManagers.size()) {
             return statusEffectManagers.get(0);
         }
-        return statusEffectManagers.get(idx);
+        return statusEffectManagers.get(playerIndex);
     }
+
 
     private boolean hasEnoughEnergyForAttack(final BattlePokemonState attacker, final Attack attack) {
         // Build a mutable pool of energy entries. Each entry tracks its type and whether
@@ -460,7 +460,7 @@ public final class RuleValidator {
         return pool.size() >= colorlessRequired;
     }
 
-    private ValidationResult validateSelectCards(final ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction action) {
+    private ValidationResult validateSelectCards(final ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction action, final int playerIndex) {
         if (!(turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase)) {
             return new ValidationResult.Invalid("wrong_phase_for_selection");
         }

@@ -151,7 +151,11 @@ public final class GameFacade {
     private void applyPlacePokemon(final PlaceBasicPokemonAction action, final PlayerRuntime runtime) {
         final Card card = runtime.getHand().removeCard(action.cardId());
         final InPlayPokemon placed = new InPlayPokemon((PokemonCard) card);
-        runtime.getBench().place(placed);
+        if (runtime.getActivePokemon() == null) {
+            runtime.setActivePokemon(placed);
+        } else {
+            runtime.getBench().place(placed);
+        }
         // Register the newly placed Pokémon so evolution restriction tracking starts at 0 turns.
         runtime.recordPokemonEntered(placed);
         

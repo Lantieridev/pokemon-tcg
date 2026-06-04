@@ -27,6 +27,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { ActionRequestDTO, SpecialCondition, PokemonTcgCard, PokemonType } from '../../core/models/game-state.models';
 import { CARDS } from '../../shared/data/cards.mock';
+import { LOCAL_CARDS_DB } from '../../shared/data/cards-local-db';
 
 // ── Chat & Log (UI local, sin lógica de negocio) ─────────────────────────────
 
@@ -105,6 +106,14 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly quickChat = QUICK_CHAT;
   Math = Math;
 
+  // ── Intro Animations ──────────────────────────────────────────────────────
+  readonly animationStage = signal<'idle' | 'coin-flip' | 'dealing-hand' | 'dealing-prizes' | 'complete'>('idle');
+  readonly coinFlipResult = signal<'heads' | 'tails' | null>(null);
+  readonly animatedHandCount = signal(0);
+  readonly animatedOppHandCount = signal(0);
+  readonly animatedPrizeCount = signal(0);
+  readonly animatedOppPrizeCount = signal(0);
+
   // ── Computed helpers ──────────────────────────────────────────────────────
   readonly myEmptyBench = computed(() =>
     Array(Math.max(0, 5 - (this.me()?.bench.length ?? 0))).fill(0)
@@ -114,6 +123,10 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   );
   readonly oppHandArray = computed(() =>
     Array(this.opp()?.handCount ?? 0).fill(0)
+  );
+
+  readonly oppHandArrayAnimated = computed(() =>
+    Array(this.animationStage() === 'complete' ? (this.opp()?.handCount ?? 0) : this.animatedOppHandCount()).fill(0)
   );
 
   readonly handCount = computed(() => this.me()?.hand.length ?? 0);
@@ -129,6 +142,18 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return handIds.map(id => {
       const card = allCards.find(c => c.id === id);
       if (card) return card;
+      
+      const localCard = (LOCAL_CARDS_DB as any)[id];
+      if (localCard) {
+        return {
+          id: id,
+          name: localCard.name,
+          supertype: localCard.supertype,
+          subtypes: localCard.subtypes || [],
+          images: { small: '', large: '' },
+          set: { id: 'xy1' }
+        } as PokemonTcgCard;
+      }
       console.warn(`Card not found in TCG Service: ${id}`);
       return {
         id,
@@ -139,6 +164,46 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         set: { id: 'xy1' }
       } as PokemonTcgCard;
     });
+  });
+
+  readonly handCardsAnimated = computed(() => {
+    const cards = this.handCards();
+    if (this.animationStage() === 'complete') {
+      return cards;
+    }
+    return cards.slice(0, this.animatedHandCount());
+  });
+
+  readonly myPrizesAnimated = computed(() => {
+    const prizes = this.me()?.prizes ?? [];
+    if (this.animationStage() === 'complete') {
+      return prizes;
+    }
+    return prizes.slice(0, this.animatedPrizeCount());
+  });
+
+  readonly oppPrizesAnimated = computed(() => {
+    const prizes = this.opp()?.prizes ?? [];
+    if (this.animationStage() === 'complete') {
+      return prizes;
+    }
+    return prizes.slice(0, this.animatedOppPrizeCount());
+  });
+
+  readonly myDeckCountAnimated = computed(() => {
+    const base = this.me()?.deckCount ?? 60;
+    if (this.animationStage() === 'complete') return base;
+    const handRemaining = (this.me()?.hand.length ?? 7) - this.animatedHandCount();
+    const prizeRemaining = (this.me()?.prizes.length ?? 6) - this.animatedPrizeCount();
+    return base + handRemaining + prizeRemaining;
+  });
+
+  readonly oppDeckCountAnimated = computed(() => {
+    const base = this.opp()?.deckCount ?? 60;
+    if (this.animationStage() === 'complete') return base;
+    const handRemaining = (this.opp()?.handCount ?? 7) - this.animatedOppHandCount();
+    const prizeRemaining = (this.opp()?.prizes.length ?? 6) - this.animatedOppPrizeCount();
+    return base + handRemaining + prizeRemaining;
   });
 
   // ── Condiciones especiales para CSS ───────────────────────────────────────
@@ -237,6 +302,22 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.connectWebSocket();
       },
     });
+
+    // Cargar historial de chat
+    this.matchBackend.getChatHistory(this.matchId).subscribe({
+      next: (history) => {
+        const username = this.authService.username;
+        const mapped = history.map(msg => ({
+          from: msg.sender === username ? 'me' : 'opp',
+          text: msg.message,
+          t: new Date(msg.timestamp).toTimeString().slice(0, 5)
+        }));
+        this.chat.set(mapped as ChatEntry[]);
+      },
+      error: (err) => {
+        console.warn('[Battle] Error cargando historial de chat:', err);
+      }
+    });
   }
 
   private connectWebSocket(): void {
@@ -244,6 +325,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.wsSub = this.wsService.connect(this.matchId).subscribe({
         next: () => {
           this.isConnecting.set(false);
+          this.checkAndStartIntro();
         },
         error: (err) => {
           this.connectionError.set('Error de conexión al tablero.');
@@ -252,7 +334,23 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         },
       });
       // Marcar como conectado tras activar (el estado llega por onConnect)
-      setTimeout(() => this.isConnecting.set(false), 3000);
+      setTimeout(() => {
+        if (this.isConnecting()) {
+          this.isConnecting.set(false);
+          this.checkAndStartIntro();
+        }
+      }, 3000);
+      
+      const chatSub = this.wsService.chatMessage$.subscribe(msg => {
+        const username = this.authService.username;
+        const mapped: ChatEntry = {
+          from: msg.sender === username ? 'me' : 'opp',
+          text: msg.message,
+          t: new Date().toTimeString().slice(0, 5)
+        };
+        this.chat.update(c => [...c, mapped]);
+      });
+      this.wsSub.add(chatSub);
     } catch (err) {
       this.connectionError.set('No se pudo conectar. ¿Estás autenticado?');
       this.isConnecting.set(false);
@@ -506,8 +604,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   sendChat(text: string): void {
-    const now = new Date().toTimeString().slice(0, 5);
-    this.chat.update((c) => [...c, { from: 'me', text, t: now }]);
+    this.wsService.sendChatMessage(this.matchId, text);
   }
 
   onLeave(): void {
@@ -537,5 +634,71 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       'status--burned': conditions.includes('BURNED'),
       'status--poisoned': conditions.includes('POISONED'),
     };
+  }
+
+  // ── Intro Sequence Runner ─────────────────────────────────────────────────
+  checkAndStartIntro(): void {
+    const isNew = this.turn().number === 1 && !this.me()?.active && !this.opp()?.active;
+    if (isNew) {
+      this.animationStage.set('coin-flip');
+      this.runIntroSequence();
+    } else {
+      this.animationStage.set('complete');
+    }
+  }
+
+  private runIntroSequence(): void {
+    const iStart = this.isMyTurn();
+    this.coinFlipResult.set(iStart ? 'heads' : 'tails');
+
+    setTimeout(() => {
+      this.animationStage.set('dealing-hand');
+      this.dealHands();
+    }, 2800);
+  }
+
+  private dealHands(): void {
+    const totalCards = this.me()?.hand.length ?? 7;
+    const oppCards = this.opp()?.handCount ?? 7;
+    
+    let dealt = 0;
+    const interval = setInterval(() => {
+      if (dealt < totalCards) {
+        this.animatedHandCount.update(n => n + 1);
+      }
+      if (dealt < oppCards) {
+        this.animatedOppHandCount.update(n => n + 1);
+      }
+      dealt++;
+      if (dealt >= Math.max(totalCards, oppCards)) {
+        clearInterval(interval);
+        setTimeout(() => {
+          this.animationStage.set('dealing-prizes');
+          this.dealPrizes();
+        }, 600);
+      }
+    }, 180);
+  }
+
+  private dealPrizes(): void {
+    const totalPrizes = this.me()?.prizes.length ?? 6;
+    const oppPrizes = this.opp()?.prizes.length ?? 6;
+
+    let dealt = 0;
+    const interval = setInterval(() => {
+      if (dealt < totalPrizes) {
+        this.animatedPrizeCount.update(n => n + 1);
+      }
+      if (dealt < oppPrizes) {
+        this.animatedOppPrizeCount.update(n => n + 1);
+      }
+      dealt++;
+      if (dealt >= Math.max(totalPrizes, oppPrizes)) {
+        clearInterval(interval);
+        setTimeout(() => {
+          this.animationStage.set('complete');
+        }, 800);
+      }
+    }, 200);
   }
 }

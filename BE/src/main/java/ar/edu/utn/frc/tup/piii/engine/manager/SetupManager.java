@@ -132,6 +132,62 @@ public final class SetupManager {
         return new SetupResult(firstPlayerIndex, mulligansP0, mulligansP1);
     }
 
+    /**
+     * Executes the Setup Phase without automatically placing Active or Bench Pokémon.
+     * Mutant slots will have their hands drawn, deck shuffled, mulligans resolved,
+     * and prizes set, but the active and benched Pokémon will remain empty.
+     *
+     * @param slot0 player 0's mutable setup state
+     * @param slot1 player 1's mutable setup state
+     * @return setup results containing the coin flip winner and mulligan logs
+     */
+    public SetupResult executeWithoutPlacement(
+            final PlayerSetupSlot slot0,
+            final PlayerSetupSlot slot1) {
+
+        Objects.requireNonNull(slot0, "slot0 must not be null");
+        Objects.requireNonNull(slot1, "slot1 must not be null");
+
+        // Step 1 — shuffle and deal initial hands
+        shuffler.accept(slot0.getDeck());
+        shuffler.accept(slot1.getDeck());
+        slot0.getHand().addCards(slot0.getDeck().drawMultiple(INITIAL_HAND_SIZE));
+        slot1.getHand().addCards(slot1.getDeck().drawMultiple(INITIAL_HAND_SIZE));
+
+        // Step 2 — Mulligan loop
+        final List<List<Card>> mulligansP0 = new ArrayList<>();
+        final List<List<Card>> mulligansP1 = new ArrayList<>();
+
+        while (!hasBasicPokemon(slot0.getHand()) || !hasBasicPokemon(slot1.getHand())) {
+            if (!hasBasicPokemon(slot0.getHand())) {
+                mulligansP0.add(new ArrayList<>(slot0.getHand().getCards()));
+                doMulligan(slot0);
+            }
+            if (!hasBasicPokemon(slot1.getHand())) {
+                mulligansP1.add(new ArrayList<>(slot1.getHand().getCards()));
+                doMulligan(slot1);
+            }
+        }
+
+        // Step 4 — Mandatory bonus draws (based on mulligans)
+        if (mulligansP0.size() > mulligansP1.size()) {
+            final int difference = mulligansP0.size() - mulligansP1.size();
+            slot1.getHand().addCards(slot1.getDeck().drawMultiple(difference));
+        } else if (mulligansP1.size() > mulligansP0.size()) {
+            final int difference = mulligansP1.size() - mulligansP0.size();
+            slot0.getHand().addCards(slot0.getDeck().drawMultiple(difference));
+        }
+
+        // Step 5 — set aside Prize cards
+        slot0.addPrizes(slot0.getDeck().drawMultiple(prizeCount));
+        slot1.addPrizes(slot1.getDeck().drawMultiple(prizeCount));
+
+        // Step 6 — coin flip for first player
+        final int firstPlayerIndex = coinFlipper.flip() ? 0 : 1;
+
+        return new SetupResult(firstPlayerIndex, mulligansP0, mulligansP1);
+    }
+
     private boolean hasBasicPokemon(final ar.edu.utn.frc.tup.piii.engine.model.Hand hand) {
         return hand.getCards().stream()
                 .anyMatch(card -> card instanceof PokemonCard pokemon
