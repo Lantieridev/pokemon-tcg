@@ -17,6 +17,7 @@ import { Subscription } from 'rxjs';
 import { FieldPokemonComponent } from '../../shared/ui/field-pokemon/field-pokemon.component';
 import { EnergyPipComponent } from '../../shared/ui/energy-pip/energy-pip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
+import { CardSelectionModalComponent } from '../../shared/ui/card-selection-modal/card-selection-modal.component';
 import { SparksComponent, AmbientComponent, BallIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
 
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -51,7 +52,7 @@ interface ChatEntry {
 @Component({
   selector: 'app-battle',
   standalone: true,
-  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, SparksComponent, AmbientComponent, BallIconComponent],
+  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, CardSelectionModalComponent, SparksComponent, AmbientComponent, BallIconComponent],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,6 +77,18 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly canEndTurn = this.store.canEndTurn;
   readonly myActiveConditions = this.store.myActiveConditions;
   readonly oppActiveConditions = this.store.oppActiveConditions;
+  readonly pendingSelection = this.store.pendingSelection;
+  readonly isFinished = computed(() => {
+    const phase = this.store.phase();
+    // Only show game over when state is loaded AND phase is explicitly FINISHED
+    return this.store.isLoaded() && phase === 'FINISHED';
+  });
+  readonly gameResult = computed(() => {
+    if (!this.isFinished()) return null;
+    // If the game ended and it's "my turn" (activePlayerIndex===0), I won
+    // This is a simplification — the backend should send explicit winner info
+    return this.store.isMyTurn() ? 'VICTORIA' : 'DERROTA';
+  });
 
   // ── Estado UI local ────────────────────────────────────────────────────────
   readonly log = signal<LogEntry[]>([]);
@@ -267,6 +280,21 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   endTurn(): void {
     if (!this.canEndTurn()) return;
     this.sendAction({ type: 'END_TURN' });
+  }
+
+  useAbility(cardId: string): void {
+    if (!this.isMyTurn()) return;
+    this.sendAction({ type: 'USE_ABILITY', cardId });
+    this.closeMenu();
+  }
+
+  confirmSelection(selectedCardIds: string[]): void {
+    this.sendAction({ type: 'SELECT_CARDS', selectedCardIds });
+  }
+
+  cancelSelection(): void {
+    // Send empty selection to cancel/skip
+    this.sendAction({ type: 'SELECT_CARDS', selectedCardIds: [] });
   }
 
   private sendAction(action: ActionRequestDTO): void {

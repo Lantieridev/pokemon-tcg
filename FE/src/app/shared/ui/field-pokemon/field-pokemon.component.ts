@@ -31,6 +31,47 @@ import { CARDS } from '../../data/cards.mock';
         />
       }
 
+      <!-- HP HUD overlay -->
+      @if (maxHp > 0 && card) {
+        <div
+          style="
+            position: absolute;
+            top: 4px;
+            right: -8px;
+            z-index: 10;
+            background: rgba(0,0,0,.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 8px;
+            padding: 3px 6px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 9px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+          "
+        >
+          <span>{{ currentHp }}/{{ maxHp }}</span>
+          <div
+            style="
+              width: 36px;
+              height: 4px;
+              border-radius: 2px;
+              background: rgba(255,255,255,.15);
+              overflow: hidden;
+            "
+          >
+            <div
+              [style.width.%]="hpPercent"
+              [style.background]="hpBarColor"
+              style="height: 100%; border-radius: 2px; transition: width .3s ease, background .3s ease;"
+            ></div>
+          </div>
+        </div>
+      }
+
       <app-energy-cascade [energies]="energies" [direction]="direction" [cardW]="width"></app-energy-cascade>
       <app-damage-tokens [damage]="damage" [status]="status"></app-damage-tokens>
     </div>
@@ -47,6 +88,7 @@ export class FieldPokemonComponent {
   @Input() width: number = 140;
   @Input() glow: boolean = false;
   @Input() direction: 'up' | 'down' = 'down';
+  @Input() maxHp: number = 0;
 
   get card() {
     const allCards = this.tcgService.cards();
@@ -91,9 +133,25 @@ export class FieldPokemonComponent {
   }
 
   get rot(): number {
-    if (this.status === 'asleep') return 90;
+    if (this.status === 'asleep') return -90;
+    if (this.status === 'paralyzed') return 90;
     if (this.status === 'confused') return 180;
     return 0;
   }
-}
 
+  get currentHp(): number {
+    return Math.max(0, this.maxHp - this.damage);
+  }
+
+  get hpPercent(): number {
+    if (this.maxHp <= 0) return 0;
+    return Math.max(0, Math.min(100, (this.currentHp / this.maxHp) * 100));
+  }
+
+  get hpBarColor(): string {
+    const pct = this.hpPercent;
+    if (pct < 20) return '#ee1515';
+    if (pct <= 50) return '#ffcb05';
+    return '#5ad27a';
+  }
+}
