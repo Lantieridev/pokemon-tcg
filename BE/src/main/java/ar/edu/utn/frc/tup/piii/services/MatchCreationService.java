@@ -109,54 +109,37 @@ public final class MatchCreationService {
         final StatusEffectManager sem1 = new StatusEffectManager(coinFlipper);
 
         // --- Setup Phase ---
-        final SetupManager setupManager = new SetupManager(coinFlipper);
         final PlayerSetupSlot slot0 = new PlayerSetupSlot(deck0, hand0, bench0);
         final PlayerSetupSlot slot1 = new PlayerSetupSlot(deck1, hand1, bench1);
-        final AutoSetupStrategy strategy = new AutoSetupStrategy();
-        final SetupResult setupResult = setupManager.execute(slot0, strategy, slot1, strategy);
-
-        // --- Broadcast Mulligans ---
-        for (final List<Card> handCards : setupResult.mulligansP0()) {
-            final String cardNames = handCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-            chatService.addMessage(matchId, new ChatMessageResponse(
-                    "Sistema", "Mulligan de " + playerAId + ": " + cardNames, LocalDateTime.now()));
-        }
-        for (final List<Card> handCards : setupResult.mulligansP1()) {
-            final String cardNames = handCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-            chatService.addMessage(matchId, new ChatMessageResponse(
-                    "Sistema", "Mulligan de " + playerBId + ": " + cardNames, LocalDateTime.now()));
-        }
+        final SetupManager setupManager = new SetupManager(coinFlipper);
+        final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
+        final int firstPlayerIndex = setupResult.firstPlayerIndex();
 
         // --- Build PlayerRuntimes with prize piles from setup ---
         final PlayerRuntime runtime0 = new PlayerRuntime(
                 deck0, hand0, bench0, dp0, sem0,
-                slot0.getActivePokemon(), new ArrayList<>(slot0.getPrizes()));
+                null, slot0.getPrizes());
         final PlayerRuntime runtime1 = new PlayerRuntime(
                 deck1, hand1, bench1, dp1, sem1,
-                slot1.getActivePokemon(), new ArrayList<>(slot1.getPrizes()));
+                null, slot1.getPrizes());
         final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
         
         sem0.setPlayerRuntime(runtime0);
         sem1.setPlayerRuntime(runtime1);
 
         // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
-        if (slot0.getActivePokemon() != null) {
-            runtime0.recordPokemonEntered(slot0.getActivePokemon());
-        }
-        bench0.getAll().forEach(runtime0::recordPokemonEntered);
-        if (slot1.getActivePokemon() != null) {
-            runtime1.recordPokemonEntered(slot1.getActivePokemon());
-        }
-        bench1.getAll().forEach(runtime1::recordPokemonEntered);
+        // Nothing to register since the board is empty
 
         // --- Build MatchBoard (immutable snapshot fields only) ---
         final PlayerState ps0 = new PlayerState(
-                slot0.getActivePokemon(), bench0.getAll(),
-                List.of(), slot0.getActivePokemon() != null ? slot0.getActivePokemon().getAttacks() : List.of(),
+                null, bench0.getAll(),
+                hand0.getCards().stream().map(Card::getCardId).toList(),
+                List.of(),
                 deck0.size(), slot0.getPrizes().size(), Map.of());
         final PlayerState ps1 = new PlayerState(
-                slot1.getActivePokemon(), bench1.getAll(),
-                List.of(), slot1.getActivePokemon() != null ? slot1.getActivePokemon().getAttacks() : List.of(),
+                null, bench1.getAll(),
+                hand1.getCards().stream().map(Card::getCardId).toList(),
+                List.of(),
                 deck1.size(), slot1.getPrizes().size(), Map.of());
         final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
         board.bindRuntimes(runtimes);
@@ -168,7 +151,7 @@ public final class MatchCreationService {
 
         // --- Wire TurnManager and all PhaseListeners ---
         final TurnManager turnManager = new TurnManager();
-        turnManager.setStartingPlayer(setupResult.firstPlayerIndex());
+        turnManager.setStartingPlayer(firstPlayerIndex);
 
         final VictoryHandler victoryHandler =
                 result -> handleVictory(matchId, session, result);
@@ -210,7 +193,7 @@ public final class MatchCreationService {
 
         // --- Register and kick off first turn ---
         registry.register(session);
-        turnManager.startTurn(setupResult.firstPlayerIndex());
+        turnManager.startTurn(firstPlayerIndex);
 
         return matchId;
     }

@@ -22,10 +22,12 @@ export class WebSocketService {
 
   private stompClient: Client | null = null;
   private messageSubject = new Subject<GameStateResponseDTO>();
+  private chatSubject = new Subject<any>();
   private currentMatchId: string | null = null;
 
   /** Observable de actualizaciones del GameState */
   readonly gameState$ = this.messageSubject.asObservable();
+  readonly chatMessage$ = this.chatSubject.asObservable();
 
   /**
    * Conecta al WebSocket y se suscribe al canal del jugador.
@@ -79,6 +81,16 @@ export class WebSocketService {
           }
         }
       });
+      
+      this.stompClient!.subscribe(`/topic/chat/${matchId}`, (message) => {
+        if (message.body) {
+          try {
+            this.chatSubject.next(JSON.parse(message.body));
+          } catch (err) {
+            console.error('[WS] Error parseando ChatMessage:', err);
+          }
+        }
+      });
     };
 
     this.stompClient.onStompError = (frame) => {
@@ -121,6 +133,16 @@ export class WebSocketService {
       headers: { playerId: username },
       body: JSON.stringify(action),
     });
+  }
+
+  sendChatMessage(matchId: string, message: string): void {
+    const username = this.authService.username;
+    if (this.stompClient?.connected && username) {
+      this.stompClient.publish({
+        destination: `/app/chat/${matchId}`,
+        body: JSON.stringify({ sender: username, message })
+      });
+    }
   }
 
   /** Desconecta el cliente STOMP y resetea el store */

@@ -150,7 +150,7 @@ public final class MatchService {
 
             // Use the per-session RuleValidator if available
             final RuleValidator validator = resolveValidator(session);
-            final ValidationResult result = validator.validate(action);
+            final ValidationResult result = validator.validate(action, playerIndex);
 
             if (result instanceof ValidationResult.Invalid invalid) {
                 throw new InvalidActionException(invalid.reason());
