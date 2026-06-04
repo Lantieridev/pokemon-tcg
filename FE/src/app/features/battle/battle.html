@@ -114,7 +114,8 @@
       <!-- Opponent Deck/Discard -->
       <div class="flex flex-col items-center gap-3">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
-        <div class="relative">
+        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
+             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
           <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
@@ -135,7 +136,8 @@
       <!-- My Deck/Discard -->
       <div class="flex flex-col items-center gap-3">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
-        <div class="relative">
+        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
+             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
           <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
@@ -227,10 +229,11 @@
 
       <!-- MY ACTIVE -->
       @if (me()!.active; as activeMe) {
-        <div class="active-pokemon-wrapper" 
+        <div class="active-pokemon-wrapper cursor-pointer" 
              [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
              (click)="selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe)"
              (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
+             (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
              (dragover)="onDragOver($event)"
              (drop)="onDropPokemon($event, 'active', null)">
           <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
@@ -266,10 +269,11 @@
            (dragover)="onDragOver($event)"
            (drop)="onDropField($event)">
         @for (b of me()!.bench; track $index) {
-          <div [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+          <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
                [class.pulse-promote]="!me()!.active"
                (click)="!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b))"
                (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
+               (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
                (dragover)="onDragOver($event)"
                (drop)="onDropPokemon($event, 'bench', $index)">
             <app-field-pokemon
@@ -350,6 +354,7 @@
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
                (click)="playCard(c, $index)"
                (dblclick)="zoomCard(getCardImage(c))"
+               (contextmenu)="zoomCard(getCardImage(c)); $event.preventDefault()"
                draggable="true"
                (dragstart)="onDragStart($event, c, $index)">
             @if (getCardImage(c)) {
@@ -368,8 +373,13 @@
            [style.left.px]="menu().x" [style.top.px]="menu().y" style="transform: translate(20px, -50%)"
            (click)="$event.stopPropagation()">
         <div class="label">
-          {{ menu().pokemon?.name || me()?.active?.name }}
-          · HP {{ me()!.active!.maxHp - me()!.active!.damage }}/{{ me()!.active!.maxHp }}
+          {{ menu().pokemon?.name }}
+          · HP {{ menu().pokemon?.maxHp - menu().pokemon?.damage }}/{{ menu().pokemon?.maxHp }}
+        </div>
+
+        <div class="item" (click)="zoomCard(getCardImageUrl(menu().pokemon.cardId)); closeMenu()">
+          <app-icon name="search" svgClass="w-4 h-4" style="color:var(--p-blue)"></app-icon>
+          <span>Ver Detalle (Zoom)</span>
         </div>
 
         <!-- Ataques disponibles del Pokémon activo -->
