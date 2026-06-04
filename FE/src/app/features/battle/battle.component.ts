@@ -25,6 +25,7 @@ import { MatchBackendService } from '../../core/services/match-backend.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { ActionRequestDTO, SpecialCondition, PokemonTcgCard, PokemonType } from '../../core/models/game-state.models';
+import { CARDS } from '../../shared/data/cards.mock';
 
 // ── Chat & Log (UI local, sin lógica de negocio) ─────────────────────────────
 
