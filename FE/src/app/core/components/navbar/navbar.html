@@ -14,7 +14,7 @@
     </div>
     
     <div>
-      <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'"></aurora-trainer-chip>
+      <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></aurora-trainer-chip>
     </div>
   </div>
 </header>

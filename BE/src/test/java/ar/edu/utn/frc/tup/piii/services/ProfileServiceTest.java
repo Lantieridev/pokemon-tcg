@@ -477,6 +477,8 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertTrue(novato.getUnlocked());
         assertEquals(1, novato.getProgress());
         assertEquals(1, novato.getTarget());
+        assertEquals("TITULO", novato.getRewardType());
+        assertEquals("Novato", novato.getRewardValue());
 
         final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO estratega = progress.stream()
                 .filter(p -> p.getTitle().equals("Estratega en Crecimiento"))
@@ -486,6 +488,8 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertFalse(estratega.getUnlocked());
         assertEquals(3, estratega.getProgress());
         assertEquals(5, estratega.getTarget());
+        assertEquals("TITULO", estratega.getRewardType());
+        assertEquals("Estratega en Crecimiento", estratega.getRewardValue());
 
         // Validate some new achievements progress
         final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO electricPower = progress.stream()
@@ -495,6 +499,8 @@ public class ProfileServiceTest {
         assertNotNull(electricPower);
         assertEquals(500, electricPower.getProgress());
         assertEquals(1000, electricPower.getTarget());
+        assertEquals("MEDALLA", electricPower.getRewardType());
+        assertEquals("medal_power_1k", electricPower.getRewardValue());
 
         final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO KOs = progress.stream()
                 .filter(p -> p.getTitle().equals("Derribador"))
@@ -503,5 +509,7 @@ public class ProfileServiceTest {
         assertNotNull(KOs);
         assertEquals(8, KOs.getProgress());
         assertEquals(10, KOs.getTarget());
+        assertEquals("MEDALLA", KOs.getRewardType());
+        assertEquals("medal_kos_10", KOs.getRewardValue());
     }
 }

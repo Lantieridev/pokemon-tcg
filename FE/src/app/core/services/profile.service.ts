@@ -72,6 +72,8 @@ export interface UserAchievementProgressDTO {
   requirement: string;
   progress: number;
   target: number;
+  rewardType?: 'MEDALLA' | 'FOTO_PERFIL' | 'TITULO';
+  rewardValue?: string;
 }
 
 export interface MatchHistoryItemDTO {
