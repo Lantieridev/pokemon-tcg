@@ -1258,6 +1258,14 @@ export class ProfileAuroraComponent implements OnInit {
       case 'PARTIDAS_JUGADAS': return '#a855f7'; // Purple
       case 'COLECCION': return '#5ad27a'; // Green
       case 'HONORES': return '#ff3b47'; // Red
+      case 'RESILIENCIA': return '#ec4899'; // Deep Pink
+      case 'COMPETITIVO': return '#f43f5e'; // Rose
+      case 'VERSATILIDAD': return '#f59e0b'; // Amber
+      case 'TITULOS': return '#10b981'; // Emerald
+      case 'ECONOMIA': return '#14b8a6'; // Teal
+      case 'COMBATE': return '#ef4444'; // Red-orange
+      case 'ELEMENTAL': return '#06b6d4'; // Cyan
+      case 'LEALTAD': return '#6366f1'; // Indigo
       default: return '#cfd6e4'; // Gray
     }
   }

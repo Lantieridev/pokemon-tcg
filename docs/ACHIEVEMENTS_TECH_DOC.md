@@ -45,5 +45,10 @@ Toda la lógica del sistema reside en [ProfileServiceImpl.java](file:///c:/Users
 ### Commit 2: Ampliación de Pruebas Unitarias
 *   **Mensaje del commit:** `test(BE): update ProfileServiceTest for expanded achievements and verify combat progress`
 *   **Descripción de cambios:**
-    *   Se añadieron imports requeridos y se actualizó `testExtendedStatsAndAchievementsProgress` para asertar el tamaño total de la lista (88 logros).
-    *   Se agregaron verificaciones explícitas de progreso para logros de daño acumulado (`Poder Eléctrico`) y KOs realizados (`Derribador`).
+	*   Se añadieron imports requeridos y se actualizó `testExtendedStatsAndAchievementsProgress` para asertar el tamaño total de la lista (88 logros).
+	*   Se agregaron verificaciones explícitas de progreso para logros de daño acumulado (`Poder Eléctrico`) y KOs realizados (`Derribador`).
+
+### Commit 3: Colores para Nuevas Categorías en Frontend
+*   **Mensaje del commit:** `style(FE): add color mapping for new achievement categories in profile page`
+*   **Descripción de cambios:**
+	*   Se añadieron los mapeos de color en `getCategoryColor` en `profile-aurora.component.ts` para las nuevas categorías de logros (`RESILIENCIA`, `COMPETITIVO`, `VERSATILIDAD`, `TITULOS`, `ECONOMIA`, `COMBATE`, `ELEMENTAL`, `LEALTAD`).
