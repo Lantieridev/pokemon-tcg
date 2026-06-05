@@ -48,8 +48,12 @@ import { RouterModule } from '@angular/router';
         
         <!-- Header Profile -->
         <div class="fu" style="display: flex; align-items: center; gap: 30px;">
-          <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%;">
-            {{ getAvatarEmoji(profileData?.avatarIcon) }}
+          <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0;">
+            @if (isCustomAvatar(profileData?.avatarIcon)) {
+              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+            } @else {
+              {{ getAvatarEmoji(profileData?.avatarIcon) }}
+            }
           </div>
           <div>
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -168,6 +172,35 @@ import { RouterModule } from '@angular/router';
                     {{ unlockedAchievementsCount }}/{{ achievements.length }}
                   </div>
                 </div>
+
+                <!-- Medallero -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="font-family: var(--display); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; color: var(--txt);">
+                      🛡️ Medallero de Logros 
+                      <span style="font-size: 12.5px; color: var(--mut); font-weight: 600;">({{ unlockedMedalsCount }} / 25)</span>
+                    </div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 12px;">
+                    @for (medal of medals; track medal.title) {
+                      <div class="medal-item" [class.locked]="!medal.unlocked">
+                        <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'" [alt]="medal.title" loading="lazy" />
+                        @if (!medal.unlocked) {
+                          <div style="position: absolute; bottom: 3px; right: 3px; font-size: 8px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; color: #ffb8b8; border: 0.5px solid rgba(255,255,255,0.15);">🔒</div>
+                        }
+                        <!-- Tooltip -->
+                        <div class="medal-tooltip">
+                          <div class="medal-tooltip-title">{{ medal.title }}</div>
+                          <div class="medal-tooltip-req">{{ medal.requirement }}</div>
+                          <div class="medal-tooltip-status" [style.color]="medal.unlocked ? '#46e08a' : '#ef4444'">
+                            {{ medal.unlocked ? '✓ Desbloqueado' : '✗ Bloqueado' }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
                 <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;" class="scroll">
                   @if (achievements.length === 0) {
                     <div style="text-align: center; color: var(--mut); padding: 40px;">No se encontraron logros.</div>
@@ -179,8 +212,35 @@ import { RouterModule } from '@angular/router';
                           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <span style="font-weight: 700; font-size: 15px; color: var(--txt);">{{ ach.title }}</span>
                             <span [style.background]="getCategoryColor(ach.category)" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; color: #111; text-transform: uppercase;">{{ ach.category }}</span>
+                            
+                            <!-- Reward Type Badge -->
+                            @if (ach.rewardType === 'MEDALLA') {
+                              <span style="background: rgba(74, 163, 255, 0.1); border: 1px solid rgba(74, 163, 255, 0.3); color: #4aa3ff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
+                                🛡️ Medalla
+                              </span>
+                            } @else if (ach.rewardType === 'FOTO_PERFIL') {
+                              <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
+                                👤 Avatar
+                              </span>
+                            } @else if (ach.rewardType === 'TITULO') {
+                              <span style="background: rgba(255, 206, 50, 0.1); border: 1px solid rgba(255, 206, 50, 0.3); color: #ffce32; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
+                                🏅 Título
+                              </span>
+                            }
                           </div>
-                          <div style="font-size: 12.5px; color: var(--mut); margin-top: 6px;">{{ ach.requirement }}</div>
+                          
+                          <div style="font-size: 12.5px; color: var(--mut); margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span>{{ ach.requirement }}</span>
+                            @if (ach.rewardType === 'MEDALLA') {
+                              <span style="color: var(--mut);">· Recompensa:</span>
+                              <img [src]="'assets/achievements/medals/' + ach.rewardValue + '.png'" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" [style.opacity]="ach.unlocked ? 1 : 0.4" />
+                            } @else if (ach.rewardType === 'FOTO_PERFIL') {
+                              <span style="color: var(--mut);">· Recompensa:</span>
+                              <img [src]="'assets/achievements/avatars/' + ach.rewardValue + '.png'" style="width: 20px; height: 20px; object-fit: cover; border-radius: 50%; vertical-align: middle; border: 1px solid var(--line);" [style.opacity]="ach.unlocked ? 1 : 0.4" />
+                            } @else if (ach.rewardType === 'TITULO') {
+                              <span style="color: var(--mut);">· Recompensa: <span style="color: var(--txt); font-weight: 600;">"{{ ach.rewardValue }}"</span></span>
+                            }
+                          </div>
                         </div>
                         <div style="font-size: 18px;">
                           {{ ach.unlocked ? '✅' : '🔒' }}
@@ -639,10 +699,14 @@ import { RouterModule } from '@angular/router';
           <!-- Avatar Icon selection -->
           <div class="form-group">
             <label class="form-label">Avatar</label>
-            <div style="display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap;">
-              @for (av of avatars; track av) {
-                <div class="avatar-option" [class.selected]="editAvatarIcon === av" (click)="editAvatarIcon = av">
-                  {{ getAvatarEmoji(av) }}
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-height: 140px; overflow-y: auto; padding-right: 4px;" class="scroll">
+              @for (av of availableAvatars; track av) {
+                <div class="avatar-option" [class.selected]="editAvatarIcon === av" (click)="editAvatarIcon = av" style="width: 46px; height: 46px; font-size: 22px; padding: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                  @if (isCustomAvatar(av)) {
+                    <img [src]="getAvatarUrl(av)" style="width: 100%; height: 100%; object-fit: cover;" />
+                  } @else {
+                    {{ getAvatarEmoji(av) }}
+                  }
                 </div>
               }
             </div>
@@ -678,11 +742,11 @@ import { RouterModule } from '@angular/router';
             <label class="form-label">Título Activo</label>
             <select [(ngModel)]="editActiveTitle" class="form-input select-dark">
               <option value="Ninguno" class="select-option">— Ninguno —</option>
-              @for (title of profileData?.unlockedTitles; track title) {
+              @for (title of unlockedTitlesList; track title) {
                 <option [value]="title" class="select-option">🏅 {{ title }}</option>
               }
             </select>
-            @if (!profileData?.unlockedTitles || profileData?.unlockedTitles?.length === 0) {
+            @if (!unlockedTitlesList || unlockedTitlesList.length === 0) {
               <div style="font-size: 11.5px; color: var(--mut); margin-top: 6px; font-style: italic;">Aún no tenés títulos desbloqueados. Completá logros para obtenerlos.</div>
             }
           </div>
@@ -918,6 +982,79 @@ import { RouterModule } from '@angular/router';
         box-shadow: 0 8px 16px rgba(0,0,0,0.6);
       }
       
+      /* Medallero Styles */
+      .medal-item {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: help;
+      }
+      .medal-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--accent2);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 206, 50, 0.2);
+      }
+      .medal-item img {
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
+        transition: filter 0.25s;
+      }
+      .medal-item.locked img {
+        filter: grayscale(1) brightness(0.5) contrast(0.8);
+        opacity: 0.35;
+      }
+      .medal-tooltip {
+        position: absolute;
+        bottom: 110%;
+        left: 50%;
+        transform: translateX(-50%) translateY(5px);
+        background: rgba(15, 15, 25, 0.95);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 14px;
+        width: 200px;
+        font-size: 12px;
+        color: var(--txt);
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        backdrop-filter: blur(10px);
+        text-align: center;
+      }
+      .medal-item:hover .medal-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .medal-tooltip-title {
+        font-weight: 700;
+        color: var(--accent2);
+        margin-bottom: 4px;
+        font-size: 13px;
+      }
+      .medal-tooltip-req {
+        color: var(--mut);
+        font-size: 11px;
+        line-height: 1.3;
+      }
+      .medal-tooltip-status {
+        margin-top: 6px;
+        font-weight: 800;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
@@ -933,6 +1070,7 @@ export class ProfileAuroraComponent implements OnInit {
 
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
+  allAchievements: UserAchievementProgressDTO[] = [];
   userDecks: any[] = [];
   activeTab: 'showcase' | 'achievements' | 'history' | 'stats' = 'showcase';
 
@@ -975,6 +1113,42 @@ export class ProfileAuroraComponent implements OnInit {
     return this.achievements.filter(a => a.unlocked).length;
   }
 
+  get unlockedTitlesList(): string[] {
+    if (!this.profileData?.unlockedTitles) return [];
+    return this.profileData.unlockedTitles.filter(title => {
+      if (title === 'Novato' || title === 'Entrenador') return true;
+      const ach = this.allAchievements.find(a => a.title === title);
+      return ach ? ach.rewardType === 'TITULO' : false;
+    });
+  }
+
+  get availableAvatars(): string[] {
+    const list = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
+    this.allAchievements.forEach(ach => {
+      if (ach.unlocked && ach.rewardType === 'FOTO_PERFIL' && ach.rewardValue) {
+        list.push(ach.rewardValue);
+      }
+    });
+    return list;
+  }
+
+  get medals(): UserAchievementProgressDTO[] {
+    return this.achievements.filter(a => a.rewardType === 'MEDALLA');
+  }
+
+  get unlockedMedalsCount(): number {
+    return this.medals.filter(m => m.unlocked).length;
+  }
+
+  isCustomAvatar(av: string | undefined): boolean {
+    return !!av && av.startsWith('avatar_');
+  }
+
+  getAvatarUrl(av: string | undefined): string {
+    if (!av) return '';
+    return `assets/achievements/avatars/${av}.png`;
+  }
+
   ngOnInit(): void {
     this.tcgService.loadCards();
     this.loadProfile();
@@ -998,6 +1172,7 @@ export class ProfileAuroraComponent implements OnInit {
   loadAchievements(): void {
     this.profileService.getAchievements(this.username).subscribe({
       next: (data) => {
+        this.allAchievements = data;
         this.achievements = data.filter(a => a.category !== 'DEFECTO');
         this.cdr.detectChanges();
       },
