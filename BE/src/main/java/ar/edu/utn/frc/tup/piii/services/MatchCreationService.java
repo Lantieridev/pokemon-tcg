@@ -25,7 +25,18 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
+import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -49,15 +60,19 @@ public final class MatchCreationService {
 
     private final MatchSessionRegistry registry;
     private final SimpMessagingTemplate messaging;
+    private final ChatService chatService;
 
     /**
-     * @param registry  stores active sessions (never null)
-     * @param messaging used to broadcast the initial game state after setup (never null)
+     * @param registry    stores active sessions (never null)
+     * @param messaging   used to broadcast the initial game state after setup (never null)
+     * @param chatService used to broadcast setup events like mulligans
      */
     public MatchCreationService(final MatchSessionRegistry registry,
-                                 final SimpMessagingTemplate messaging) {
+                                 final SimpMessagingTemplate messaging,
+                                 final ChatService chatService) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
+        this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
     }
 
     /**
@@ -94,54 +109,37 @@ public final class MatchCreationService {
         final StatusEffectManager sem1 = new StatusEffectManager(coinFlipper);
 
         // --- Setup Phase ---
-        final SetupManager setupManager = new SetupManager(coinFlipper);
         final PlayerSetupSlot slot0 = new PlayerSetupSlot(deck0, hand0, bench0);
         final PlayerSetupSlot slot1 = new PlayerSetupSlot(deck1, hand1, bench1);
-        final AutoSetupStrategy strategy = new AutoSetupStrategy();
-        final SetupResult setupResult = setupManager.execute(slot0, strategy, slot1, strategy);
+        final SetupManager setupManager = new SetupManager(coinFlipper);
+        final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
+        final int firstPlayerIndex = setupResult.firstPlayerIndex();
 
         // --- Build PlayerRuntimes with prize piles from setup ---
         final PlayerRuntime runtime0 = new PlayerRuntime(
                 deck0, hand0, bench0, dp0, sem0,
-                slot0.getActivePokemon(), new ArrayList<>(slot0.getPrizes()));
+                null, slot0.getPrizes());
         final PlayerRuntime runtime1 = new PlayerRuntime(
                 deck1, hand1, bench1, dp1, sem1,
-                slot1.getActivePokemon(), new ArrayList<>(slot1.getPrizes()));
+                null, slot1.getPrizes());
         final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
         
         sem0.setPlayerRuntime(runtime0);
         sem1.setPlayerRuntime(runtime1);
 
         // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
-        runtime0.recordPokemonEntered(slot0.getActivePokemon());
-        if (slot0.getActivePokemon() != null) {
-            runtime0.getStatisticsTracker().incrementPokemonPlayed(slot0.getActivePokemon().getCardId());
-        }
-        bench0.getAll().forEach(p -> {
-            runtime0.recordPokemonEntered(p);
-            if (p != null) {
-                runtime0.getStatisticsTracker().incrementPokemonPlayed(p.getCardId());
-            }
-        });
-        runtime1.recordPokemonEntered(slot1.getActivePokemon());
-        if (slot1.getActivePokemon() != null) {
-            runtime1.getStatisticsTracker().incrementPokemonPlayed(slot1.getActivePokemon().getCardId());
-        }
-        bench1.getAll().forEach(p -> {
-            runtime1.recordPokemonEntered(p);
-            if (p != null) {
-                runtime1.getStatisticsTracker().incrementPokemonPlayed(p.getCardId());
-            }
-        });
+        // Nothing to register since the board is empty
 
         // --- Build MatchBoard (immutable snapshot fields only) ---
         final PlayerState ps0 = new PlayerState(
-                slot0.getActivePokemon(), bench0.getAll(),
-                List.of(), slot0.getActivePokemon().getAttacks(),
+                null, bench0.getAll(),
+                hand0.getCards().stream().map(Card::getCardId).toList(),
+                List.of(),
                 deck0.size(), slot0.getPrizes().size(), Map.of());
         final PlayerState ps1 = new PlayerState(
-                slot1.getActivePokemon(), bench1.getAll(),
-                List.of(), slot1.getActivePokemon().getAttacks(),
+                null, bench1.getAll(),
+                hand1.getCards().stream().map(Card::getCardId).toList(),
+                List.of(),
                 deck1.size(), slot1.getPrizes().size(), Map.of());
         final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
         board.bindRuntimes(runtimes);
@@ -153,7 +151,7 @@ public final class MatchCreationService {
 
         // --- Wire TurnManager and all PhaseListeners ---
         final TurnManager turnManager = new TurnManager();
-        turnManager.setStartingPlayer(setupResult.firstPlayerIndex());
+        turnManager.setStartingPlayer(firstPlayerIndex);
 
         final VictoryHandler victoryHandler =
                 result -> handleVictory(matchId, session, result);
@@ -195,7 +193,7 @@ public final class MatchCreationService {
 
         // --- Register and kick off first turn ---
         registry.register(session);
-        turnManager.startTurn(setupResult.firstPlayerIndex());
+        turnManager.startTurn(firstPlayerIndex);
 
         return matchId;
     }

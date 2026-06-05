@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
@@ -19,7 +19,7 @@ interface Filters {
 @Component({
   selector: 'app-deck-aurora',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, NgOptimizedImage],
+  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, EnergyTypeComponent, NgOptimizedImage],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
@@ -32,18 +32,8 @@ interface Filters {
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
-      <!-- Topbar -->
-      <div style="flex: 0 0 auto; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 10; background: linear-gradient(180deg, var(--bg) 0%, transparent 100%);">
-        <aurora-logo></aurora-logo>
-        <div style="display: flex; align-items: center; gap: 22px;">
-          <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
-            <a routerLink="/lobby" style="text-decoration: none; color: var(--mut);">Inicio</a>
-            <a routerLink="/deck" style="text-decoration: none; color: var(--txt);">Mazos</a>
-            <a routerLink="/profile" style="text-decoration: none; color: var(--mut);">Perfil</a>
-          </nav>
-          <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData?.mmr?.toString() ?? ''"></aurora-trainer-chip>
-        </div>
-      </div>
+      <!-- Topbar spacer (Navbar is handled globally by app-navbar) -->
+      <div style="flex: 0 0 auto; height: 92px; z-index: 10;"></div>
 
       <!-- Main Deck Builder Area -->
       <div class="fu" style="flex: 1; display: flex; gap: 24px; padding: 0 44px 44px; z-index: 5; height: calc(100vh - 92px);">
@@ -167,8 +157,6 @@ export class DeckAuroraComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
 
-  private cdr = inject(ChangeDetectorRef);
-
   readonly filters = signal<Filters>({ search: '', supertype: 'all', subtype: '' });
   readonly saveLoading = signal(false);
   readonly saveSuccess = signal(false);
@@ -216,10 +204,7 @@ export class DeckAuroraComponent implements OnInit {
     this.tcgService.loadCards();
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
-        next: (data) => {
-          this.profileData = data;
-          this.cdr.detectChanges();
-        },
+        next: (data) => this.profileData = data,
         error: (err) => console.error('Error fetching profile', err)
       });
     }

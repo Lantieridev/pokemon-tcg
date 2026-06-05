@@ -1,81 +1,109 @@
 @if (me() && opp()) {
-<div class="absolute inset-0 flex" (click)="closeMenu()">
-  <div class="relative flex-1 overflow-hidden playmat-classic">
-    <div class="playmat-texture"></div>
+<div class="scene v-aurora absolute inset-0 flex" (click)="closeMenu()" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
+  <!-- aurora mesh -->
+  <div class="mesh absolute inset-0 opacity-40 pointer-events-none">
+    <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
+    <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
+    <span style="width: 560px; height: 560px; right: -120px; bottom: -220px; background: var(--m3); animation-delay: -9s;"></span>
+    <span style="width: 440px; height: 440px; left: 500px; bottom: -200px; background: var(--m4); animation-delay: -3s;"></span>
+  </div>
 
-    <!-- ── TOP STRIP — opponent HUD + controls ────────────────────────── -->
+  <aurora-ambient></aurora-ambient>
+  <aurora-sparks [n]="12" color="var(--accent2)"></aurora-sparks>
+  <div class="bd-noise absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"></div>
+  <div class="bd-vignette absolute inset-0 pointer-events-none"></div>
+
+  <div class="relative flex-1 overflow-hidden">
+
     <div class="absolute top-3 left-4 right-4 z-30 flex items-center gap-3">
       <!-- Player HUD Opponent -->
-      <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
+      <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl transition-all"
            [class.opacity-90]="isMyTurn()"
-           style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
-           [style.boxShadow]="!isMyTurn() ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
-        <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
-             style="background:var(--p-red); color:#fff; border:2px solid #1a1010;">
+           style="background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line); color:var(--txt);"
+           [style.boxShadow]="!isMyTurn() ? '0 0 0 1px var(--accent2), 0 0 24px rgba(255,206,50,.35)' : '0 4px 12px rgba(0,0,0,0.5)'">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"
+             style="background:var(--accent); color:var(--on-accent); border:1px solid var(--line); font-family: var(--display); font-size: 15px;">
           {{ opp()?.avatar }}
         </div>
         <div class="leading-tight">
-          <div class="font-display text-[13px] flex items-center gap-2">{{ opp()?.name }}</div>
-          <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ opp()?.tag }}</div>
+          <div class="text-[14px] flex items-center gap-2" style="font-family: var(--display); font-weight: 700; letter-spacing: 0.02em;">{{ opp()?.name }}</div>
+          <div class="num text-[9px] tracking-[.1em]" style="color:var(--mut)">{{ opp()?.tag }}</div>
         </div>
-        <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
+        <div class="w-px h-9 mx-1" style="background:var(--line)"></div>
         <div class="leading-tight text-right">
-          <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="!isMyTurn() ? 'var(--p-red)' : '#5b6885'">
+          <div class="text-[9px] tracking-[.1em] font-bold" [style.color]="!isMyTurn() ? 'var(--accent2)' : 'var(--mut)'" style="font-family: 'Space Grotesk', sans-serif;">
             {{ !isMyTurn() ? 'SU TURNO' : 'ESPERANDO' }}
           </div>
-          <div class="font-display text-lg tnum" style="color:#1a1010">
-            {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+          <div class="text-lg tnum" [style.opacity]="!isMyTurn() ? '1' : '0.5'" style="font-family: var(--num); color:var(--txt)">
+            @if (!isMyTurn()) {
+              {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+            } @else {
+              0:00
+            }
           </div>
         </div>
       </div>
 
       <div class="ml-2 flex items-center gap-2">
-        <span class="font-chunky text-[10px] tracking-[.2em]" style="color:var(--p-yellow)">
+        <span class="text-[11px] tracking-[.1em] font-semibold" style="color:var(--accent2); font-family: 'Space Grotesk', sans-serif;">
           Mano del rival
         </span>
-        <span class="font-display text-base tnum" style="color:#fff">{{ opp()?.handCount }}</span>
+        <span class="text-base tnum" style="color:#fff; font-family: var(--num);">{{ opp()?.handCount }}</span>
       </div>
 
       <div class="flex-1"></div>
 
-      <button class="menu-chip red" style="padding:7px 14px; font-size:11px"
+      <button class="ghost-btn sm" style="height: 38px; padding: 0 16px; font-size: 12px; border-radius: 12px;"
               (click)="$event.stopPropagation(); onLeave()">
         <app-icon name="logout" svgClass="w-3.5 h-3.5"></app-icon> Abandonar
       </button>
     </div>
 
     <!-- Opponent hand silhouette arc -->
-    <div class="absolute top-[68px] left-1/2 -translate-x-1/2 z-10 flex">
-      @for (h of oppHandArray(); track $index) {
-        <div class="card-back"
-             [style.width.px]="50" [style.height.px]="72"
-             [style.marginLeft.px]="$index === 0 ? 0 : -28"
-             [style.transform]="'rotate(' + (($index - ((opp()?.handCount ?? 0) - 1) / 2) * 6) + 'deg) translateY(' + (Math.abs($index - ((opp()?.handCount ?? 0) - 1) / 2) * 2) + 'px)'"
-             style="transform-origin: 50% 200%;"></div>
+    <div class="opp-fan-hand z-40 pointer-events-none">
+      @for (h of oppHandArrayAnimated(); track $index) {
+        <div class="opp-fan-card"
+             [style.--i]="$index"
+             [style.--n]="opp()?.handCount ?? 0"
+             [style.--spread]="'6deg'"
+             [style.zIndex]="10 + $index">
+          <div class="card-back w-full h-full opp-card-deal-wrapper"></div>
+        </div>
       }
     </div>
 
     <!-- LEFT COLUMN — both players' prize cards stacked -->
-    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
+    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-4 items-center">
       <!-- Opponent Prizes -->
       <div class="flex flex-col items-center gap-2">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of opp()?.prizes; track $index) {
-            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+          @for (alive of oppPrizesAnimated(); track $index) {
+            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
           }
         </div>
       </div>
+
+      <!-- ESTADIO -->
+      <div class="flex flex-col items-center gap-1.5">
+        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
+        <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
+            <div class="text-center">
+              <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
+            </div>
+        </div>
+      </div>
+
       <!-- My Prizes -->
       <div class="flex flex-col items-center gap-2">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
         <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
              style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of me()?.prizes; track $index) {
-            <div class="prize card-back" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+          @for (alive of myPrizesAnimated(); track $index) {
+            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
               <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
             </div>
           }
@@ -88,12 +116,13 @@
       <!-- Opponent Deck/Discard -->
       <div class="flex flex-col items-center gap-3">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
-        <div class="relative">
+        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
+             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
           <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
         </div>
         <div class="relative">
           <div class="rounded-md flex items-center justify-center"
@@ -109,12 +138,13 @@
       <!-- My Deck/Discard -->
       <div class="flex flex-col items-center gap-3">
         <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
-        <div class="relative">
+        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
+             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
           <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
           <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
           <div class="card-back relative" style="width:70px; height:98px"></div>
           <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.deckCount }}</div>
+               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
         </div>
         <div class="relative">
           @if (me()! && me()!.discard && me()!.discard.length > 0) {
@@ -135,12 +165,12 @@
     </div>
 
     <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
-    <div class="absolute left-0 right-0 top-[150px] bottom-[260px] z-10 flex flex-col items-center justify-between px-[180px]">
+    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]">
       
       <!-- OPPONENT BENCH -->
       <div class="flex items-end gap-3" style="transform: rotate(180deg)">
         @for (b of oppEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 86px; height: 120.4px;">
+          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 70px; height: 98px;">
             <div class="w-full h-full rounded-md flex items-center justify-center"
                  style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
               <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
@@ -148,14 +178,15 @@
           </div>
         }
         @for (b of opp()!.bench; track $index) {
-          <div>
+          <div (click)="zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
             <app-field-pokemon
               [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
+              [maxHp]="b.maxHp"
               [status]="b.status"
-              [width]="86"
-              direction="down">
+              [width]="70"
+              direction="up">
             </app-field-pokemon>
           </div>
         }
@@ -163,7 +194,8 @@
 
       <!-- OPPONENT ACTIVE -->
       @if (opp()!.active; as activeOpp) {
-        <div class="active-pokemon-wrapper" style="transform: rotate(180deg)">
+        <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
+             (click)="zoomCard(getCardImageUrl(activeOpp.cardId))">
           @if (oppActiveIsBurned()) {
             <div class="token-burned" title="Oponente Quemado">🔥</div>
           }
@@ -174,39 +206,40 @@
             [cardId]="activeOpp.cardId"
             [energies]="activeOpp.energies"
             [damage]="activeOpp.damage"
+            [maxHp]="activeOpp.maxHp"
             [status]="activeOpp.status"
-            [width]="140"
+            [width]="110"
             [glow]="true"
-            direction="down">
+            direction="up">
           </app-field-pokemon>
+        </div>
+      } @else {
+        <!-- Empty active slot placeholder -->
+        <div class="active-pokemon-wrapper opacity-35" style="transform: rotate(180deg); border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 110px; height: 154px; display: flex; align-items: center; justify-content: center;">
+          <div class="text-center">
+            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+          </div>
         </div>
       }
 
-      <!-- STADIUM -->
-      <div class="flex flex-col items-center gap-2 my-1">
+      <!-- TURNO INDICATOR -->
+      <div class="flex flex-col items-center gap-2 my-1 relative z-30">
         <div class="px-4 py-1 rounded-full"
              style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
           <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
-        </div>
-        <div class="relative flex flex-col items-center">
-          <div class="flex items-center gap-3">
-            <div class="h-px w-24" style="background:linear-gradient(90deg, transparent, rgba(255,203,5,.5))"></div>
-            <div class="flex items-center justify-center relative w-[122px] h-[86px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
-                <div class="text-center">
-                  <div class="font-chunky text-[9px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Estadio</div>
-                  <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-                </div>
-            </div>
-            <div class="h-px w-24" style="background:linear-gradient(90deg, rgba(255,203,5,.5), transparent)"></div>
-          </div>
         </div>
       </div>
 
       <!-- MY ACTIVE -->
       @if (me()!.active; as activeMe) {
-        <div class="active-pokemon-wrapper" 
-             [class.target-highlight]="selectedHandCard() !== null"
-             (click)="selectedHandCard() ? selectTarget(null) : openMenu($event, activeMe)">
+        <div class="active-pokemon-wrapper cursor-pointer" 
+             [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+             (click)="selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe)"
+             (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
+             (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
+             (dragover)="onDragOver($event)"
+             (drop)="onDropPokemon($event, 'active', null)">
           <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
           @if (myActiveIsBurned()) {
             <div class="token-burned" title="Quemado">🔥</div>
@@ -218,31 +251,52 @@
             [cardId]="activeMe.cardId"
             [energies]="activeMe.energies"
             [damage]="activeMe.damage"
+            [maxHp]="activeMe.maxHp"
             [status]="activeMe.status"
-            [width]="148"
+            [width]="120"
             [glow]="true"
             direction="up">
           </app-field-pokemon>
+        </div>
+      } @else {
+        <!-- Empty active slot placeholder -->
+        <div class="active-pokemon-wrapper opacity-35" style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 120px; height: 168px; display: flex; align-items: center; justify-content: center;">
+          <div class="text-center">
+            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+          </div>
         </div>
       }
 
 
       <!-- MY BENCH -->
-      <div class="flex items-start gap-3">
+      <div class="flex items-start gap-3"
+           (dragover)="onDragOver($event)"
+           (drop)="onDropField($event)">
         @for (b of me()!.bench; track $index) {
-          <div [class.target-highlight]="selectedHandCard() !== null"
-               (click)="selectedHandCard() ? selectTarget($index) : openMenu($event, b)">
+          <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+               [class.pulse-promote]="!me()!.active"
+               (click)="!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b))"
+               (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
+               (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
+               (dragover)="onDragOver($event)"
+               (drop)="onDropPokemon($event, 'bench', $index)">
             <app-field-pokemon
               [cardId]="b.cardId"
               [energies]="b.energies"
               [damage]="b.damage"
-              [width]="94"
+              [maxHp]="b.maxHp"
+              [width]="80"
               direction="up">
             </app-field-pokemon>
           </div>
         }
         @for (b of myEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 94px; height: 131.6px;">
+          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 80px; height: 112px;"
+               [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
+               (click)="selectTarget('bench', null)"
+               (dragover)="onDragOver($event)"
+               (drop)="onDropField($event)">
             <div class="w-full h-full rounded-md flex items-center justify-center"
                  style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
               <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
@@ -257,25 +311,29 @@
     <div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
       <div class="flex items-end justify-between px-4 pb-3 pointer-events-auto">
         <!-- Player HUD Me -->
-        <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl"
+        <div class="flex items-center gap-3 px-3.5 py-2 rounded-2xl transition-all"
              [class.opacity-90]="!isMyTurn()"
-             style="background:#fff8e8; border:3px solid #1a1010; color:#1a1010;"
-             [style.boxShadow]="isMyTurn() ? '0 4px 0 #1a1010, 0 0 0 3px var(--p-yellow), 0 0 24px rgba(255,203,5,.45)' : '0 4px 0 #1a1010'">
-          <div class="w-9 h-9 rounded-full flex items-center justify-center font-chunky text-xs"
-               style="background:var(--p-blue); color:#fff; border:2px solid #1a1010;">
+             style="background:var(--surface); backdrop-filter:blur(12px); border:1px solid var(--line); color:var(--txt);"
+             [style.boxShadow]="isMyTurn() ? '0 0 0 1px var(--accent2), 0 0 24px rgba(255,206,50,.35)' : '0 4px 12px rgba(0,0,0,0.5)'">
+          <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"
+               style="background:var(--bg2); color:var(--txt); border:1px solid var(--line); font-family: var(--display); font-size: 15px;">
             {{ me()?.avatar }}
           </div>
           <div class="leading-tight">
-            <div class="font-display text-[13px] flex items-center gap-2">{{ me()?.name }}</div>
-            <div class="font-chunky text-[9px] tracking-[.2em]" style="color:#5b6885">{{ me()?.tag }}</div>
+            <div class="text-[14px] flex items-center gap-2" style="font-family: var(--display); font-weight: 700; letter-spacing: 0.02em;">{{ me()?.name }}</div>
+            <div class="num text-[9px] tracking-[.1em]" style="color:var(--mut)">{{ me()?.tag }}</div>
           </div>
-          <div class="w-px h-9 mx-1" style="background:rgba(0,0,0,.12)"></div>
+          <div class="w-px h-9 mx-1" style="background:var(--line)"></div>
           <div class="leading-tight text-right">
-            <div class="font-chunky text-[8px] tracking-[.22em]" [style.color]="isMyTurn() ? 'var(--p-red)' : '#5b6885'">
-              {{ isMyTurn() ? 'SU TURNO' : 'ESPERANDO' }}
+            <div class="text-[9px] tracking-[.1em] font-bold" [style.color]="!me()!.active ? 'var(--accent)' : (isMyTurn() ? 'var(--accent2)' : 'var(--mut)')" style="font-family: 'Space Grotesk', sans-serif;">
+              {{ !me()!.active ? '¡ELIGE ACTIVO!' : (isMyTurn() ? 'TU TURNO' : 'ESPERANDO') }}
             </div>
-            <div class="font-display text-lg tnum" style="color:#1a1010">
-              {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+            <div class="text-lg tnum" [style.opacity]="isMyTurn() ? '1' : '0.5'" style="font-family: var(--num); color:var(--txt)">
+              @if (isMyTurn()) {
+                {{ Math.floor(turn().timer / 60) }}:{{ (turn().timer % 60).toString().padStart(2, '0') }}
+              } @else {
+                0:00
+              }
             </div>
           </div>
         </div>
@@ -284,13 +342,11 @@
           <!-- Botón Fin de Turno — habilitado solo en fase MAIN y turno del jugador -->
           <button
             id="btn-end-turn"
-            class="battle-cta"
-            style="font-size: 22px; padding:12px 28px 12px 18px"
+            class="btn-aurora-cta"
             [disabled]="!canEndTurn()"
-            [style.opacity]="canEndTurn() ? '1' : '0.45'"
             (click)="endTurn()"
           >
-            <span class="pb-icon" style="width: 34px; height: 34px; border-width: 2px"></span>
+            <aurora-ball-icon [size]="20"></aurora-ball-icon>
             <span>FIN TURNO</span>
           </button>
         </div>
@@ -298,17 +354,22 @@
 
       <!-- Fan hand -->
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
-        @for (c of handCards(); track c.id) {
-          <div class="fan-card" 
-               [class.fan-card--selected]="isSelected(c.id)"
+        @for (c of handCardsAnimated(); track $index) {
+          <div class="fan-card cursor-pointer" 
+               [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
-               (click)="playCard(c)"
-               draggable="true">
-            @if (getCardImage(c)) {
-              <img [src]="getCardImage(c)" [alt]="c.name" class="w-full h-full object-cover rounded-md border border-[#1a1010]" />
-            } @else {
-              <div class="card-back w-full h-full" style="border-radius: 6px;"></div>
-            }
+               (click)="playCard(c, $index)"
+               (dblclick)="zoomCard(getCardImage(c))"
+               (contextmenu)="zoomCard(getCardImage(c)); $event.preventDefault()"
+               draggable="true"
+               (dragstart)="onDragStart($event, c, $index)">
+            <div class="card-deal-wrapper w-full h-full">
+              @if (getCardImage(c)) {
+                <img [src]="getCardImage(c)" [alt]="c.name" class="w-full h-full object-cover rounded-md border border-[#1a1010]" />
+              } @else {
+                <div class="card-back w-full h-full" style="border-radius: 6px;"></div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -320,8 +381,8 @@
            [style.left.px]="menu().x" [style.top.px]="menu().y" style="transform: translate(20px, -50%)"
            (click)="$event.stopPropagation()">
         <div class="label">
-          {{ menu().pokemon?.name || me()?.active?.name }}
-          · HP {{ me()!.active!.maxHp - me()!.active!.damage }}/{{ me()!.active!.maxHp }}
+          {{ menu().pokemon?.name }}
+          · HP {{ menu().pokemon?.maxHp - menu().pokemon?.damage }}/{{ menu().pokemon?.maxHp }}
         </div>
 
         <!-- Ataques disponibles del Pokémon activo -->
@@ -341,6 +402,18 @@
         }
 
         <div class="label">Acciones</div>
+        <!-- Usar Habilidad — si el Pokémon tiene abilities -->
+        @if (menu().pokemon?.abilities) {
+          @for (ab of menu().pokemon.abilities; track $index) {
+            <div class="item"
+                 [class.opacity-50]="!isMyTurn()"
+                 (click)="useAbility(menu().pokemon.cardId)">
+              <app-icon name="star" svgClass="w-4 h-4" style="color:var(--p-yellow)"></app-icon>
+              <span>{{ ab.name || 'Habilidad' }}</span>
+              <span class="key">HAB</span>
+            </div>
+          }
+        }
         <!-- Retirar — habilitado según fase -->
         <div class="item"
              [class.opacity-50]="!canRetreat()"
@@ -368,10 +441,9 @@
   </div>
 
   <!-- ── RIGHT SIDEBAR ── historial + chat ───────────────────────────── -->
-  <aside class="relative flex flex-col w-[308px]"
-         style="border-left:3px solid #1a1010; background:linear-gradient(180deg, #131e30 0%, #0a1020 100%)"
+  <aside class="relative flex flex-col w-[308px] z-30 m-4 rounded-3xl"
+         style="background:var(--surface); backdrop-filter:blur(16px); border:1px solid var(--line); box-shadow:0 8px 32px rgba(0,0,0,.5); overflow:hidden;"
          (click)="$event.stopPropagation()">
-    <div class="absolute inset-0 hex-bg pointer-events-none opacity-50"></div>
 
     <!-- HISTORIAL -->
     <div class="relative flex flex-col min-h-0 flex-[1_1_60%]">
@@ -414,14 +486,14 @@
 
     <!-- CHAT -->
     <div class="relative flex flex-col min-h-0 flex-[1_1_40%]"
-         style="border-top:2px solid rgba(255,203,5,.22); background:rgba(0,0,0,.18)">
+         style="border-top:1px solid var(--line); background:transparent">
       <div class="px-4 py-3 flex items-center justify-between">
-        <div class="font-chunky text-[11px] tracking-[.24em]" style="color:var(--p-yellow)">
+        <div class="font-chunky text-[11px] tracking-[.24em]" style="color:var(--accent2)">
           ◆ CHAT
         </div>
         <div class="flex items-center gap-1.5">
           <div class="dot-online"></div>
-          <span class="font-mono text-[9px]" style="color:#9aa9c7">en vivo</span>
+          <span class="font-mono text-[9px]" style="color:var(--mut)">en vivo</span>
         </div>
       </div>
 
@@ -431,19 +503,19 @@
             <div class="flex items-end gap-1.5 max-w-[88%]">
               @if (m.from !== 'me') {
                 <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
-                     style="background:var(--p-red); color:#fff; border:1.5px solid #1a1010">
+                     style="background:var(--accent); color:var(--txt); border:1px solid var(--line)">
                   {{ opp()?.avatar }}
                 </div>
               }
-              <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border-2 border-[#1a1010] shadow-[0_2px_0_#1a1010]"
-                   [style.background]="m.from === 'me' ? 'var(--p-yellow)' : '#fff8e8'"
+              <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border border-[var(--line)] shadow-lg"
+                   [style.background]="m.from === 'me' ? 'var(--surface)' : 'var(--bg2)'"
                    [style.borderRadius]="m.from === 'me' ? '14px 14px 4px 14px' : '14px 14px 14px 4px'"
-                   style="color:#1a1010">
+                   style="color:var(--txt); backdrop-filter:blur(8px)">
                 {{ m.text }}
               </div>
               @if (m.from === 'me') {
                 <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
-                     style="background:var(--p-blue); color:#fff; border:1.5px solid #1a1010">
+                     style="background:var(--bg2); color:var(--txt); border:1px solid var(--line)">
                   {{ me()?.avatar }}
                 </div>
               }
@@ -452,22 +524,129 @@
         }
       </div>
 
-      <div class="px-3 py-2.5" style="border-top:1.5px solid rgba(255,255,255,.06)">
-        <div class="font-chunky text-[8px] tracking-[.22em] mb-1.5" style="color:#5b6885">
-          QUICK CHAT
-        </div>
-        <div class="grid grid-cols-2 gap-1.5">
-          @for (q of quickChat; track q) {
-            <button (click)="sendChat(q)"
-                    class="px-2 py-1.5 rounded-md text-[11px] font-bold text-left transition hover:brightness-110"
-                    style="background:#fff8e8; color:#1a1010; border:2px solid #1a1010; box-shadow:0 2px 0 #1a1010">
-              {{ q }}
+      <!-- Chat input & Quick Chat -->
+      <div class="px-3 py-3" style="border-top:1px solid var(--line)">
+        <!-- Quick chat chips -->
+        <div class="flex flex-wrap gap-1.5 mb-2">
+          @for (qc of quickChat; track qc) {
+            <button class="px-2 py-1 rounded-[10px] text-[10px] font-bold"
+                    style="background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); color:var(--txt); transition:all .15s"
+                    onmouseover="this.style.background='rgba(255,255,255,.12)'"
+                    onmouseout="this.style.background='rgba(255,255,255,.06)'"
+                    (click)="sendChat(qc)">
+              {{ qc }}
             </button>
           }
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <input #chatInput type="text" placeholder="Escribe un mensaje..."
+                 class="flex-1 px-3 py-2 rounded-xl text-xs font-semibold outline-none"
+                 style="background:rgba(0,0,0,.2); border:1px solid var(--line); color:var(--txt)"
+                 (keydown.enter)="chatInput.value.trim() && sendChat(chatInput.value); chatInput.value=''">
+          <button class="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                  style="background:var(--accent); color:var(--on-accent)"
+                  onmouseover="this.style.filter='brightness(1.1)'"
+                  onmouseout="this.style.filter='none'"
+                  (click)="chatInput.value.trim() && sendChat(chatInput.value); chatInput.value=''">
+            <app-icon name="send" svgClass="w-3.5 h-3.5"></app-icon>
+          </button>
         </div>
       </div>
     </div>
   </aside>
+
+  <!-- Fullscreen Card Zoom Modal Overlay -->
+  @if (zoomedCardUrl(); as url) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+         (click)="closeZoom()">
+      <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+           (click)="closeZoom()">
+        <img [src]="url" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+             style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6)); pointer-events: none;" />
+      </div>
+    </div>
+  }
+
+  <!-- Card Selection Modal (PendingSelectionRequest) -->
+  @if (pendingSelection(); as sel) {
+    <app-card-selection-modal
+      [title]="sel.sourceEffect || 'Selecciona cartas'"
+      [cardIds]="sel.options"
+      [maxSelections]="sel.maxSelections"
+      [sourceLabel]="sel.source || 'MAZO'"
+      (confirm)="confirmSelection($event)"
+      (cancel)="cancelSelection()">
+    </app-card-selection-modal>
+  }
+
+  <!-- Coin Flip Overlay -->
+  @if (animationStage() === 'coin-flip') {
+    <div class="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md">
+      <div class="coin-container">
+        <div class="coin" [class.flip-heads]="coinFlipResult() === 'heads'" [class.flip-tails]="coinFlipResult() === 'tails'">
+          <div class="coin-side front">
+            <span class="coin-symbol">⚡</span>
+          </div>
+          <div class="coin-side back">
+            <span class="coin-symbol">☠</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-12 text-center">
+        <h2 class="text-3xl font-display font-bold tracking-[0.2em] text-[#ffcb05] uppercase drop-shadow-[0_2px_10px_rgba(255,203,5,0.3)] animate-fade-in">Lanzamiento de Moneda</h2>
+        <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Determinando quién empieza la partida...</p>
+        
+        @if (coinFlipResult()) {
+          <div class="mt-8 px-6 py-2.5 rounded-2xl border border-white/10 bg-white/5 font-chunky text-sm tracking-wider uppercase animate-scale-up"
+               [style.color]="isMyTurn() ? '#5ad27a' : '#ee1515'"
+               [style.borderColor]="isMyTurn() ? 'rgba(90,210,122,0.2)' : 'rgba(238,21,21,0.2)'">
+            {{ isMyTurn() ? '¡Ganaste el coin flip! Empiezas tú' : 'Perdiste el coin flip. Empieza el rival' }}
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Game Over Overlay -->
+  @if (isFinished() && me() && opp()) {
+    <div class="fixed inset-0 z-[60] flex items-center justify-center" style="background: rgba(0,0,0,.88); backdrop-filter: blur(12px);">
+      <div class="flex flex-col items-center gap-6 text-center animate-fade">
+        <!-- Result icon -->
+        <div class="w-24 h-24 rounded-full flex items-center justify-center"
+             [style.background]="gameResult() === 'VICTORIA' ? 'linear-gradient(135deg, #ffcb05, #e6a700)' : 'linear-gradient(135deg, #ee1515, #8d1212)'"
+             style="border: 4px solid #fff; box-shadow: 0 0 60px rgba(255,203,5,.4);">
+          @if (gameResult() === 'VICTORIA') {
+            <app-icon name="trophy" svgClass="w-12 h-12" style="color:#1a1010"></app-icon>
+          } @else {
+            <app-icon name="close" svgClass="w-12 h-12" style="color:#fff"></app-icon>
+          }
+        </div>
+
+        <!-- Result text -->
+        <div class="font-display text-5xl tracking-wider"
+             [style.color]="gameResult() === 'VICTORIA' ? '#ffcb05' : '#ee1515'"
+             style="text-shadow: 0 4px 20px rgba(0,0,0,.8);">
+          {{ gameResult() }}
+        </div>
+
+        <div class="font-chunky text-sm tracking-widest uppercase" style="color: rgba(255,255,255,.5);">
+          Partida finalizada
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 mt-4">
+          <button class="px-8 py-3 rounded-2xl font-chunky text-sm tracking-wider uppercase transition-all"
+                  style="background: #ffcb05; color: #1a1010; border: 3px solid #1a1010; box-shadow: 0 4px 0 #1a1010;"
+                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 0 #1a1010'"
+                  onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 0 #1a1010'"
+                  (click)="onLeave()">
+            Volver al Lobby
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
 } @else {
   <div class="absolute inset-0 flex items-center justify-center bg-[#0d0a1c] text-white">

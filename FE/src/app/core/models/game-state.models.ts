@@ -23,7 +23,7 @@ export type ActionType =
   | 'SELECT_CARDS';
 
 /** Fases del turno — currentPhase del GameStateResponseDTO */
-export type TurnPhase = 'DRAW' | 'MAIN' | 'ATTACK' | 'BETWEEN_TURNS' | 'SETUP';
+export type TurnPhase = 'DRAW' | 'MAIN' | 'ATTACK' | 'BETWEEN_TURNS' | 'SETUP' | 'FINISHED';
 
 /** Tipos de Pokémon (energía) — PokemonType.java */
 export type PokemonType =
@@ -89,6 +89,7 @@ export interface PendingSelectionRequest {
 export interface GameStateResponseDTO {
   matchId: string;
   version: number;
+  turnNumber: number;
   activePlayerIndex: number;  // 0 o 1
   currentPhase: TurnPhase;
   pendingSelectionRequest: PendingSelectionRequest | null;

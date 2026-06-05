@@ -24,6 +24,10 @@ export class MatchBackendService {
     );
   }
 
+  getChatHistory(matchId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.MATCHES_URL}/${matchId}/chat`);
+  }
+
   /**
    * POST /api/matches
    * Crea una nueva partida entre dos jugadores.

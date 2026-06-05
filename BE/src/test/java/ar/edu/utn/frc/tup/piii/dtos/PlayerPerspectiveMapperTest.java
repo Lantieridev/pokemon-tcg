@@ -191,4 +191,11 @@ class PlayerPerspectiveMapperTest {
         assertThat(view0.opponent().handSize()).isEqualTo(5);
         assertThat(view1.opponent().handSize()).isEqualTo(5);
     }
+
+    @Test
+    void shouldMapPhaseToFinishedWhenSessionIsFinished() {
+        session.finish();
+        final GameStateResponseDTO response = mapper.toResponse(session, 0);
+        assertThat(response.currentPhase()).isEqualTo("FINISHED");
+    }
 }

@@ -17,6 +17,7 @@ import java.util.List;
     public record GameStateResponseDTO(
         String matchId,
         long version,
+        int turnNumber,
         int activePlayerIndex,
         String currentPhase,
         PendingSelectionRequestDTO pendingSelectionRequest,

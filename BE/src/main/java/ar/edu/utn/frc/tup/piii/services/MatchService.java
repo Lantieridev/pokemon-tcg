@@ -150,7 +150,7 @@ public final class MatchService {
 
             // Use the per-session RuleValidator if available
             final RuleValidator validator = resolveValidator(session);
-            final ValidationResult result = validator.validate(action);
+            final ValidationResult result = validator.validate(action, playerIndex);
 
             if (result instanceof ValidationResult.Invalid invalid) {
                 throw new InvalidActionException(invalid.reason());
@@ -167,6 +167,8 @@ public final class MatchService {
 
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
+
+            session.incrementVersion();
 
             final int turnNumber = getCurrentTurnNumber(session);
             final GameStateSnapshot snapshot = new GameStateSnapshot(
@@ -286,12 +288,14 @@ public final class MatchService {
                 turnManager.endBetweenTurns();
             }
             case PromoteActiveAction ignored -> {
-                // Apply the promotion; session.clearAwaitingPromotion() is called after
+                final boolean wasAwaiting = session.isAwaitingPromotion();
                 facade.apply(session, action, turnManager);
-                session.clearAwaitingPromotion();
-                // Resume the deferred between-turns phase that was paused for this promotion
-                processBetweenTurns(session, turnManager);
-                turnManager.endBetweenTurns();
+                if (wasAwaiting) {
+                    session.clearAwaitingPromotion();
+                    // Resume the deferred between-turns phase that was paused for this promotion
+                    processBetweenTurns(session, turnManager);
+                    turnManager.endBetweenTurns();
+                }
             }
             default -> facade.apply(session, action, turnManager);
         }
@@ -360,6 +364,7 @@ public final class MatchService {
             lock.lock();
             try {
                 session.finish();
+                session.incrementVersion();
                 // Determine the winner (the other player)
                 String winnerUsername = null;
                 if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {
