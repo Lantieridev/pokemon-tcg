@@ -165,7 +165,7 @@
     </div>
 
     <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
-    <div class="absolute left-0 right-0 top-[180px] bottom-[180px] z-20 flex flex-col items-center justify-center gap-6 px-[180px]">
+    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]">
       
       <!-- OPPONENT BENCH -->
       <div class="flex items-end gap-3" style="transform: rotate(180deg)">
@@ -224,7 +224,7 @@
       }
 
       <!-- TURNO INDICATOR -->
-      <div class="flex flex-col items-center gap-2 my-1">
+      <div class="flex flex-col items-center gap-2 my-1 relative z-30">
         <div class="px-4 py-1 rounded-full"
              style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
           <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>

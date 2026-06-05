@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, NgZone } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
@@ -19,6 +19,7 @@ import { GameStateResponseDTO, ActionRequestDTO } from '../models/game-state.mod
 export class WebSocketService {
   private authService = inject(AuthService);
   private matchStore = inject(MatchStore);
+  private ngZone = inject(NgZone);
 
   private stompClient: Client | null = null;
   private messageSubject = new Subject<GameStateResponseDTO>();
@@ -73,9 +74,11 @@ export class WebSocketService {
         if (message.body) {
           try {
             const body = JSON.parse(message.body) as GameStateResponseDTO;
-            // Actualizar el store automáticamente
-            this.matchStore.updateState(body);
-            this.messageSubject.next(body);
+            this.ngZone.run(() => {
+              // Actualizar el store automáticamente
+              this.matchStore.updateState(body);
+              this.messageSubject.next(body);
+            });
           } catch (err) {
             console.error('[WS] Error parseando GameState:', err);
           }
@@ -85,7 +88,9 @@ export class WebSocketService {
       this.stompClient!.subscribe(`/topic/chat/${matchId}`, (message) => {
         if (message.body) {
           try {
-            this.chatSubject.next(JSON.parse(message.body));
+            this.ngZone.run(() => {
+              this.chatSubject.next(JSON.parse(message.body));
+            });
           } catch (err) {
             console.error('[WS] Error parseando ChatMessage:', err);
           }
