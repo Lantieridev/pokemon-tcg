@@ -33,6 +33,7 @@ export interface UserProfileResponseDTO {
   avatarIcon: string;
   description: string;
   activeTitle: string;
+  selectedMedals?: string;
   level: number;
   xp: number;
   xpToNextLevel: number;
@@ -107,7 +108,7 @@ export class ProfileService {
     return this.http.get<UserAchievementProgressDTO[]>(`${this.API_URL}/${username}/profile/achievements`);
   }
 
-  updateProfile(request: { avatarIcon: string; description: string; activeTitle: string; }): Observable<void> {
+  updateProfile(request: { avatarIcon: string; description: string; activeTitle: string; selectedMedals?: string; }): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/profile`, request);
   }
 

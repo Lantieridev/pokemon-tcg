@@ -13,4 +13,5 @@ public class UpdateProfileRequestDTO {
     private String avatarIcon;
     private String description;
     private String activeTitle;
+    private String selectedMedals;
 }

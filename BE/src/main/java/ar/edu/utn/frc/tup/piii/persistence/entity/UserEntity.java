@@ -52,6 +52,10 @@ public class UserEntity {
     @Builder.Default
     private String activeTitle = "Novato";
 
+    @Column(name = "selected_medals")
+    @Builder.Default
+    private String selectedMedals = "";
+
     @Builder.Default
     private Integer level = 1;
 
