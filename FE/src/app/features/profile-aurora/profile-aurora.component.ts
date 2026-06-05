@@ -785,19 +785,49 @@ import { RouterModule } from '@angular/router';
                 }
               </div>
 
-              <!-- Title -->
+              <!-- Title picker: pill grid with optional search -->
               <div class="edit-field">
                 <div class="edit-field-header">
                   <span class="edit-field-label">🏅 Título Activo</span>
-                </div>
-                <select [(ngModel)]="editActiveTitle" class="edit-select">
-                  <option value="Ninguno">— Sin título —</option>
-                  @for (title of unlockedTitlesList; track title) {
-                    <option [value]="title">{{ title }}</option>
+                  @if (editActiveTitle && editActiveTitle !== 'Ninguno') {
+                    <span class="edit-active-title-chip">{{ editActiveTitle }}</span>
                   }
-                </select>
-                @if (!unlockedTitlesList || unlockedTitlesList.length === 0) {
+                </div>
+                @if (unlockedTitlesList.length === 0) {
                   <div class="edit-hint">Completá logros para desbloquear títulos.</div>
+                } @else {
+                  @if (unlockedTitlesList.length > 5) {
+                    <div class="edit-title-search-wrap">
+                      <span class="title-search-icon">🔍</span>
+                      <input
+                        type="text"
+                        [(ngModel)]="titleSearchQuery"
+                        class="edit-title-search"
+                        placeholder="Filtrar títulos..." />
+                      @if (titleSearchQuery) {
+                        <button class="title-search-clear" (click)="titleSearchQuery = ''">✕</button>
+                      }
+                    </div>
+                  }
+                  <div class="edit-title-pill-grid scroll">
+                    <!-- «Sin título» always first -->
+                    <div class="title-pill none-pill"
+                         [class.active]="editActiveTitle === 'Ninguno'"
+                         (click)="editActiveTitle = 'Ninguno'">
+                      — Sin título —
+                    </div>
+                    @for (title of filteredUnlockedTitles; track title) {
+                      <div class="title-pill"
+                           [class.active]="editActiveTitle === title"
+                           (click)="editActiveTitle = title"
+                           [title]="title">
+                        🏅 {{ title }}
+                      </div>
+                    }
+                    @if (filteredUnlockedTitles.length === 0 && titleSearchQuery) {
+                      <div class="edit-hint" style="grid-column: 1/-1; padding: 8px 4px;">Sin resultados para "{{ titleSearchQuery }}"</div>
+                    }
+                  </div>
                 }
               </div>
 
@@ -1329,6 +1359,111 @@ import { RouterModule } from '@angular/router';
         cursor: not-allowed;
         transform: none;
       }
+
+      /* ── TITLE PILL PICKER ── */
+      .edit-title-search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .title-search-icon {
+        position: absolute;
+        left: 11px;
+        font-size: 13px;
+        pointer-events: none;
+        opacity: 0.6;
+      }
+      .edit-title-search {
+        width: 100%;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--txt);
+        padding: 9px 36px 9px 32px;
+        border-radius: 10px;
+        outline: none;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+      .edit-title-search:focus {
+        border-color: rgba(255,46,62,0.45);
+        box-shadow: 0 0 0 3px rgba(255,46,62,0.07);
+      }
+      .edit-title-search::placeholder { color: var(--mut); }
+      .title-search-clear {
+        position: absolute;
+        right: 10px;
+        background: transparent;
+        border: none;
+        color: var(--mut);
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: color 0.15s;
+      }
+      .title-search-clear:hover { color: var(--txt); }
+      .edit-title-pill-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        max-height: 130px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        background: rgba(0,0,0,0.15);
+      }
+      .title-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.04);
+        color: var(--dim);
+        transition: all 0.16s;
+        white-space: nowrap;
+        user-select: none;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .title-pill:hover {
+        border-color: rgba(255,255,255,0.22);
+        background: rgba(255,255,255,0.08);
+        color: var(--txt);
+        transform: translateY(-1px);
+      }
+      .title-pill.active {
+        border-color: var(--accent);
+        background: linear-gradient(135deg, rgba(255,46,62,0.2), rgba(255,46,62,0.08));
+        color: var(--txt);
+        box-shadow: 0 0 10px rgba(255,46,62,0.2), inset 0 0 0 1px rgba(255,46,62,0.15);
+      }
+      .title-pill.none-pill.active {
+        border-color: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.08);
+        box-shadow: none;
+      }
+      .edit-active-title-chip {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--accent);
+        background: rgba(255,46,62,0.1);
+        border: 1px solid rgba(255,46,62,0.25);
+        padding: 2px 8px;
+        border-radius: 10px;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       
       .form-group {
         margin-bottom: 22px;
@@ -1516,6 +1651,7 @@ export class ProfileAuroraComponent implements OnInit {
   showEditModal = false;
   editDescription = '';
   editActiveTitle = '';
+  titleSearchQuery = '';
   editAvatarIcon = '';
   editSelectedMedals: string[] = [];
   savingProfile = false;
@@ -1559,6 +1695,12 @@ export class ProfileAuroraComponent implements OnInit {
       const ach = this.allAchievements.find(a => a.title === title);
       return ach ? ach.rewardType === 'TITULO' : false;
     });
+  }
+
+  get filteredUnlockedTitles(): string[] {
+    const q = this.titleSearchQuery.trim().toLowerCase();
+    if (!q) return this.unlockedTitlesList;
+    return this.unlockedTitlesList.filter(t => t.toLowerCase().includes(q));
   }
 
   get availableAvatars(): string[] {
@@ -1702,6 +1844,7 @@ export class ProfileAuroraComponent implements OnInit {
   openEditModal(): void {
     this.editDescription = this.profileData?.description || '';
     this.editActiveTitle = this.profileData?.activeTitle || 'Ninguno';
+    this.titleSearchQuery = '';
     this.editAvatarIcon = this.profileData?.avatarIcon || 'avatar_winner_badge';
     this.editSelectedMedals = this.profileData?.selectedMedals ? this.profileData.selectedMedals.split(',').filter(m => !!m) : [];
     this.descriptionError = '';
