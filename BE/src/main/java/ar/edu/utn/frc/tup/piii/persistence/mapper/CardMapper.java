@@ -63,6 +63,7 @@ public final class CardMapper {
         final Map<String, EvolutionStage> es = new HashMap<>();
         es.put("Stage 2", EvolutionStage.STAGE_2);
         es.put("Stage 1", EvolutionStage.STAGE_1);
+        es.put("MEGA",    EvolutionStage.STAGE_1);
         es.put("Basic",   EvolutionStage.BASIC);
         EVOLUTION_STAGE_BY_SUBTYPE = Collections.unmodifiableMap(es);
 

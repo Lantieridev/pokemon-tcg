@@ -66,13 +66,20 @@ class MatchPersistenceTest {
         StatusEffectManager semA = new StatusEffectManager(() -> true);
         semA.apply(StatusEffectType.ENVENENADO);
 
+        // Board snapshots
+        Map<BattlePokemonState, Integer> turnsInPlayMapA = new HashMap<>();
+        turnsInPlayMapA.put(activeA, 3);
+        turnsInPlayMapA.put(benchPk, 1);
+
         PlayerRuntime runtimeA = new PlayerRuntime(
                 new Deck(List.of(pokemon)),
                 handA,
                 benchA,
                 new DiscardPile(),
                 semA,
-                activeA
+                activeA,
+                List.of(pokemon),
+                turnsInPlayMapA
         );
 
         // Player B Setup
@@ -83,13 +90,10 @@ class MatchPersistenceTest {
                 new Bench(),
                 new DiscardPile(),
                 new StatusEffectManager(() -> true),
-                activeB
+                activeB,
+                List.of(pokemon),
+                new HashMap<>()
         );
-
-        // Board snapshots
-        Map<BattlePokemonState, Integer> turnsInPlayMapA = new HashMap<>();
-        turnsInPlayMapA.put(activeA, 3);
-        turnsInPlayMapA.put(benchPk, 1);
 
         PlayerState psA = new PlayerState(activeA, List.of(benchPk), List.of("p-001"), 60, 6, turnsInPlayMapA);
         PlayerState psB = new PlayerState(activeB, List.of(), List.of(), 60, 6, new HashMap<>());
@@ -130,6 +134,9 @@ class MatchPersistenceTest {
         assertNotNull(restoredRuntimeA);
         assertEquals(3, restoredRuntimeA.getHand().size());
 
+        // Verify prizePile was restored in PlayerRuntime
+        assertEquals(1, restoredRuntimeA.getPrizeCount());
+
         // Verify status effects
         assertTrue(restoredRuntimeA.getStatusEffectManager().has(StatusEffectType.ENVENENADO));
 
@@ -137,6 +144,12 @@ class MatchPersistenceTest {
         PlayerState restoredPsA = restored.getBoard().getPlayerState(0);
         BattlePokemonState restoredActive = restoredPsA.getActivePokemon();
         assertNotNull(restoredActive);
+
+        // Verify turnsInPlay was restored in PlayerRuntime
+        assertEquals(3, restoredRuntimeA.getTurnsInPlay(restoredRuntimeA.getActivePokemon()));
+        if (!restoredRuntimeA.getBench().getAll().isEmpty()) {
+            assertEquals(1, restoredRuntimeA.getTurnsInPlay(restoredRuntimeA.getBench().getAll().get(0)));
+        }
 
         // turnsInPlay contains mapping for restoredActive
         assertEquals(3, restoredPsA.getTurnsInPlay(restoredActive));
