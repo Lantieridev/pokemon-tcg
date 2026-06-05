@@ -50,10 +50,7 @@ import { RouterModule } from '@angular/router';
         <div class="fu" style="display: flex; align-items: center; gap: 30px;">
           <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0;">
             @if (isCustomAvatar(profileData?.avatarIcon)) {
-              <img [src]="getAvatarUrl(profileData?.avatarIcon)"
-                   [style.object-fit]="isStickerAvatar(profileData?.avatarIcon) ? 'contain' : 'cover'"
-                   [style.mix-blend-mode]="isStickerAvatar(profileData?.avatarIcon) ? 'multiply' : 'normal'"
-                   style="width: 100%; height: 100%;" />
+              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
             } @else {
               {{ getAvatarEmoji(profileData?.avatarIcon) }}
             }
@@ -714,10 +711,7 @@ import { RouterModule } from '@angular/router';
               @for (av of availableAvatars; track av) {
                 <div class="avatar-option" [class.selected]="editAvatarIcon === av" (click)="editAvatarIcon = av" style="width: 46px; height: 46px; font-size: 22px; padding: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
                   @if (isCustomAvatar(av)) {
-                    <img [src]="getAvatarUrl(av)"
-                         [style.object-fit]="isStickerAvatar(av) ? 'contain' : 'cover'"
-                         [style.mix-blend-mode]="isStickerAvatar(av) ? 'multiply' : 'normal'"
-                         style="width: 100%; height: 100%;" />
+                    <img [src]="getAvatarUrl(av)" style="width: 100%; height: 100%; object-fit: cover;" />
                   } @else {
                     {{ getAvatarEmoji(av) }}
                   }
@@ -1186,32 +1180,6 @@ export class ProfileAuroraComponent implements OnInit {
 
   isCustomAvatar(av: string | undefined): boolean {
     return !!av && av.startsWith('avatar_');
-  }
-
-  /**
-   * Returns true for avatars that have a white/light background (sticker style).
-   * These need mix-blend-mode:multiply to look properly centered on dark backgrounds.
-   */
-  isStickerAvatar(av: string | undefined): boolean {
-    const stickerAvatars = new Set([
-      'avatar_belt_white',
-      'avatar_blastoise_cute',
-      'avatar_bulbasaur',
-      'avatar_charizard_cute',
-      'avatar_fire_kanto',
-      'avatar_grass_kanto',
-      'avatar_lightning_kanto',
-      'avatar_mewtwo_cute',
-      'avatar_neutral_balance',
-      'avatar_pikachu_cute',
-      'avatar_resilience_mid',
-      'avatar_rules_student',
-      'avatar_venusaur_cute',
-      'avatar_versatility_mid',
-      'avatar_water_kanto',
-      'avatar_winner_badge',
-    ]);
-    return !!av && stickerAvatars.has(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
