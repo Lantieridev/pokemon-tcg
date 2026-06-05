@@ -23,7 +23,7 @@ import {
 } from './ui/aurora-ui.components';
 import { HoloCardComponent, AuroraCardComponent } from './components/cards.components';
 import { DeckRailComponent } from './components/deck-rail.component';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
 import { LobbyService } from '../../core/services/lobby.service';
@@ -476,6 +476,9 @@ type PrivateMode = 'create' | 'join';
             <button class="ghost-btn" (click)="openModal('casual')">
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
+            <button class="ghost-btn" (click)="startBotMatch()" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;">
+              <aurora-icon n="sword" [s]="18"></aurora-icon> Jugar vs Bot (Dev)
+            </button>
           </div>
 
           <!-- Rank strip -->
@@ -678,6 +681,7 @@ type PrivateMode = 'create' | 'join';
 })
 export class LobbyAuroraComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   readonly lobby = inject(LobbyService);
@@ -762,6 +766,10 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────
+
+  startBotMatch(): void {
+    this.router.navigate(['/battle', 'dev-match-001']);
+  }
 
   openModal(mode: 'competitive' | 'casual'): void {
     this.modalMode.set(mode);
