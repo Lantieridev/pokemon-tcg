@@ -48,7 +48,7 @@ export class LogoComponent {}
 @Component({
   selector: 'aurora-trainer-chip',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div style="position: relative;">
       <div class="chip" (click)="toggle()" style="cursor: pointer; user-select: none;"
@@ -82,6 +82,24 @@ export class LogoComponent {}
             <div style="font-size: 12px; color: var(--mut); margin-bottom: 2px;">Sesión activa</div>
             <div style="font-weight: 700; font-size: 14px;">{{ name }}</div>
           </div>
+          
+          <a
+            routerLink="/profile"
+            (click)="open = false"
+            class="profile-item"
+            style="
+              display: flex; align-items: center; gap: 8px;
+              width: 100%; padding: 9px 12px; border: none; border-radius: 8px;
+              background: transparent; color: var(--txt);
+              font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+              transition: background 0.15s; margin-bottom: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            Mi Perfil
+          </a>
+
           <button
             (click)="logout()"
             style="
@@ -103,6 +121,9 @@ export class LogoComponent {}
     @keyframes chipDrop {
       from { opacity: 0; transform: translateY(-6px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+    .profile-item:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
     }
   `]
 })

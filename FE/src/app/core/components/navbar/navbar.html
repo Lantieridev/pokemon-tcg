@@ -13,22 +13,8 @@
       <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
     </div>
     
-    <div class="relative">
-      <div (click)="toggleUserMenu()" class="cursor-pointer transition hover:brightness-110">
-        <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'"></aurora-trainer-chip>
-      </div>
-
-      @if (isUserMenuOpen) {
-        <div class="absolute right-0 top-full mt-2 w-48 rounded-xl overflow-hidden flex flex-col"
-             style="background: #1c2a44; border: 2px solid #1a1010; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 10001">
-          <a routerLink="/profile" (click)="toggleUserMenu()" class="px-4 py-3 text-sm text-white hover:bg-white/10 transition font-display" style="text-decoration: none;">
-            Mi Perfil
-          </a>
-          <button (click)="logout()" class="px-4 py-3 text-sm text-left hover:bg-white/10 transition font-display border-t border-white/5" style="color: var(--p-red)">
-            Cerrar Sesión
-          </button>
-        </div>
-      }
+    <div>
+      <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'"></aurora-trainer-chip>
     </div>
   </div>
 </header>
