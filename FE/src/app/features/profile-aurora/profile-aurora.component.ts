@@ -700,97 +700,145 @@ import { RouterModule } from '@angular/router';
 
     <!-- MODAL: EDIT PROFILE -->
     @if (showEditModal) {
-      <div class="modal-backdrop">
-        <div class="modal-card">
-          <h2 style="font-family: var(--display); font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px;">Editar Perfil de Entrenador</h2>
-          
-          <!-- Avatar Icon selection -->
-          <div class="form-group">
-            <label class="form-label">Avatar</label>
-            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-height: 140px; overflow-y: auto; padding-right: 4px;" class="scroll">
-              @for (av of availableAvatars; track av) {
-                <div class="avatar-option" [class.selected]="editAvatarIcon === av" (click)="editAvatarIcon = av" style="width: 46px; height: 46px; font-size: 22px; padding: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                  @if (isCustomAvatar(av)) {
-                    <img [src]="getAvatarUrl(av)" style="width: 100%; height: 100%; object-fit: cover;" />
+      <div class="modal-backdrop" (click)="closeEditModal()">
+        <div class="edit-modal" (click)="$event.stopPropagation()">
+
+          <!-- ── HEADER ── -->
+          <div class="edit-modal-header">
+            <div>
+              <div class="edit-modal-eyebrow">ENTRENADOR</div>
+              <h2 class="edit-modal-title">Editar Perfil</h2>
+            </div>
+            <button class="edit-close-btn" (click)="closeEditModal()">&#x2715;</button>
+          </div>
+
+          <!-- ── BODY: two columns ── -->
+          <div class="edit-modal-body">
+
+            <!-- LEFT: preview + avatar picker -->
+            <div class="edit-left-panel">
+
+              <!-- Live preview card -->
+              <div class="edit-preview-card">
+                <div class="edit-avatar-preview">
+                  @if (isCustomAvatar(editAvatarIcon)) {
+                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
                   } @else {
-                    {{ getAvatarEmoji(av) }}
+                    <span style="font-size:36px;">{{ getAvatarEmoji(editAvatarIcon) }}</span>
                   }
                 </div>
-              }
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div class="form-group">
-            <label class="form-label">Descripción</label>
-            <textarea
-              [(ngModel)]="editDescription"
-              (ngModelChange)="validateDescription()"
-              class="form-input"
-              [style.border-color]="descriptionError ? '#f87171' : ''"
-              rows="3" maxlength="150"
-              placeholder="Escribe tu descripción de entrenador..."
-              style="resize: none;"></textarea>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 6px;">
-              @if (descriptionError) {
-                <div style="font-size: 11.5px; color: #f87171; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                  ⚠️ {{ descriptionError }}
-                </div>
-              } @else {
-                <div></div>
-              }
-              <div [style.color]="editDescription.length >= 140 ? '#f87171' : 'var(--mut)'" style="font-size: 11px; flex-shrink: 0;">
-                {{ editDescription.length }} / 150
-              </div>
-            </div>
-          </div>
-
-          <!-- Title selection -->
-          <div class="form-group">
-            <label class="form-label">Título Activo</label>
-            <select [(ngModel)]="editActiveTitle" class="form-input select-dark">
-              <option value="Ninguno" class="select-option">— Ninguno —</option>
-              @for (title of unlockedTitlesList; track title) {
-                <option [value]="title" class="select-option">🏅 {{ title }}</option>
-              }
-            </select>
-            @if (!unlockedTitlesList || unlockedTitlesList.length === 0) {
-              <div style="font-size: 11.5px; color: var(--mut); margin-top: 6px; font-style: italic;">Aún no tenés títulos desbloqueados. Completá logros para obtenerlos.</div>
-            }
-          </div>
-
-          <!-- Medallas Destacadas Selection -->
-          <div class="form-group">
-            <label class="form-label">Medallas Destacadas (Máximo 3)</label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; max-height: 120px; overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,0.2);" class="scroll">
-              @if (unlockedMedals.length === 0) {
-                <div style="font-size: 12.5px; color: var(--mut); font-style: italic; padding: 4px;">No tenés medallas desbloqueadas para destacar.</div>
-              }
-              @for (medal of unlockedMedals; track medal.rewardValue) {
-                @let isSelected = editSelectedMedals.includes(medal.rewardValue || '');
-                <div (click)="toggleMedalSelection(medal.rewardValue)"
-                     style="width: 48px; height: 48px; padding: 6px; border: 2px solid transparent; border-radius: 10px; background: rgba(255,255,255,0.03); cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.15s;"
-                     [style.border-color]="isSelected ? 'var(--accent2)' : 'transparent'"
-                     [style.background]="isSelected ? 'rgba(255, 206, 50, 0.12)' : 'rgba(255,255,255,0.03)'"
-                     [style.box-shadow]="isSelected ? '0 0 10px rgba(255, 206, 50, 0.25)' : 'none'">
-                  <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'" style="width: 100%; height: 100%; object-fit: contain;" />
-                  @if (isSelected) {
-                    <div style="position: absolute; top: -6px; right: -6px; background: var(--accent2); color: #000; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 1.5px solid var(--bg2);">
-                      {{ editSelectedMedals.indexOf(medal.rewardValue || '') + 1 }}
+                <div class="edit-preview-username">{{ username }}</div>
+                @if (editActiveTitle && editActiveTitle !== 'Ninguno') {
+                  <div class="edit-preview-title-badge">🏅 {{ editActiveTitle }}</div>
+                }
+                <!-- Medal slots preview -->
+                <div class="edit-preview-medals">
+                  @for (slot of [0,1,2]; track slot) {
+                    <div class="edit-medal-slot" [class.has-medal]="!!editSelectedMedals[slot]">
+                      @if (editSelectedMedals[slot]) {
+                        <img [src]="'assets/achievements/medals/' + editSelectedMedals[slot] + '.png'"
+                             style="width:100%;height:100%;object-fit:contain;" />
+                      } @else {
+                        <span class="slot-empty-icon">+</span>
+                      }
                     </div>
                   }
                 </div>
-              }
+              </div>
+
+              <!-- Avatar picker -->
+              <div class="edit-section-label">FOTO DE PERFIL</div>
+              <div class="edit-avatar-grid scroll">
+                @for (av of availableAvatars; track av) {
+                  <div class="edit-avatar-thumb"
+                       [class.selected]="editAvatarIcon === av"
+                       (click)="editAvatarIcon = av">
+                    @if (isCustomAvatar(av)) {
+                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    } @else {
+                      <span>{{ getAvatarEmoji(av) }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+            </div>
+
+            <!-- RIGHT: form fields -->
+            <div class="edit-right-panel">
+
+              <!-- Description -->
+              <div class="edit-field">
+                <div class="edit-field-header">
+                  <span class="edit-field-label">📝 Descripción</span>
+                  <span class="edit-char-count" [class.warn]="editDescription.length >= 140">{{ editDescription.length }}/150</span>
+                </div>
+                <textarea
+                  [(ngModel)]="editDescription"
+                  (ngModelChange)="validateDescription()"
+                  class="edit-textarea"
+                  [class.is-error]="!!descriptionError"
+                  rows="4" maxlength="150"
+                  placeholder="Contale al mundo tu historia como entrenador..."></textarea>
+                @if (descriptionError) {
+                  <div class="edit-error-msg">⚠️ {{ descriptionError }}</div>
+                }
+              </div>
+
+              <!-- Title -->
+              <div class="edit-field">
+                <div class="edit-field-header">
+                  <span class="edit-field-label">🏅 Título Activo</span>
+                </div>
+                <select [(ngModel)]="editActiveTitle" class="edit-select">
+                  <option value="Ninguno">— Sin título —</option>
+                  @for (title of unlockedTitlesList; track title) {
+                    <option [value]="title">{{ title }}</option>
+                  }
+                </select>
+                @if (!unlockedTitlesList || unlockedTitlesList.length === 0) {
+                  <div class="edit-hint">Completá logros para desbloquear títulos.</div>
+                }
+              </div>
+
+              <!-- Medals -->
+              <div class="edit-field" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+                <div class="edit-field-header">
+                  <span class="edit-field-label">🎖️ Medallas Destacadas</span>
+                  <span class="edit-char-count" [class.warn]="editSelectedMedals.length >= 3">{{ editSelectedMedals.length }}/3</span>
+                </div>
+                @if (unlockedMedals.length === 0) {
+                  <div class="edit-hint">Completá logros para desbloquear medallas.</div>
+                } @else {
+                  <div class="edit-medal-grid scroll">
+                    @for (medal of unlockedMedals; track medal.rewardValue) {
+                      @let isSel = editSelectedMedals.includes(medal.rewardValue || '');
+                      <div class="edit-medal-thumb"
+                           [class.selected]="isSel"
+                           (click)="toggleMedalSelection(medal.rewardValue)"
+                           [title]="medal.title || ''">
+                        <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'"
+                             style="width:100%;height:100%;object-fit:contain;" />
+                        @if (isSel) {
+                          <div class="edit-medal-badge">{{ editSelectedMedals.indexOf(medal.rewardValue || '') + 1 }}</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
             </div>
           </div>
 
-          <!-- Actions -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
+          <!-- ── FOOTER ── -->
+          <div class="edit-modal-footer">
             <button class="ghost-btn" (click)="closeEditModal()" [disabled]="savingProfile">Cancelar</button>
-            <button class="cta" (click)="saveProfile()" [disabled]="savingProfile || !!descriptionError" style="padding: 10px 24px; font-size: 13px;">
-              @if (savingProfile) { Guardando... } @else { Guardar Cambios }
+            <button class="edit-save-btn" (click)="saveProfile()" [disabled]="savingProfile || !!descriptionError">
+              @if (savingProfile) { Guardando... } @else { 💾 Guardar Cambios }
             </button>
           </div>
+
         </div>
       </div>
     }
@@ -923,6 +971,363 @@ import { RouterModule } from '@angular/router';
         max-height: 85vh;
         display: flex;
         flex-direction: column;
+      }
+
+      /* ═══ EDIT PROFILE MODAL ═══ */
+      .edit-modal {
+        background: linear-gradient(160deg, #161628 0%, #1a1a30 60%, #14141f 100%);
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 28px;
+        width: 95%;
+        max-width: 720px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,46,62,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+        animation: scaleUp 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        overflow: hidden;
+      }
+      .edit-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 30px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        background: linear-gradient(90deg, rgba(255,46,62,0.08) 0%, transparent 60%);
+        flex-shrink: 0;
+      }
+      .edit-modal-eyebrow {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 4px;
+      }
+      .edit-modal-title {
+        font-family: var(--display);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--txt);
+        margin: 0;
+      }
+      .edit-close-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--mut);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s;
+        flex-shrink: 0;
+      }
+      .edit-close-btn:hover {
+        background: rgba(255,46,62,0.15);
+        border-color: var(--accent);
+        color: var(--txt);
+      }
+      .edit-modal-body {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      /* LEFT PANEL */
+      .edit-left-panel {
+        width: 210px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 16px;
+        border-right: 1px solid rgba(255,255,255,0.06);
+        gap: 14px;
+        overflow-y: auto;
+        background: rgba(0,0,0,0.15);
+      }
+      .edit-preview-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 18px;
+        padding: 16px 12px 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .edit-avatar-preview {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: var(--surface);
+        border: 3px solid rgba(255,46,62,0.4);
+        box-shadow: 0 0 0 4px rgba(255,46,62,0.1), 0 8px 20px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.2s;
+      }
+      .edit-preview-username {
+        font-weight: 700;
+        font-size: 13.5px;
+        color: var(--txt);
+        text-align: center;
+      }
+      .edit-preview-title-badge {
+        background: linear-gradient(135deg, rgba(255,206,50,0.18), rgba(255,206,50,0.05));
+        border: 1px solid rgba(255,206,50,0.3);
+        color: var(--accent2);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .edit-preview-medals {
+        display: flex;
+        gap: 6px;
+        margin-top: 2px;
+      }
+      .edit-medal-slot {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1.5px dashed rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        overflow: hidden;
+        position: relative;
+      }
+      .edit-medal-slot.has-medal {
+        border-color: rgba(255,206,50,0.4);
+        background: rgba(255,206,50,0.06);
+        box-shadow: 0 0 8px rgba(255,206,50,0.15);
+      }
+      .slot-empty-icon {
+        font-size: 14px;
+        color: rgba(255,255,255,0.2);
+        font-weight: 300;
+      }
+      .edit-section-label {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: var(--mut);
+        padding: 0 2px;
+      }
+      .edit-avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        padding-right: 2px;
+      }
+      .edit-avatar-thumb {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        background: rgba(255,255,255,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s;
+        position: relative;
+      }
+      .edit-avatar-thumb:hover {
+        transform: scale(1.08);
+        border-color: rgba(255,255,255,0.25);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      }
+      .edit-avatar-thumb.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(255,46,62,0.2), 0 4px 14px rgba(255,46,62,0.3);
+      }
+      /* RIGHT PANEL */
+      .edit-right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 22px 24px;
+        gap: 18px;
+        overflow-y: auto;
+        min-width: 0;
+      }
+      .edit-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .edit-field-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .edit-field-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.07em;
+        color: var(--mut);
+        text-transform: uppercase;
+      }
+      .edit-char-count {
+        font-size: 11px;
+        color: var(--mut);
+        font-weight: 600;
+      }
+      .edit-char-count.warn { color: #f87171; }
+      .edit-textarea {
+        width: 100%;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--txt);
+        padding: 12px 14px;
+        border-radius: 14px;
+        outline: none;
+        font-family: 'Manrope', sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+        resize: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+      }
+      .edit-textarea:focus {
+        border-color: rgba(255,46,62,0.5);
+        box-shadow: 0 0 0 3px rgba(255,46,62,0.08);
+      }
+      .edit-textarea.is-error { border-color: #f87171; }
+      .edit-select {
+        width: 100%;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--txt);
+        padding: 11px 36px 11px 14px;
+        border-radius: 14px;
+        outline: none;
+        font-family: 'Manrope', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+      }
+      .edit-select option { background: #1a1a2e; color: #e8e8f0; }
+      .edit-select:focus {
+        border-color: rgba(255,46,62,0.5);
+        box-shadow: 0 0 0 3px rgba(255,46,62,0.08);
+      }
+      .edit-hint {
+        font-size: 12px;
+        color: var(--mut);
+        font-style: italic;
+      }
+      .edit-error-msg {
+        font-size: 12px;
+        color: #f87171;
+        font-weight: 600;
+      }
+      .edit-medal-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 80px;
+        max-height: 160px;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        background: rgba(0,0,0,0.15);
+      }
+      .edit-medal-thumb {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        background: rgba(255,255,255,0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 5px;
+        box-sizing: border-box;
+        transition: all 0.15s;
+      }
+      .edit-medal-thumb:hover {
+        background: rgba(255,255,255,0.08);
+        transform: scale(1.08);
+      }
+      .edit-medal-thumb.selected {
+        border-color: var(--accent2);
+        background: rgba(255,206,50,0.1);
+        box-shadow: 0 0 10px rgba(255,206,50,0.2);
+      }
+      .edit-medal-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: var(--accent2);
+        color: #000;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 900;
+        border: 1.5px solid #161628;
+      }
+      .edit-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        flex-shrink: 0;
+        background: rgba(0,0,0,0.1);
+      }
+      .edit-save-btn {
+        background: linear-gradient(135deg, var(--accent) 0%, #c0152a 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 24px;
+        font-size: 13.5px;
+        font-weight: 700;
+        font-family: 'Manrope', sans-serif;
+        cursor: pointer;
+        transition: all 0.18s;
+        box-shadow: 0 4px 14px rgba(255,46,62,0.3);
+      }
+      .edit-save-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(255,46,62,0.45);
+      }
+      .edit-save-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
       }
       
       .form-group {
@@ -1157,13 +1562,22 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   get availableAvatars(): string[] {
-    const list = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
+    // Default avatars always available (no achievement required)
+    const defaults = [
+      'avatar_winner_badge',
+      'avatar_rules_student',
+      'avatar_resilience_mid',
+      'avatar_neutral_balance',
+      'avatar_belt_white',
+      'avatar_water_kanto',
+    ];
+    const set = new Set<string>(defaults);
     this.allAchievements.forEach(ach => {
       if (ach.unlocked && ach.rewardType === 'FOTO_PERFIL' && ach.rewardValue) {
-        list.push(ach.rewardValue);
+        set.add(ach.rewardValue);
       }
     });
-    return list;
+    return Array.from(set);
   }
 
   get medals(): UserAchievementProgressDTO[] {
@@ -1288,7 +1702,7 @@ export class ProfileAuroraComponent implements OnInit {
   openEditModal(): void {
     this.editDescription = this.profileData?.description || '';
     this.editActiveTitle = this.profileData?.activeTitle || 'Ninguno';
-    this.editAvatarIcon = this.profileData?.avatarIcon || 'ash';
+    this.editAvatarIcon = this.profileData?.avatarIcon || 'avatar_winner_badge';
     this.editSelectedMedals = this.profileData?.selectedMedals ? this.profileData.selectedMedals.split(',').filter(m => !!m) : [];
     this.descriptionError = '';
     this.showEditModal = true;
