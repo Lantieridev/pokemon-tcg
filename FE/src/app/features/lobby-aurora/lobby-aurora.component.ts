@@ -205,6 +205,40 @@ type PrivateMode = 'create' | 'join';
       background: rgba(255,255,255,0.1);
     }
 
+    .action-btn.bot {
+      background: linear-gradient(135deg, rgba(20,184,166,0.2), rgba(13,148,136,0.4));
+      border: 1px solid rgba(45,212,191,0.3);
+      color: #5eead4;
+      margin-top: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn.bot::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: skewX(-20deg);
+      transition: all 0.5s ease;
+    }
+
+    .action-btn.bot:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(20,184,166,0.3), rgba(13,148,136,0.5));
+      border: 1px solid rgba(45,212,191,0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(13,148,136,0.4);
+    }
+
+    .action-btn.bot:hover:not(:disabled)::before {
+      left: 200%;
+    }
+
+    .action-btn.bot .bot-icon {
+      font-size: 16px;
+    }
+
     /* ── Waiting state ─────────────────────────────────────────────────── */
     .waiting-state {
       display: flex;
@@ -477,9 +511,11 @@ type PrivateMode = 'create' | 'join';
             <button class="ghost-btn" (click)="openModal('casual')">
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
-            <button class="ghost-btn" (click)="startBotMatch()" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;">
-              <aurora-icon n="sword" [s]="18"></aurora-icon> Jugar vs Bot
-            </button>
+            <div class="bot-section">
+              <button class="action-btn bot" [disabled]="lobby.decks().length === 0" (click)="startBotMatch()">
+                <span class="bot-icon">🤖</span> Jugar vs Bot
+              </button>
+            </div>
           </div>
 
           <!-- Rank strip -->
