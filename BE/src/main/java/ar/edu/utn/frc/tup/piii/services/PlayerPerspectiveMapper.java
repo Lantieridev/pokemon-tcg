@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.dtos.PendingSelectionRequestDTO;
 
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public final class PlayerPerspectiveMapper {
                 session.getVersion(),
                 turnNumber,
                 session.getActivePlayerIndex() == -1 ? -1 : (session.getActivePlayerIndex() == viewerIndex ? 0 : 1),
-                session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name(),
+                session.getState() == MatchSessionState.FINISHED ? "FINISHED" : (session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name()),
                 requestDto,
                 self,
                 opponent);
