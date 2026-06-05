@@ -403,100 +403,218 @@ public class ProfileServiceImpl implements ProfileService {
 
         boolean changed = false;
 
-        // Títulos por Defecto
-        if (titles.add("Novato")) {
-            changed = true;
+        final List<UserCardStatEntity> cardStats = userCardStatRepository.findByUserId(user.getId());
+        final List<UserEnergyStatEntity> energyStats = userEnergyStatRepository.findByUserId(user.getId());
+
+        // Map cards to names
+        final List<CardEntity> allCards = cardRepository.findAll();
+        final Map<String, String> cardNamesMap = allCards.stream()
+                .collect(Collectors.toMap(CardEntity::getId, CardEntity::getName, (a, b) -> a));
+
+        final int versatilityCount = (int) cardStats.stream()
+                .filter(stat -> stat.getTimesPlayed() > 0)
+                .count();
+
+        int pikachuPlays = 0;
+        int charizardPlays = 0;
+        int blastoisePlays = 0;
+        int venusaurPlays = 0;
+        int mewtwoPlays = 0;
+
+        for (final UserCardStatEntity stat : cardStats) {
+            final String name = cardNamesMap.get(stat.getCardId());
+            if (name != null) {
+                final String nameLower = name.toLowerCase();
+                if (nameLower.contains("pikachu")) {
+                    pikachuPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("charizard")) {
+                    charizardPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("blastoise")) {
+                    blastoisePlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("venusaur")) {
+                    venusaurPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("mewtwo")) {
+                    mewtwoPlays += stat.getTimesPlayed();
+                }
+            }
         }
-        if (titles.add("Entrenador")) {
-            changed = true;
+
+        int fireAttached = 0;
+        int waterAttached = 0;
+        int grassAttached = 0;
+        int lightningAttached = 0;
+        int psychicAttached = 0;
+        int fightingAttached = 0;
+        int colorlessAttached = 0;
+
+        for (final UserEnergyStatEntity stat : energyStats) {
+            if (stat.getEnergyType() != null) {
+                switch (stat.getEnergyType().toUpperCase()) {
+                    case "FIRE" -> fireAttached += stat.getTimesPlayed();
+                    case "WATER" -> waterAttached += stat.getTimesPlayed();
+                    case "GRASS" -> grassAttached += stat.getTimesPlayed();
+                    case "LIGHTNING" -> lightningAttached += stat.getTimesPlayed();
+                    case "PSYCHIC" -> psychicAttached += stat.getTimesPlayed();
+                    case "FIGHTING" -> fightingAttached += stat.getTimesPlayed();
+                    case "COLORLESS" -> colorlessAttached += stat.getTimesPlayed();
+                }
+            }
         }
 
         final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+        final int mmr = user.getMmr() != null ? user.getMmr() : 1000;
+        final int pokecoins = user.getPokecoins() != null ? user.getPokecoins() : 0;
+        final int battlePoints = user.getBattlePoints() != null ? user.getBattlePoints() : 0;
+        final int totalDamageDealt = user.getTotalDamageDealt() != null ? user.getTotalDamageDealt() : 0;
+        final int totalKos = user.getTotalKos() != null ? user.getTotalKos() : 0;
+        final int perfectWins = user.getPerfectWins() != null ? user.getPerfectWins() : 0;
+        final int comebackWins = user.getComebackWins() != null ? user.getComebackWins() : 0;
+        final int trainerCardsPlayed = user.getTrainerCardsPlayed() != null ? user.getTrainerCardsPlayed() : 0;
+        final int losses = matchesPlayed - matchesWon;
 
-        // Títulos por Nivel
-        if (currentLevel >= 5) {
-            if (titles.add("Estratega en Crecimiento")) {
-                changed = true;
-            }
-        }
-        if (currentLevel >= 10) {
-            if (titles.add("Maestro de Cartas")) {
-                changed = true;
-            }
-        }
+        // Títulos por Defecto
+        if (titles.add("Novato")) changed = true;
+        if (titles.add("Entrenador")) changed = true;
 
-        // Títulos por Victorias
-        if (matchesWon >= 5) {
-            if (titles.add("Ganador Prometedor")) {
-                changed = true;
-            }
-        }
-        if (matchesWon >= 20) {
-            if (titles.add("Ganador Implacable")) {
-                changed = true;
-            }
-        }
-        if (matchesWon >= 50) {
-            if (titles.add("Campeón del Tablero")) {
-                changed = true;
-            }
-        }
-        if (matchesWon >= 100) {
-            if (titles.add("Leyenda del Tablero")) {
-                changed = true;
-            }
-        }
+        // 1. Nivel
+        if (currentLevel >= 5 && titles.add("Estratega en Crecimiento")) changed = true;
+        if (currentLevel >= 10 && titles.add("Maestro de Cartas")) changed = true;
+        if (currentLevel >= 20 && titles.add("Gran Mentor")) changed = true;
+        if (currentLevel >= 30 && titles.add("Líder de Élite")) changed = true;
+        if (currentLevel >= 50 && titles.add("Leyenda Viviente")) changed = true;
+        if (currentLevel >= 100 && titles.add("Maestro de Kanto")) changed = true;
 
-        // Títulos por Partidas Jugadas (Terminadas totalmente)
-        if (matchesPlayed >= 10) {
-            if (titles.add("Combatiente")) {
-                changed = true;
-            }
-        }
-        if (matchesPlayed >= 25) {
-            if (titles.add("Combatiente Tenaz")) {
-                changed = true;
-            }
-        }
-        if (matchesPlayed >= 50) {
-            if (titles.add("Veterano de Batallas")) {
-                changed = true;
-            }
-        }
-        if (matchesPlayed >= 100) {
-            if (titles.add("Leyenda de Batallas")) {
-                changed = true;
-            }
-        }
+        // 2. Victorias
+        if (matchesWon >= 5 && titles.add("Ganador Prometedor")) changed = true;
+        if (matchesWon >= 20 && titles.add("Ganador Implacable")) changed = true;
+        if (matchesWon >= 50 && titles.add("Campeón del Tablero")) changed = true;
+        if (matchesWon >= 100 && titles.add("Leyenda del Tablero")) changed = true;
+        if (matchesWon >= 250 && titles.add("Inmortal del Tablero")) changed = true;
 
-        // Títulos por Colección (Cartas distintas en sus mazos)
-        if (uniqueCardsCount >= 30) {
-            if (titles.add("Coleccionista Novato")) {
-                changed = true;
-            }
-        }
-        if (uniqueCardsCount >= 50) {
-            if (titles.add("Coleccionista Experto")) {
-                changed = true;
-            }
-        }
-        if (uniqueCardsCount >= 100) {
-            if (titles.add("Coleccionista de Élite")) {
-                changed = true;
-            }
-        }
-        if (uniqueCardsCount >= 150) {
-            if (titles.add("Maestro Coleccionista")) {
-                changed = true;
-            }
-        }
+        // 3. Resiliencia
+        if (losses >= 10 && titles.add("Espíritu Resiliente")) changed = true;
+        if (losses >= 50 && titles.add("Fuerza de Voluntad")) changed = true;
 
-        // Títulos por Honores
-        if (totalHonors >= 5) {
-            if (titles.add("Compañero Amigable")) {
-                changed = true;
-            }
-        }
+        // 4. Partidas Jugadas
+        if (matchesPlayed >= 10 && titles.add("Combatiente")) changed = true;
+        if (matchesPlayed >= 25 && titles.add("Combatiente Tenaz")) changed = true;
+        if (matchesPlayed >= 50 && titles.add("Veterano de Batallas")) changed = true;
+        if (matchesPlayed >= 100 && titles.add("Leyenda de Batallas")) changed = true;
+        if (matchesPlayed >= 250 && titles.add("Espíritu Inquebrantable")) changed = true;
+
+        // 5. Colección de Cartas
+        if (uniqueCardsCount >= 30 && titles.add("Coleccionista Novato")) changed = true;
+        if (uniqueCardsCount >= 50 && titles.add("Coleccionista Experto")) changed = true;
+        if (uniqueCardsCount >= 100 && titles.add("Coleccionista de Élite")) changed = true;
+        if (uniqueCardsCount >= 150 && titles.add("Maestro Coleccionista")) changed = true;
+        if (uniqueCardsCount >= 200 && titles.add("Curador del Museo")) changed = true;
+
+        // 6. Honores
+        if (totalHonors >= 5 && titles.add("Compañero Amigable")) changed = true;
+        if (totalHonors >= 15 && titles.add("Entrenador Respetado")) changed = true;
+        if (totalHonors >= 30 && titles.add("Héroe del Fair Play")) changed = true;
+
+        // 7. Competitivo y MMR
+        if (mmr >= 1200 && titles.add("Entrenador Destacado")) changed = true;
+        if (mmr >= 1500 && titles.add("Líder de Gimnasio")) changed = true;
+        if (mmr >= 1800 && titles.add("Alto Mando")) changed = true;
+        if (mmr >= 2000 && titles.add("Campeón de la Liga")) changed = true;
+
+        // 8. Versatilidad
+        if (versatilityCount >= 20 && titles.add("Estratega Versátil")) changed = true;
+        if (versatilityCount >= 50 && titles.add("Maestro Adaptable")) changed = true;
+
+        // 10. Economía
+        if (pokecoins >= 1000 && titles.add("Súper Nerd de las Ventas")) changed = true;
+        if (pokecoins >= 5000 && titles.add("Magnate de Kanto")) changed = true;
+        if (battlePoints >= 500 && titles.add("Gladiador del Tablero")) changed = true;
+        if (battlePoints >= 2000 && titles.add("Campeón del Coliseo")) changed = true;
+
+        // 11. Combate - Daño
+        if (totalDamageDealt >= 1000 && titles.add("Poder Eléctrico")) changed = true;
+        if (totalDamageDealt >= 5000 && titles.add("Fuerza Brutal")) changed = true;
+        if (totalDamageDealt >= 15000 && titles.add("Fuerza de la Naturaleza")) changed = true;
+        if (totalDamageDealt >= 50000 && titles.add("Destructor Cósmico")) changed = true;
+
+        // 11. Combate - KOs
+        if (totalKos >= 10 && titles.add("Derribador")) changed = true;
+        if (totalKos >= 50 && titles.add("Cazador de KOs")) changed = true;
+        if (totalKos >= 150 && titles.add("Ejecutor Implacable")) changed = true;
+        if (totalKos >= 300 && titles.add("Verdugo Supremo")) changed = true;
+
+        // 11. Combate - Victorias Perfectas
+        if (perfectWins >= 1 && titles.add("Estratega Imbatible")) changed = true;
+        if (perfectWins >= 5 && titles.add("Intocable")) changed = true;
+        if (perfectWins >= 15 && titles.add("Inmaculado")) changed = true;
+
+        // 11. Combate - Victorias de Remontada
+        if (comebackWins >= 1 && titles.add("Rey del Clímax")) changed = true;
+        if (comebackWins >= 5 && titles.add("Espíritu de Remontada")) changed = true;
+        if (comebackWins >= 15 && titles.add("Fénix del Tablero")) changed = true;
+
+        // 11. Combate - Cartas de Entrenador
+        if (trainerCardsPlayed >= 50 && titles.add("Estudioso de Reglas")) changed = true;
+        if (trainerCardsPlayed >= 200 && titles.add("Maestro Táctico")) changed = true;
+        if (trainerCardsPlayed >= 500 && titles.add("Gran Sabio")) changed = true;
+
+        // 12. Elemental - Fuego
+        if (fireAttached >= 50 && titles.add("Piro-Novato")) changed = true;
+        if (fireAttached >= 200 && titles.add("Piro-Maestro")) changed = true;
+        if (fireAttached >= 500 && titles.add("Llama de Kanto")) changed = true;
+
+        // 12. Elemental - Agua
+        if (waterAttached >= 50 && titles.add("Hidro-Novato")) changed = true;
+        if (waterAttached >= 200 && titles.add("Maestro del Surf")) changed = true;
+        if (waterAttached >= 500 && titles.add("Tsunami Viviente")) changed = true;
+
+        // 12. Elemental - Planta
+        if (grassAttached >= 50 && titles.add("Brote Verde")) changed = true;
+        if (grassAttached >= 200 && titles.add("Guardián de la Selva")) changed = true;
+        if (grassAttached >= 500 && titles.add("Espíritu del Bosque")) changed = true;
+
+        // 12. Elemental - Rayo
+        if (lightningAttached >= 50 && titles.add("Chispa Inicial")) changed = true;
+        if (lightningAttached >= 200 && titles.add("Voltaje Máximo")) changed = true;
+        if (lightningAttached >= 500 && titles.add("Tormenta Perpetua")) changed = true;
+
+        // 12. Elemental - Psíquico
+        if (psychicAttached >= 50 && titles.add("Sensitivo")) changed = true;
+        if (psychicAttached >= 200 && titles.add("Mente Mística")) changed = true;
+        if (psychicAttached >= 500 && titles.add("Poder Cósmico")) changed = true;
+
+        // 12. Elemental - Lucha
+        if (fightingAttached >= 50 && titles.add("Cinturón Blanco")) changed = true;
+        if (fightingAttached >= 200 && titles.add("Cinturón Negro")) changed = true;
+        if (fightingAttached >= 500 && titles.add("Fuerza Sísmica")) changed = true;
+
+        // 12. Elemental - Incoloro
+        if (colorlessAttached >= 50 && titles.add("Equilibrio")) changed = true;
+        if (colorlessAttached >= 200 && titles.add("Estratega Neutral")) changed = true;
+        if (colorlessAttached >= 500 && titles.add("Armonía Pura")) changed = true;
+
+        // 13. Lealtad - Pikachu
+        if (pikachuPlays >= 15 && titles.add("Amigo del Ratón")) changed = true;
+        if (pikachuPlays >= 50 && titles.add("Compañero Fiel")) changed = true;
+
+        // 13. Lealtad - Charizard
+        if (charizardPlays >= 10 && titles.add("Aliento Ígneo")) changed = true;
+        if (charizardPlays >= 30 && titles.add("Llama Ancestral")) changed = true;
+
+        // 13. Lealtad - Blastoise
+        if (blastoisePlays >= 10 && titles.add("Presión de Agua")) changed = true;
+        if (blastoisePlays >= 30 && titles.add("Tsunami de Kanto")) changed = true;
+
+        // 13. Lealtad - Venusaur
+        if (venusaurPlays >= 10 && titles.add("Floración Rápida")) changed = true;
+        if (venusaurPlays >= 30 && titles.add("Semilla de la Vida")) changed = true;
+
+        // 13. Lealtad - Mewtwo
+        if (mewtwoPlays >= 10 && titles.add("Mirada Mental")) changed = true;
+        if (mewtwoPlays >= 30 && titles.add("Fuerza Psíquica")) changed = true;
+
+        // 9. Colección de Títulos (se chequea al final para incluir los recién desbloqueados)
+        if (titles.size() >= 10 && titles.add("Multifacético")) changed = true;
+        if (titles.size() >= 20 && titles.add("Celebridad de Kanto")) changed = true;
 
         if (changed) {
             user.setUnlockedTitles(titles);
@@ -583,38 +701,207 @@ public class ProfileServiceImpl implements ProfileService {
             unlocked = new java.util.HashSet<>();
         }
 
+        final List<UserCardStatEntity> cardStats = userCardStatRepository.findByUserId(user.getId());
+        final List<UserEnergyStatEntity> energyStats = userEnergyStatRepository.findByUserId(user.getId());
+
+        // Map cards to names
+        final List<CardEntity> allCards = cardRepository.findAll();
+        final Map<String, String> cardNamesMap = allCards.stream()
+                .collect(Collectors.toMap(CardEntity::getId, CardEntity::getName, (a, b) -> a));
+
+        final int versatilityCount = (int) cardStats.stream()
+                .filter(stat -> stat.getTimesPlayed() > 0)
+                .count();
+
+        int pikachuPlays = 0;
+        int charizardPlays = 0;
+        int blastoisePlays = 0;
+        int venusaurPlays = 0;
+        int mewtwoPlays = 0;
+
+        for (final UserCardStatEntity stat : cardStats) {
+            final String name = cardNamesMap.get(stat.getCardId());
+            if (name != null) {
+                final String nameLower = name.toLowerCase();
+                if (nameLower.contains("pikachu")) {
+                    pikachuPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("charizard")) {
+                    charizardPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("blastoise")) {
+                    blastoisePlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("venusaur")) {
+                    venusaurPlays += stat.getTimesPlayed();
+                } else if (nameLower.contains("mewtwo")) {
+                    mewtwoPlays += stat.getTimesPlayed();
+                }
+            }
+        }
+
+        int fireAttached = 0;
+        int waterAttached = 0;
+        int grassAttached = 0;
+        int lightningAttached = 0;
+        int psychicAttached = 0;
+        int fightingAttached = 0;
+        int colorlessAttached = 0;
+
+        for (final UserEnergyStatEntity stat : energyStats) {
+            if (stat.getEnergyType() != null) {
+                switch (stat.getEnergyType().toUpperCase()) {
+                    case "FIRE" -> fireAttached += stat.getTimesPlayed();
+                    case "WATER" -> waterAttached += stat.getTimesPlayed();
+                    case "GRASS" -> grassAttached += stat.getTimesPlayed();
+                    case "LIGHTNING" -> lightningAttached += stat.getTimesPlayed();
+                    case "PSYCHIC" -> psychicAttached += stat.getTimesPlayed();
+                    case "FIGHTING" -> fightingAttached += stat.getTimesPlayed();
+                    case "COLORLESS" -> colorlessAttached += stat.getTimesPlayed();
+                }
+            }
+        }
+
+        final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+        final int mmr = user.getMmr() != null ? user.getMmr() : 1000;
+        final int pokecoins = user.getPokecoins() != null ? user.getPokecoins() : 0;
+        final int battlePoints = user.getBattlePoints() != null ? user.getBattlePoints() : 0;
+        final int totalDamageDealt = user.getTotalDamageDealt() != null ? user.getTotalDamageDealt() : 0;
+        final int totalKos = user.getTotalKos() != null ? user.getTotalKos() : 0;
+        final int perfectWins = user.getPerfectWins() != null ? user.getPerfectWins() : 0;
+        final int comebackWins = user.getComebackWins() != null ? user.getComebackWins() : 0;
+        final int trainerCardsPlayed = user.getTrainerCardsPlayed() != null ? user.getTrainerCardsPlayed() : 0;
+        final int losses = completedMatches - matchesWon;
+        final int titleCount = unlocked.size();
+
         final List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> list = new java.util.ArrayList<>();
 
         // Novato, Entrenador (Defecto)
         list.add(createProgressDTO("Novato", "DEFECTO", unlocked.contains("Novato"), "Título inicial por defecto", 1, 1));
         list.add(createProgressDTO("Entrenador", "DEFECTO", unlocked.contains("Entrenador"), "Título inicial por defecto", 1, 1));
 
-        final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
-
-        // Nivel (5, 10)
+        // 1. Nivel y Experiencia (NIVEL)
         list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", currentLevel, 5));
         list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", currentLevel, 10));
+        list.add(createProgressDTO("Gran Mentor", "NIVEL", unlocked.contains("Gran Mentor"), "Alcanzar nivel 20", currentLevel, 20));
+        list.add(createProgressDTO("Líder de Élite", "NIVEL", unlocked.contains("Líder de Élite"), "Alcanzar nivel 30", currentLevel, 30));
+        list.add(createProgressDTO("Leyenda Viviente", "NIVEL", unlocked.contains("Leyenda Viviente"), "Alcanzar nivel 50", currentLevel, 50));
+        list.add(createProgressDTO("Maestro de Kanto", "NIVEL", unlocked.contains("Maestro de Kanto"), "Alcanzar nivel 100", currentLevel, 100));
 
-        // Victorias (5, 20, 50, 100)
+        // 2. Victorias (VICTORIAS)
         list.add(createProgressDTO("Ganador Prometedor", "VICTORIAS", unlocked.contains("Ganador Prometedor"), "Ganar 5 partidas", matchesWon, 5));
         list.add(createProgressDTO("Ganador Implacable", "VICTORIAS", unlocked.contains("Ganador Implacable"), "Ganar 20 partidas", matchesWon, 20));
         list.add(createProgressDTO("Campeón del Tablero", "VICTORIAS", unlocked.contains("Campeón del Tablero"), "Ganar 50 partidas", matchesWon, 50));
         list.add(createProgressDTO("Leyenda del Tablero", "VICTORIAS", unlocked.contains("Leyenda del Tablero"), "Ganar 100 partidas", matchesWon, 100));
+        list.add(createProgressDTO("Inmortal del Tablero", "VICTORIAS", unlocked.contains("Inmortal del Tablero"), "Ganar 250 partidas", matchesWon, 250));
 
-        // Partidas completas (10, 25, 50, 100)
+        // 3. Derrotas y Resiliencia (RESILIENCIA)
+        list.add(createProgressDTO("Espíritu Resiliente", "RESILIENCIA", unlocked.contains("Espíritu Resiliente"), "Perder 10 partidas en total", losses, 10));
+        list.add(createProgressDTO("Fuerza de Voluntad", "RESILIENCIA", unlocked.contains("Fuerza de Voluntad"), "Perder 50 partidas en total", losses, 50));
+
+        // 4. Partidas Jugadas (PARTIDAS_JUGADAS)
         list.add(createProgressDTO("Combatiente", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente"), "Jugar 10 partidas completas", completedMatches, 10));
         list.add(createProgressDTO("Combatiente Tenaz", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente Tenaz"), "Jugar 25 partidas completas", completedMatches, 25));
         list.add(createProgressDTO("Veterano de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Veterano de Batallas"), "Jugar 50 partidas completas", completedMatches, 50));
         list.add(createProgressDTO("Leyenda de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Leyenda de Batallas"), "Jugar 100 partidas completas", completedMatches, 100));
+        list.add(createProgressDTO("Espíritu Inquebrantable", "PARTIDAS_JUGADAS", unlocked.contains("Espíritu Inquebrantable"), "Jugar 250 partidas completas", completedMatches, 250));
 
-        // Colección (30, 50, 100, 150)
+        // 5. Colección de Cartas (COLECCION)
         list.add(createProgressDTO("Coleccionista Novato", "COLECCION", unlocked.contains("Coleccionista Novato"), "Tener 30 cartas distintas en tus mazos", uniqueCardsCount, 30));
         list.add(createProgressDTO("Coleccionista Experto", "COLECCION", unlocked.contains("Coleccionista Experto"), "Tener 50 cartas distintas en tus mazos", uniqueCardsCount, 50));
         list.add(createProgressDTO("Coleccionista de Élite", "COLECCION", unlocked.contains("Coleccionista de Élite"), "Tener 100 cartas distintas en tus mazos", uniqueCardsCount, 100));
         list.add(createProgressDTO("Maestro Coleccionista", "COLECCION", unlocked.contains("Maestro Coleccionista"), "Tener 150 cartas distintas en tus mazos", uniqueCardsCount, 150));
+        list.add(createProgressDTO("Curador del Museo", "COLECCION", unlocked.contains("Curador del Museo"), "Tener 200 cartas distintas en tus mazos", uniqueCardsCount, 200));
 
-        // Honores (5)
+        // 6. Honores Recibidos (HONORES)
         list.add(createProgressDTO("Compañero Amigable", "HONORES", unlocked.contains("Compañero Amigable"), "Recibir 5 honores de otros jugadores", totalHonors, 5));
+        list.add(createProgressDTO("Entrenador Respetado", "HONORES", unlocked.contains("Entrenador Respetado"), "Recibir 15 honores de otros jugadores", totalHonors, 15));
+        list.add(createProgressDTO("Héroe del Fair Play", "HONORES", unlocked.contains("Héroe del Fair Play"), "Recibir 30 honores de otros jugadores", totalHonors, 30));
+
+        // 7. Competitivo y MMR (COMPETITIVO)
+        list.add(createProgressDTO("Entrenador Destacado", "COMPETITIVO", unlocked.contains("Entrenador Destacado"), "Alcanzar 1200 de MMR", mmr, 1200));
+        list.add(createProgressDTO("Líder de Gimnasio", "COMPETITIVO", unlocked.contains("Líder de Gimnasio"), "Alcanzar 1500 de MMR", mmr, 1500));
+        list.add(createProgressDTO("Alto Mando", "COMPETITIVO", unlocked.contains("Alto Mando"), "Alcanzar 1800 de MMR", mmr, 1800));
+        list.add(createProgressDTO("Campeón de la Liga", "COMPETITIVO", unlocked.contains("Campeón de la Liga"), "Alcanzar 2000 de MMR", mmr, 2000));
+
+        // 8. Versatilidad (VERSATILIDAD)
+        list.add(createProgressDTO("Estratega Versátil", "VERSATILIDAD", unlocked.contains("Estratega Versátil"), "Jugar 20 cartas diferentes en partidas", versatilityCount, 20));
+        list.add(createProgressDTO("Maestro Adaptable", "VERSATILIDAD", unlocked.contains("Maestro Adaptable"), "Jugar 50 cartas diferentes en partidas", versatilityCount, 50));
+
+        // 9. Colección de Títulos (TITULOS)
+        list.add(createProgressDTO("Multifacético", "TITULOS", unlocked.contains("Multifacético"), "Desbloquear 10 títulos", titleCount, 10));
+        list.add(createProgressDTO("Celebridad de Kanto", "TITULOS", unlocked.contains("Celebridad de Kanto"), "Desbloquear 20 títulos", titleCount, 20));
+
+        // 10. Economía y Divisas (ECONOMIA)
+        list.add(createProgressDTO("Súper Nerd de las Ventas", "ECONOMIA", unlocked.contains("Súper Nerd de las Ventas"), "Acumular 1,000 Pokecoins", pokecoins, 1000));
+        list.add(createProgressDTO("Magnate de Kanto", "ECONOMIA", unlocked.contains("Magnate de Kanto"), "Acumular 5,000 Pokecoins", pokecoins, 5000));
+        list.add(createProgressDTO("Gladiador del Tablero", "ECONOMIA", unlocked.contains("Gladiador del Tablero"), "Acumular 500 Battle Points", battlePoints, 500));
+        list.add(createProgressDTO("Campeón del Coliseo", "ECONOMIA", unlocked.contains("Campeón del Coliseo"), "Acumular 2,000 Battle Points", battlePoints, 2000));
+
+        // 11. Logros de Combate (COMBATE)
+        list.add(createProgressDTO("Poder Eléctrico", "COMBATE", unlocked.contains("Poder Eléctrico"), "Infligir 1,000 puntos de daño en total", totalDamageDealt, 1000));
+        list.add(createProgressDTO("Fuerza Brutal", "COMBATE", unlocked.contains("Fuerza Brutal"), "Infligir 5,000 puntos de daño en total", totalDamageDealt, 5000));
+        list.add(createProgressDTO("Fuerza de la Naturaleza", "COMBATE", unlocked.contains("Fuerza de la Naturaleza"), "Infligir 15,000 puntos de daño en total", totalDamageDealt, 15000));
+        list.add(createProgressDTO("Destructor Cósmico", "COMBATE", unlocked.contains("Destructor Cósmico"), "Infligir 50,000 puntos de daño en total", totalDamageDealt, 50000));
+
+        list.add(createProgressDTO("Derribador", "COMBATE", unlocked.contains("Derribador"), "Realizar 10 KOs en total", totalKos, 10));
+        list.add(createProgressDTO("Cazador de KOs", "COMBATE", unlocked.contains("Cazador de KOs"), "Realizar 50 KOs en total", totalKos, 50));
+        list.add(createProgressDTO("Ejecutor Implacable", "COMBATE", unlocked.contains("Ejecutor Implacable"), "Realizar 150 KOs en total", totalKos, 150));
+        list.add(createProgressDTO("Verdugo Supremo", "COMBATE", unlocked.contains("Verdugo Supremo"), "Realizar 300 KOs en total", totalKos, 300));
+
+        list.add(createProgressDTO("Estratega Imbatible", "COMBATE", unlocked.contains("Estratega Imbatible"), "Conseguir 1 victoria perfecta (sin sufrir KOs)", perfectWins, 1));
+        list.add(createProgressDTO("Intocable", "COMBATE", unlocked.contains("Intocable"), "Conseguir 5 victorias perfectas", perfectWins, 5));
+        list.add(createProgressDTO("Inmaculado", "COMBATE", unlocked.contains("Inmaculado"), "Conseguir 15 victorias perfectas", perfectWins, 15));
+
+        list.add(createProgressDTO("Rey del Clímax", "COMBATE", unlocked.contains("Rey del Clímax"), "Conseguir 1 victoria tras remontada", comebackWins, 1));
+        list.add(createProgressDTO("Espíritu de Remontada", "COMBATE", unlocked.contains("Espíritu de Remontada"), "Conseguir 5 victorias tras remontada", comebackWins, 5));
+        list.add(createProgressDTO("Fénix del Tablero", "COMBATE", unlocked.contains("Fénix del Tablero"), "Conseguir 15 victorias tras remontada", comebackWins, 15));
+
+        list.add(createProgressDTO("Estudioso de Reglas", "COMBATE", unlocked.contains("Estudioso de Reglas"), "Jugar 50 cartas de Entrenador", trainerCardsPlayed, 50));
+        list.add(createProgressDTO("Maestro Táctico", "COMBATE", unlocked.contains("Maestro Táctico"), "Jugar 200 cartas de Entrenador", trainerCardsPlayed, 200));
+        list.add(createProgressDTO("Gran Sabio", "COMBATE", unlocked.contains("Gran Sabio"), "Jugar 500 cartas de Entrenador", trainerCardsPlayed, 500));
+
+        // 12. Logros Elementales (ELEMENTAL)
+        list.add(createProgressDTO("Piro-Novato", "ELEMENTAL", unlocked.contains("Piro-Novato"), "Unir 50 energías de Fuego", fireAttached, 50));
+        list.add(createProgressDTO("Piro-Maestro", "ELEMENTAL", unlocked.contains("Piro-Maestro"), "Unir 200 energías de Fuego", fireAttached, 200));
+        list.add(createProgressDTO("Llama de Kanto", "ELEMENTAL", unlocked.contains("Llama de Kanto"), "Unir 500 energías de Fuego", fireAttached, 500));
+
+        list.add(createProgressDTO("Hidro-Novato", "ELEMENTAL", unlocked.contains("Hidro-Novato"), "Unir 50 energías de Agua", waterAttached, 50));
+        list.add(createProgressDTO("Maestro del Surf", "ELEMENTAL", unlocked.contains("Maestro del Surf"), "Unir 200 energías de Agua", waterAttached, 200));
+        list.add(createProgressDTO("Tsunami Viviente", "ELEMENTAL", unlocked.contains("Tsunami Viviente"), "Unir 500 energías de Agua", waterAttached, 500));
+
+        list.add(createProgressDTO("Brote Verde", "ELEMENTAL", unlocked.contains("Brote Verde"), "Unir 50 energías de Planta", grassAttached, 50));
+        list.add(createProgressDTO("Guardián de la Selva", "ELEMENTAL", unlocked.contains("Guardián de la Selva"), "Unir 200 energías de Planta", grassAttached, 200));
+        list.add(createProgressDTO("Espíritu del Bosque", "ELEMENTAL", unlocked.contains("Espíritu del Bosque"), "Unir 500 energías de Planta", grassAttached, 500));
+
+        list.add(createProgressDTO("Chispa Inicial", "ELEMENTAL", unlocked.contains("Chispa Inicial"), "Unir 50 energías de Rayo", lightningAttached, 50));
+        list.add(createProgressDTO("Voltaje Máximo", "ELEMENTAL", unlocked.contains("Voltaje Máximo"), "Unir 200 energías de Rayo", lightningAttached, 200));
+        list.add(createProgressDTO("Tormenta Perpetua", "ELEMENTAL", unlocked.contains("Tormenta Perpetua"), "Unir 500 energías de Rayo", lightningAttached, 500));
+
+        list.add(createProgressDTO("Sensitivo", "ELEMENTAL", unlocked.contains("Sensitivo"), "Unir 50 energías Psíquicas", psychicAttached, 50));
+        list.add(createProgressDTO("Mente Mística", "ELEMENTAL", unlocked.contains("Mente Mística"), "Unir 200 energías Psíquicas", psychicAttached, 200));
+        list.add(createProgressDTO("Poder Cósmico", "ELEMENTAL", unlocked.contains("Poder Cósmico"), "Unir 500 energías Psíquicas", psychicAttached, 500));
+
+        list.add(createProgressDTO("Cinturón Blanco", "ELEMENTAL", unlocked.contains("Cinturón Blanco"), "Unir 50 energías de Lucha", fightingAttached, 50));
+        list.add(createProgressDTO("Cinturón Negro", "ELEMENTAL", unlocked.contains("Cinturón Negro"), "Unir 200 energías de Lucha", fightingAttached, 200));
+        list.add(createProgressDTO("Fuerza Sísmica", "ELEMENTAL", unlocked.contains("Fuerza Sísmica"), "Unir 500 energías de Lucha", fightingAttached, 500));
+
+        list.add(createProgressDTO("Equilibrio", "ELEMENTAL", unlocked.contains("Equilibrio"), "Unir 50 energías Incoloras", colorlessAttached, 50));
+        list.add(createProgressDTO("Estratega Neutral", "ELEMENTAL", unlocked.contains("Estratega Neutral"), "Unir 200 energías Incoloras", colorlessAttached, 200));
+        list.add(createProgressDTO("Armonía Pura", "ELEMENTAL", unlocked.contains("Armonía Pura"), "Unir 500 energías Incoloras", colorlessAttached, 500));
+
+        // 13. Logros de Lealtad (LEALTAD)
+        list.add(createProgressDTO("Amigo del Ratón", "LEALTAD", unlocked.contains("Amigo del Ratón"), "Jugar cartas de Pikachu 15 veces", pikachuPlays, 15));
+        list.add(createProgressDTO("Compañero Fiel", "LEALTAD", unlocked.contains("Compañero Fiel"), "Jugar cartas de Pikachu 50 veces", pikachuPlays, 50));
+
+        list.add(createProgressDTO("Aliento Ígneo", "LEALTAD", unlocked.contains("Aliento Ígneo"), "Jugar cartas de Charizard 10 veces", charizardPlays, 10));
+        list.add(createProgressDTO("Llama Ancestral", "LEALTAD", unlocked.contains("Llama Ancestral"), "Jugar cartas de Charizard 30 veces", charizardPlays, 30));
+
+        list.add(createProgressDTO("Presión de Agua", "LEALTAD", unlocked.contains("Presión de Agua"), "Jugar cartas de Blastoise 10 veces", blastoisePlays, 10));
+        list.add(createProgressDTO("Tsunami de Kanto", "LEALTAD", unlocked.contains("Tsunami de Kanto"), "Jugar cartas de Blastoise 30 veces", blastoisePlays, 30));
+
+        list.add(createProgressDTO("Floración Rápida", "LEALTAD", unlocked.contains("Floración Rápida"), "Jugar cartas de Venusaur 10 veces", venusaurPlays, 10));
+        list.add(createProgressDTO("Semilla de la Vida", "LEALTAD", unlocked.contains("Semilla de la Vida"), "Jugar cartas de Venusaur 30 veces", venusaurPlays, 30));
+
+        list.add(createProgressDTO("Mirada Mental", "LEALTAD", unlocked.contains("Mirada Mental"), "Jugar cartas de Mewtwo 10 veces", mewtwoPlays, 10));
+        list.add(createProgressDTO("Fuerza Psíquica", "LEALTAD", unlocked.contains("Fuerza Psíquica"), "Jugar cartas de Mewtwo 30 veces", mewtwoPlays, 30));
 
         return list;
     }
