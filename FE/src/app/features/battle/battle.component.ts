@@ -78,7 +78,10 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly canEndTurn = this.store.canEndTurn;
   readonly myActiveConditions = this.store.myActiveConditions;
   readonly oppActiveConditions = this.store.oppActiveConditions;
-  readonly pendingSelection = this.store.pendingSelection;
+  readonly pendingSelection = computed(() => {
+    const sel = this.store.pendingSelection();
+    return sel && this.isMyTurn() ? sel : null;
+  });
   readonly isFinished = computed(() => {
     const phase = this.store.phase();
     // Only show game over when state is loaded AND phase is explicitly FINISHED

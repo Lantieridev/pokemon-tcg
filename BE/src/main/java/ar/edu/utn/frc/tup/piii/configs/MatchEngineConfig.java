@@ -9,6 +9,7 @@ import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -18,6 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Spring configuration for match engine collaborators and scheduling.
  */
 @Configuration
+@EnableAsync
 public class MatchEngineConfig {
 
     private static final int ABANDONMENT_POOL_SIZE = 4;
