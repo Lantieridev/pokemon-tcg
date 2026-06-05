@@ -21,6 +21,7 @@ public class UserProfileResponseDTO {
     private String avatarIcon;
     private String description;
     private String activeTitle;
+    private String selectedMedals;
     private Integer level;
     private Integer xp;
     private Integer xpToNextLevel;

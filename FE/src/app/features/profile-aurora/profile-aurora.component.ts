@@ -63,6 +63,14 @@ import { RouterModule } from '@angular/router';
                   🏅 {{ profileData?.activeTitle }}
                 </span>
               }
+              <!-- Selected Medals Showcase -->
+              @if (selectedMedalsList.length > 0) {
+                <div style="display: flex; gap: 8px; align-items: center; margin-left: 4px;">
+                  @for (medal of selectedMedalsList; track medal) {
+                    <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" [title]="getMedalTitle(medal)" />
+                  }
+                </div>
+              }
             </div>
             
             <div style="color: var(--mut); font-weight: 600; letter-spacing: 0.05em; font-size: 14.5px; margin-top: 8px; font-style: italic; max-width: 480px; line-height: 1.4;">
@@ -751,6 +759,31 @@ import { RouterModule } from '@angular/router';
             }
           </div>
 
+          <!-- Medallas Destacadas Selection -->
+          <div class="form-group">
+            <label class="form-label">Medallas Destacadas (Máximo 3)</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; max-height: 120px; overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,0.2);" class="scroll">
+              @if (unlockedMedals.length === 0) {
+                <div style="font-size: 12.5px; color: var(--mut); font-style: italic; padding: 4px;">No tenés medallas desbloqueadas para destacar.</div>
+              }
+              @for (medal of unlockedMedals; track medal.rewardValue) {
+                @let isSelected = editSelectedMedals.includes(medal.rewardValue || '');
+                <div (click)="toggleMedalSelection(medal.rewardValue)"
+                     style="width: 48px; height: 48px; padding: 6px; border: 2px solid transparent; border-radius: 10px; background: rgba(255,255,255,0.03); cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.15s;"
+                     [style.border-color]="isSelected ? 'var(--accent2)' : 'transparent'"
+                     [style.background]="isSelected ? 'rgba(255, 206, 50, 0.12)' : 'rgba(255,255,255,0.03)'"
+                     [style.box-shadow]="isSelected ? '0 0 10px rgba(255, 206, 50, 0.25)' : 'none'">
+                  <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'" style="width: 100%; height: 100%; object-fit: contain;" />
+                  @if (isSelected) {
+                    <div style="position: absolute; top: -6px; right: -6px; background: var(--accent2); color: #000; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 1.5px solid var(--bg2);">
+                      {{ editSelectedMedals.indexOf(medal.rewardValue || '') + 1 }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
           <!-- Actions -->
           <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
             <button class="ghost-btn" (click)="closeEditModal()" [disabled]="savingProfile">Cancelar</button>
@@ -1079,6 +1112,7 @@ export class ProfileAuroraComponent implements OnInit {
   editDescription = '';
   editActiveTitle = '';
   editAvatarIcon = '';
+  editSelectedMedals: string[] = [];
   savingProfile = false;
   descriptionError = '';
   avatars = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
@@ -1140,6 +1174,10 @@ export class ProfileAuroraComponent implements OnInit {
     return this.medals.filter(m => m.unlocked).length;
   }
 
+  get unlockedMedals(): UserAchievementProgressDTO[] {
+    return this.medals.filter(m => m.unlocked);
+  }
+
   isCustomAvatar(av: string | undefined): boolean {
     return !!av && av.startsWith('avatar_');
   }
@@ -1147,6 +1185,30 @@ export class ProfileAuroraComponent implements OnInit {
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
     return `assets/achievements/avatars/${av}.png`;
+  }
+
+  get selectedMedalsList(): string[] {
+    if (!this.profileData?.selectedMedals) return [];
+    return this.profileData.selectedMedals.split(',').filter(m => !!m);
+  }
+
+  getMedalTitle(medalValue: string): string {
+    const ach = this.allAchievements.find(a => a.rewardValue === medalValue);
+    return ach ? ach.title : 'Medalla';
+  }
+
+  toggleMedalSelection(medalValue: string | undefined): void {
+    if (!medalValue) return;
+    const idx = this.editSelectedMedals.indexOf(medalValue);
+    if (idx > -1) {
+      this.editSelectedMedals.splice(idx, 1);
+    } else {
+      if (this.editSelectedMedals.length >= 3) {
+        this.showToast('❌ Solo podés destacar un máximo de 3 medallas', 'error');
+        return;
+      }
+      this.editSelectedMedals.push(medalValue);
+    }
   }
 
   ngOnInit(): void {
@@ -1227,6 +1289,7 @@ export class ProfileAuroraComponent implements OnInit {
     this.editDescription = this.profileData?.description || '';
     this.editActiveTitle = this.profileData?.activeTitle || 'Ninguno';
     this.editAvatarIcon = this.profileData?.avatarIcon || 'ash';
+    this.editSelectedMedals = this.profileData?.selectedMedals ? this.profileData.selectedMedals.split(',').filter(m => !!m) : [];
     this.descriptionError = '';
     this.showEditModal = true;
   }
@@ -1284,7 +1347,8 @@ export class ProfileAuroraComponent implements OnInit {
     const payload = {
       description: this.editDescription.trim(),
       activeTitle: activeTitleVal,
-      avatarIcon: this.editAvatarIcon
+      avatarIcon: this.editAvatarIcon,
+      selectedMedals: this.editSelectedMedals.join(',')
     };
 
     // Timeout de seguridad: si el request tarda más de 10s, libera el botón
@@ -1306,7 +1370,8 @@ export class ProfileAuroraComponent implements OnInit {
             ...this.profileData,
             description: payload.description,
             activeTitle: payload.activeTitle || this.profileData.activeTitle,
-            avatarIcon: payload.avatarIcon
+            avatarIcon: payload.avatarIcon,
+            selectedMedals: payload.selectedMedals
           };
         }
 
