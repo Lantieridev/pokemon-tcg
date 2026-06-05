@@ -50,7 +50,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * </p>
  */
 @Service
-public final class MatchService {
+public class MatchService {
 
     private static final int FIRST_ROUND = 0;
     private static final String MATCH_TOPIC_BASE = "/topic/match/";
