@@ -1,0 +1,49 @@
+# Documentación Técnica: Sistema de Logros y Títulos de Entrenador
+
+Este documento detalla la arquitectura, el diseño lógico y el historial de cambios (commits) para la expansión del sistema de logros y títulos del entrenador en el backend.
+
+---
+
+## 1. Arquitectura y Modelo de Datos
+
+El sistema de logros se evalúa de manera **dinámica** sin requerir un estado persistente de "logro desbloqueado por ID" en tablas separadas. En su lugar, el backend utiliza el conjunto de **títulos desbloqueados** (`unlockedTitles` en `UserEntity`) mapeado a la tabla `user_unlocked_titles` como el indicador del estado del logro.
+
+### Atributos Utilizados en `users`:
+*   `level`, `xp`: Para logros de progresión de nivel.
+*   `mmr`: Para los logros del modo competitivo.
+*   `pokecoins`, `battle_points`: Monedas acumuladas de la economía.
+*   `total_damage_dealt`: Daño acumulado infligido.
+*   `total_kos`: Cantidad acumulada de KOs realizados.
+*   `perfect_wins`: Victorias perfectas (sin perder Pokémon/KOs sufridos).
+*   `comeback_wins`: Victorias de remontada.
+*   `trainer_cards_played`: Cartas de Entrenador jugadas.
+
+### Tablas de Estadísticas Adicionales:
+*   `user_card_stats` (`UserCardStatEntity`): Utilizada para calcular la versatilidad (número de cartas distintas jugadas) y la lealtad de uso de Pokémon específicos (Pikachu, Charizard, Blastoise, Venusaur, Mewtwo).
+*   `user_energy_stats` (`UserEnergyStatEntity`): Utilizada para contabilizar el uso acumulado de energías de tipos elementales (Fuego, Agua, Planta, Rayo, Psíquico, Lucha, Incoloro).
+
+---
+
+## 2. Puntos de Entrada de Lógica (BE)
+
+Toda la lógica del sistema reside en [ProfileServiceImpl.java](file:///c:/Users/lucas/.gemini/antigravity/scratch/tpi-pokemon-2w1-15/BE/src/main/java/ar/edu/utn/frc/tup/piii/services/impl/ProfileServiceImpl.java):
+
+1.  `checkAndUnlockTitles(UserEntity user, ...)`: Se ejecuta al ganar XP tras finalizar una partida o al consultar el perfil. Evalúa los requisitos de los 88 logros y añade los títulos correspondientes al conjunto `unlockedTitles`.
+2.  `getAchievementsProgress(String username)`: Retorna el listado completo de logros con sus respectivos niveles de progreso actual y objetivos (`progress` y `target`) para el renderizado de la interfaz en el frontend.
+
+---
+
+## 3. Registro de Commits y Cambios
+
+### Commit 1: Implementación de la Lógica del Backend
+*   **Mensaje del commit:** `feat(BE): expand achievements and titles system to 88 total achievements`
+*   **Descripción de cambios:**
+    *   Se implementó la recolección de estadísticas de uso de cartas (`UserCardStatEntity`) y energías unidas (`UserEnergyStatEntity`) en `ProfileServiceImpl`.
+    *   Se ampliaron las evaluaciones en `checkAndUnlockTitles` para abarcar las nuevas categorías: Combate (Daño, KOs, Victorias Perfectas, Remontadas, Entrenadores), Resiliencia (Derrotas), MMR Competitivo, Versatilidad, Economía, Colección de Títulos, Lealtad de Pokémon y Elementos.
+    *   Se amplió `getAchievementsProgress` para mapear los 88 logros con su progreso actual de forma que el frontend los recupere dinámicamente.
+
+### Commit 2: Ampliación de Pruebas Unitarias
+*   **Mensaje del commit:** `test(BE): update ProfileServiceTest for expanded achievements and verify combat progress`
+*   **Descripción de cambios:**
+    *   Se añadieron imports requeridos y se actualizó `testExtendedStatsAndAchievementsProgress` para asertar el tamaño total de la lista (88 logros).
+    *   Se agregaron verificaciones explícitas de progreso para logros de daño acumulado (`Poder Eléctrico`) y KOs realizados (`Derribador`).
