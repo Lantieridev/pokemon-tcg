@@ -23,6 +23,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +50,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * </p>
  */
 @Service
-public final class MatchService {
+public class MatchService {
 
     private static final int FIRST_ROUND = 0;
     private static final String MATCH_TOPIC_BASE = "/topic/match/";
@@ -65,6 +66,7 @@ public final class MatchService {
     private final PenaltyService penaltyService;
     private final ProfileService profileService;
     private final UserRepository userRepository;
+    private final BotDecisionService botDecisionService;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -78,6 +80,7 @@ public final class MatchService {
      * @param penaltyService        manages turn penalties (never null)
      * @param profileService        manages user profiles and XP (never null)
      * @param userRepository        repository for User entities (never null)
+     * @param botDecisionService    service for handling bot turns
      * @param abandonTimeoutSeconds seconds before a disconnected player forfeits
      */
     public MatchService(final MatchSessionRegistry registry,
@@ -89,6 +92,7 @@ public final class MatchService {
                         final PenaltyService penaltyService,
                         final ProfileService profileService,
                         final UserRepository userRepository,
+                        @Lazy final BotDecisionService botDecisionService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -100,6 +104,7 @@ public final class MatchService {
         this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
         this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
+        this.botDecisionService = botDecisionService;
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -203,6 +208,18 @@ public final class MatchService {
         }
 
         broadcastState(matchId, session);
+
+        // Check for bot turn
+        final MatchSession currentSession = registry.find(matchId).orElse(null);
+        if (currentSession != null && currentSession.getTurnManager() != null) {
+            int activeIndex = currentSession.getTurnManager().activePlayerIndex();
+            if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
+                String activeId = currentSession.getPlayerIds().get(activeIndex);
+                if ("Bot-001".equals(activeId)) {
+                    botDecisionService.evaluateAndPlay(matchId);
+                }
+            }
+        }
     }
 
     /**

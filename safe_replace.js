@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('FE/src/app/features/battle/battle.component.ts', 'utf8'); c = c.split(supertype === 'Pok\u01F8mon').join(supertype === 'Pokémon'); fs.writeFileSync('FE/src/app/features/battle/battle.component.ts', c, 'utf8');
