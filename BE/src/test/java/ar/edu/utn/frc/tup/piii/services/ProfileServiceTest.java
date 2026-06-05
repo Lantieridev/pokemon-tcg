@@ -14,6 +14,9 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.services.impl.ProfileServiceImpl;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserCardStatEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEnergyStatEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.CardEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -464,7 +467,7 @@ public class ProfileServiceTest {
         // Test achievement progress DTOs
         final List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> progress = profileService.getAchievementsProgress("lucas");
         assertNotNull(progress);
-        assertEquals(17, progress.size());
+        assertEquals(88, progress.size());
 
         final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO novato = progress.stream()
                 .filter(p -> p.getTitle().equals("Novato"))
@@ -483,5 +486,22 @@ public class ProfileServiceTest {
         org.junit.jupiter.api.Assertions.assertFalse(estratega.getUnlocked());
         assertEquals(3, estratega.getProgress());
         assertEquals(5, estratega.getTarget());
+
+        // Validate some new achievements progress
+        final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO electricPower = progress.stream()
+                .filter(p -> p.getTitle().equals("Poder Eléctrico"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(electricPower);
+        assertEquals(500, electricPower.getProgress());
+        assertEquals(1000, electricPower.getTarget());
+
+        final ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO KOs = progress.stream()
+                .filter(p -> p.getTitle().equals("Derribador"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(KOs);
+        assertEquals(8, KOs.getProgress());
+        assertEquals(10, KOs.getTarget());
     }
 }
