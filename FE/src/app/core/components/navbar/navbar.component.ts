@@ -37,8 +37,6 @@ export class NavbarComponent implements OnInit {
     return url.startsWith(path);
   }
 
-  isUserMenuOpen = false;
-
   get username(): string {
     return this.authService.username ?? 'Invitado';
   }
@@ -54,16 +52,6 @@ export class NavbarComponent implements OnInit {
         error: (err) => console.error('Error fetching profile for navbar', err)
       });
     }
-  }
-
-  toggleUserMenu() {
-    this.isUserMenuOpen = !this.isUserMenuOpen;
-  }
-
-  logout() {
-    this.authService.logout();
-    this.isUserMenuOpen = false;
-    this.router.navigate(['/login']);
   }
 }
 
