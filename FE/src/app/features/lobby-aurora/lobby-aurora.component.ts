@@ -6,6 +6,7 @@ import {
   OnDestroy,
   signal,
   computed,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -457,7 +458,7 @@ type PrivateMode = 'create' | 'join';
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw"
               style="font-size: 76px; line-height: 0.98; letter-spacing: -0.015em; margin: 18px 0 0; animation-delay: .05s;">
             Es tu hora,<br/>
-            <span class="name-energy" [style.font-style]="titleFont === 'sans' ? 'normal' : 'italic'">TRAINER</span>.
+            <span class="name-energy" [style.font-style]="titleFont === 'sans' ? 'normal' : 'italic'">{{ username }}</span>.
           </h1>
           <p class="fu" style="color: var(--mut); font-size: 16px; line-height: 1.55; margin: 20px 0 0; max-width: 380px; animation-delay: .1s;">
             La arena está despierta. Elegí tu mazo y buscá un rival.
@@ -484,7 +485,7 @@ type PrivateMode = 'create' | 'join';
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
               <div style="font-weight: 800; font-size: 15px; margin-top: 3px;">Oro III</div>
             </div>
-            <aurora-stat [v]="(profileData?.mmr ?? 1200).toString()" k="MMR"></aurora-stat>
+            <aurora-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></aurora-stat>
             <aurora-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></aurora-stat>
             <div>
               <div class="num" style="display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--accent);">
@@ -676,9 +677,14 @@ type PrivateMode = 'create' | 'join';
   `,
 })
 export class LobbyAuroraComponent implements OnInit, OnDestroy {
+  private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   readonly lobby = inject(LobbyService);
+
+  get username(): string {
+    return this.authService.username ?? 'Invitado';
+  }
 
   // ── UI State ────────────────────────────────────────────────────────────
   readonly activeTab = signal<LobbyTab>('public');
@@ -699,7 +705,9 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   // ── Visual config ────────────────────────────────────────────────────────
   fog = 0.62;
   titleFont = 'serif';
-  streak = 4;
+  get streak(): number {
+    return this.profileData?.statistics?.winStreak ?? 0;
+  }
 
   get displayFont() {
     return this.titleFont === 'sans'
@@ -736,7 +744,10 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     const username = this.authService.username;
     if (username) {
       this.profileService.getProfile(username).subscribe({
-        next: (data) => (this.profileData = data),
+        next: (data) => {
+          this.profileData = data;
+          this.cdr.detectChanges();
+        },
         error: (err) => console.warn('Error fetching profile', err),
       });
     }
