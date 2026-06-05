@@ -58,3 +58,26 @@ Toda la lógica del sistema reside en [ProfileServiceImpl.java](file:///c:/Users
 *   **Descripción de cambios:**
 	*   Se removió el menú superpuesto redundante de `navbar.html` y el manejador `toggleUserMenu()` de `navbar.component.ts`.
 	*   Se integró el enlace "Mi Perfil" directamente dentro del componente de menú estilizado `TrainerChipComponent` en `aurora-ui.components.ts` e importó `RouterModule` para permitir navegación.
+
+### Commit 5: Actualización del DTO de Logros y Vista del Navbar en Frontend
+*   **Mensaje del commit:** `feat(FE): extend UserAchievementProgressDTO and link avatar icon to navbar trainer chip`
+*   **Descripción de cambios:**
+	*   Se añadieron los campos opcionales `rewardType` y `rewardValue` al DTO `UserAchievementProgressDTO` en `profile.service.ts`.
+	*   Se modificó el componente `TrainerChipComponent` para recibir el parámetro `avatarIcon` y renderizar dinámicamente la imagen del avatar si es personalizado (`avatar_`) o el emoji si es por defecto.
+	*   Se actualizó `navbar.html` para enlazar y pasar `profileData()?.avatarIcon` al chip.
+
+### Commit 6: Procesamiento e Integración de Activos Gráficos Originales
+*   **Mensaje del commit:** `feat(assets): generate and slice 25 medals and 31 avatars from master grids`
+*   **Descripción de cambios:**
+	*   Se generaron 4 grids maestros de imágenes (estilos Cute/Flat y Epic 3D Holographic) utilizando herramientas de inteligencia artificial.
+	*   Se escribió y ejecutó un script en Node.js (`slice_assets.js`) utilizando `jimp` para recortar y redimensionar de forma óptima a 192x192 cada medalla y avatar.
+	*   Los activos resultantes con fondo transparente se ubicaron en `FE/public/assets/achievements/medals` y `FE/public/assets/achievements/avatars`.
+
+### Commit 7: Medallero, Avatares y Filtrado de Títulos en Perfil
+*   **Mensaje del commit:** `feat(FE): integrate Medallero, custom avatars list, and active titles dropdown filtering`
+*   **Descripción de cambios:**
+	*   Se implementó el componente visual **Medallero de Logros** con tooltips descriptivos animados (CSS puro) que reflejan el estado bloqueado/desbloqueado de cada una de las 25 medallas.
+	*   Se actualizó el listado de logros para mostrar tags de tipo de recompensa (Medalla, Título, Avatar) y un preview gráfico al lado de cada logro.
+	*   Se filtró el dropdown de selección de títulos activos en el modal de edición de perfil para mostrar únicamente logros desbloqueados que otorgan un Título.
+	*   Se implementó un grid con scroll para la selección de avatares en el modal que carga los avatares por defecto y los personalizados una vez que se desbloquean.
+
