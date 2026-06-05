@@ -17,65 +17,6 @@ export class MatchBackendService {
    * El backend verifica que principal.getName() === playerId (seguridad).
    */
   getMatchState(matchId: string): Observable<GameStateResponseDTO> {
-    if (matchId === 'dev-match-001') {
-      return of({
-        matchId: 'dev-match-001',
-        version: 1,
-        turnNumber: 1,
-        activePlayerIndex: 0,
-        currentPhase: 'MAIN',
-        pendingSelectionRequest: null,
-        self: {
-          playerId: this.authService.username ?? 'Tú',
-          active: {
-            cardId: 'xy1-11',
-            name: 'Charizard EX',
-            pokemonType: 'FIRE',
-            maxHp: 180,
-            damageCounters: 3,
-            isEx: true,
-            weaknessType: 'WATER',
-            resistanceType: null,
-            attachedEnergies: ['FIRE', 'FIRE', 'COLORLESS'],
-            retreatCost: 2,
-            hasToolAttached: false,
-            attacks: [
-              { name: 'Combustion', baseDamage: 60, energyCost: ['FIRE', 'COLORLESS', 'COLORLESS'] },
-            ],
-            statusConditions: []
-          },
-          bench: [
-            { cardId: 'xy1-4', name: 'Charmander', pokemonType: 'FIRE', maxHp: 60, damageCounters: 0, isEx: false, weaknessType: 'WATER', resistanceType: null, attachedEnergies: [], retreatCost: 1, hasToolAttached: false, attacks: [], statusConditions: [] }
-          ],
-          hand: ['xy1-1', 'xy1-2', 'xy1-3'],
-          deckSize: 45,
-          prizeCount: 6
-        },
-        opponent: {
-          playerId: 'Bot Ash',
-          active: {
-            cardId: 'xy9-40',
-            name: 'Greninja EX',
-            pokemonType: 'WATER',
-            maxHp: 170,
-            damageCounters: 0,
-            isEx: true,
-            weaknessType: 'GRASS',
-            resistanceType: null,
-            attachedEnergies: ['WATER'],
-            retreatCost: 1,
-            hasToolAttached: false,
-            attacks: [],
-            statusConditions: []
-          },
-          bench: [],
-          handSize: 5,
-          deckSize: 45,
-          prizeCount: 6
-        }
-      });
-    }
-
     const username = this.authService.username ?? '';
     return this.http.get<GameStateResponseDTO>(
       `${this.MATCHES_URL}/${matchId}/state`,
@@ -118,5 +59,21 @@ export class MatchBackendService {
    */
   getDeck(id: number): Observable<DeckResponseDTO> {
     return this.http.get<DeckResponseDTO>(`${this.DECKS_URL}/${id}`);
+  }
+
+  /**
+   * POST /api/matches/bot
+   * Crea una nueva partida contra el Bot.
+   */
+  createBotMatch(
+    playerId: string,
+    deckId: number
+  ): Observable<{ matchId: string }> {
+    return this.http.post<{ matchId: string }>(`${this.MATCHES_URL}/bot`, {
+      playerAId: playerId,
+      deckAId: deckId,
+      playerBId: 'Bot-001',
+      deckBId: deckId // El backend usará deckAId internamente para el bot
+    });
   }
 }

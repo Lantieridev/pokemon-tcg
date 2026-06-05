@@ -101,7 +101,7 @@ class MatchServiceTest {
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, null, TIMEOUT_SECONDS);
     }
 
     @Test

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -72,6 +73,31 @@ public final class MatchRestController {
         final List<Card> deckB = cardResolutionService.resolveCards(request.deckBId());
         final String matchId = matchCreationService.createMatch(
                 request.playerAId(), request.playerBId(), deckA, deckB);
+        return Map.of("matchId", matchId);
+    }
+
+    /**
+     * Creates a new match against a Bot.
+     * Uses the player's deck and uses a copy of the player's deck (or deck ID 1 if none provided) for the bot.
+     *
+     * @param request body containing playerAId and deckAId (never null)
+     * @return a map with a single entry {@code matchId → UUID string}
+     */
+    @PostMapping("/bot")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, String> createBotMatch(@RequestBody final CreateMatchRequestDTO request, Principal principal) {
+        if (principal == null || !principal.getName().equals(request.playerAId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot create bot match for another player");
+        }
+        
+        final List<Card> deckA = cardResolutionService.resolveCards(request.deckAId());
+        
+        // For the bot, just use the same deck as player A for simplicity, or hardcode a deck ID if preferred.
+        // In this basic version, playing a mirror match is the easiest way to ensure the bot has a valid deck.
+        final List<Card> deckB = cardResolutionService.resolveCards(request.deckAId());
+        
+        final String matchId = matchCreationService.createMatch(
+                request.playerAId(), "Bot-001", deckA, deckB);
         return Map.of("matchId", matchId);
     }
 

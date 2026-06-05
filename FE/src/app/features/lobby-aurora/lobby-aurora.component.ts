@@ -27,6 +27,7 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
 import { LobbyService } from '../../core/services/lobby.service';
+import { MatchBackendService } from '../../core/services/match-backend.service';
 import { DeckSummaryDTO } from '../../core/models/game-state.models';
 
 type LobbyTab = 'public' | 'private';
@@ -476,8 +477,8 @@ type PrivateMode = 'create' | 'join';
             <button class="ghost-btn" (click)="openModal('casual')">
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
-            <button class="ghost-btn" (click)="startBotMatch()" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;">
-              <aurora-icon n="sword" [s]="18"></aurora-icon> Jugar vs Bot (Dev)
+            <button class="ghost-btn" (click)="startBotMatch()">
+              <aurora-icon n="sword" [s]="18"></aurora-icon> Jugar vs Bot
             </button>
           </div>
 
@@ -684,6 +685,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
+  private matchBackendService = inject(MatchBackendService);
   readonly lobby = inject(LobbyService);
 
   get username(): string {
@@ -768,7 +770,26 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   // ── Handlers ─────────────────────────────────────────────────────────────
 
   startBotMatch(): void {
-    this.router.navigate(['/battle', 'dev-match-001']);
+    const deckIndex = this.selectedDeckIndex();
+    const decks = this.lobby.decks();
+    if (decks.length === 0) {
+      alert('Debes tener al menos un mazo para jugar.');
+      return;
+    }
+    const deckId = decks[deckIndex].id;
+    const username = this.authService.username;
+    
+    if (username) {
+      this.matchBackendService.createBotMatch(username, deckId).subscribe({
+        next: (res) => {
+          this.router.navigate(['/battle', res.matchId]);
+        },
+        error: (err) => {
+          console.error('Error al crear partida contra bot', err);
+          alert('Hubo un problema al crear la partida contra el bot.');
+        }
+      });
+    }
   }
 
   openModal(mode: 'competitive' | 'casual'): void {
