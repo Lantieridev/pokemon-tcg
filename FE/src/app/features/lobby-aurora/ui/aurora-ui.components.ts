@@ -54,7 +54,15 @@ export class LogoComponent {}
       <div class="chip" (click)="toggle()" style="cursor: pointer; user-select: none;"
            [style.outline]="open ? '2px solid var(--accent)' : 'none'"
            [style.outline-offset]="'2px'">
-        <div class="avatar ring">{{ initial }}</div>
+        <div class="avatar ring" style="display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; font-size: 16px;">
+          @if (isCustomAvatar(avatarIcon)) {
+            <img [src]="getAvatarUrl(avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+          } @else if (getAvatarEmoji(avatarIcon)) {
+            {{ getAvatarEmoji(avatarIcon) }}
+          } @else {
+            {{ initial }}
+          }
+        </div>
         <div style="line-height: 1.15;">
           <div style="font-weight: 800; font-size: 13.5px; letter-spacing: .01em;">{{ name }}</div>
           <div class="num" style="font-size: 10.5px; color: var(--mut); letter-spacing: .04em;">{{ mmr ? mmr + ' MMR' : '...' }}</div>
@@ -78,9 +86,20 @@ export class LogoComponent {}
           border-radius: 12px; padding: 8px;
           box-shadow: 0 16px 48px rgba(0,0,0,0.6);
           z-index: 9999; animation: chipDrop 0.15s ease;">
-          <div style="padding: 8px 12px 10px; border-bottom: 1px solid var(--line, rgba(255,255,255,0.08)); margin-bottom: 6px;">
-            <div style="font-size: 12px; color: var(--mut); margin-bottom: 2px;">Sesión activa</div>
-            <div style="font-weight: 700; font-size: 14px;">{{ name }}</div>
+          <div style="padding: 8px 12px 10px; border-bottom: 1px solid var(--line, rgba(255,255,255,0.08)); margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+            <div class="avatar ring" style="display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; font-size: 18px; width: 34px; height: 34px; border-radius: 50%; background: var(--surface);">
+              @if (isCustomAvatar(avatarIcon)) {
+                <img [src]="getAvatarUrl(avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+              } @else if (getAvatarEmoji(avatarIcon)) {
+                {{ getAvatarEmoji(avatarIcon) }}
+              } @else {
+                {{ initial }}
+              }
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--mut); margin-bottom: 1px;">Sesión activa</div>
+              <div style="font-weight: 700; font-size: 13.5px;">{{ name }}</div>
+            </div>
           </div>
           
           <a
@@ -131,10 +150,33 @@ export class TrainerChipComponent {
   @Input() name: string = 'NOVA';
   @Input() mmr: string = '';
   @Input() initial: string = 'N';
+  @Input() avatarIcon: string = '';
 
   open = false;
 
   toggle() { this.open = !this.open; }
+
+  getAvatarEmoji(icon: string | undefined): string {
+    if (!icon) return '';
+    switch (icon.toLowerCase()) {
+      case 'ash': return '🧢';
+      case 'misty': return '💧';
+      case 'brock': return '🪨';
+      case 'gary': return '👑';
+      case 'serena': return '🎀';
+      case 'red': return '⚡';
+      default: return '';
+    }
+  }
+
+  isCustomAvatar(av: string | undefined): boolean {
+    return !!av && av.startsWith('avatar_');
+  }
+
+  getAvatarUrl(av: string | undefined): string {
+    if (!av) return '';
+    return `assets/achievements/avatars/${av}.png`;
+  }
 
   logout() {
     this.open = false;

@@ -774,140 +774,141 @@ public class ProfileServiceImpl implements ProfileService {
         final List<ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO> list = new java.util.ArrayList<>();
 
         // Novato, Entrenador (Defecto)
-        list.add(createProgressDTO("Novato", "DEFECTO", unlocked.contains("Novato"), "Título inicial por defecto", 1, 1));
-        list.add(createProgressDTO("Entrenador", "DEFECTO", unlocked.contains("Entrenador"), "Título inicial por defecto", 1, 1));
+        list.add(createProgressDTO("Novato", "DEFECTO", unlocked.contains("Novato"), "Título inicial por defecto", 1, 1, "TITULO", "Novato"));
+        list.add(createProgressDTO("Entrenador", "DEFECTO", unlocked.contains("Entrenador"), "Título inicial por defecto", 1, 1, "TITULO", "Entrenador"));
 
         // 1. Nivel y Experiencia (NIVEL)
-        list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", currentLevel, 5));
-        list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", currentLevel, 10));
-        list.add(createProgressDTO("Gran Mentor", "NIVEL", unlocked.contains("Gran Mentor"), "Alcanzar nivel 20", currentLevel, 20));
-        list.add(createProgressDTO("Líder de Élite", "NIVEL", unlocked.contains("Líder de Élite"), "Alcanzar nivel 30", currentLevel, 30));
-        list.add(createProgressDTO("Leyenda Viviente", "NIVEL", unlocked.contains("Leyenda Viviente"), "Alcanzar nivel 50", currentLevel, 50));
-        list.add(createProgressDTO("Maestro de Kanto", "NIVEL", unlocked.contains("Maestro de Kanto"), "Alcanzar nivel 100", currentLevel, 100));
+        list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", currentLevel, 5, "TITULO", "Estratega en Crecimiento"));
+        list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", currentLevel, 10, "TITULO", "Maestro de Cartas"));
+        list.add(createProgressDTO("Gran Mentor", "NIVEL", unlocked.contains("Gran Mentor"), "Alcanzar nivel 20", currentLevel, 20, "FOTO_PERFIL", "avatar_bulbasaur"));
+        list.add(createProgressDTO("Líder de Élite", "NIVEL", unlocked.contains("Líder de Élite"), "Alcanzar nivel 30", currentLevel, 30, "FOTO_PERFIL", "avatar_charizard_3d"));
+        list.add(createProgressDTO("Leyenda Viviente", "NIVEL", unlocked.contains("Leyenda Viviente"), "Alcanzar nivel 50", currentLevel, 50, "MEDALLA", "medal_legend"));
+        list.add(createProgressDTO("Maestro de Kanto", "NIVEL", unlocked.contains("Maestro de Kanto"), "Alcanzar nivel 100", currentLevel, 100, "FOTO_PERFIL", "avatar_mewtwo_3d"));
 
         // 2. Victorias (VICTORIAS)
-        list.add(createProgressDTO("Ganador Prometedor", "VICTORIAS", unlocked.contains("Ganador Prometedor"), "Ganar 5 partidas", matchesWon, 5));
-        list.add(createProgressDTO("Ganador Implacable", "VICTORIAS", unlocked.contains("Ganador Implacable"), "Ganar 20 partidas", matchesWon, 20));
-        list.add(createProgressDTO("Campeón del Tablero", "VICTORIAS", unlocked.contains("Campeón del Tablero"), "Ganar 50 partidas", matchesWon, 50));
-        list.add(createProgressDTO("Leyenda del Tablero", "VICTORIAS", unlocked.contains("Leyenda del Tablero"), "Ganar 100 partidas", matchesWon, 100));
-        list.add(createProgressDTO("Inmortal del Tablero", "VICTORIAS", unlocked.contains("Inmortal del Tablero"), "Ganar 250 partidas", matchesWon, 250));
+        list.add(createProgressDTO("Ganador Prometedor", "VICTORIAS", unlocked.contains("Ganador Prometedor"), "Ganar 5 partidas", matchesWon, 5, "TITULO", "Ganador Prometedor"));
+        list.add(createProgressDTO("Ganador Implacable", "VICTORIAS", unlocked.contains("Ganador Implacable"), "Ganar 20 partidas", matchesWon, 20, "FOTO_PERFIL", "avatar_winner_badge"));
+        list.add(createProgressDTO("Campeón del Tablero", "VICTORIAS", unlocked.contains("Campeón del Tablero"), "Ganar 50 partidas", matchesWon, 50, "MEDALLA", "medal_champion"));
+        list.add(createProgressDTO("Leyenda del Tablero", "VICTORIAS", unlocked.contains("Leyenda del Tablero"), "Ganar 100 partidas", matchesWon, 100, "MEDALLA", "medal_board_legend"));
+        list.add(createProgressDTO("Inmortal del Tablero", "VICTORIAS", unlocked.contains("Inmortal del Tablero"), "Ganar 250 partidas", matchesWon, 250, "FOTO_PERFIL", "avatar_red_champ"));
 
         // 3. Derrotas y Resiliencia (RESILIENCIA)
-        list.add(createProgressDTO("Espíritu Resiliente", "RESILIENCIA", unlocked.contains("Espíritu Resiliente"), "Perder 10 partidas en total", losses, 10));
-        list.add(createProgressDTO("Fuerza de Voluntad", "RESILIENCIA", unlocked.contains("Fuerza de Voluntad"), "Perder 50 partidas en total", losses, 50));
+        list.add(createProgressDTO("Espíritu Resiliente", "RESILIENCIA", unlocked.contains("Espíritu Resiliente"), "Perder 10 partidas en total", losses, 10, "TITULO", "Espíritu Resiliente"));
+        list.add(createProgressDTO("Fuerza de Voluntad", "RESILIENCIA", unlocked.contains("Fuerza de Voluntad"), "Perder 50 partidas en total", losses, 50, "FOTO_PERFIL", "avatar_resilience_mid"));
 
         // 4. Partidas Jugadas (PARTIDAS_JUGADAS)
-        list.add(createProgressDTO("Combatiente", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente"), "Jugar 10 partidas completas", completedMatches, 10));
-        list.add(createProgressDTO("Combatiente Tenaz", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente Tenaz"), "Jugar 25 partidas completas", completedMatches, 25));
-        list.add(createProgressDTO("Veterano de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Veterano de Batallas"), "Jugar 50 partidas completas", completedMatches, 50));
-        list.add(createProgressDTO("Leyenda de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Leyenda de Batallas"), "Jugar 100 partidas completas", completedMatches, 100));
-        list.add(createProgressDTO("Espíritu Inquebrantable", "PARTIDAS_JUGADAS", unlocked.contains("Espíritu Inquebrantable"), "Jugar 250 partidas completas", completedMatches, 250));
+        list.add(createProgressDTO("Combatiente", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente"), "Jugar 10 partidas completas", completedMatches, 10, "TITULO", "Combatiente"));
+        list.add(createProgressDTO("Combatiente Tenaz", "PARTIDAS_JUGADAS", unlocked.contains("Combatiente Tenaz"), "Jugar 25 partidas completas", completedMatches, 25, "TITULO", "Combatiente Tenaz"));
+        list.add(createProgressDTO("Veterano de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Veterano de Batallas"), "Jugar 50 partidas completas", completedMatches, 50, "MEDALLA", "medal_veteran"));
+        list.add(createProgressDTO("Leyenda de Batallas", "PARTIDAS_JUGADAS", unlocked.contains("Leyenda de Batallas"), "Jugar 100 partidas completas", completedMatches, 100, "FOTO_PERFIL", "avatar_lucas_legend"));
+        list.add(createProgressDTO("Espíritu Inquebrantable", "PARTIDAS_JUGADAS", unlocked.contains("Espíritu Inquebrantable"), "Jugar 250 partidas completas", completedMatches, 250, "FOTO_PERFIL", "avatar_eevee_3d"));
 
         // 5. Colección de Cartas (COLECCION)
-        list.add(createProgressDTO("Coleccionista Novato", "COLECCION", unlocked.contains("Coleccionista Novato"), "Tener 30 cartas distintas en tus mazos", uniqueCardsCount, 30));
-        list.add(createProgressDTO("Coleccionista Experto", "COLECCION", unlocked.contains("Coleccionista Experto"), "Tener 50 cartas distintas en tus mazos", uniqueCardsCount, 50));
-        list.add(createProgressDTO("Coleccionista de Élite", "COLECCION", unlocked.contains("Coleccionista de Élite"), "Tener 100 cartas distintas en tus mazos", uniqueCardsCount, 100));
-        list.add(createProgressDTO("Maestro Coleccionista", "COLECCION", unlocked.contains("Maestro Coleccionista"), "Tener 150 cartas distintas en tus mazos", uniqueCardsCount, 150));
-        list.add(createProgressDTO("Curador del Museo", "COLECCION", unlocked.contains("Curador del Museo"), "Tener 200 cartas distintas en tus mazos", uniqueCardsCount, 200));
+        list.add(createProgressDTO("Coleccionista Novato", "COLECCION", unlocked.contains("Coleccionista Novato"), "Tener 30 cartas distintas en tus mazos", uniqueCardsCount, 30, "TITULO", "Coleccionista Novato"));
+        list.add(createProgressDTO("Coleccionista Experto", "COLECCION", unlocked.contains("Coleccionista Experto"), "Tener 50 cartas distintas en tus mazos", uniqueCardsCount, 50, "TITULO", "Coleccionista Experto"));
+        list.add(createProgressDTO("Coleccionista de Élite", "COLECCION", unlocked.contains("Coleccionista de Élite"), "Tener 100 cartas distintas en tus mazos", uniqueCardsCount, 100, "MEDALLA", "medal_collector_elite"));
+        list.add(createProgressDTO("Maestro Coleccionista", "COLECCION", unlocked.contains("Maestro Coleccionista"), "Tener 150 cartas distintas en tus mazos", uniqueCardsCount, 150, "MEDALLA", "medal_collector_legend"));
+        list.add(createProgressDTO("Curador del Museo", "COLECCION", unlocked.contains("Curador del Museo"), "Tener 200 cartas distintas en tus mazos", uniqueCardsCount, 200, "FOTO_PERFIL", "avatar_collector_legend"));
 
         // 6. Honores Recibidos (HONORES)
-        list.add(createProgressDTO("Compañero Amigable", "HONORES", unlocked.contains("Compañero Amigable"), "Recibir 5 honores de otros jugadores", totalHonors, 5));
-        list.add(createProgressDTO("Entrenador Respetado", "HONORES", unlocked.contains("Entrenador Respetado"), "Recibir 15 honores de otros jugadores", totalHonors, 15));
-        list.add(createProgressDTO("Héroe del Fair Play", "HONORES", unlocked.contains("Héroe del Fair Play"), "Recibir 30 honores de otros jugadores", totalHonors, 30));
+        list.add(createProgressDTO("Compañero Amigable", "HONORES", unlocked.contains("Compañero Amigable"), "Recibir 5 honores de otros jugadores", totalHonors, 5, "TITULO", "Compañero Amigable"));
+        list.add(createProgressDTO("Entrenador Respetado", "HONORES", unlocked.contains("Entrenador Respetado"), "Recibir 15 honores de otros jugadores", totalHonors, 15, "TITULO", "Entrenador Respetado"));
+        list.add(createProgressDTO("Héroe del Fair Play", "HONORES", unlocked.contains("Héroe del Fair Play"), "Recibir 30 honores de otros jugadores", totalHonors, 30, "MEDALLA", "medal_fair_play_legend"));
 
         // 7. Competitivo y MMR (COMPETITIVO)
-        list.add(createProgressDTO("Entrenador Destacado", "COMPETITIVO", unlocked.contains("Entrenador Destacado"), "Alcanzar 1200 de MMR", mmr, 1200));
-        list.add(createProgressDTO("Líder de Gimnasio", "COMPETITIVO", unlocked.contains("Líder de Gimnasio"), "Alcanzar 1500 de MMR", mmr, 1500));
-        list.add(createProgressDTO("Alto Mando", "COMPETITIVO", unlocked.contains("Alto Mando"), "Alcanzar 1800 de MMR", mmr, 1800));
-        list.add(createProgressDTO("Campeón de la Liga", "COMPETITIVO", unlocked.contains("Campeón de la Liga"), "Alcanzar 2000 de MMR", mmr, 2000));
+        list.add(createProgressDTO("Entrenador Destacado", "COMPETITIVO", unlocked.contains("Entrenador Destacado"), "Alcanzar 1200 de MMR", mmr, 1200, "TITULO", "Entrenador Destacado"));
+        list.add(createProgressDTO("Líder de Gimnasio", "COMPETITIVO", unlocked.contains("Líder de Gimnasio"), "Alcanzar 1500 de MMR", mmr, 1500, "FOTO_PERFIL", "avatar_gym_leader"));
+        list.add(createProgressDTO("Alto Mando", "COMPETITIVO", unlocked.contains("Alto Mando"), "Alcanzar 1800 de MMR", mmr, 1800, "TITULO", "Alto Mando"));
+        list.add(createProgressDTO("Campeón de la Liga", "COMPETITIVO", unlocked.contains("Campeón de la Liga"), "Alcanzar 2000 de MMR", mmr, 2000, "MEDALLA", "medal_league_champion"));
 
         // 8. Versatilidad (VERSATILIDAD)
-        list.add(createProgressDTO("Estratega Versátil", "VERSATILIDAD", unlocked.contains("Estratega Versátil"), "Jugar 20 cartas diferentes en partidas", versatilityCount, 20));
-        list.add(createProgressDTO("Maestro Adaptable", "VERSATILIDAD", unlocked.contains("Maestro Adaptable"), "Jugar 50 cartas diferentes en partidas", versatilityCount, 50));
+        list.add(createProgressDTO("Estratega Versátil", "VERSATILIDAD", unlocked.contains("Estratega Versátil"), "Jugar 20 cartas diferentes en partidas", versatilityCount, 20, "FOTO_PERFIL", "avatar_versatility_mid"));
+        list.add(createProgressDTO("Maestro Adaptable", "VERSATILIDAD", unlocked.contains("Maestro Adaptable"), "Jugar 50 cartas diferentes en partidas", versatilityCount, 50, "FOTO_PERFIL", "avatar_versatility_3d"));
 
         // 9. Colección de Títulos (TITULOS)
-        list.add(createProgressDTO("Multifacético", "TITULOS", unlocked.contains("Multifacético"), "Desbloquear 10 títulos", titleCount, 10));
-        list.add(createProgressDTO("Celebridad de Kanto", "TITULOS", unlocked.contains("Celebridad de Kanto"), "Desbloquear 20 títulos", titleCount, 20));
+        list.add(createProgressDTO("Multifacético", "TITULOS", unlocked.contains("Multifacético"), "Desbloquear 10 títulos", titleCount, 10, "FOTO_PERFIL", "avatar_multifaceted"));
+        list.add(createProgressDTO("Celebridad de Kanto", "TITULOS", unlocked.contains("Celebridad de Kanto"), "Desbloquear 20 títulos", titleCount, 20, "FOTO_PERFIL", "avatar_celebrity"));
 
         // 10. Economía y Divisas (ECONOMIA)
-        list.add(createProgressDTO("Súper Nerd de las Ventas", "ECONOMIA", unlocked.contains("Súper Nerd de las Ventas"), "Acumular 1,000 Pokecoins", pokecoins, 1000));
-        list.add(createProgressDTO("Magnate de Kanto", "ECONOMIA", unlocked.contains("Magnate de Kanto"), "Acumular 5,000 Pokecoins", pokecoins, 5000));
-        list.add(createProgressDTO("Gladiador del Tablero", "ECONOMIA", unlocked.contains("Gladiador del Tablero"), "Acumular 500 Battle Points", battlePoints, 500));
-        list.add(createProgressDTO("Campeón del Coliseo", "ECONOMIA", unlocked.contains("Campeón del Coliseo"), "Acumular 2,000 Battle Points", battlePoints, 2000));
+        list.add(createProgressDTO("Súper Nerd de las Ventas", "ECONOMIA", unlocked.contains("Súper Nerd de las Ventas"), "Acumular 1,000 Pokecoins", pokecoins, 1000, "MEDALLA", "medal_coins_1k"));
+        list.add(createProgressDTO("Magnate de Kanto", "ECONOMIA", unlocked.contains("Magnate de Kanto"), "Acumular 5,000 Pokecoins", pokecoins, 5000, "MEDALLA", "medal_magnate_gold"));
+        list.add(createProgressDTO("Gladiador del Tablero", "ECONOMIA", unlocked.contains("Gladiador del Tablero"), "Acumular 500 Battle Points", battlePoints, 500, "TITULO", "Gladiador del Tablero"));
+        list.add(createProgressDTO("Campeón del Coliseo", "ECONOMIA", unlocked.contains("Campeón del Coliseo"), "Acumular 2,000 Battle Points", battlePoints, 2000, "MEDALLA", "medal_colosseum_legend"));
 
         // 11. Logros de Combate (COMBATE)
-        list.add(createProgressDTO("Poder Eléctrico", "COMBATE", unlocked.contains("Poder Eléctrico"), "Infligir 1,000 puntos de daño en total", totalDamageDealt, 1000));
-        list.add(createProgressDTO("Fuerza Brutal", "COMBATE", unlocked.contains("Fuerza Brutal"), "Infligir 5,000 puntos de daño en total", totalDamageDealt, 5000));
-        list.add(createProgressDTO("Fuerza de la Naturaleza", "COMBATE", unlocked.contains("Fuerza de la Naturaleza"), "Infligir 15,000 puntos de daño en total", totalDamageDealt, 15000));
-        list.add(createProgressDTO("Destructor Cósmico", "COMBATE", unlocked.contains("Destructor Cósmico"), "Infligir 50,000 puntos de daño en total", totalDamageDealt, 50000));
+        list.add(createProgressDTO("Poder Eléctrico", "COMBATE", unlocked.contains("Poder Eléctrico"), "Infligir 1,000 puntos de daño en total", totalDamageDealt, 1000, "MEDALLA", "medal_power_1k"));
+        list.add(createProgressDTO("Fuerza Brutal", "COMBATE", unlocked.contains("Fuerza Brutal"), "Infligir 5,000 puntos de daño en total", totalDamageDealt, 5000, "TITULO", "Fuerza Brutal"));
+        list.add(createProgressDTO("Fuerza de la Naturaleza", "COMBATE", unlocked.contains("Fuerza de la Naturaleza"), "Infligir 15,000 puntos de daño en total", totalDamageDealt, 15000, "FOTO_PERFIL", "avatar_nature_force"));
+        list.add(createProgressDTO("Destructor Cósmico", "COMBATE", unlocked.contains("Destructor Cósmico"), "Infligir 50,000 puntos de daño en total", totalDamageDealt, 50000, "TITULO", "Destructor Cósmico"));
 
-        list.add(createProgressDTO("Derribador", "COMBATE", unlocked.contains("Derribador"), "Realizar 10 KOs en total", totalKos, 10));
-        list.add(createProgressDTO("Cazador de KOs", "COMBATE", unlocked.contains("Cazador de KOs"), "Realizar 50 KOs en total", totalKos, 50));
-        list.add(createProgressDTO("Ejecutor Implacable", "COMBATE", unlocked.contains("Ejecutor Implacable"), "Realizar 150 KOs en total", totalKos, 150));
-        list.add(createProgressDTO("Verdugo Supremo", "COMBATE", unlocked.contains("Verdugo Supremo"), "Realizar 300 KOs en total", totalKos, 300));
+        list.add(createProgressDTO("Derribador", "COMBATE", unlocked.contains("Derribador"), "Realizar 10 KOs en total", totalKos, 10, "MEDALLA", "medal_kos_10"));
+        list.add(createProgressDTO("Cazador de KOs", "COMBATE", unlocked.contains("Cazador de KOs"), "Realizar 50 KOs en total", totalKos, 50, "TITULO", "Cazador de KOs"));
+        list.add(createProgressDTO("Ejecutor Implacable", "COMBATE", unlocked.contains("Ejecutor Implacable"), "Realizar 150 KOs en total", totalKos, 150, "FOTO_PERFIL", "avatar_executor_mid"));
+        list.add(createProgressDTO("Verdugo Supremo", "COMBATE", unlocked.contains("Verdugo Supremo"), "Realizar 300 KOs en total", totalKos, 300, "TITULO", "Verdugo Supremo"));
 
-        list.add(createProgressDTO("Estratega Imbatible", "COMBATE", unlocked.contains("Estratega Imbatible"), "Conseguir 1 victoria perfecta (sin sufrir KOs)", perfectWins, 1));
-        list.add(createProgressDTO("Intocable", "COMBATE", unlocked.contains("Intocable"), "Conseguir 5 victorias perfectas", perfectWins, 5));
-        list.add(createProgressDTO("Inmaculado", "COMBATE", unlocked.contains("Inmaculado"), "Conseguir 15 victorias perfectas", perfectWins, 15));
+        list.add(createProgressDTO("Estratega Imbatible", "COMBATE", unlocked.contains("Estratega Imbatible"), "Conseguir 1 victoria perfecta (sin sufrir KOs)", perfectWins, 1, "MEDALLA", "medal_perfect_1"));
+        list.add(createProgressDTO("Intocable", "COMBATE", unlocked.contains("Intocable"), "Conseguir 5 victorias perfectas", perfectWins, 5, "TITULO", "Intocable"));
+        list.add(createProgressDTO("Inmaculado", "COMBATE", unlocked.contains("Inmaculado"), "Conseguir 15 victorias perfectas", perfectWins, 15, "TITULO", "Inmaculado"));
 
-        list.add(createProgressDTO("Rey del Clímax", "COMBATE", unlocked.contains("Rey del Clímax"), "Conseguir 1 victoria tras remontada", comebackWins, 1));
-        list.add(createProgressDTO("Espíritu de Remontada", "COMBATE", unlocked.contains("Espíritu de Remontada"), "Conseguir 5 victorias tras remontada", comebackWins, 5));
-        list.add(createProgressDTO("Fénix del Tablero", "COMBATE", unlocked.contains("Fénix del Tablero"), "Conseguir 15 victorias tras remontada", comebackWins, 15));
+        list.add(createProgressDTO("Rey del Clímax", "COMBATE", unlocked.contains("Rey del Clímax"), "Conseguir 1 victoria tras remontada", comebackWins, 1, "MEDALLA", "medal_comeback_1"));
+        list.add(createProgressDTO("Espíritu de Remontada", "COMBATE", unlocked.contains("Espíritu de Remontada"), "Conseguir 5 victorias tras remontada", comebackWins, 5, "TITULO", "Espíritu de Remontada"));
+        list.add(createProgressDTO("Fénix del Tablero", "COMBATE", unlocked.contains("Fénix del Tablero"), "Conseguir 15 victorias tras remontada", comebackWins, 15, "TITULO", "Fénix del Tablero"));
 
-        list.add(createProgressDTO("Estudioso de Reglas", "COMBATE", unlocked.contains("Estudioso de Reglas"), "Jugar 50 cartas de Entrenador", trainerCardsPlayed, 50));
-        list.add(createProgressDTO("Maestro Táctico", "COMBATE", unlocked.contains("Maestro Táctico"), "Jugar 200 cartas de Entrenador", trainerCardsPlayed, 200));
-        list.add(createProgressDTO("Gran Sabio", "COMBATE", unlocked.contains("Gran Sabio"), "Jugar 500 cartas de Entrenador", trainerCardsPlayed, 500));
+        list.add(createProgressDTO("Estudioso de Reglas", "COMBATE", unlocked.contains("Estudioso de Reglas"), "Jugar 50 cartas de Entrenador", trainerCardsPlayed, 50, "FOTO_PERFIL", "avatar_rules_student"));
+        list.add(createProgressDTO("Maestro Táctico", "COMBATE", unlocked.contains("Maestro Táctico"), "Jugar 200 cartas de Entrenador", trainerCardsPlayed, 200, "TITULO", "Maestro Táctico"));
+        list.add(createProgressDTO("Gran Sabio", "COMBATE", unlocked.contains("Gran Sabio"), "Jugar 500 cartas de Entrenador", trainerCardsPlayed, 500, "TITULO", "Gran Sabio"));
 
         // 12. Logros Elementales (ELEMENTAL)
-        list.add(createProgressDTO("Piro-Novato", "ELEMENTAL", unlocked.contains("Piro-Novato"), "Unir 50 energías de Fuego", fireAttached, 50));
-        list.add(createProgressDTO("Piro-Maestro", "ELEMENTAL", unlocked.contains("Piro-Maestro"), "Unir 200 energías de Fuego", fireAttached, 200));
-        list.add(createProgressDTO("Llama de Kanto", "ELEMENTAL", unlocked.contains("Llama de Kanto"), "Unir 500 energías de Fuego", fireAttached, 500));
+        list.add(createProgressDTO("Piro-Novato", "ELEMENTAL", unlocked.contains("Piro-Novato"), "Unir 50 energías de Fuego", fireAttached, 50, "MEDALLA", "medal_fire_50"));
+        list.add(createProgressDTO("Piro-Maestro", "ELEMENTAL", unlocked.contains("Piro-Maestro"), "Unir 200 energías de Fuego", fireAttached, 200, "MEDALLA", "medal_fire_200"));
+        list.add(createProgressDTO("Llama de Kanto", "ELEMENTAL", unlocked.contains("Llama de Kanto"), "Unir 500 energías de Fuego", fireAttached, 500, "FOTO_PERFIL", "avatar_fire_kanto"));
 
-        list.add(createProgressDTO("Hidro-Novato", "ELEMENTAL", unlocked.contains("Hidro-Novato"), "Unir 50 energías de Agua", waterAttached, 50));
-        list.add(createProgressDTO("Maestro del Surf", "ELEMENTAL", unlocked.contains("Maestro del Surf"), "Unir 200 energías de Agua", waterAttached, 200));
-        list.add(createProgressDTO("Tsunami Viviente", "ELEMENTAL", unlocked.contains("Tsunami Viviente"), "Unir 500 energías de Agua", waterAttached, 500));
+        list.add(createProgressDTO("Hidro-Novato", "ELEMENTAL", unlocked.contains("Hidro-Novato"), "Unir 50 energías de Agua", waterAttached, 50, "MEDALLA", "medal_water_50"));
+        list.add(createProgressDTO("Maestro del Surf", "ELEMENTAL", unlocked.contains("Maestro del Surf"), "Unir 200 energías de Agua", waterAttached, 200, "MEDALLA", "medal_water_200"));
+        list.add(createProgressDTO("Tsunami Viviente", "ELEMENTAL", unlocked.contains("Tsunami Viviente"), "Unir 500 energías de Agua", waterAttached, 500, "FOTO_PERFIL", "avatar_water_kanto"));
 
-        list.add(createProgressDTO("Brote Verde", "ELEMENTAL", unlocked.contains("Brote Verde"), "Unir 50 energías de Planta", grassAttached, 50));
-        list.add(createProgressDTO("Guardián de la Selva", "ELEMENTAL", unlocked.contains("Guardián de la Selva"), "Unir 200 energías de Planta", grassAttached, 200));
-        list.add(createProgressDTO("Espíritu del Bosque", "ELEMENTAL", unlocked.contains("Espíritu del Bosque"), "Unir 500 energías de Planta", grassAttached, 500));
+        list.add(createProgressDTO("Brote Verde", "ELEMENTAL", unlocked.contains("Brote Verde"), "Unir 50 energías de Planta", grassAttached, 50, "MEDALLA", "medal_grass_50"));
+        list.add(createProgressDTO("Guardián de la Selva", "ELEMENTAL", unlocked.contains("Guardián de la Selva"), "Unir 200 energías de Planta", grassAttached, 200, "MEDALLA", "medal_grass_200"));
+        list.add(createProgressDTO("Espíritu del Bosque", "ELEMENTAL", unlocked.contains("Espíritu del Bosque"), "Unir 500 energías de Planta", grassAttached, 500, "FOTO_PERFIL", "avatar_grass_kanto"));
 
-        list.add(createProgressDTO("Chispa Inicial", "ELEMENTAL", unlocked.contains("Chispa Inicial"), "Unir 50 energías de Rayo", lightningAttached, 50));
-        list.add(createProgressDTO("Voltaje Máximo", "ELEMENTAL", unlocked.contains("Voltaje Máximo"), "Unir 200 energías de Rayo", lightningAttached, 200));
-        list.add(createProgressDTO("Tormenta Perpetua", "ELEMENTAL", unlocked.contains("Tormenta Perpetua"), "Unir 500 energías de Rayo", lightningAttached, 500));
+        list.add(createProgressDTO("Chispa Inicial", "ELEMENTAL", unlocked.contains("Chispa Inicial"), "Unir 50 energías de Rayo", lightningAttached, 50, "MEDALLA", "medal_lightning_50"));
+        list.add(createProgressDTO("Voltaje Máximo", "ELEMENTAL", unlocked.contains("Voltaje Máximo"), "Unir 200 energías de Rayo", lightningAttached, 200, "MEDALLA", "medal_lightning_200"));
+        list.add(createProgressDTO("Tormenta Perpetua", "ELEMENTAL", unlocked.contains("Tormenta Perpetua"), "Unir 500 energías de Rayo", lightningAttached, 500, "FOTO_PERFIL", "avatar_lightning_kanto"));
 
-        list.add(createProgressDTO("Sensitivo", "ELEMENTAL", unlocked.contains("Sensitivo"), "Unir 50 energías Psíquicas", psychicAttached, 50));
-        list.add(createProgressDTO("Mente Mística", "ELEMENTAL", unlocked.contains("Mente Mística"), "Unir 200 energías Psíquicas", psychicAttached, 200));
-        list.add(createProgressDTO("Poder Cósmico", "ELEMENTAL", unlocked.contains("Poder Cósmico"), "Unir 500 energías Psíquicas", psychicAttached, 500));
+        list.add(createProgressDTO("Sensitivo", "ELEMENTAL", unlocked.contains("Sensitivo"), "Unir 50 energías Psíquicas", psychicAttached, 50, "MEDALLA", "medal_psychic_50"));
+        list.add(createProgressDTO("Mente Mística", "ELEMENTAL", unlocked.contains("Mente Mística"), "Unir 200 energías Psíquicas", psychicAttached, 200, "MEDALLA", "medal_psychic_200"));
+        list.add(createProgressDTO("Poder Cósmico", "ELEMENTAL", unlocked.contains("Poder Cósmico"), "Unir 500 energías Psíquicas", psychicAttached, 500, "FOTO_PERFIL", "avatar_psychic_kanto"));
 
-        list.add(createProgressDTO("Cinturón Blanco", "ELEMENTAL", unlocked.contains("Cinturón Blanco"), "Unir 50 energías de Lucha", fightingAttached, 50));
-        list.add(createProgressDTO("Cinturón Negro", "ELEMENTAL", unlocked.contains("Cinturón Negro"), "Unir 200 energías de Lucha", fightingAttached, 200));
-        list.add(createProgressDTO("Fuerza Sísmica", "ELEMENTAL", unlocked.contains("Fuerza Sísmica"), "Unir 500 energías de Lucha", fightingAttached, 500));
+        list.add(createProgressDTO("Cinturón Blanco", "ELEMENTAL", unlocked.contains("Cinturón Blanco"), "Unir 50 energías de Lucha", fightingAttached, 50, "FOTO_PERFIL", "avatar_belt_white"));
+        list.add(createProgressDTO("Cinturón Negro", "ELEMENTAL", unlocked.contains("Cinturón Negro"), "Unir 200 energías de Lucha", fightingAttached, 200, "TITULO", "Cinturón Negro"));
+        list.add(createProgressDTO("Fuerza Sísmica", "ELEMENTAL", unlocked.contains("Fuerza Sísmica"), "Unir 500 energías de Lucha", fightingAttached, 500, "FOTO_PERFIL", "avatar_fighting_kanto"));
 
-        list.add(createProgressDTO("Equilibrio", "ELEMENTAL", unlocked.contains("Equilibrio"), "Unir 50 energías Incoloras", colorlessAttached, 50));
-        list.add(createProgressDTO("Estratega Neutral", "ELEMENTAL", unlocked.contains("Estratega Neutral"), "Unir 200 energías Incoloras", colorlessAttached, 200));
-        list.add(createProgressDTO("Armonía Pura", "ELEMENTAL", unlocked.contains("Armonía Pura"), "Unir 500 energías Incoloras", colorlessAttached, 500));
+        list.add(createProgressDTO("Equilibrio", "ELEMENTAL", unlocked.contains("Equilibrio"), "Unir 50 energías Incoloras", colorlessAttached, 50, "FOTO_PERFIL", "avatar_neutral_balance"));
+        list.add(createProgressDTO("Estratega Neutral", "ELEMENTAL", unlocked.contains("Estratega Neutral"), "Unir 200 energías Incoloras", colorlessAttached, 200, "TITULO", "Estratega Neutral"));
+        list.add(createProgressDTO("Armonía Pura", "ELEMENTAL", unlocked.contains("Armonía Pura"), "Unir 500 energías Incoloras", colorlessAttached, 500, "FOTO_PERFIL", "avatar_colorless_kanto"));
 
         // 13. Logros de Lealtad (LEALTAD)
-        list.add(createProgressDTO("Amigo del Ratón", "LEALTAD", unlocked.contains("Amigo del Ratón"), "Jugar cartas de Pikachu 15 veces", pikachuPlays, 15));
-        list.add(createProgressDTO("Compañero Fiel", "LEALTAD", unlocked.contains("Compañero Fiel"), "Jugar cartas de Pikachu 50 veces", pikachuPlays, 50));
+        list.add(createProgressDTO("Amigo del Ratón", "LEALTAD", unlocked.contains("Amigo del Ratón"), "Jugar cartas de Pikachu 15 veces", pikachuPlays, 15, "FOTO_PERFIL", "avatar_pikachu_cute"));
+        list.add(createProgressDTO("Compañero Fiel", "LEALTAD", unlocked.contains("Compañero Fiel"), "Jugar cartas de Pikachu 50 veces", pikachuPlays, 50, "TITULO", "Compañero Fiel"));
 
-        list.add(createProgressDTO("Aliento Ígneo", "LEALTAD", unlocked.contains("Aliento Ígneo"), "Jugar cartas de Charizard 10 veces", charizardPlays, 10));
-        list.add(createProgressDTO("Llama Ancestral", "LEALTAD", unlocked.contains("Llama Ancestral"), "Jugar cartas de Charizard 30 veces", charizardPlays, 30));
+        list.add(createProgressDTO("Aliento Ígneo", "LEALTAD", unlocked.contains("Aliento Ígneo"), "Jugar cartas de Charizard 10 veces", charizardPlays, 10, "FOTO_PERFIL", "avatar_charizard_cute"));
+        list.add(createProgressDTO("Llama Ancestral", "LEALTAD", unlocked.contains("Llama Ancestral"), "Jugar cartas de Charizard 30 veces", charizardPlays, 30, "TITULO", "Llama Ancestral"));
 
-        list.add(createProgressDTO("Presión de Agua", "LEALTAD", unlocked.contains("Presión de Agua"), "Jugar cartas de Blastoise 10 veces", blastoisePlays, 10));
-        list.add(createProgressDTO("Tsunami de Kanto", "LEALTAD", unlocked.contains("Tsunami de Kanto"), "Jugar cartas de Blastoise 30 veces", blastoisePlays, 30));
+        list.add(createProgressDTO("Presión de Agua", "LEALTAD", unlocked.contains("Presión de Agua"), "Jugar cartas de Blastoise 10 veces", blastoisePlays, 10, "FOTO_PERFIL", "avatar_blastoise_cute"));
+        list.add(createProgressDTO("Tsunami de Kanto", "LEALTAD", unlocked.contains("Tsunami de Kanto"), "Jugar cartas de Blastoise 30 veces", blastoisePlays, 30, "TITULO", "Tsunami de Kanto"));
 
-        list.add(createProgressDTO("Floración Rápida", "LEALTAD", unlocked.contains("Floración Rápida"), "Jugar cartas de Venusaur 10 veces", venusaurPlays, 10));
-        list.add(createProgressDTO("Semilla de la Vida", "LEALTAD", unlocked.contains("Semilla de la Vida"), "Jugar cartas de Venusaur 30 veces", venusaurPlays, 30));
+        list.add(createProgressDTO("Floración Rápida", "LEALTAD", unlocked.contains("Floración Rápida"), "Jugar cartas de Venusaur 10 veces", venusaurPlays, 10, "FOTO_PERFIL", "avatar_venusaur_cute"));
+        list.add(createProgressDTO("Semilla de la Vida", "LEALTAD", unlocked.contains("Semilla de la Vida"), "Jugar cartas de Venusaur 30 veces", venusaurPlays, 30, "TITULO", "Semilla de la Vida"));
 
-        list.add(createProgressDTO("Mirada Mental", "LEALTAD", unlocked.contains("Mirada Mental"), "Jugar cartas de Mewtwo 10 veces", mewtwoPlays, 10));
-        list.add(createProgressDTO("Fuerza Psíquica", "LEALTAD", unlocked.contains("Fuerza Psíquica"), "Jugar cartas de Mewtwo 30 veces", mewtwoPlays, 30));
+        list.add(createProgressDTO("Mirada Mental", "LEALTAD", unlocked.contains("Mirada Mental"), "Jugar cartas de Mewtwo 10 veces", mewtwoPlays, 10, "FOTO_PERFIL", "avatar_mewtwo_cute"));
+        list.add(createProgressDTO("Fuerza Psíquica", "LEALTAD", unlocked.contains("Fuerza Psíquica"), "Jugar cartas de Mewtwo 30 veces", mewtwoPlays, 30, "TITULO", "Fuerza Psíquica"));
 
         return list;
     }
 
     private ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO createProgressDTO(
-            final String title, final String category, final boolean unlocked, final String req, final int progress, final int target) {
+            final String title, final String category, final boolean unlocked, final String req, final int progress, final int target,
+            final String rewardType, final String rewardValue) {
         return ar.edu.utn.frc.tup.piii.dtos.UserAchievementProgressDTO.builder()
                 .title(title)
                 .category(category)
@@ -915,6 +916,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .requirement(req)
                 .progress(Math.min(progress, target))
                 .target(target)
+                .rewardType(rewardType)
+                .rewardValue(rewardValue)
                 .build();
     }
 }

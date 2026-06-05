@@ -16,4 +16,6 @@ public class UserAchievementProgressDTO {
     private String requirement;
     private Integer progress;
     private Integer target;
+    private String rewardType; // "MEDALLA", "FOTO_PERFIL", "TITULO"
+    private String rewardValue; // e.g. "medal_legend", "avatar_bulbasaur", or "Maestro de Cartas"
 }
