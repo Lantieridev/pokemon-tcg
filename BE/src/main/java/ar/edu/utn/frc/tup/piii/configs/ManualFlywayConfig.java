@@ -11,11 +11,13 @@ public class ManualFlywayConfig {
 
     public ManualFlywayConfig(final DataSource dataSource) {
         Objects.requireNonNull(dataSource, "dataSource must not be null");
-        Flyway.configure()
+        Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .baselineOnMigrate(true)
+                .outOfOrder(true)
                 .locations("classpath:db/migration")
-                .load()
-                .migrate();
+                .load();
+        flyway.repair();
+        flyway.migrate();
     }
 }

@@ -272,59 +272,87 @@ body{
 }
 .card-back{
   border-radius: 4.5%;
-  background:
-    radial-gradient(ellipse at 50% 38%, #6f1f2a 0%, #4a1620 55%, #2b0d14 100%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 8px, transparent 8px 16px);
-  background-blend-mode: normal, overlay;
-  border: 2px solid #2a1e3f;
+  background-image: url('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg');
+  background-size: cover;
+  background-position: center;
+  border: 1px solid #1a1010;
   box-shadow:
     0 1px 1px rgba(255,255,255,.18) inset,
     0 12px 24px -8px rgba(0,0,0,.65);
-  position:relative; overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
-}
-.card-back::before{
-  content:''; width:54%; aspect-ratio:1; border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 50%, #f4f1ff 0 8%, #1a0c12 8.5% 12%, transparent 12.5%),
-    linear-gradient(180deg, #d72e3d 0 50%, #f4f1ff 50% 100%);
-  border:3px solid #1a0c12;
-  box-shadow: 0 4px 10px rgba(0,0,0,.5);
+  position:relative; 
+  overflow:hidden;
 }
 
 /* ─── Fan hand math ──────────────────────────────────────────────────────── */
-.fan-hand{
-  position:absolute; bottom: -36px; left:50%; transform:translateX(-50%);
-  width: 880px; height: 220px; pointer-events:none;
+.fan-hand {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
-.fan-card{
-  position:absolute; left:50%; bottom:0;
-  width: 130px; height: 182px;
-  transform-origin: 50% calc(100% + 220px);
-  transform:
-    translateX(-50%)
-    rotate(calc((var(--i) - (var(--n) - 1) / 2) * var(--spread, 6deg)));
-  transition: transform .35s cubic-bezier(.2,.9,.25,1.05), filter .25s;
-  pointer-events:auto;
+
+.fan-card {
+  position: relative;
+  width: 90px;
+  aspect-ratio: 0.716;
+  margin-left: -40px;
+  transform-origin: bottom center;
+  
+  --spread-angle: calc((var(--i) - (var(--n) - 1) / 2) * var(--spread));
+  /* Arching logic - translate down slightly more to hide bottom halves */
+  transform: 
+    rotate(var(--spread-angle)) 
+    translateY(calc(abs(var(--i) - (var(--n) - 1) / 2) * 6px + 20px));
+  
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.25, 1.05), filter 0.3s, z-index 0s;
+  cursor: grab;
   will-change: transform;
 }
-.fan-card .card-img{ width:100%; height:100%; }
-.fan-card::before{
-  content: '';
-  position: absolute;
-  inset: -30px;
-  bottom: -110px;
-  z-index: -1;
+
+.fan-card:first-child {
+  margin-left: 0;
 }
-.fan-card:hover{
-  transform:
-    translateX(-50%)
-    rotate(0deg)
-    translateY(-110px)
-    scale(1.45);
-  filter: drop-shadow(0 30px 40px rgba(0,0,0,.7))
-          drop-shadow(0 0 25px rgba(255,203,5,.35));
-  z-index: 80;
+
+.fan-card:hover {
+  transform: 
+    rotate(var(--spread-angle)) 
+    translateY(calc(abs(var(--i) - (var(--n) - 1) / 2) * 6px - 80px))
+    scale(1.2);
+  z-index: 80 !important;
+  filter: drop-shadow(0 30px 40px rgba(0,0,0,.7)) drop-shadow(0 0 25px rgba(255,203,5,.35));
+}
+
+.opp-fan-hand {
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.opp-fan-card {
+  position: relative;
+  width: 90px;
+  aspect-ratio: 0.716;
+  margin-left: -40px;
+  transform-origin: center center;
+  
+  --spread-angle: calc((var(--i) - (var(--n) - 1) / 2) * var(--spread, 6deg));
+  /* Flip 180deg so cards face the player. translateY moves it locally (visually UP). */
+  transform: 
+    rotate(calc(180deg - var(--spread-angle))) 
+    translateY(calc(abs(var(--i) - (var(--n) - 1) / 2) * 6px + 20px));
+  
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.25, 1.05);
+}
+
+.opp-fan-card:first-child {
+  margin-left: 0;
 }
 
 /* ─── Energy cascade behind a pokémon ────────────────────────────────────── */
@@ -382,8 +410,9 @@ body{
 .status-token.confused{ background: linear-gradient(180deg, #ffcc33, #8a5a00); color:#2a1700; }
 .status-token.paralyzed{background: linear-gradient(180deg, #facc15, #92400e); color:#1a1000; }
 
-.rotate-asleep   { transform: rotate(90deg); }
+.rotate-asleep   { transform: rotate(-90deg); }
 .rotate-confused { transform: rotate(180deg); }
+.rotate-paralyzed{ transform: rotate(90deg); }
 
 /* ─── Glow rings ─────────────────────────────────────────────────────────── */
 .glow{ position:absolute; inset:-8px; border-radius: 12%; pointer-events:none; z-index:-2; }
@@ -394,7 +423,7 @@ body{
 .glow.psychic  { box-shadow: 0 0 60px 0 rgba(200,123,255,.5);  background: radial-gradient(closest-side, rgba(200,123,255,.22), transparent 70%); }
 .glow.fighting { box-shadow: 0 0 60px 0 rgba(217,125,74,.5);   background: radial-gradient(closest-side, rgba(217,125,74,.2), transparent 70%); }
 
-.bench-slot{ transition: transform .25s ease, filter .25s; cursor: pointer; }
+.bench-slot{ transition: transform .25s ease, filter .25s; cursor: pointer; isolation: isolate; z-index: 1; }
 .bench-slot:hover{ transform: translateY(-6px) scale(1.04); filter: brightness(1.15) drop-shadow(0 0 14px rgba(255,203,5,.45)); }
 
 /* ─── Playmat backgrounds ───────────────────────────────────────────────── */

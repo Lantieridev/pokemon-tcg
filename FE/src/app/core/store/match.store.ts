@@ -40,6 +40,9 @@ export interface UIPlayerState {
 @Injectable({ providedIn: 'root' })
 export class MatchStore {
   private state = signal<GameStateResponseDTO | null>(null);
+  private timerInterval: any;
+  private readonly timeLeft = signal(60);
+
 
   // ── Selectors básicos ────────────────────────────────────────────────────
 
@@ -99,9 +102,9 @@ export class MatchStore {
   });
 
   readonly turn = computed(() => ({
-    number: this.version(),
+    number: this.state()?.turnNumber ?? 1,
     owner: this.isMyTurn() ? 'me' : 'opp',
-    timer: 60,
+    timer: this.timeLeft(),
   }));
 
   // ── Condiciones especiales del activo ─────────────────────────────────────
@@ -136,11 +139,24 @@ export class MatchStore {
   // ── Mutaciones ────────────────────────────────────────────────────────────
 
   updateState(newState: GameStateResponseDTO): void {
+    const oldVersion = this.state()?.version;
     this.state.set(newState);
+    if (newState.version !== oldVersion) {
+      this.timeLeft.set(60);
+      this.startTimer();
+    }
+  }
+
+  private startTimer(): void {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = setInterval(() => {
+      this.timeLeft.update(t => Math.max(0, t - 1));
+    }, 1000);
   }
 
   reset(): void {
     this.state.set(null);
+    if (this.timerInterval) clearInterval(this.timerInterval);
   }
 
   // ── Helpers privados ──────────────────────────────────────────────────────

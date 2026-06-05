@@ -157,7 +157,9 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         // 4. XP necesario para el próximo nivel
-        final int xpToNext = getXpNeededForNextLevel(user.getLevel());
+        final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+        final int currentXp = user.getXp() != null ? user.getXp() : 0;
+        final int xpToNext = getXpNeededForNextLevel(currentLevel);
 
         UserProfileResponseDTO.ShowcasedDeck showcasedDeckDto = null;
         if (user.getShowcasedDeck() != null) {
@@ -235,8 +237,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .avatarIcon(user.getAvatarIcon())
                 .description(user.getDescription())
                 .activeTitle(user.getActiveTitle())
-                .level(user.getLevel())
-                .xp(user.getXp())
+                .level(currentLevel)
+                .xp(currentXp)
                 .xpToNextLevel(xpToNext)
                 .mmr(user.getMmr() != null ? user.getMmr() : 1000)
                 .pokecoins(user.getPokecoins() != null ? user.getPokecoins() : 0)
@@ -344,15 +346,21 @@ public class ProfileServiceImpl implements ProfileService {
 
         // 1. Asignar XP
         final int xpGained = won ? 50 : 25;
-        user.setXp(user.getXp() + xpGained);
+        int currentXp = user.getXp() != null ? user.getXp() : 0;
+        int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+
+        currentXp += xpGained;
 
         // 2. Subida de Nivel
-        int needed = getXpNeededForNextLevel(user.getLevel());
-        while (user.getXp() >= needed) {
-            user.setXp(user.getXp() - needed);
-            user.setLevel(user.getLevel() + 1);
-            needed = getXpNeededForNextLevel(user.getLevel());
+        int needed = getXpNeededForNextLevel(currentLevel);
+        while (currentXp >= needed) {
+            currentXp -= needed;
+            currentLevel++;
+            needed = getXpNeededForNextLevel(currentLevel);
         }
+        
+        user.setXp(currentXp);
+        user.setLevel(currentLevel);
 
         // 3. Chequear y Desbloquear Títulos
         final List<ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto> matches = matchRepository.findMatchesByUsername(user.getUsername());
@@ -403,13 +411,15 @@ public class ProfileServiceImpl implements ProfileService {
             changed = true;
         }
 
+        final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+
         // Títulos por Nivel
-        if (user.getLevel() >= 5) {
+        if (currentLevel >= 5) {
             if (titles.add("Estratega en Crecimiento")) {
                 changed = true;
             }
         }
-        if (user.getLevel() >= 10) {
+        if (currentLevel >= 10) {
             if (titles.add("Maestro de Cartas")) {
                 changed = true;
             }
@@ -579,9 +589,11 @@ public class ProfileServiceImpl implements ProfileService {
         list.add(createProgressDTO("Novato", "DEFECTO", unlocked.contains("Novato"), "Título inicial por defecto", 1, 1));
         list.add(createProgressDTO("Entrenador", "DEFECTO", unlocked.contains("Entrenador"), "Título inicial por defecto", 1, 1));
 
+        final int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
+
         // Nivel (5, 10)
-        list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", user.getLevel(), 5));
-        list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", user.getLevel(), 10));
+        list.add(createProgressDTO("Estratega en Crecimiento", "NIVEL", unlocked.contains("Estratega en Crecimiento"), "Alcanzar nivel 5", currentLevel, 5));
+        list.add(createProgressDTO("Maestro de Cartas", "NIVEL", unlocked.contains("Maestro de Cartas"), "Alcanzar nivel 10", currentLevel, 10));
 
         // Victorias (5, 20, 50, 100)
         list.add(createProgressDTO("Ganador Prometedor", "VICTORIAS", unlocked.contains("Ganador Prometedor"), "Ganar 5 partidas", matchesWon, 5));

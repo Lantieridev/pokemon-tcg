@@ -224,7 +224,9 @@ class ComprehensiveGameSimulationTest {
 
         // Restore bench size to normal for following tests
         session.getPlayerRuntime(0).getBench().removeAll();
-        session.getPlayerRuntime(0).getBench().place(new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon((PokemonCard) resolveCard("xy1-1"))); // Keep Venusaur-EX
+        ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon newVenusaur = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon((PokemonCard) resolveCard("xy1-1"));
+        session.getPlayerRuntime(0).getBench().place(newVenusaur);
+        session.getPlayerRuntime(0).recordPokemonEntered(newVenusaur);
         assertThat(session.getPlayerRuntime(0).getBench().getAll()).hasSize(1);
 
         // ---------------------------------------------------------------------
@@ -316,26 +318,50 @@ class ComprehensiveGameSimulationTest {
         // ---------------------------------------------------------------------
         // 5. RETREAT ENERGY COST & LIMIT
         // ---------------------------------------------------------------------
-        printHeader("5. PRUEBA DE RETIRO Y LÍMITE POR TURNO", PURPLE);
-        printStep("Ash intenta retirar a Weedle (Costo de retiro: 1) sin pagar energía...");
-        ActionRequestDTO retreatNoPay = new ActionRequestDTO(
-                ActionType.RETREAT, null, null, 1, null, null, null, // Bench targetIndex 1 (Venusaur-EX)
+        // ---------------------------------------------------------------------
+        // 5. EVOLUTION SUCCESS BEFORE RETREAT
+        // ---------------------------------------------------------------------
+        printHeader("5. PRUEBA DE EVOLUCIÓN EXITOSA DEL ACTIVO", PURPLE);
+        printStep("Ash une una SEGUNDA Energía Planta a Weedle Activo...");
+        ActionRequestDTO attachEnergyTurn2 = new ActionRequestDTO(
+                ActionType.ATTACH_ENERGY, "energy-grass-2", null, null, null, null, PokemonType.GRASS,
                 Collections.emptyList(), null, Collections.emptyList()
+        );
+        matchService.processAction(matchId, activePlayerId, attachEnergyTurn2);
+
+        printStep("Ash evoluciona Weedle Activo a Kakuna (Turno 2 - ya tiene >1 turno en juego)...");
+        // Weedle entered during Setup, so it has been in play since start
+        ActionRequestDTO evolveActiveSuccess = new ActionRequestDTO(
+                ActionType.EVOLVE, "xy1-4", "xy1-3", null, null, null, null,
+                Collections.emptyList(), null, Collections.emptyList()
+        );
+        matchService.processAction(matchId, activePlayerId, evolveActiveSuccess);
+        assertThat(session.getPlayerRuntime(0).getActivePokemon().getBaseCard().getCardId()).isEqualTo("xy1-4");
+        printSuccess("Weedle Activo evolucionó a Kakuna con éxito.");
+
+        // ---------------------------------------------------------------------
+        // 6. RETREAT ENERGY COST & LIMIT
+        // ---------------------------------------------------------------------
+        printHeader("6. PRUEBA DE RETIRO Y LÍMITE POR TURNO", PURPLE);
+        printStep("Ash intenta retirar a Kakuna (Costo de retiro: 2) pagando solo 1 energía...");
+        ActionRequestDTO retreatNoPay = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, 0, null, null, null, // Bench targetIndex 0 (Venusaur-EX)
+                List.of(0), null, Collections.emptyList()
         );
         final String pid6 = activePlayerId;
         Exception exRetreatNoPay = assertThrows(InvalidActionException.class, () -> {
             matchService.processAction(matchId, pid6, retreatNoPay);
         });
-        printFailureExpected("Must specify exactly 1 energy indices to discard.", exRetreatNoPay.getMessage());
+        printFailureExpected("Must specify exactly 2 energy indices to discard.", exRetreatNoPay.getMessage());
 
-        printStep("Ash retira a Weedle pagando la Energía Planta attached...");
+        printStep("Ash retira a Kakuna pagando las 2 Energías Planta attached...");
         ActionRequestDTO retreatSuccess = new ActionRequestDTO(
-                ActionType.RETREAT, null, null, 0, null, null, null,
-                List.of(0), null, Collections.emptyList() // Discard energy index 0
+                ActionType.RETREAT, null, null, 0, null, null, null, // Bench targetIndex 0 (Venusaur-EX)
+                List.of(0, 1), null, Collections.emptyList() // Discard energy indices 0 and 1
         );
         matchService.processAction(matchId, activePlayerId, retreatSuccess);
         assertThat(session.getPlayerRuntime(0).getActivePokemon().getBaseCard().getCardId()).isEqualTo("xy1-1"); // Venusaur-EX is now active
-        printSuccess("Weedle retirado. Venusaur-EX es ahora el Pokémon Activo.");
+        printSuccess("Kakuna retirado. Venusaur-EX es ahora el Pokémon Activo.");
 
         printStep("Ash intenta realizar un SEGUNDO retiro en el mismo turno...");
         ActionRequestDTO retreatSecond = new ActionRequestDTO(
@@ -348,23 +374,9 @@ class ComprehensiveGameSimulationTest {
         });
         printFailureExpected("retreat_already_used", exRetreatLimit.getMessage());
 
-        // ---------------------------------------------------------------------
-        // 6. EVOLUTION PROGRESSION SUCCESS
-        // ---------------------------------------------------------------------
-        printHeader("6. PRUEBA DE EVOLUCIÓN EXITOSA Y PROGRESIÓN", PURPLE);
-        printStep("Ash evoluciona Weedle (en banca) a Kakuna (Turno 2 - ya tiene >1 turno en juego)...");
-        // Weedle entered during Setup, so it has been in play since start
-        ActionRequestDTO evolveBenchSuccess = new ActionRequestDTO(
-                ActionType.EVOLVE, "xy1-4", "xy1-3", 0, null, null, null,
-                Collections.emptyList(), null, Collections.emptyList()
-        );
-        matchService.processAction(matchId, activePlayerId, evolveBenchSuccess);
-        assertThat(session.getPlayerRuntime(0).getBench().getAll().get(0).getBaseCard().getCardId()).isEqualTo("xy1-4");
-        printSuccess("Weedle en banca evolucionó a Kakuna con éxito.");
-
-        printStep("Ash intenta evolucionar Kakuna a Beedrill en el mismo turno (Saltarse tiempos)...");
+        printStep("Ash intenta evolucionar Kakuna (en banca) a Beedrill en el mismo turno (debe fallar)...");
         ActionRequestDTO evolveKakunaSameTurn = new ActionRequestDTO(
-                ActionType.EVOLVE, "xy1-5", "xy1-4", 0, null, null, null,
+                ActionType.EVOLVE, "xy1-5", "xy1-4", 0, null, null, null, // Bench targetIndex 0 (Kakuna)
                 Collections.emptyList(), null, Collections.emptyList()
         );
         final String pid8 = activePlayerId;
@@ -409,10 +421,10 @@ class ComprehensiveGameSimulationTest {
         assertThat(session.getPlayerRuntime(1).getPrizeCount()).isEqualTo(2);
         printSuccess("Pila de premios de Misty forzada a 2 cartas para verificar condición de victoria.");
 
-        // Active Venusaur-EX has 180 HP. Let's add 17 damage counters (170 damage) to it first,
-        // so that Spewpa's 10-damage attack delivers the lethal 18th counter!
-        session.getPlayerRuntime(0).getActivePokemon().addDamageCounters(17);
-        printSuccess("Venusaur-EX (Activo de Ash) preparado con 170 de daño previo.");
+        // Add damage counters to active Pokémon so it is 10 HP away from KO
+        int maxHp = session.getPlayerRuntime(0).getActivePokemon().getMaxHp();
+        session.getPlayerRuntime(0).getActivePokemon().addDamageCounters((maxHp - 10) / 10);
+        printSuccess("Pokémon Activo preparado con daño previo para KO.");
 
         printStep("Misty ataca con Spewpa (Bug Bite, costo: 1 Colorless, hace 10 de daño)...");
         // It has 1 Grass Energy attached, which satisfies the Colorless requirement

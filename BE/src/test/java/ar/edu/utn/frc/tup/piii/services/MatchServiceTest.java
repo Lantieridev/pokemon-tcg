@@ -94,7 +94,7 @@ class MatchServiceTest {
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
-                MATCH_ID, 1L, 0, "ACTIVE", null,
+                MATCH_ID, 1L, 1, 0, "ACTIVE", null,
                 new GameStateResponseDTO.PlayerView(PLAYER_A_ID, null, List.of(), List.of(), 45, 6),
                 new GameStateResponseDTO.OpponentView(PLAYER_B_ID, null, List.of(), 0, 45, 6));
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
@@ -111,7 +111,7 @@ class MatchServiceTest {
         when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
                 new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(
                         board.getActivePokemon(0)));
-        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
 
         matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
 
@@ -130,7 +130,7 @@ class MatchServiceTest {
         final ar.edu.utn.frc.tup.piii.engine.model.Action action =
                 new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0));
         when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(action);
-        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
 
         matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
 
@@ -148,7 +148,7 @@ class MatchServiceTest {
         when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
                 new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(
                         board.getActivePokemon(0)));
-        when(ruleValidator.validate(any())).thenReturn(
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(
                 new ValidationResult.Invalid("retreat_blocked_by_status"));
 
         assertThatThrownBy(() -> matchService.processAction(MATCH_ID, PLAYER_A_ID, dto))
@@ -164,7 +164,7 @@ class MatchServiceTest {
                 ActionType.RETREAT, null, null, null, null, null);
         when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
                 new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0)));
-        when(ruleValidator.validate(any())).thenReturn(new ValidationResult.Valid());
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
 
         // Force session state to FINISHED after apply
         org.mockito.Mockito.doAnswer(invocation -> {

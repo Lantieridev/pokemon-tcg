@@ -48,12 +48,16 @@ export const CARDS: Record<string, CardMock> = {
   potion:      { id:'potion',      name:'Potion',         type:'trainer', img: IMG('base1', 94, false) },
 
   // ── Energies ──────────────────────────────────────────────────────────────
-  e_fire:      { id:'e_fire',      name:'Fire Energy',     type:'fire',      energy:true, img: IMG('base1', 98, false) },
-  e_water:     { id:'e_water',     name:'Water Energy',    type:'water',     energy:true, img: IMG('base1',102, false) },
-  e_lightning: { id:'e_lightning', name:'Lightning Energy',type:'lightning', energy:true, img: IMG('base1',100, false) },
-  e_grass:     { id:'e_grass',     name:'Grass Energy',    type:'grass',     energy:true, img: IMG('base1', 99, false) },
-  e_fighting:  { id:'e_fighting',  name:'Fighting Energy', type:'fighting',  energy:true, img: IMG('base1', 97, false) },
-  e_psychic:   { id:'e_psychic',   name:'Psychic Energy',  type:'psychic',   energy:true, img: IMG('base1',101, false) },
+  e_grass:     { id:'e_grass',     name:'Grass Energy',    type:'grass',     energy:true, img: 'https://images.pokemontcg.io/xy1/132.png' },
+  e_fire:      { id:'e_fire',      name:'Fire Energy',     type:'fire',      energy:true, img: 'https://images.pokemontcg.io/xy1/133.png' },
+  e_water:     { id:'e_water',     name:'Water Energy',    type:'water',     energy:true, img: 'https://images.pokemontcg.io/xy1/134.png' },
+  e_lightning: { id:'e_lightning', name:'Lightning Energy',type:'lightning', energy:true, img: 'https://images.pokemontcg.io/xy1/135.png' },
+  e_psychic:   { id:'e_psychic',   name:'Psychic Energy',  type:'psychic',   energy:true, img: 'https://images.pokemontcg.io/xy1/136.png' },
+  e_fighting:  { id:'e_fighting',  name:'Fighting Energy', type:'fighting',  energy:true, img: 'https://images.pokemontcg.io/xy1/137.png' },
+  e_darkness:  { id:'e_darkness',  name:'Darkness Energy', type:'darkness',  energy:true, img: 'https://images.pokemontcg.io/xy1/138.png' },
+  e_metal:     { id:'e_metal',     name:'Metal Energy',    type:'metal',     energy:true, img: 'https://images.pokemontcg.io/xy1/139.png' },
+  e_fairy:     { id:'e_fairy',     name:'Fairy Energy',    type:'fairy',     energy:true, img: 'https://images.pokemontcg.io/xy1/140.png' },
+  e_colorless: { id:'e_colorless', name:'Double Colorless',type:'colorless', energy:true, img: 'https://images.pokemontcg.io/xy1/130.png' },
 };
 
 export const TYPE_COLORS: Record<string, { hex: string, glow: string, rgb: string }> = {

@@ -364,6 +364,33 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             } else {
                 gen.writeNullField("activePokemon");
             }
+            // Serialize prizePile
+            gen.writeArrayFieldStart("prizePile");
+            for (Card card : value.getPrizePile()) {
+                if (card != null) {
+                    gen.writeObject(card);
+                } else {
+                    gen.writeNull();
+                }
+            }
+            gen.writeEndArray();
+
+            // Serialize turnsInPlay using location markers
+            gen.writeObjectFieldStart("turnsInPlay");
+            if (value.getActivePokemon() != null) {
+                int activeTurns = value.getTurnsInPlay(value.getActivePokemon());
+                gen.writeNumberField("active", activeTurns);
+            }
+            List<BattlePokemonState> bench = value.getBench().getAll();
+            for (int i = 0; i < bench.size(); i++) {
+                BattlePokemonState pk = bench.get(i);
+                if (pk != null) {
+                    int benchTurns = value.getTurnsInPlay(pk);
+                    gen.writeNumberField("bench_" + i, benchTurns);
+                }
+            }
+            gen.writeEndObject();
+
             gen.writeEndObject();
         }
     }
@@ -379,9 +406,43 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             StatusEffectManager statusEffectManager = p.getCodec().treeToValue(node.get("statusEffectManager"), StatusEffectManager.class);
             BattlePokemonState activePokemon = p.getCodec().treeToValue(node.get("activePokemon"), BattlePokemonState.class);
 
-            return new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon);
+            List<Card> prizePile = new ArrayList<>();
+            if (node.has("prizePile") && !node.get("prizePile").isNull()) {
+                for (JsonNode pNode : node.get("prizePile")) {
+                    prizePile.add(p.getCodec().treeToValue(pNode, Card.class));
+                }
+            }
+
+            Map<BattlePokemonState, Integer> turnsInPlay = new java.util.HashMap<>();
+            if (node.has("turnsInPlay") && !node.get("turnsInPlay").isNull()) {
+                JsonNode turnsNode = node.get("turnsInPlay");
+                Iterator<Map.Entry<String, JsonNode>> fields = turnsNode.fields();
+                while (fields.hasNext()) {
+                    Map.Entry<String, JsonNode> field = fields.next();
+                    String key = field.getKey();
+                    int val = field.getValue().asInt();
+                    if ("active".equals(key)) {
+                        if (activePokemon != null) {
+                            turnsInPlay.put(activePokemon, val);
+                        }
+                    } else if (key.startsWith("bench_")) {
+                        try {
+                            int index = Integer.parseInt(key.substring(6));
+                            List<BattlePokemonState> benched = bench.getAll();
+                            if (index >= 0 && index < benched.size()) {
+                                turnsInPlay.put(benched.get(index), val);
+                            }
+                        } catch (NumberFormatException e) {
+                            // ignore invalid keys
+                        }
+                    }
+                }
+            }
+
+            return new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
         }
     }
+
 
     public static class StatusEffectManagerSerializer extends JsonSerializer<StatusEffectManager> {
         @Override
@@ -546,6 +607,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("board", value.getBoard());
             gen.writeStringField("state", value.getState().name());
             gen.writeNumberField("activePlayerIndex", value.getActivePlayerIndex());
+            gen.writeNumberField("version", value.getVersion());
             if (value.getWinnerId() != null) {
                 gen.writeStringField("winnerId", value.getWinnerId());
             } else {
@@ -600,6 +662,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             String winnerId = node.has("winnerId") && !node.get("winnerId").isNull()
                     ? node.get("winnerId").asText()
                     : null;
+            long version = node.has("version") && !node.get("version").isNull()
+                    ? node.get("version").asLong()
+                    : 1L;
 
             MatchSession session = new MatchSession(matchId, playerIds, board, playerRuntimes);
 
@@ -615,6 +680,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 java.lang.reflect.Field winnerIdField = MatchSession.class.getDeclaredField("winnerId");
                 winnerIdField.setAccessible(true);
                 winnerIdField.set(session, winnerId);
+
+                java.lang.reflect.Field versionField = MatchSession.class.getDeclaredField("version");
+                versionField.setAccessible(true);
+                versionField.set(session, version);
             } catch (Exception e) {
                 throw new IOException("Failed to restore MatchSession state fields", e);
             }

@@ -1,4 +1,4 @@
-import { Component, Input, signal, HostListener, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, HostListener, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -196,7 +196,7 @@ export class BallIconComponent {
   standalone: true,
   imports: [CommonModule, IconComponent],
   template: `
-    @if (searching()) {
+    @if (_searching()) {
       <div class="cta cta--searching">
         <div class="pokespin"></div>
         <div style="text-align: left; flex: 1;">
@@ -218,25 +218,51 @@ export class BallIconComponent {
     }
   `
 })
-export class BattleCtaComponent {
+export class BattleCtaComponent implements OnDestroy {
   @Input() title: string = 'BATALLAR';
   @Input() sub: string = 'Clasificatoria · Liga Oro III';
   
-  searching = signal(false);
+  @Input() set searching(val: boolean) {
+    this._searching.set(val);
+    if (val) {
+      this.startTimer();
+    } else {
+      this.stopTimer();
+    }
+  }
+  get searching() {
+    return this._searching();
+  }
+  _searching = signal(false);
+
+  @Output() startBattle = new EventEmitter<void>();
+  @Output() cancelBattle = new EventEmitter<void>();
+  
   secs = signal(0);
   intervalId: any;
 
   startSearch() {
-    this.searching.set(true);
+    this.startBattle.emit();
+  }
+
+  stopSearch() {
+    this.cancelBattle.emit();
+  }
+
+  startTimer() {
+    clearInterval(this.intervalId);
     this.secs.set(0);
     this.intervalId = setInterval(() => {
       this.secs.update(s => s + 1);
     }, 1000);
   }
 
-  stopSearch() {
-    this.searching.set(false);
+  stopTimer() {
     clearInterval(this.intervalId);
+  }
+
+  ngOnDestroy() {
+    this.stopTimer();
   }
 
   mm() {

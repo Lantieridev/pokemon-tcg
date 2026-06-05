@@ -62,7 +62,7 @@ public final class PlayerRuntime {
         this.bench = Objects.requireNonNull(bench, "bench must not be null");
         this.discardPile = Objects.requireNonNull(discardPile, "discardPile must not be null");
         this.statusEffectManager = Objects.requireNonNull(statusEffectManager, "statusEffectManager must not be null");
-        this.activePokemon = Objects.requireNonNull(activePokemon, "activePokemon must not be null");
+        this.activePokemon = activePokemon;
         this.prizePile = new ArrayList<>(Objects.requireNonNull(prizePile, "prizePile must not be null"));
     }
 
@@ -84,6 +84,33 @@ public final class PlayerRuntime {
                          final BattlePokemonState activePokemon) {
         this(deck, hand, bench, discardPile, statusEffectManager, activePokemon, List.of());
     }
+
+    /**
+     * Reconstructive constructor including prize pile and turns-in-play tracking.
+     *
+     * @param deck                 the player's deck (never null)
+     * @param hand                 the player's hand (never null)
+     * @param bench                the player's bench (never null)
+     * @param discardPile          the player's discard pile (never null)
+     * @param statusEffectManager  tracks the active Pokémon's status conditions (never null)
+     * @param activePokemon        the Pokémon currently in the Active slot (never null)
+     * @param prizePile            the face-down prize cards set aside at setup (never null)
+     * @param turnsInPlay          turns-in-play tracking map (never null)
+     */
+    public PlayerRuntime(final Deck deck,
+                         final Hand hand,
+                         final Bench bench,
+                         final DiscardPile discardPile,
+                         final StatusEffectManager statusEffectManager,
+                         final BattlePokemonState activePokemon,
+                         final List<Card> prizePile,
+                         final Map<BattlePokemonState, Integer> turnsInPlay) {
+        this(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile);
+        if (turnsInPlay != null) {
+            this.turnsInPlay.putAll(turnsInPlay);
+        }
+    }
+
 
     public Deck getDeck() {
         return deck;
@@ -110,7 +137,7 @@ public final class PlayerRuntime {
     }
 
     public void setActivePokemon(final BattlePokemonState pokemon) {
-        this.activePokemon = Objects.requireNonNull(pokemon, "pokemon must not be null");
+        this.activePokemon = pokemon;
     }
 
     public void clearActivePokemon() {
