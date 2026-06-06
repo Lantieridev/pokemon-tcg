@@ -7,6 +7,7 @@
       <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
       <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
       <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
+      <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
     </nav>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
@@ -18,3 +19,4 @@
     </div>
   </div>
 </header>
+<app-friends-sidebar #friendsSidebar></app-friends-sidebar>
