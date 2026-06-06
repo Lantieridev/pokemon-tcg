@@ -96,7 +96,10 @@ public final class GameFacade {
      * @param turnManager the turn manager associated with the active session
      */
     public void apply(final MatchSession session, final Action action, final TurnManager turnManager) {
-        final int playerIndex = session.getActivePlayerIndex();
+        int playerIndex = session.getActivePlayerIndex();
+        if (action instanceof PromoteActiveAction && session.getPromotingPlayerIndex() != -1) {
+            playerIndex = session.getPromotingPlayerIndex();
+        }
         final PlayerRuntime runtime = session.getPlayerRuntime(playerIndex);
 
         switch (action) {
@@ -483,9 +486,22 @@ public final class GameFacade {
         final MatchBoard board = session.getBoard();
         return switch (dto.type()) {
             case DECLARE_ATTACK      -> buildDeclareAttack(board, playerIndex, dto);
-            case RETREAT             -> new RetreatAction(board.getActivePokemon(playerIndex),
-                                            dto.targetIndex() != null ? dto.targetIndex() : 0,
-                                            dto.selectedEnergyIndices() != null ? dto.selectedEnergyIndices() : java.util.Collections.emptyList());
+            case RETREAT             -> {
+                java.util.List<Integer> indices = dto.selectedEnergyIndices();
+                if (indices == null || indices.isEmpty()) {
+                    indices = new java.util.ArrayList<>();
+                    BattlePokemonState active = board.getActivePokemon(playerIndex);
+                    if (active != null) {
+                        int cost = active.getRetreatCost();
+                        for (int i = 0; i < Math.min(cost, active.getAttachedEnergies().size()); i++) {
+                            indices.add(i);
+                        }
+                    }
+                }
+                yield new RetreatAction(board.getActivePokemon(playerIndex),
+                        dto.targetIndex() != null ? dto.targetIndex() : 0,
+                        indices);
+            }
             case PLAY_TRAINER        -> {
                 TrainerEffectId effectId = null;
                 if (dto.cardId() != null) {

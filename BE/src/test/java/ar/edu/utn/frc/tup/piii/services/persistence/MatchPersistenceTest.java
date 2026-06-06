@@ -170,6 +170,11 @@ class MatchPersistenceTest {
             fail("Reflection failed: " + e.getMessage());
         }
         assertTrue(activeRefMatched, "Active pokemon key in turnsInPlay map should be the same object instance as the active pokemon field");
+
+        // Verify board is bound to runtimes: clearing runtime active should reflect on board
+        assertNotNull(restored.getBoard().getActivePokemon(0));
+        restoredRuntimeA.clearActivePokemon();
+        assertNull(restored.getBoard().getActivePokemon(0));
     }
 
     @Test

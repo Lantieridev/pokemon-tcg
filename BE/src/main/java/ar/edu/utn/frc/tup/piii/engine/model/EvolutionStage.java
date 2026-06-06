@@ -5,5 +5,5 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  * evolution chains: BASIC evolves only to STAGE_1, STAGE_1 only to STAGE_2.
  */
 public enum EvolutionStage {
-    BASIC, STAGE_1, STAGE_2
+    BASIC, STAGE_1, STAGE_2, MEGA
 }

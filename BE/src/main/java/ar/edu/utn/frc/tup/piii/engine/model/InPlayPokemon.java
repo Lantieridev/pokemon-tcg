@@ -34,13 +34,33 @@ public final class InPlayPokemon implements BattlePokemonState {
     /**
      * Comprehensive constructor for deserialization.
      */
-    public InPlayPokemon(final PokemonCard card, final int damageCounters, final List<PokemonType> attachedEnergies, final TrainerCard attachedTool) {
+    public InPlayPokemon(final PokemonCard card, final int damageCounters, final List<PokemonType> attachedEnergies, final List<EnergyCard> attachedEnergyCards, final TrainerCard attachedTool) {
         this.card = Objects.requireNonNull(card, "card must not be null");
         this.damageCounters = damageCounters;
         if (attachedEnergies != null) {
             this.attachedEnergies.addAll(attachedEnergies);
         }
+        if (attachedEnergyCards != null) {
+            this.attachedEnergyCards.addAll(attachedEnergyCards);
+        }
         this.attachedTool = attachedTool;
+    }
+
+    /**
+     * Backwards-compatible constructor.
+     */
+    public InPlayPokemon(final PokemonCard card, final int damageCounters, final List<PokemonType> attachedEnergies, final TrainerCard attachedTool) {
+        this(card, damageCounters, attachedEnergies, reconstructEnergyCards(attachedEnergies), attachedTool);
+    }
+
+    private static List<EnergyCard> reconstructEnergyCards(final List<PokemonType> energies) {
+        final List<EnergyCard> list = new ArrayList<>();
+        if (energies != null) {
+            for (final PokemonType type : energies) {
+                list.add(new EnergyCard("dummy-" + java.util.UUID.randomUUID(), type.name() + " Energy", type, true));
+            }
+        }
+        return list;
     }
 
     /**

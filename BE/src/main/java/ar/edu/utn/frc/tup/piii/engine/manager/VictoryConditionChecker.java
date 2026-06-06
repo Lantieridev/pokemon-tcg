@@ -106,15 +106,21 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
             fireVictory(new VictoryResult.PrizeVictory(defender));
             return;
         }
-        boolean defenderBenchEmpty = benchProvider.getBenchSize(defender) == 0;
-        boolean attackerBenchEmpty = benchProvider.getBenchSize(attacker) == 0;
+        final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
+        final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
 
-        if (defenderBenchEmpty && attackerBenchEmpty) {
+        final boolean p0BenchEmpty = benchProvider.getBenchSize(0) == 0;
+        final boolean p1BenchEmpty = benchProvider.getBenchSize(1) == 0;
+
+        final boolean p0Loses = p0ActiveNull && p0BenchEmpty;
+        final boolean p1Loses = p1ActiveNull && p1BenchEmpty;
+
+        if (p0Loses && p1Loses) {
             fireVictory(new VictoryResult.SuddenDeath());
-        } else if (defenderBenchEmpty) {
-            fireVictory(new VictoryResult.BenchOutVictory(attacker));
-        } else if (attackerBenchEmpty) {
-            fireVictory(new VictoryResult.BenchOutVictory(defender));
+        } else if (p0Loses) {
+            fireVictory(new VictoryResult.BenchOutVictory(1));
+        } else if (p1Loses) {
+            fireVictory(new VictoryResult.BenchOutVictory(0));
         }
     }
 
