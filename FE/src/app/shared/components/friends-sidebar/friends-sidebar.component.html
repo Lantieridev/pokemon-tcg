@@ -1,0 +1,51 @@
+<div class="friends-sidebar-overlay" *ngIf="isOpen" (click)="toggleSidebar()"></div>
+<div class="friends-sidebar" [class.open]="isOpen">
+  <div class="sidebar-header">
+    <h2>Social</h2>
+    <button class="close-btn" (click)="toggleSidebar()">✕</button>
+  </div>
+
+  <div class="tabs">
+    <button [class.active]="activeTab === 'friends'" (click)="activeTab = 'friends'">Amigos</button>
+    <button [class.active]="activeTab === 'requests'" (click)="activeTab = 'requests'">
+      Solicitudes
+      <span class="badge" *ngIf="requests.length">{{requests.length}}</span>
+    </button>
+  </div>
+
+  <div class="tab-content" *ngIf="activeTab === 'friends'">
+    <div class="add-friend-form">
+      <input type="text" [(ngModel)]="newFriendUsername" placeholder="Username del amigo...">
+      <button (click)="sendRequest()">Añadir</button>
+    </div>
+    <div class="friends-list">
+      <div class="friend-item" *ngFor="let f of friends">
+        <div class="friend-info">
+          <span class="avatar">{{f.avatarIcon || '👤'}}</span>
+          <span class="username">{{f.friendUsername}}</span>
+        </div>
+        <div class="actions">
+          <button (click)="openChat(f)" title="Chat">💬</button>
+          <button class="danger" (click)="removeFriend(f.id)" title="Eliminar">🗑️</button>
+        </div>
+      </div>
+      <p class="empty-state" *ngIf="!friends.length">No tienes amigos aún.</p>
+    </div>
+  </div>
+
+  <div class="tab-content" *ngIf="activeTab === 'requests'">
+    <div class="requests-list">
+      <div class="request-item" *ngFor="let r of requests">
+        <div class="friend-info">
+          <span class="avatar">{{r.avatarIcon || '👤'}}</span>
+          <span class="username">{{r.friendUsername}}</span>
+        </div>
+        <div class="actions">
+          <button class="success" (click)="acceptRequest(r.id)">✓</button>
+          <button class="danger" (click)="rejectRequest(r.id)">✕</button>
+        </div>
+      </div>
+      <p class="empty-state" *ngIf="!requests.length">No hay solicitudes pendientes.</p>
+    </div>
+  </div>
+</div>
