@@ -25,6 +25,7 @@
           <span class="username">{{f.friendUsername}}</span>
         </div>
         <div class="actions">
+          <button (click)="viewProfile(f.friendUsername)" title="Ver Perfil">👁️</button>
           <button (click)="openChat(f)" title="Chat">💬</button>
           <button class="danger" (click)="removeFriend(f.id)" title="Eliminar">🗑️</button>
         </div>

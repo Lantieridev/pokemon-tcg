@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
@@ -18,6 +18,9 @@ export class FriendsSidebarComponent implements OnInit {
   friends: FriendshipDTO[] = [];
   requests: FriendshipDTO[] = [];
   newFriendUsername = '';
+
+  @Output() onOpenChat = new EventEmitter<FriendshipDTO>();
+  @Output() onOpenProfile = new EventEmitter<string>();
 
   constructor(
     private friendsApi: FriendsApiService,
@@ -64,7 +67,11 @@ export class FriendsSidebarComponent implements OnInit {
     this.friendsApi.removeFriend(id).subscribe(() => this.loadData());
   }
 
+  viewProfile(username: string) {
+    this.onOpenProfile.emit(username);
+  }
+
   openChat(friend: FriendshipDTO) {
-    // To be implemented in step 18
+    this.onOpenChat.emit(friend);
   }
 }
