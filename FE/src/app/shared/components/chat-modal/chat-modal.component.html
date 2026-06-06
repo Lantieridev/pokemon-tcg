@@ -1,0 +1,27 @@
+<div class="chat-modal">
+  <div class="chat-header">
+    <div class="friend-info">
+      <span class="avatar">{{friend.avatarIcon || '👤'}}</span>
+      <span class="username">{{friend.friendUsername}}</span>
+    </div>
+    <div class="header-actions">
+      <button class="challenge-btn" (click)="sendChallenge()" title="Desafiar">⚔️ Desafiar</button>
+      <button class="close-btn" (click)="onClose()">✕</button>
+    </div>
+  </div>
+
+  <div class="chat-messages">
+    <div *ngFor="let msg of messages" 
+         class="message" 
+         [class.sent]="msg.receiverUsername === friend.friendUsername"
+         [class.received]="msg.senderUsername === friend.friendUsername">
+      <div class="bubble">{{msg.content}}</div>
+      <div class="time">{{msg.timestamp | date:'shortTime'}}</div>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Escribe un mensaje...">
+    <button (click)="sendMessage()">Enviar</button>
+  </div>
+</div>
