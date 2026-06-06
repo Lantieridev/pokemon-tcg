@@ -666,6 +666,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                     ? node.get("version").asLong()
                     : 1L;
 
+            if (board != null && playerRuntimes != null) {
+                board.bindRuntimes(playerRuntimes);
+            }
             MatchSession session = new MatchSession(matchId, playerIds, board, playerRuntimes);
 
             try {
@@ -703,6 +706,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
+            gen.writeObjectField("attachedEnergyCards", value.getAttachedEnergyCards());
             if (value.getAttachedTool().isPresent()) {
                 gen.writeObjectField("attachedTool", value.getAttachedTool().get());
             } else {
@@ -718,6 +722,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
+            gen.writeObjectField("attachedEnergyCards", value.getAttachedEnergyCards());
             if (value.getAttachedTool().isPresent()) {
                 gen.writeObjectField("attachedTool", value.getAttachedTool().get());
             } else {
@@ -739,11 +744,31 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                     attachedEnergies.add(PokemonType.valueOf(eNode.asText()));
                 }
             }
+            List<EnergyCard> attachedEnergyCards = new ArrayList<>();
+            if (node.has("attachedEnergyCards") && !node.get("attachedEnergyCards").isNull()) {
+                for (JsonNode eNode : node.get("attachedEnergyCards")) {
+                    if (eNode.isTextual()) {
+                        attachedEnergyCards.add(new EnergyCard("dummy-" + UUID.randomUUID(), eNode.asText() + " Energy", PokemonType.valueOf(eNode.asText()), true));
+                    } else {
+                        String cardId = eNode.has("cardId") ? eNode.get("cardId").asText() : "dummy-" + UUID.randomUUID();
+                        String name = eNode.has("name") ? eNode.get("name").asText() : "Energy";
+                        PokemonType energyType = eNode.has("energyType") ? PokemonType.valueOf(eNode.get("energyType").asText()) : PokemonType.COLORLESS;
+                        boolean basic = !eNode.has("basic") || eNode.get("basic").asBoolean();
+                        int energyCount = eNode.has("energyCount") ? eNode.get("energyCount").asInt(1) : 1;
+                        boolean providesAllTypes = eNode.has("providesAllTypes") && eNode.get("providesAllTypes").asBoolean();
+                        attachedEnergyCards.add(new EnergyCard(cardId, name, energyType, basic, energyCount, providesAllTypes));
+                    }
+                }
+            } else {
+                for (PokemonType type : attachedEnergies) {
+                    attachedEnergyCards.add(new EnergyCard("dummy-" + UUID.randomUUID(), type.name() + " Energy", type, true));
+                }
+            }
             TrainerCard tool = null;
             if (node.has("attachedTool") && !node.get("attachedTool").isNull()) {
                 tool = p.getCodec().treeToValue(node.get("attachedTool"), TrainerCard.class);
             }
-            return new InPlayPokemon(card, damageCounters, attachedEnergies, tool);
+            return new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
         }
     }
 

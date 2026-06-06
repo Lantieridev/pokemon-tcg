@@ -18,6 +18,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
+import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
@@ -300,6 +301,32 @@ class GameFacadeApplyTest {
 
         assertEquals(0, active1.getAttachedEnergies().size(),
                 "No energy to discard — active should remain at 0");
+    }
+
+    @Test
+    void shouldPromoteActiveUsingPromotingPlayerIndexWhenAwaitingPromotion() {
+        // Player 1 needs to promote.
+        // Create a benched Pokémon for Player 1 (Bob).
+        final InPlayPokemon benchPokemon1 = new InPlayPokemon(buildPokemon("xy1-046", "Charmander", 50, 1, EvolutionStage.BASIC));
+        bench1.place(benchPokemon1);
+
+        // Clear active Pokémon for Player 1 so they must promote.
+        runtime1.clearActivePokemon();
+
+        // Set match session to awaiting promotion for Player 1 (Bob)
+        session.setAwaitingPromotion(PLAYER_1);
+
+        // The active turn player index is PLAYER_0 (Alice).
+        session.setActivePlayerIndex(PLAYER_0);
+
+        // Apply PromoteActiveAction for Player 1's bench index 0
+        final TurnManager turnManager = new TurnManager();
+        facade.apply(session, new PromoteActiveAction(0), turnManager);
+
+        // Assert that Player 1's active Pokémon is now set to benchPokemon1,
+        // and Player 0's active Pokémon remains untouched.
+        assertSame(benchPokemon1, runtime1.getActivePokemon(), "Player 1's benched Pokémon should be promoted");
+        assertSame(active0, runtime0.getActivePokemon(), "Player 0's active Pokémon should remain unchanged");
     }
 
     // --- helpers ---
