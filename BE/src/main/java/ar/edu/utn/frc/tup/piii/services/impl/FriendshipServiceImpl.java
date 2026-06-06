@@ -78,4 +78,44 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .createdAt(entity.getCreatedAt())
                 .build();
     }
+
+    @Override
+    public void acceptFriendRequest(String username, Long friendshipId) {
+        FriendshipEntity friendship = getFriendshipForUser(username, friendshipId);
+        if (!friendship.getStatus().equals("PENDING")) {
+            throw new IllegalArgumentException("Request is not pending");
+        }
+        if (!friendship.getUser2().getUsername().equals(username)) {
+            throw new IllegalArgumentException("Only the target user can accept the request");
+        }
+        friendship.setStatus("ACCEPTED");
+        friendshipRepository.save(friendship);
+    }
+
+    @Override
+    public void rejectFriendRequest(String username, Long friendshipId) {
+        FriendshipEntity friendship = getFriendshipForUser(username, friendshipId);
+        if (!friendship.getStatus().equals("PENDING")) {
+            throw new IllegalArgumentException("Request is not pending");
+        }
+        if (!friendship.getUser2().getUsername().equals(username)) {
+            throw new IllegalArgumentException("Only the target user can reject the request");
+        }
+        friendshipRepository.delete(friendship);
+    }
+
+    @Override
+    public void removeFriend(String username, Long friendshipId) {
+        FriendshipEntity friendship = getFriendshipForUser(username, friendshipId);
+        friendshipRepository.delete(friendship);
+    }
+
+    private FriendshipEntity getFriendshipForUser(String username, Long friendshipId) {
+        FriendshipEntity friendship = friendshipRepository.findById(friendshipId)
+                .orElseThrow(() -> new IllegalArgumentException("Friendship not found"));
+        if (!friendship.getUser1().getUsername().equals(username) && !friendship.getUser2().getUsername().equals(username)) {
+            throw new IllegalArgumentException("User is not part of this friendship");
+        }
+        return friendship;
+    }
 }
