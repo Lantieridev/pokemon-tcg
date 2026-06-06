@@ -1,0 +1,41 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="onClose()">✕</button>
+    
+    <div class="profile-header">
+      <div class="avatar">{{profile.avatarIcon || '👤'}}</div>
+      <div class="title-info">
+        <h2>{{profile.username}}</h2>
+        <span class="active-title" *ngIf="profile.activeTitle">{{profile.activeTitle}}</span>
+        <span class="level-badge">Lvl {{profile.level || 1}}</span>
+      </div>
+    </div>
+
+    <p class="description" *ngIf="profile.description">"{{profile.description}}"</p>
+    
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="label">MMR</span>
+        <span class="value">{{profile.mmr || 1200}}</span>
+      </div>
+      <div class="stat-box">
+        <span class="label">Win Rate</span>
+        <span class="value">{{ (profile.statistics?.winRate | number:'1.0-1') || 0 }}%</span>
+      </div>
+      <div class="stat-box">
+        <span class="label">Total KOs</span>
+        <span class="value">{{profile.statistics?.totalKos || 0}}</span>
+      </div>
+    </div>
+
+    <div class="showcase-section" *ngIf="profile.showcase?.length">
+      <h3>Cartas Destacadas</h3>
+      <div class="showcase-cards">
+        <div class="card-slot" *ngFor="let slot of profile.showcase">
+          <img *ngIf="slot.cardId" [src]="'assets/cards/' + slot.cardId + '.png'" [alt]="slot.cardName" class="showcase-img">
+          <div class="empty-slot" *ngIf="!slot.cardId"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
