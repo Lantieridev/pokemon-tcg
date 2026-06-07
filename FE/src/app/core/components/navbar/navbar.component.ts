@@ -74,7 +74,11 @@ export class NavbarComponent implements OnInit {
   }
 
   openChatModal(friend: FriendshipDTO) {
-    this.selectedChatFriend.set(friend);
+    if (this.selectedChatFriend()?.friendUsername === friend.friendUsername) {
+      this.closeChatModal();
+    } else {
+      this.selectedChatFriend.set(friend);
+    }
     this.cdr.markForCheck();
   }
 
