@@ -19,6 +19,11 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 ctx.addAttackerModifier(dmg -> dmg + extraDamage);
             }
         }
+        if ("coin_flip_fail".equals(effectText)) {
+            if (!ctx.getCoinFlipper().flip()) {
+                ctx.setAttackBlocked(true);
+            }
+        }
 
         // Check for SAFEGUARD ability on the defender
         boolean hasSafeguard = ctx.getDefender().getAbilities().stream()

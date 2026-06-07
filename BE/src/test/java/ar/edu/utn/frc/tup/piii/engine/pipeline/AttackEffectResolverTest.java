@@ -261,12 +261,118 @@ class AttackEffectResolverTest {
         resolver.apply(ctx); // FR-TODO: no-op, must not throw
     }
 
+    // --- apply: coin-flip status effects ---
+
+    @Test
+    void shouldResolveCoinFlipPoisonType() {
+        assertEquals(AttackEffectType.COIN_FLIP_POISON, resolver.resolveType("coin_flip_poison"));
+    }
+
+    @Test
+    void shouldResolveCoinFlipBurnType() {
+        assertEquals(AttackEffectType.COIN_FLIP_BURN, resolver.resolveType("coin_flip_burn"));
+    }
+
+    @Test
+    void shouldResolveCoinFlipParalysisType() {
+        assertEquals(AttackEffectType.COIN_FLIP_PARALYSIS, resolver.resolveType("coin_flip_paralysis"));
+    }
+
+    @Test
+    void shouldResolveCoinFlipSleepType() {
+        assertEquals(AttackEffectType.COIN_FLIP_SLEEP, resolver.resolveType("coin_flip_sleep"));
+    }
+
+    @Test
+    void shouldResolveCoinFlipConfusionType() {
+        assertEquals(AttackEffectType.COIN_FLIP_CONFUSION, resolver.resolveType("coin_flip_confusion"));
+    }
+
+    @Test
+    void shouldApplyPoisonWhenCoinFlipIsHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_poison", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldNotApplyPoisonWhenCoinFlipIsTails() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_poison", () -> false);
+        resolver.apply(ctx);
+        assertFalse(defenderSM.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldApplyBurnWhenCoinFlipIsHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_burn", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.QUEMADO));
+    }
+
+    @Test
+    void shouldNotApplyBurnWhenCoinFlipIsTails() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_burn", () -> false);
+        resolver.apply(ctx);
+        assertFalse(defenderSM.has(StatusEffectType.QUEMADO));
+    }
+
+    @Test
+    void shouldApplyParalysisWhenCoinFlipIsHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_paralysis", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.PARALIZADO));
+    }
+
+    @Test
+    void shouldNotApplyParalysisWhenCoinFlipIsTails() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_paralysis", () -> false);
+        resolver.apply(ctx);
+        assertFalse(defenderSM.has(StatusEffectType.PARALIZADO));
+    }
+
+    @Test
+    void shouldApplySleepWhenCoinFlipIsHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_sleep", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldNotApplySleepWhenCoinFlipIsTails() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_sleep", () -> false);
+        resolver.apply(ctx);
+        assertFalse(defenderSM.has(StatusEffectType.DORMIDO));
+    }
+
+    @Test
+    void shouldApplyConfusionWhenCoinFlipIsHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_confusion", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.CONFUNDIDO));
+    }
+
+    @Test
+    void shouldNotApplyConfusionWhenCoinFlipIsTails() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_confusion", () -> false);
+        resolver.apply(ctx);
+        assertFalse(defenderSM.has(StatusEffectType.CONFUNDIDO));
+    }
+
     // --- helpers ---
 
     private AttackContext buildCtx(final String effectText) {
         return new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
                 attackerSM, defenderSM,
                 mock(KnockoutHandler.class), () -> true)
+                .effectText(effectText)
+                .build();
+    }
+
+    private AttackContext buildCtxWithCoinFlipper(final String effectText,
+                                                  final ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper coinFlipper) {
+        return new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), coinFlipper)
                 .effectText(effectText)
                 .build();
     }

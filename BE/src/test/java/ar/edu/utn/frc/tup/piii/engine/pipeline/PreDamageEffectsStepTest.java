@@ -85,4 +85,22 @@ class PreDamageEffectsStepTest {
         // Assert
         assertFalse(ctx.isAttackBlocked());
     }
+
+    @Test
+    void testProcess_coinFlipFail_heads_doesNotBlockAttack() {
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Hyper Fang", 40, List.of()), mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class), () -> true)
+                .effectText("coin_flip_fail")
+                .build();
+        step.process(ctx, () -> {});
+        assertFalse(ctx.isAttackBlocked());
+    }
+
+    @Test
+    void testProcess_coinFlipFail_tails_blocksAttack() {
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Hyper Fang", 40, List.of()), mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class), () -> false)
+                .effectText("coin_flip_fail")
+                .build();
+        step.process(ctx, () -> {});
+        assertTrue(ctx.isAttackBlocked());
+    }
 }

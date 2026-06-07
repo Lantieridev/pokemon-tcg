@@ -224,10 +224,13 @@ public final class MatchCreationService {
 
         if (result instanceof VictoryResult.PrizeVictory prize) {
             session.setWinnerId(session.getPlayerIds().get(prize.winnerPlayerIndex()));
+            session.setVictoryReason("PRIZE_CARDS");
         } else if (result instanceof VictoryResult.BenchOutVictory bench) {
             session.setWinnerId(session.getPlayerIds().get(bench.winnerPlayerIndex()));
+            session.setVictoryReason("NO_BENCH_POKEMON");
         } else if (result instanceof VictoryResult.DeckOutVictory deck) {
             session.setWinnerId(session.getPlayerIds().get(deck.winnerPlayerIndex()));
+            session.setVictoryReason("DECK_OUT");
         }
 
         session.finish();

@@ -16,6 +16,7 @@ export interface UIPokemon {
   isEx: boolean;
   retreatCost: number;
   hasToolAttached: boolean;
+  attachedToolCardId: string | null;
   attacks: { name: string; baseDamage: number; energyCost: string[] }[];
   statusConditions: SpecialCondition[];
   // Compatibilidad con FieldPokemonComponent (status único legacy)
@@ -51,6 +52,11 @@ export class MatchStore {
   readonly phase = computed(() => this.state()?.currentPhase ?? null);
   readonly version = computed(() => this.state()?.version ?? 0);
   readonly pendingSelection = computed(() => this.state()?.pendingSelectionRequest ?? null);
+  readonly activeStadiumCardId = computed(() => this.state()?.activeStadiumCardId ?? null);
+  readonly winnerId = computed(() => this.state()?.winnerId ?? null);
+  readonly victoryReason = computed(() => this.state()?.victoryReason ?? null);
+  readonly mvpCardId = computed(() => this.state()?.mvpCardId ?? null);
+  readonly mvpCardDamage = computed(() => this.state()?.mvpCardDamage ?? null);
 
   readonly isMyTurn = computed(() => {
     const s = this.state();
@@ -110,11 +116,11 @@ export class MatchStore {
   // ── Condiciones especiales del activo ─────────────────────────────────────
 
   readonly myActiveConditions = computed<SpecialCondition[]>(
-    () => this.state()?.self?.active?.statusConditions ?? []
+    () => this.me()?.active?.statusConditions ?? []
   );
 
   readonly oppActiveConditions = computed<SpecialCondition[]>(
-    () => this.state()?.opponent?.active?.statusConditions ?? []
+    () => this.opp()?.active?.statusConditions ?? []
   );
 
   // ── Habilitación de botones según fase del turno ──────────────────────────
@@ -162,7 +168,15 @@ export class MatchStore {
   // ── Helpers privados ──────────────────────────────────────────────────────
 
   private mapPokemon(dto: BattlePokemonDTO): UIPokemon {
-    const conditions = dto.statusConditions ?? [];
+    const conditions = (dto.statusConditions ?? []).map((c: any) => {
+      const s = String(c).toUpperCase();
+      if (s === 'DORMIDO' || s === 'ASLEEP') return 'ASLEEP';
+      if (s === 'CONFUNDIDO' || s === 'CONFUSED') return 'CONFUSED';
+      if (s === 'PARALIZADO' || s === 'PARALYZED') return 'PARALYZED';
+      if (s === 'QUEMADO' || s === 'BURNED') return 'BURNED';
+      if (s === 'ENVENENADO' || s === 'POISONED') return 'POISONED';
+      return s as SpecialCondition;
+    });
     return {
       cardId: dto.cardId,
       name: dto.name,
@@ -172,6 +186,7 @@ export class MatchStore {
       isEx: dto.isEx,
       retreatCost: dto.retreatCost,
       hasToolAttached: dto.hasToolAttached,
+      attachedToolCardId: dto.attachedToolCardId ?? null,
       attacks: (dto.attacks ?? []).map((a) => ({
         name: a.name,
         baseDamage: a.baseDamage,

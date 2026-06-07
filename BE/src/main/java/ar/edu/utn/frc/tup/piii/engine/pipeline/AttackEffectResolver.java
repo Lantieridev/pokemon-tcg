@@ -47,6 +47,11 @@ public final class AttackEffectResolver {
         m.put("bench_damage",     AttackEffectType.BENCH_DAMAGE);
         m.put("move_energy",      AttackEffectType.MOVE_ENERGY);
         m.put("force_switch",     AttackEffectType.FORCE_SWITCH);
+        m.put("coin_flip_poison",    AttackEffectType.COIN_FLIP_POISON);
+        m.put("coin_flip_burn",      AttackEffectType.COIN_FLIP_BURN);
+        m.put("coin_flip_paralysis", AttackEffectType.COIN_FLIP_PARALYSIS);
+        m.put("coin_flip_sleep",     AttackEffectType.COIN_FLIP_SLEEP);
+        m.put("coin_flip_confusion", AttackEffectType.COIN_FLIP_CONFUSION);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -85,6 +90,16 @@ public final class AttackEffectResolver {
                     final int counters = amount / DAMAGE_PER_COUNTER;
                     ctx.getDefenderBench().forEach(benched -> benched.addDamageCounters(counters));
                 });
+        m.put(AttackEffectType.COIN_FLIP_POISON,
+                (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.ENVENENADO); });
+        m.put(AttackEffectType.COIN_FLIP_BURN,
+                (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.QUEMADO); });
+        m.put(AttackEffectType.COIN_FLIP_PARALYSIS,
+                (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.PARALIZADO); });
+        m.put(AttackEffectType.COIN_FLIP_SLEEP,
+                (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.DORMIDO); });
+        m.put(AttackEffectType.COIN_FLIP_CONFUSION,
+                (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.CONFUNDIDO); });
         // FR-TODO: move_energy requires attacker bench runtime access — deferred.
         m.put(AttackEffectType.MOVE_ENERGY,
                 (amount, ctx) -> { });

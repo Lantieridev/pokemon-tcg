@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EnergyCascadeComponent } from '../energy-cascade/energy-cascade.component';
 import { DamageTokensComponent } from '../damage-tokens/damage-tokens.component';
@@ -29,6 +29,15 @@ import { CARDS } from '../../data/cards.mock';
           style="width: 100%; height: 100%; transition: transform .35s cubic-bezier(.2,.9,.25,1.05); z-index: 2; position: relative;"
           draggable="false"
         />
+      }
+
+      <!-- Tool badge -->
+      @if (attachedToolCardId) {
+        <div
+          class="tool-badge"
+          (click)="onToolClick($event)"
+          title="Herramienta equipada"
+        >🔧</div>
       }
 
       <!-- HP HUD overlay -->
@@ -76,6 +85,29 @@ import { CARDS } from '../../data/cards.mock';
       <app-damage-tokens [status]="status"></app-damage-tokens>
     </div>
   `,
+  styles: [`
+    .tool-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      z-index: 15;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 203, 5, 0.5);
+      border-radius: 50%;
+      font-size: 11px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      line-height: 1;
+    }
+    .tool-badge:hover {
+      transform: scale(1.25);
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FieldPokemonComponent {
@@ -89,6 +121,16 @@ export class FieldPokemonComponent {
   @Input() glow: boolean = false;
   @Input() direction: 'up' | 'down' = 'down';
   @Input() maxHp: number = 0;
+  @Input() attachedToolCardId: string | null = null;
+
+  @Output() toolClick = new EventEmitter<string>();
+
+  onToolClick(event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.attachedToolCardId) {
+      this.toolClick.emit(this.attachedToolCardId);
+    }
+  }
 
   get card() {
     const allCards = this.tcgService.cards();

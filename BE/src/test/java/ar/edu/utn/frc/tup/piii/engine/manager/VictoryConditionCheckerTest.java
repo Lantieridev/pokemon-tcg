@@ -354,4 +354,31 @@ class VictoryConditionCheckerTest {
 
         assertTrue(captured.isEmpty());
     }
+
+    @Test
+    void shouldNotBenchOutAttackerIfAttackerHasNoBenchButActivePokemonIsAlive() {
+        prizeProvider.set(PLAYER_0, PRIZES_TWO);
+        prizeProvider.set(PLAYER_1, PRIZES_TWO);
+
+        benchProvider.set(PLAYER_0, BENCH_ZERO);
+        benchProvider.set(PLAYER_1, PRIZES_TWO);
+
+        FakeBattlePokemonState active0 = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState active1 = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        FakeBattlefieldStateProvider localBattlefieldProvider = new FakeBattlefieldStateProvider(active0, active1);
+
+        VictoryConditionChecker localChecker = new VictoryConditionChecker(
+                prizeProvider,
+                deckProvider,
+                benchProvider,
+                localBattlefieldProvider,
+                result -> captured.add(result));
+
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        FakeBattlePokemonState knocked = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        localChecker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertTrue(captured.isEmpty());
+    }
 }

@@ -185,6 +185,7 @@ public final class RuleValidator {
 
         final boolean validProgression =
                 (targetStage == EvolutionStage.BASIC     && evolutionStage == EvolutionStage.STAGE_1)
+             || (targetStage == EvolutionStage.BASIC     && evolutionStage == EvolutionStage.MEGA)
              || (targetStage == EvolutionStage.STAGE_1   && evolutionStage == EvolutionStage.STAGE_2);
 
         if (!validProgression) {

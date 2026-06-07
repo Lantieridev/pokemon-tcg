@@ -52,6 +52,7 @@ export interface BattlePokemonDTO {
   attachedEnergies: PokemonType[];
   retreatCost: number;
   hasToolAttached: boolean;
+  attachedToolCardId?: string | null;
   attacks: AttackDTO[];
   statusConditions: SpecialCondition[];  // List<String> en Java
 }
@@ -93,6 +94,11 @@ export interface GameStateResponseDTO {
   activePlayerIndex: number;  // 0 o 1
   currentPhase: TurnPhase;
   pendingSelectionRequest: PendingSelectionRequest | null;
+  activeStadiumCardId?: string | null;
+  winnerId?: string | null;
+  victoryReason?: string | null;
+  mvpCardId?: string | null;
+  mvpCardDamage?: number | null;
   self: PlayerView;
   opponent: OpponentView;
 }
