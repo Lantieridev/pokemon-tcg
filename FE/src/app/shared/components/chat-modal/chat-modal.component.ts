@@ -30,14 +30,14 @@ export class ChatModalComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.friendsApi.getChatHistory(this.friend.friendUsername).subscribe(history => {
       this.messages = history;
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
       this.scrollToBottom();
     });
 
     this.sub = this.friendsWs.messages$.subscribe(msg => {
       if (msg.senderUsername === this.friend.friendUsername || msg.receiverUsername === this.friend.friendUsername) {
-        this.messages.push(msg);
-        this.cdr.markForCheck();
+        this.messages = [...this.messages, msg];
+        this.cdr.detectChanges();
         this.scrollToBottom();
       }
     });
