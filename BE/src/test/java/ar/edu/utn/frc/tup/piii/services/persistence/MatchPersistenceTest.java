@@ -1,6 +1,9 @@
 package ar.edu.utn.frc.tup.piii.services.persistence;
 
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnInPlayTracker;
+import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.model.*;
 import ar.edu.utn.frc.tup.piii.engine.session.*;
 import ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto;
@@ -396,6 +399,133 @@ class MatchPersistenceTest {
         assertEquals("user-y", listAlice.get(1).player2Username());
         assertEquals("user-x", listAlice.get(1).winnerUsername());
     }
+
+    @Test
+    void testBenchedEvolutionAfterSerializationAndTurns() {
+        MatchSessionJsonConverter converter = new MatchSessionJsonConverter();
+
+        // Prepare Pikachu (Basic)
+        PokemonCard pikachu = new PokemonCard.Builder("p-001", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+        // Prepare Raichu (Stage 1)
+        PokemonCard raichu = new PokemonCard.Builder("p-002", "Raichu", 90, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.STAGE_1)
+                .evolvesFrom("Pikachu")
+                .build();
+
+        // Player A Setup: active Pikachu, bench Pikachu
+        InPlayPokemon activeA = new InPlayPokemon(pikachu);
+        InPlayPokemon benchA = new InPlayPokemon(pikachu);
+
+        Bench bench = new Bench();
+        bench.place(benchA);
+
+        Hand handA = new Hand();
+        handA.addCard(raichu);
+
+        PlayerRuntime runtimeA = new PlayerRuntime(
+                new Deck(List.of(pikachu)),
+                handA,
+                bench,
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                activeA,
+                List.of(pikachu),
+                new java.util.HashMap<>()
+        );
+        runtimeA.recordPokemonEntered(activeA);
+        runtimeA.recordPokemonEntered(benchA);
+
+        PlayerRuntime runtimeB = new PlayerRuntime(
+                new Deck(List.of(pikachu)),
+                new Hand(),
+                new Bench(),
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                new InPlayPokemon(pikachu),
+                List.of(pikachu),
+                new java.util.HashMap<>()
+        );
+
+        PlayerState psA = new PlayerState(activeA, List.of(benchA), List.of("p-002"), 60, 6, new java.util.HashMap<>());
+        PlayerState psB = new PlayerState(runtimeB.getActivePokemon(), List.of(), List.of(), 60, 6, new java.util.HashMap<>());
+        MatchBoard board = new MatchBoard(List.of(psA, psB));
+
+        MatchSession session = new MatchSession(
+                "match-test-bench-evolution",
+                List.of("player-a", "player-b"),
+                board,
+                List.of(runtimeA, runtimeB)
+        );
+        session.setActivePlayerIndex(0);
+        session.setup();
+        session.start();
+
+        // Now, we mock/set turn manager and listeners so we can end turn
+        TurnManager turnManager = new TurnManager();
+        turnManager.setStartingPlayer(0);
+        TurnInPlayTracker tracker = new TurnInPlayTracker(List.of(runtimeA, runtimeB));
+        turnManager.registerListener(tracker);
+        session.setTurnManager(turnManager);
+
+        RuleValidator ruleValidator = new RuleValidator(
+                turnManager,
+                List.of(runtimeA.getStatusEffectManager(), runtimeB.getStatusEffectManager()),
+                board,
+                board,
+                board,
+                board
+        );
+        session.setRuleValidator(ruleValidator);
+
+        // Turn 1 starts for player 0.
+        turnManager.startTurn(0);
+        turnManager.endDraw(); // Enter MainPhase
+
+        // Let's end player 0's turn to increment turns in play
+        turnManager.passTurn();
+        turnManager.endBetweenTurns(); // turns switch to player 1, player 0's turnsInPlay increment to 1!
+
+        // Let's serialize and deserialize to simulate database roundtrip!
+        String json = converter.convertToDatabaseColumn(session);
+        MatchSession restored = converter.convertToEntityAttribute(json);
+        
+        TurnManager restoredTurnManager = new TurnManager();
+        restoredTurnManager.setStartingPlayer(0);
+        restoredTurnManager.startTurn(0);
+        restoredTurnManager.endDraw();
+        restoredTurnManager.passTurn();
+        restoredTurnManager.endBetweenTurns(); // player 0 ended first turn
+
+        restored.setTurnManager(restoredTurnManager);
+
+        restored.setRuleValidator(new RuleValidator(
+                restoredTurnManager,
+                List.of(restored.getPlayerRuntime(0).getStatusEffectManager(), restored.getPlayerRuntime(1).getStatusEffectManager()),
+                restored.getBoard(),
+                restored.getBoard(),
+                restored.getBoard(),
+                restored.getBoard()
+        ));
+
+        // It is now player 1's turn. Let's pass player 1's turn to get back to player 0
+        restoredTurnManager.endDraw(); // Enter MainPhase
+        restoredTurnManager.passTurn();
+        restoredTurnManager.endBetweenTurns(); // player 1 ended first turn, back to player 0
+
+        // Now we are in player 0's turn. Let's try to evolve the benched Pikachu
+        PlayerRuntime restoredRuntimeA = restored.getPlayerRuntime(0);
+        BattlePokemonState targetBench = restoredRuntimeA.getBench().getAll().get(0);
+
+        // Validate evolution on benched Pikachu
+        ValidationResult valResult = restored.getRuleValidator().validate(
+                new EvolveAction(targetBench, raichu), 0
+        );
+        assertTrue(valResult instanceof ValidationResult.Valid,
+                valResult instanceof ValidationResult.Invalid ? ((ValidationResult.Invalid) valResult).reason() : "");
+    }
 }
+
 
 
