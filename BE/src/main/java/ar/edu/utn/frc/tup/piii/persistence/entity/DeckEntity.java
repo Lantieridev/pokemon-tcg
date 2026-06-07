@@ -28,6 +28,9 @@ public class DeckEntity {
 
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    private ar.edu.utn.frc.tup.piii.engine.model.DeckStatus status;
+
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeckCardEntity> cards;
 

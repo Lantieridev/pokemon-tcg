@@ -114,10 +114,10 @@ class DeckServiceImplTest {
     void create_throwsWhenUserNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", List.of());
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
 
         assertThrows(NoSuchElementException.class, () -> service.create(request));
-        verify(validator, never()).validate(anyList());
+        verify(validator, never()).validate(anyList(), any());
     }
 
     @Test
@@ -131,14 +131,14 @@ class DeckServiceImplTest {
         final DeckEntity savedDeck = buildDeckEntity(10L, "My Deck", new ArrayList<>());
         when(deckRepository.save(any())).thenReturn(savedDeck);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         service.create(request);
 
         verify(apiClient, never()).findById(anyString());
         verify(cardRepository, never()).save(any(CardEntity.class));
-        verify(validator).validate(anyList());
+        verify(validator).validate(anyList(), any());
     }
 
     @Test
@@ -158,7 +158,7 @@ class DeckServiceImplTest {
         final DeckEntity savedDeck = buildDeckEntity(10L, "My Deck", new ArrayList<>());
         when(deckRepository.save(any(DeckEntity.class))).thenReturn(savedDeck);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         service.create(request);
@@ -175,7 +175,7 @@ class DeckServiceImplTest {
         when(cardRepository.findById("unknown-1")).thenReturn(Optional.empty());
         when(apiClient.findById("unknown-1")).thenReturn(Optional.empty());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("unknown-1", 60)));
 
         assertThrows(NoSuchElementException.class, () -> service.create(request));
@@ -189,9 +189,9 @@ class DeckServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.of(card));
         doThrow(new InvalidDeckException("deck has 59 cards, expected 60"))
-                .when(validator).validate(anyList());
+                .when(validator).validate(anyList(), any());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 59)));
 
         assertThrows(InvalidDeckException.class, () -> service.create(request));
@@ -218,7 +218,7 @@ class DeckServiceImplTest {
                 .thenReturn(firstSave)
                 .thenReturn(secondSave);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         final DeckResponseDTO result = service.create(request);
@@ -236,6 +236,7 @@ class DeckServiceImplTest {
         return DeckEntity.builder()
                 .id(id)
                 .name(name)
+                .status(ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID)
                 .createdAt(LocalDateTime.now())
                 .cards(new ArrayList<>(cards))
                 .build();

@@ -82,11 +82,12 @@ public class DeckServiceImpl implements DeckService {
                 .map(c -> toEntry(cardMap.get(c.cardId()), c.quantity()))
                 .toList();
 
-        validator.validate(entries);
+        validator.validate(entries, request.status());
 
         final DeckEntity deck = deckRepository.save(DeckEntity.builder()
                 .user(user)
                 .name(request.name())
+                .status(request.status())
                 .cards(new ArrayList<>())
                 .build());
 
@@ -167,7 +168,7 @@ public class DeckServiceImpl implements DeckService {
         final int total = deck.getCards().stream()
                 .mapToInt(DeckCardEntity::getQuantity)
                 .sum();
-        return new DeckSummaryDTO(deck.getId(), deck.getName(), deck.getCreatedAt(), total);
+        return new DeckSummaryDTO(deck.getId(), deck.getName(), deck.getStatus(), deck.getCreatedAt(), total);
     }
 
     private DeckResponseDTO toResponseDTO(final DeckEntity deck) {
@@ -179,6 +180,6 @@ public class DeckServiceImpl implements DeckService {
                         dc.getCard().getSubtype(),
                         dc.getQuantity()))
                 .toList();
-        return new DeckResponseDTO(deck.getId(), deck.getName(), deck.getCreatedAt(), cards);
+        return new DeckResponseDTO(deck.getId(), deck.getName(), deck.getStatus(), deck.getCreatedAt(), cards);
     }
 }
