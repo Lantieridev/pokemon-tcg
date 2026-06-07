@@ -2,42 +2,266 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="onClose()">✕</button>
     
-    <div class="profile-header">
-      <div class="avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <img *ngIf="isCustomAvatar(profile.avatarIcon)" [src]="getAvatarUrl(profile.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
-        <ng-container *ngIf="!isCustomAvatar(profile.avatarIcon)">{{ getAvatarEmoji(profile.avatarIcon) }}</ng-container>
-      </div>
-      <div class="title-info">
-        <h2>{{profile.username}}</h2>
-        <span class="active-title" *ngIf="profile.activeTitle">{{profile.activeTitle}}</span>
-        <span class="level-badge">Lvl {{profile.level || 1}}</span>
-      </div>
-    </div>
-
-    <p class="description" *ngIf="profile.description">"{{profile.description}}"</p>
-    
-    <div class="stats-grid">
-      <div class="stat-box">
-        <span class="label">MMR</span>
-        <span class="value">{{profile.mmr || 1200}}</span>
-      </div>
-      <div class="stat-box">
-        <span class="label">Win Rate</span>
-        <span class="value">{{ (profile.statistics?.winRate | number:'1.0-1') || 0 }}%</span>
-      </div>
-      <div class="stat-box">
-        <span class="label">Total KOs</span>
-        <span class="value">{{profile.statistics?.totalKos || 0}}</span>
-      </div>
-    </div>
-
-    <div class="showcase-section" *ngIf="profile.showcase?.length">
-      <h3>Cartas Destacadas</h3>
-      <div class="showcase-cards">
-        <div class="card-slot" *ngFor="let slot of profile.showcase">
-          <img *ngIf="slot.cardId" [src]="'assets/cards/' + slot.cardId + '.png'" [alt]="slot.cardName" class="showcase-img">
-          <div class="empty-slot" *ngIf="!slot.cardId"></div>
+    <!-- Profile Content -->
+    <div style="position: relative; width: 100%; display: flex; flex-direction: column; gap: 30px;">
+      
+      <!-- Header Profile -->
+      <div class="fu" style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <div class="avatar" style="width: 80px; height: 80px; font-size: 34px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--bg), 0 0 0 8px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0; flex-shrink: 0;">
+          <ng-container *ngIf="isCustomAvatar(profile.avatarIcon)">
+            <img [src]="getAvatarUrl(profile.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+          </ng-container>
+          <ng-container *ngIf="!isCustomAvatar(profile.avatarIcon)">
+            {{ getAvatarEmoji(profile.avatarIcon) }}
+          </ng-container>
         </div>
+        <div style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <h1 class="display" style="font-size: 40px; font-weight: 700; margin: 0; color: var(--txt); line-height: 1;">{{ profile.username }}</h1>
+            <span *ngIf="profile.activeTitle" style="background: linear-gradient(135deg, var(--accent2) 0%, rgba(255,255,255,0.05) 100%); border: 1px solid var(--line); color: var(--txt); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
+              🏅 {{ profile.activeTitle }}
+            </span>
+            <!-- Selected Medals Showcase -->
+            <div *ngIf="selectedMedalsList.length > 0" style="display: flex; gap: 8px; align-items: center; margin-left: 4px;">
+              <img *ngFor="let medal of selectedMedalsList" [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+            </div>
+          </div>
+          
+          <div style="color: var(--mut); font-weight: 600; letter-spacing: 0.05em; font-size: 13.5px; margin-top: 8px; font-style: italic; max-width: 400px; line-height: 1.4;">
+            {{ profile.description || 'Sin descripción de entrenador.' }}
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 20px; padding: 16px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px);">
+          <aurora-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></aurora-stat>
+          <div style="width: 1px; background: var(--line);"></div>
+          <aurora-stat [v]="totalLosses.toString()" k="Derrotas"></aurora-stat>
+          <div style="width: 1px; background: var(--line);"></div>
+          <aurora-stat [v]="overallWinRate + '%'" k="Win Rate" [accent]="true"></aurora-stat>
+        </div>
+      </div>
+
+      <!-- Layout 2 Columns -->
+      <div class="fu" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start;">
+        
+        <!-- Left Column (Tabs) -->
+        <div>
+          <!-- Tabs Header -->
+          <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
+            <button (click)="activeTab = 'showcase'" [class.active-tab]="activeTab === 'showcase'" class="tab-btn">Vitrina y Mazo</button>
+            <button (click)="activeTab = 'stats'" [class.active-tab]="activeTab === 'stats'" class="tab-btn">Estadísticas Avanzadas</button>
+          </div>
+
+          <!-- Tab content: Showcase -->
+          <div *ngIf="activeTab === 'showcase'">
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+              <!-- Card Showcase -->
+              <div>
+                <div class="eyebrow" style="margin-bottom: 16px; color: var(--accent2);">Vitrina de Cartas Destacadas</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                  <ng-container *ngFor="let pos of [1, 2, 3]">
+                    <div class="showcase-slot">
+                      <ng-container *ngIf="getShowcaseSlot(pos) as slot">
+                        <img *ngIf="slot.cardId" [src]="getCardImageById(slot.cardId)" [alt]="slot.cardName" style="max-height: 100%; max-width: 100%; pointer-events: none;" />
+                        <div *ngIf="!slot.cardId" style="text-align: center; color: var(--mut); padding: 20px; pointer-events: none;">
+                          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Vacío</div>
+                        </div>
+                      </ng-container>
+                      <ng-container *ngIf="!getShowcaseSlot(pos)">
+                        <div style="text-align: center; color: var(--mut); padding: 20px; pointer-events: none;">
+                          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Vacío</div>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Showcase Deck Section -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="eyebrow" style="color: var(--accent2); margin-bottom: 20px;">Mazo Destacado</div>
+
+                <div *ngIf="profile.showcasedDeck" style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
+                    <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profile.showcasedDeck.name }}</div>
+                    <div style="font-size: 11px; color: var(--mut);">ID: #{{ profile.showcasedDeck.id }}</div>
+                  </div>
+                </div>
+                
+                <div *ngIf="!profile.showcasedDeck" style="padding: 24px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; color: var(--mut); font-size: 13.5px; font-weight: 600;">
+                  El jugador no destacó ningún mazo.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab content: Advanced Stats -->
+          <div *ngIf="activeTab === 'stats'">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+              
+              <!-- Global Stats Summary -->
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <!-- Daño Panel -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px);">
+                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Balance de Daño</div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                      <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Realizado</div>
+                      <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #4aa3ff;">
+                        💥 {{ profile.advancedStats?.totalDamageDealt || 0 }}
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Recibido</div>
+                      <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #ff7a3d;">
+                        🛡️ {{ profile.advancedStats?.totalDamageReceived || 0 }}
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Compare Bar -->
+                  <div style="height: 8px; background: #ff7a3d; border-radius: 4px; overflow: hidden; display: flex;">
+                    <ng-container *ngIf="((profile.advancedStats?.totalDamageDealt || 0) + (profile.advancedStats?.totalDamageReceived || 0)) as totalDmg">
+                      <div [style.width.%]="totalDmg > 0 ? ((profile.advancedStats?.totalDamageDealt || 0) / totalDmg * 100) : 50" style="height: 100%; background: #4aa3ff;"></div>
+                    </ng-container>
+                  </div>
+                </div>
+
+                <!-- KOs Panel -->
+                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px);">
+                  <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Derribos (KOs)</div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div>
+                      <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">A favor</div>
+                      <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #46e08a;">
+                        ⚡ {{ profile.advancedStats?.totalKOsMade || 0 }}
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">En contra</div>
+                      <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #ff3b47;">
+                        💀 {{ profile.advancedStats?.totalKOsSuffered || 0 }}
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Compare Bar -->
+                  <div style="height: 8px; background: #ff3b47; border-radius: 4px; overflow: hidden; display: flex;">
+                    <ng-container *ngIf="((profile.advancedStats?.totalKOsMade || 0) + (profile.advancedStats?.totalKOsSuffered || 0)) as totalKOs">
+                      <div [style.width.%]="totalKOs > 0 ? ((profile.advancedStats?.totalKOsMade || 0) / totalKOs * 100) : 50" style="height: 100%; background: #46e08a;"></div>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Played Pokemons -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                  <div>
+                    <div class="eyebrow" style="color: var(--accent2);">Pokémon más jugados</div>
+                  </div>
+                  <select [(ngModel)]="elementFilter" class="form-input select-dark" style="width: 140px; padding: 6px 10px; font-size: 12px;">
+                    <option value="ALL">Todos los tipos</option>
+                    <option value="FIRE">🔥 Fuego</option>
+                    <option value="WATER">💧 Agua</option>
+                    <option value="GRASS">🌿 Planta</option>
+                    <option value="LIGHTNING">⚡ Rayo</option>
+                    <option value="PSYCHIC">🔮 Psíquico</option>
+                    <option value="FIGHTING">👊 Lucha</option>
+                    <option value="DARKNESS">🌙 Siniestro</option>
+                    <option value="METAL">🔩 Metal</option>
+                    <option value="FAIRY">🎀 Hada</option>
+                    <option value="DRAGON">🐉 Dragón</option>
+                    <option value="COLORLESS">⚪ Normal</option>
+                  </select>
+                </div>
+
+                <div *ngIf="getTopPlayedPokemons().length === 0" style="text-align: center; color: var(--mut); padding: 20px; font-weight: 600;">
+                  No hay registros de Pokémon jugados para este tipo.
+                </div>
+                
+                <div *ngIf="getTopPlayedPokemons().length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+                  <ng-container *ngFor="let p of getTopPlayedPokemons(); let idx = index">
+                    <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px;">
+                      <div style="width: 35px; height: 50px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
+                        <img *ngIf="getCardImageById(p.cardId)" [src]="getCardImageById(p.cardId)" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                        <span *ngIf="!getCardImageById(p.cardId)">🃏</span>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-weight: 700; font-size: 13px; color: var(--txt);">#{{ idx + 1 }} {{ p.cardName }}</span>
+                          <span class="num" style="font-size: 12px; font-weight: 800; color: var(--accent2);">{{ p.timesPlayed }} partidas</span>
+                        </div>
+                        <div style="height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                          <div [style.width.%]="(p.timesPlayed / Math.max(getTopPlayedPokemons()[0].timesPlayed, 1) * 100)" [style.background]="getTypeColor(p.pokemonType)" style="height: 100%;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Elemental Energy Usage -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Uso de Energías Elementales</div>
+                <div *ngIf="getEnergyStats().length === 0" style="text-align: center; color: var(--mut); padding: 20px; font-weight: 600;">
+                  No hay registros de energías unidas.
+                </div>
+                <div *ngIf="getEnergyStats().length > 0" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                  <ng-container *ngFor="let e of getEnergyStats()">
+                    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 12px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                          {{ getEnergyIconEmoji(e.energyType) }} {{ getEnergyLabel(e.energyType) }}
+                        </span>
+                        <span class="num" style="color: var(--dim);">{{ e.count }} unidas</span>
+                      </div>
+                      <div style="height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                        <div [style.width.%]="(e.count / Math.max(getEnergyStats()[0].count, 1) * 100)" [style.background]="getTypeColor(e.energyType)" style="height: 100%;"></div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column (Basic Info Sidebar) -->
+        <div>
+          <!-- Level Block -->
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+            <div style="font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; text-shadow: 0 0 20px rgba(255,255,255,0.1);">
+              Nivel {{ profile.level }}
+            </div>
+            <div style="font-size: 11px; color: var(--mut); margin-bottom: 16px;">
+              Este jugador alcanzó el nivel {{profile.level}}.
+            </div>
+            <!-- MMR Block -->
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase;">MMR Global</span>
+              <span style="font-family: var(--display); font-size: 22px; font-weight: 700; color: #ffce32;">{{ profile.mmr }}</span>
+            </div>
+          </div>
+
+          <!-- Combat Milestones (Simple view) -->
+          <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+            <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Hitos de Combate</div>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 12px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase;">Victorias Perfectas</span>
+                <span style="font-weight: 800; font-size: 15px; color: #ffce32;">🏆 {{ profile.statistics?.flawlessVictories || 0 }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase;">Cartas Jugadas</span>
+                <span style="font-weight: 800; font-size: 15px; color: #ff7a3d;">🃏 {{ (profile.statistics?.pokemonCardsPlayed || 0) + (profile.statistics?.trainerCardsPlayed || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
