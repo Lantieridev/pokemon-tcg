@@ -59,16 +59,37 @@ export class FriendsSidebarComponent implements OnInit {
     });
   }
 
+  friendToDelete: FriendshipDTO | null = null;
+
   acceptRequest(id: number) {
-    this.friendsApi.acceptFriendRequest(id).subscribe(() => this.loadData());
+    this.friendsApi.acceptFriendRequest(id).subscribe({
+      next: () => {
+        this.toastService.success('Solicitud aceptada correctamente');
+        this.loadData();
+      },
+      error: (err) => this.toastService.error(err.error.message || 'Error al aceptar solicitud')
+    });
   }
 
   rejectRequest(id: number) {
     this.friendsApi.rejectFriendRequest(id).subscribe(() => this.loadData());
   }
 
-  removeFriend(id: number) {
-    this.friendsApi.removeFriend(id).subscribe(() => this.loadData());
+  confirmRemoveFriend(friend: FriendshipDTO) {
+    this.friendToDelete = friend;
+  }
+
+  cancelRemoveFriend() {
+    this.friendToDelete = null;
+  }
+
+  removeFriend() {
+    if (!this.friendToDelete) return;
+    this.friendsApi.removeFriend(this.friendToDelete.id).subscribe(() => {
+      this.toastService.success('Amigo eliminado correctamente');
+      this.friendToDelete = null;
+      this.loadData();
+    });
   }
 
   viewProfile(username: string) {

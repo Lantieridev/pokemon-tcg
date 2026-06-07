@@ -284,3 +284,57 @@
   border: 1px dashed rgba(255,255,255,0.1);
   border-radius: 16px;
 }
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  animation: fadeIn 0.2s;
+}
+
+.delete-confirm span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f87171;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.confirm-actions button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  font-size: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+  color: var(--txt, #e8eaf6);
+}
+
+.confirm-actions button.success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.confirm-actions button.success:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.confirm-actions button.danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.confirm-actions button.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
