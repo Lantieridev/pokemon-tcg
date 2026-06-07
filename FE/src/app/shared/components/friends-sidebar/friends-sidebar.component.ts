@@ -107,4 +107,26 @@ export class FriendsSidebarComponent implements OnInit {
   openChat(friend: FriendshipDTO) {
     this.onOpenChat.emit(friend);
   }
+
+  isCustomAvatar(av: string | undefined): boolean {
+    return !!av && av.startsWith('avatar_');
+  }
+
+  getAvatarUrl(av: string | undefined): string {
+    if (!av) return '';
+    return `assets/achievements/avatars/${av}.png`;
+  }
+
+  getAvatarEmoji(icon: string | undefined): string {
+    if (!icon) return '👤';
+    switch (icon.toLowerCase()) {
+      case 'ash': return '🧢';
+      case 'misty': return '💧';
+      case 'brock': return '🪨';
+      case 'gary': return '👑';
+      case 'serena': return '🎀';
+      case 'red': return '⚡';
+      default: return '👤';
+    }
+  }
 }
