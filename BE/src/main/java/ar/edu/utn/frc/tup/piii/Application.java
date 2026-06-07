@@ -15,14 +15,18 @@ public class Application {
 
     /**
      * Main program.
+     * 
      * @param args application args
      */
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+
     }
 
     /**
-     * Bean for RestClient.Builder to resolve RestClientPokemonTcgApiClient dependency injection.
+     * Bean for RestClient.Builder to resolve RestClientPokemonTcgApiClient
+     * dependency injection.
+     * 
      * @return a new RestClient.Builder
      */
     @Bean
