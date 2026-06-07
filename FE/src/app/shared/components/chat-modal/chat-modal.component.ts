@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendshipDTO, ChatMessageDTO } from '../../../core/models/friends.models';
@@ -24,7 +25,8 @@ export class ChatModalComponent implements OnInit, OnDestroy {
   constructor(
     private friendsApi: FriendsApiService,
     private friendsWs: FriendsWsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -59,12 +61,19 @@ export class ChatModalComponent implements OnInit, OnDestroy {
   }
 
   sendChallenge() {
+    this.newMessage = "¡Te desafío a una batalla! Crea una sala privada o mándame tu código.";
+    this.sendMessage();
+    
+    // Mandamos el challenge por websocket tmb por si queremos escucharlo luego en otro lado
     const lobbyId = 'lobby_' + Date.now();
     this.friendsWs.sendChallenge({
       senderUsername: '',
       receiverUsername: this.friend.friendUsername,
       lobbyId
     });
+    
+    this.onClose();
+    this.router.navigate(['/lobby']);
   }
 
   onClose() {
