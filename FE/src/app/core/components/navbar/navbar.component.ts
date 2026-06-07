@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -31,6 +31,16 @@ export class NavbarComponent implements OnInit {
     ),
     { initialValue: this.router.url }
   );
+
+  @ViewChild(FriendsSidebarComponent) friendsSidebar!: FriendsSidebarComponent;
+
+  toggleFriendsSidebar() {
+    if (this.friendsSidebar) {
+      this.friendsSidebar.toggleSidebar();
+    } else {
+      console.error('FriendsSidebarComponent is undefined');
+    }
+  }
 
   isActive(path: string): boolean {
     const url = (this.currentPath() as string) || '/';

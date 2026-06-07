@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
@@ -13,7 +13,7 @@ import { FriendshipDTO } from '../../../core/models/friends.models';
   styleUrls: ['./friends-sidebar.component.css']
 })
 export class FriendsSidebarComponent implements OnInit {
-  isOpen = false;
+  isOpen = signal(false);
   activeTab: 'friends' | 'requests' = 'friends';
   friends: FriendshipDTO[] = [];
   requests: FriendshipDTO[] = [];
@@ -24,7 +24,8 @@ export class FriendsSidebarComponent implements OnInit {
 
   constructor(
     private friendsApi: FriendsApiService,
-    private friendsWs: FriendsWsService
+    private friendsWs: FriendsWsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -33,15 +34,15 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   toggleSidebar() {
-    this.isOpen = !this.isOpen;
-    if (this.isOpen) {
+    this.isOpen.update(v => !v);
+    if (this.isOpen()) {
       this.loadData();
     }
   }
 
   loadData() {
-    this.friendsApi.getActiveFriends().subscribe(res => this.friends = res);
-    this.friendsApi.getPendingRequests().subscribe(res => this.requests = res);
+    this.friendsApi.getActiveFriends().subscribe(res => { this.friends = res; this.cdr.markForCheck(); });
+    this.friendsApi.getPendingRequests().subscribe(res => { this.requests = res; this.cdr.markForCheck(); });
   }
 
   sendRequest() {
