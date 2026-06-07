@@ -72,14 +72,12 @@ public final class PlayerPerspectiveMapper {
 
             int maxDamage = -1;
             if (session.hasPlayerRuntimes()) {
-                for (int i = 0; i < 2; i++) {
-                    final var runtime = session.getPlayerRuntime(i);
-                    if (runtime != null && runtime.getStatisticsTracker() != null) {
-                        for (var entry : runtime.getStatisticsTracker().getPokemonDamageDealt().entrySet()) {
-                            if (entry.getValue() > maxDamage) {
-                                maxDamage = entry.getValue();
-                                mvpCardId = entry.getKey();
-                            }
+                final var runtime = session.getPlayerRuntime(viewerIndex);
+                if (runtime != null && runtime.getStatisticsTracker() != null) {
+                    for (var entry : runtime.getStatisticsTracker().getPokemonDamageDealt().entrySet()) {
+                        if (entry.getValue() > maxDamage) {
+                            maxDamage = entry.getValue();
+                            mvpCardId = entry.getKey();
                         }
                     }
                 }

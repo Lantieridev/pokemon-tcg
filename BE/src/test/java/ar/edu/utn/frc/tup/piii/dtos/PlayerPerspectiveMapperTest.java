@@ -244,10 +244,16 @@ class PlayerPerspectiveMapperTest {
         customSession.setVictoryReason("PRIZE_CARDS");
         customSession.finish();
 
-        GameStateResponseDTO finishedResponse = mapper.toResponse(customSession, 0);
-        assertThat(finishedResponse.winnerId()).isEqualTo("playerB");
-        assertThat(finishedResponse.victoryReason()).isEqualTo("PRIZE_CARDS");
-        assertThat(finishedResponse.mvpCardId()).isEqualTo("xy1-1");
-        assertThat(finishedResponse.mvpCardDamage()).isEqualTo(120);
+        GameStateResponseDTO responseA = mapper.toResponse(customSession, 0);
+        assertThat(responseA.winnerId()).isEqualTo("playerB");
+        assertThat(responseA.victoryReason()).isEqualTo("PRIZE_CARDS");
+        assertThat(responseA.mvpCardId()).isEqualTo("xy1-46");
+        assertThat(responseA.mvpCardDamage()).isEqualTo(50);
+
+        GameStateResponseDTO responseB = mapper.toResponse(customSession, 1);
+        assertThat(responseB.winnerId()).isEqualTo("playerB");
+        assertThat(responseB.victoryReason()).isEqualTo("PRIZE_CARDS");
+        assertThat(responseB.mvpCardId()).isEqualTo("xy1-1");
+        assertThat(responseB.mvpCardDamage()).isEqualTo(120);
     }
 }
