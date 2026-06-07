@@ -57,6 +57,36 @@ public final class PlayerPerspectiveMapper {
         final int turnNumber = session.getTurnManager() != null ?
                 (session.getTurnManager().getTurnCount(0) + session.getTurnManager().getTurnCount(1)) : 0;
 
+        final String stadiumCardId = session.getBoard().getActiveStadium() != null
+                ? session.getBoard().getActiveStadium().getCardId()
+                : null;
+
+        String winnerId = null;
+        String victoryReason = null;
+        String mvpCardId = null;
+        Integer mvpCardDamage = null;
+
+        if (session.getState() == MatchSessionState.FINISHED) {
+            winnerId = session.getWinnerId();
+            victoryReason = session.getVictoryReason();
+
+            int maxDamage = -1;
+            if (session.hasPlayerRuntimes()) {
+                final var runtime = session.getPlayerRuntime(viewerIndex);
+                if (runtime != null && runtime.getStatisticsTracker() != null) {
+                    for (var entry : runtime.getStatisticsTracker().getPokemonDamageDealt().entrySet()) {
+                        if (entry.getValue() > maxDamage) {
+                            maxDamage = entry.getValue();
+                            mvpCardId = entry.getKey();
+                        }
+                    }
+                }
+            }
+            if (mvpCardId != null) {
+                mvpCardDamage = maxDamage;
+            }
+        }
+
         return new GameStateResponseDTO(
                 session.getMatchId(),
                 session.getVersion(),
@@ -65,7 +95,12 @@ public final class PlayerPerspectiveMapper {
                 session.getState() == MatchSessionState.FINISHED ? "FINISHED" : (session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name()),
                 requestDto,
                 self,
-                opponent);
+                opponent,
+                stadiumCardId,
+                winnerId,
+                victoryReason,
+                mvpCardId,
+                mvpCardDamage);
     }
 
     private GameStateResponseDTO.PlayerView buildPlayerView(final MatchSession session, final int playerIndex) {
@@ -115,6 +150,9 @@ public final class PlayerPerspectiveMapper {
                 pokemon.getAttacks().stream()
                         .map(a -> new AttackDTO(a.name(), a.baseDamage(), a.requiredEnergies()))
                         .toList();
+        final String toolCardId = pokemon.getAttachedTool()
+                .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
+                .orElse(null);
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -127,6 +165,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.getAttachedEnergies(),
                 pokemon.getRetreatCost(),
                 pokemon.hasToolAttached(),
+                toolCardId,
                 attackDtos,
                 statusConditions);
     }

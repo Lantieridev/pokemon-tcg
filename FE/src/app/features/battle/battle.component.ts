@@ -78,6 +78,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly canEndTurn = this.store.canEndTurn;
   readonly myActiveConditions = this.store.myActiveConditions;
   readonly oppActiveConditions = this.store.oppActiveConditions;
+  readonly activeStadiumCardId = this.store.activeStadiumCardId;
   readonly pendingSelection = computed(() => {
     const sel = this.store.pendingSelection();
     return sel && this.isMyTurn() ? sel : null;
@@ -89,10 +90,47 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
   readonly gameResult = computed(() => {
     if (!this.isFinished()) return null;
-    // If the game ended and it's "my turn" (activePlayerIndex===0), I won
-    // This is a simplification — the backend should send explicit winner info
-    return this.store.isMyTurn() ? 'VICTORIA' : 'DERROTA';
+    const winnerId = this.store.winnerId();
+    if (!winnerId) return 'EMPATE';
+    return winnerId === this.me()?.name ? 'VICTORIA' : 'DERROTA';
   });
+
+  readonly victoryReasonText = computed(() => {
+    if (!this.isFinished()) return '';
+    const reason = this.store.victoryReason();
+    const isWinner = this.gameResult() === 'VICTORIA';
+    
+    if (isWinner) {
+      switch (reason) {
+        case 'PRIZE_CARDS':
+          return '¡Ganaste al tomar todas tus cartas de Premio!';
+        case 'NO_BENCH_POKEMON':
+          return '¡Ganaste porque tu oponente se quedó sin Pokémon en juego!';
+        case 'DECK_OUT':
+          return '¡Ganaste porque tu oponente se quedó sin cartas en su mazo!';
+        case 'ABANDON':
+          return '¡Ganaste porque tu oponente abandonó la partida!';
+        default:
+          return '¡Victoria!';
+      }
+    } else {
+      switch (reason) {
+        case 'PRIZE_CARDS':
+          return 'Tu oponente tomó todas sus cartas de Premio.';
+        case 'NO_BENCH_POKEMON':
+          return 'Perdiste al quedarte sin Pokémon en juego.';
+        case 'DECK_OUT':
+          return 'Perdiste al quedarte sin cartas en tu mazo al comenzar tu turno.';
+        case 'ABANDON':
+          return 'Abandonaste la partida.';
+        default:
+          return 'Derrota.';
+      }
+    }
+  });
+
+  readonly mvpCardId = this.store.mvpCardId;
+  readonly mvpCardDamage = this.store.mvpCardDamage;
 
   // ── Estado UI local ────────────────────────────────────────────────────────
   readonly log = signal<LogEntry[]>([]);
@@ -402,6 +440,16 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.wsService.sendAction(this.matchId, action);
   }
 
+  isTargetingTrainer(card: PokemonTcgCard): boolean {
+    if (card.supertype !== 'Trainer') return false;
+    const name = card.name.toLowerCase();
+    if (card.subtypes.includes('Pokémon Tool')) return true;
+    if (name.includes('evosoda')) return true;
+    if (name.includes('potion')) return true;
+    if (name.includes('cassius')) return true;
+    return false;
+  }
+
   playCard(card: PokemonTcgCard, index: number): void {
     if (!this.isMyTurn()) return;
     
@@ -413,8 +461,12 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
     
-    // Si es Energía o Evolución, requiere seleccionar un objetivo
-    if (card.supertype === 'Energy' || card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2')) {
+    // Si es Energía, Evolución o Entrenador que requiere objetivo, requiere seleccionar un objetivo
+    if (
+      card.supertype === 'Energy' || 
+      (card.supertype === 'Pokémon' && (card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2') || card.subtypes.includes('MEGA'))) ||
+      this.isTargetingTrainer(card)
+    ) {
       if (this.selectedHandIndex() === index) {
         this.selectedHandIndex.set(null);
         this.selectedHandCard.set(null);
@@ -422,6 +474,18 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.selectedHandIndex.set(index);
         this.selectedHandCard.set(card);
       }
+    } else if (card.supertype === 'Trainer') {
+      // Entrenador no-objetivo (Shauna, Profesores, Roller Skates, etc.) - Jugar de inmediato
+      const type = card.subtypes.includes('Stadium') ? 'STADIUM'
+                 : card.subtypes.includes('Supporter') ? 'SUPPORTER' : 'ITEM';
+      this.sendAction({
+        type: 'PLAY_TRAINER',
+        cardId: card.id,
+        trainerType: type,
+        targetIndex: null
+      });
+      this.selectedHandIndex.set(null);
+      this.selectedHandCard.set(null);
     }
   }
 
@@ -437,11 +501,20 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         energyType: energyType as PokemonType,
         targetIndex: targetType === 'active' ? null : targetIndex
       });
-    } else if (card.supertype === 'Pokémon' && (card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2'))) {
+    } else if (card.supertype === 'Pokémon' && (card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2') || card.subtypes.includes('MEGA'))) {
       this.sendAction({
         type: 'EVOLVE',
         cardId: card.id,
         targetIndex: targetType === 'active' ? null : targetIndex
+      });
+    } else if (card.supertype === 'Trainer') {
+      const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
+                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+      this.sendAction({
+        type: 'PLAY_TRAINER',
+        cardId: card.id,
+        trainerType: type,
+        targetIndex: targetType === 'active' ? -1 : targetIndex
       });
     } else if (targetType === 'bench' && card.supertype === 'Pokémon' && card.subtypes.includes('Basic')) {
       this.sendAction({ type: 'PLACE_BASIC_POKEMON', cardId: card.id });
@@ -561,7 +634,16 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const card = this.draggedCard();
     if (!card) return;
 
-    if (card.supertype === 'Energy') {
+    if (card.supertype === 'Trainer' && !card.subtypes.includes('Stadium')) {
+      const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
+                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+      this.sendAction({
+        type: 'PLAY_TRAINER',
+        cardId: card.id,
+        trainerType: type,
+        targetIndex: targetType === 'active' ? -1 : targetIndex
+      });
+    } else if (card.supertype === 'Energy') {
       const energyType = this.getEnergyType(card);
       this.sendAction({
         type: 'ATTACH_ENERGY',
@@ -569,7 +651,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         energyType: energyType as PokemonType,
         targetIndex: targetType === 'active' ? null : targetIndex
       });
-    } else if (card.supertype === 'Pokémon' && (card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2'))) {
+    } else if (card.supertype === 'Pokémon' && (card.subtypes.includes('Stage 1') || card.subtypes.includes('Stage 2') || card.subtypes.includes('MEGA'))) {
       this.sendAction({
         type: 'EVOLVE',
         cardId: card.id,
