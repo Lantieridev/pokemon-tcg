@@ -4,7 +4,6 @@ import { NavbarComponent } from './core/components/navbar/navbar.component';
 import { AmbientComponent } from './features/lobby-aurora/ui/aurora-ui.components';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
-import { BackgroundMusicService } from './core/services/background-music.service';
 import { ToastComponent } from './shared/components/toast/toast.component';
 
 @Component({
