@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -8,11 +8,15 @@ import { AuthService } from '../../services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../services/profile.service';
 import { LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
 import { FriendsSidebarComponent } from '../../../shared/components/friends-sidebar/friends-sidebar.component';
+import { PublicProfileModalComponent } from '../../../shared/components/public-profile-modal/public-profile-modal.component';
+import { PublicProfileDTO } from '../../models/friends.models';
+import { FriendsApiService } from '../../services/friends-api.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent, FriendsSidebarComponent],
+  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent, FriendsSidebarComponent, PublicProfileModalComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -21,8 +25,14 @@ export class NavbarComponent implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
+  private friendsApi = inject(FriendsApiService);
+  private toastService = inject(ToastService);
+  private cdr = inject(ChangeDetectorRef);
 
   profileData = signal<UserProfileResponseDTO | null>(null);
+
+  selectedProfile = signal<PublicProfileDTO | null>(null);
+  isProfileModalOpen = signal(false);
 
   currentPath = toSignal(
     this.router.events.pipe(
@@ -40,6 +50,24 @@ export class NavbarComponent implements OnInit {
     } else {
       console.error('FriendsSidebarComponent is undefined');
     }
+  }
+
+  openProfileModal(username: string) {
+    this.friendsApi.getPublicProfile(username).subscribe({
+      next: (profile) => {
+        this.selectedProfile.set(profile);
+        this.isProfileModalOpen.set(true);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Error al cargar perfil');
+      }
+    });
+  }
+
+  closeProfileModal() {
+    this.isProfileModalOpen.set(false);
+    this.selectedProfile.set(null);
   }
 
   isActive(path: string): boolean {

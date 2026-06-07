@@ -3,7 +3,10 @@
     <button class="close-btn" (click)="onClose()">✕</button>
     
     <div class="profile-header">
-      <div class="avatar">{{profile.avatarIcon || '👤'}}</div>
+      <div class="avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0;">
+        <img *ngIf="isCustomAvatar(profile.avatarIcon)" [src]="getAvatarUrl(profile.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+        <ng-container *ngIf="!isCustomAvatar(profile.avatarIcon)">{{ getAvatarEmoji(profile.avatarIcon) }}</ng-container>
+      </div>
       <div class="title-info">
         <h2>{{profile.username}}</h2>
         <span class="active-title" *ngIf="profile.activeTitle">{{profile.activeTitle}}</span>
