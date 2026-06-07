@@ -145,9 +145,12 @@ export class MatchStore {
   // ── Mutaciones ────────────────────────────────────────────────────────────
 
   updateState(newState: GameStateResponseDTO): void {
-    const oldVersion = this.state()?.version;
+    const oldState = this.state();
+    const turnChanged = !oldState || 
+                        oldState.turnNumber !== newState.turnNumber || 
+                        oldState.activePlayerIndex !== newState.activePlayerIndex;
     this.state.set(newState);
-    if (newState.version !== oldVersion) {
+    if (turnChanged) {
       this.timeLeft.set(60);
       this.startTimer();
     }

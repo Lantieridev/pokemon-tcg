@@ -433,6 +433,19 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldReturnInvalidWhenAttackIsDisabledByEffect() {
+        FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        Attack attack = new Attack("Ember", 30, List.of(PokemonType.FIRE));
+        when(statusEffectManager.canAttack()).thenReturn(true);
+        when(statusEffectManager.getDisabledAttackName()).thenReturn("Ember");
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(attacker, attack));
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "attack_disabled_by_effect");
+    }
+
+    @Test
     void shouldReturnInvalidWhenTypedEnergyRequirementIsUnmet() {
         // required: [FIRE, FIRE, COLORLESS], attached: [FIRE, WATER, WATER]
         FakeBattlePokemonState attacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);

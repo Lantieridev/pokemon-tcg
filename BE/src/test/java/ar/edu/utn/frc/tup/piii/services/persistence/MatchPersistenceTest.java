@@ -525,6 +525,64 @@ class MatchPersistenceTest {
         assertTrue(valResult instanceof ValidationResult.Valid,
                 valResult instanceof ValidationResult.Invalid ? ((ValidationResult.Invalid) valResult).reason() : "");
     }
+
+    @Test
+    void testPendingSelectionRequestSerialization() {
+        MatchSessionJsonConverter converter = new MatchSessionJsonConverter();
+
+        PokemonCard pokemon = new PokemonCard.Builder("p-001", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+
+        InPlayPokemon active = new InPlayPokemon(pokemon);
+        PlayerRuntime runtimeA = new PlayerRuntime(
+                new Deck(List.of(pokemon)),
+                new Hand(),
+                new Bench(),
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                active
+        );
+        PlayerRuntime runtimeB = new PlayerRuntime(
+                new Deck(List.of(pokemon)),
+                new Hand(),
+                new Bench(),
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                active
+        );
+        PlayerState psA = new PlayerState(active, List.of(), List.of(), 60, 6, new HashMap<>());
+        PlayerState psB = new PlayerState(active, List.of(), List.of(), 60, 6, new HashMap<>());
+        MatchBoard board = new MatchBoard(List.of(psA, psB));
+
+        MatchSession session = new MatchSession(
+                "match-selection-test",
+                List.of("player-a", "player-b"),
+                board,
+                List.of(runtimeA, runtimeB)
+        );
+
+        PendingSelectionRequest request = new PendingSelectionRequest(
+                TrainerEffectId.MAX_REVIVE,
+                null,
+                1,
+                SelectionSource.DISCARD_PILE
+        );
+        session.setPendingSelectionRequest(request);
+
+        // Serialize
+        String json = converter.convertToDatabaseColumn(session);
+        assertNotNull(json);
+
+        // Deserialize
+        MatchSession restored = converter.convertToEntityAttribute(json);
+        assertNotNull(restored);
+        assertNotNull(restored.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.MAX_REVIVE, restored.getPendingSelectionRequest().sourceEffect());
+        assertEquals(SelectionSource.DISCARD_PILE, restored.getPendingSelectionRequest().source());
+        assertEquals(1, restored.getPendingSelectionRequest().maxSelections());
+        assertNull(restored.getPendingSelectionRequest().target());
+    }
 }
 
 

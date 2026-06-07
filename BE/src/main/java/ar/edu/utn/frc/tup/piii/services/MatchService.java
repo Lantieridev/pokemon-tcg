@@ -351,6 +351,9 @@ public class MatchService {
                 final StatusEffectManager sem =
                         session.getPlayerRuntime(i).getStatusEffectManager();
                 sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon());
+                if (i == turnManager.activePlayerIndex()) {
+                    sem.setDisabledAttackName(null);
+                }
             }
         }
     }
