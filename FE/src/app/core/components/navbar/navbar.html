@@ -3,17 +3,18 @@
     <aurora-logo></aurora-logo>
   </a>
   <div style="display: flex; align-items: center; gap: 22px;">
-    <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
-      <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
-      <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
-      <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
-      <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
-    </nav>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-      <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
-    </div>
-    
+    @if (username !== 'Invitado') {
+      <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
+        <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
+        <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
+        <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
+        <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
+        <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+      </div>
+    }
     <div>
       <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></aurora-trainer-chip>
     </div>
