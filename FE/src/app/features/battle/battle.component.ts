@@ -78,6 +78,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly canEndTurn = this.store.canEndTurn;
   readonly myActiveConditions = this.store.myActiveConditions;
   readonly oppActiveConditions = this.store.oppActiveConditions;
+  readonly activeStadiumCardId = this.store.activeStadiumCardId;
   readonly pendingSelection = computed(() => {
     const sel = this.store.pendingSelection();
     return sel && this.isMyTurn() ? sel : null;
@@ -89,10 +90,47 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   });
   readonly gameResult = computed(() => {
     if (!this.isFinished()) return null;
-    // If the game ended and it's "my turn" (activePlayerIndex===0), I won
-    // This is a simplification — the backend should send explicit winner info
-    return this.store.isMyTurn() ? 'VICTORIA' : 'DERROTA';
+    const winnerId = this.store.winnerId();
+    if (!winnerId) return 'EMPATE';
+    return winnerId === this.me()?.name ? 'VICTORIA' : 'DERROTA';
   });
+
+  readonly victoryReasonText = computed(() => {
+    if (!this.isFinished()) return '';
+    const reason = this.store.victoryReason();
+    const isWinner = this.gameResult() === 'VICTORIA';
+    
+    if (isWinner) {
+      switch (reason) {
+        case 'PRIZE_CARDS':
+          return '¡Ganaste al tomar todas tus cartas de Premio!';
+        case 'NO_BENCH_POKEMON':
+          return '¡Ganaste porque tu oponente se quedó sin Pokémon en juego!';
+        case 'DECK_OUT':
+          return '¡Ganaste porque tu oponente se quedó sin cartas en su mazo!';
+        case 'ABANDON':
+          return '¡Ganaste porque tu oponente abandonó la partida!';
+        default:
+          return '¡Victoria!';
+      }
+    } else {
+      switch (reason) {
+        case 'PRIZE_CARDS':
+          return 'Tu oponente tomó todas sus cartas de Premio.';
+        case 'NO_BENCH_POKEMON':
+          return 'Perdiste al quedarte sin Pokémon en juego.';
+        case 'DECK_OUT':
+          return 'Perdiste al quedarte sin cartas en tu mazo al comenzar tu turno.';
+        case 'ABANDON':
+          return 'Abandonaste la partida.';
+        default:
+          return 'Derrota.';
+      }
+    }
+  });
+
+  readonly mvpCardId = this.store.mvpCardId;
+  readonly mvpCardDamage = this.store.mvpCardDamage;
 
   // ── Estado UI local ────────────────────────────────────────────────────────
   readonly log = signal<LogEntry[]>([]);
@@ -561,7 +599,16 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const card = this.draggedCard();
     if (!card) return;
 
-    if (card.supertype === 'Energy') {
+    if (card.supertype === 'Trainer' && !card.subtypes.includes('Stadium')) {
+      const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
+                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+      this.sendAction({
+        type: 'PLAY_TRAINER',
+        cardId: card.id,
+        trainerType: type,
+        targetIndex: targetType === 'active' ? -1 : targetIndex
+      });
+    } else if (card.supertype === 'Energy') {
       const energyType = this.getEnergyType(card);
       this.sendAction({
         type: 'ATTACH_ENERGY',

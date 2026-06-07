@@ -212,6 +212,23 @@ class CardMapperTest {
         assertEquals(PokemonType.COLORLESS, pokemon.getPokemonType());
     }
 
+    @Test
+    void shouldParseAttackEffectTextCorrectly() {
+        final CardEntity entity = pokemonEntity("xy1-x", "TestMon", "Basic", 60,
+                "[{\"name\":\"Slash\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"10\",\"text\":\"Flip a coin. If heads, the Defending Pokémon is now paralyzed.\"},"
+                + "{\"name\":\"Toxic\",\"cost\":[\"Grass\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"20\",\"text\":\"The Defending Pokémon is now poisoned.\"},"
+                + "{\"name\":\"Hyper Fang\",\"cost\":[\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":2,"
+                + "\"damage\":\"40\",\"text\":\"Flip a coin. If tails, this attack does nothing.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pokemon = assertInstanceOf(PokemonCard.class, mapper.map(entity));
+        assertEquals(3, pokemon.getAttacks().size());
+        assertEquals("coin_flip_paralysis", pokemon.getAttacks().get(0).effectText());
+        assertEquals("poison", pokemon.getAttacks().get(1).effectText());
+        assertEquals("coin_flip_fail", pokemon.getAttacks().get(2).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,

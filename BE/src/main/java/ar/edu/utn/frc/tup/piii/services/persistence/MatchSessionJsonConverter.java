@@ -613,6 +613,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             } else {
                 gen.writeNullField("winnerId");
             }
+            if (value.getVictoryReason() != null) {
+                gen.writeStringField("victoryReason", value.getVictoryReason());
+            } else {
+                gen.writeNullField("victoryReason");
+            }
 
             try {
                 java.lang.reflect.Field runtimesField = MatchSession.class.getDeclaredField("playerRuntimes");
@@ -662,6 +667,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             String winnerId = node.has("winnerId") && !node.get("winnerId").isNull()
                     ? node.get("winnerId").asText()
                     : null;
+            String victoryReason = node.has("victoryReason") && !node.get("victoryReason").isNull()
+                    ? node.get("victoryReason").asText()
+                    : null;
             long version = node.has("version") && !node.get("version").isNull()
                     ? node.get("version").asLong()
                     : 1L;
@@ -683,6 +691,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 java.lang.reflect.Field winnerIdField = MatchSession.class.getDeclaredField("winnerId");
                 winnerIdField.setAccessible(true);
                 winnerIdField.set(session, winnerId);
+
+                java.lang.reflect.Field victoryReasonField = MatchSession.class.getDeclaredField("victoryReason");
+                victoryReasonField.setAccessible(true);
+                victoryReasonField.set(session, victoryReason);
 
                 java.lang.reflect.Field versionField = MatchSession.class.getDeclaredField("version");
                 versionField.setAccessible(true);

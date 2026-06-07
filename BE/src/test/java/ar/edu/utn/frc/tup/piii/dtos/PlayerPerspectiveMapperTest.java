@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.dtos;
 
+import ar.edu.utn.frc.tup.piii.engine.model.*;
 import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
@@ -135,6 +136,17 @@ class PlayerPerspectiveMapperTest {
         assertThat(dto.retreatCost()).isEqualTo(1);
         assertThat(dto.attachedEnergies()).hasSize(2);
         assertThat(dto.hasToolAttached()).isTrue();
+        assertThat(dto.attachedToolCardId()).isEqualTo("tool");
+    }
+
+    @Test
+    void shouldMapActiveStadiumCardId() {
+        final ar.edu.utn.frc.tup.piii.engine.model.TrainerCard stadium =
+                new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("stadium-card-id", "Rough Seas", ar.edu.utn.frc.tup.piii.engine.model.TrainerType.STADIUM).build();
+        session.getBoard().replaceStadium(stadium);
+
+        final GameStateResponseDTO response = mapper.toResponse(session, 0);
+        assertThat(response.activeStadiumCardId()).isEqualTo("stadium-card-id");
     }
 
     @Test
@@ -197,5 +209,45 @@ class PlayerPerspectiveMapperTest {
         session.finish();
         final GameStateResponseDTO response = mapper.toResponse(session, 0);
         assertThat(response.currentPhase()).isEqualTo("FINISHED");
+    }
+
+    @Test
+    void shouldMapVictoryDetailsAndMVPCardWhenFinished() {
+        final List<Card> dummyCards = List.of(new EnergyCard("dummy", "Energy", PokemonType.FIRE, true));
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime pr0 = 
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(
+                        new Deck(dummyCards), new Hand(), new Bench(), new DiscardPile(),
+                        new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(new ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper()),
+                        null, List.of());
+        pr0.getStatisticsTracker().addDamageDealt("xy1-46", 50);
+
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime pr1 = 
+                new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(
+                        new Deck(dummyCards), new Hand(), new Bench(), new DiscardPile(),
+                        new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(new ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper()),
+                        null, List.of());
+        pr1.getStatisticsTracker().addDamageDealt("xy1-1", 120);
+
+        final MatchSession customSession = new MatchSession(
+                "custom-001", List.of("playerA", "playerB"), session.getBoard(), List.of(pr0, pr1));
+        
+        customSession.setup();
+        customSession.start();
+        
+        GameStateResponseDTO activeResponse = mapper.toResponse(customSession, 0);
+        assertThat(activeResponse.winnerId()).isNull();
+        assertThat(activeResponse.victoryReason()).isNull();
+        assertThat(activeResponse.mvpCardId()).isNull();
+        assertThat(activeResponse.mvpCardDamage()).isNull();
+
+        customSession.setWinnerId("playerB");
+        customSession.setVictoryReason("PRIZE_CARDS");
+        customSession.finish();
+
+        GameStateResponseDTO finishedResponse = mapper.toResponse(customSession, 0);
+        assertThat(finishedResponse.winnerId()).isEqualTo("playerB");
+        assertThat(finishedResponse.victoryReason()).isEqualTo("PRIZE_CARDS");
+        assertThat(finishedResponse.mvpCardId()).isEqualTo("xy1-1");
+        assertThat(finishedResponse.mvpCardDamage()).isEqualTo(120);
     }
 }

@@ -392,6 +392,7 @@ public class MatchService {
                 if (winnerUsername != null) {
                     session.setWinnerId(winnerUsername);
                 }
+                session.setVictoryReason("ABANDON");
 
                 final int turnNumber = getCurrentTurnNumber(session);
                 persistence.save(new GameStateSnapshot(matchId, turnNumber, session.getPlayerIds()));

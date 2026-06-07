@@ -32,5 +32,10 @@ public enum AttackEffectType {
      * Example: Blastoise-EX "Rapid Spin" (xy1-29) — {@code "force_switch"}.
      * FR-TODO: requires full runtime access; not yet implemented.
      */
+    COIN_FLIP_POISON,
+    COIN_FLIP_BURN,
+    COIN_FLIP_PARALYSIS,
+    COIN_FLIP_SLEEP,
+    COIN_FLIP_CONFUSION,
     FORCE_SWITCH
 }
