@@ -1,17 +1,30 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PublicProfileDTO } from '../../../core/models/friends.models';
+import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
+import { StatComponent, IconComponent, TrainerChipComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
 
 @Component({
   selector: 'app-public-profile-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, StatComponent, IconComponent, TrainerChipComponent],
   templateUrl: './public-profile-modal.component.html',
   styleUrls: ['./public-profile-modal.component.css']
 })
-export class PublicProfileModalComponent {
+export class PublicProfileModalComponent implements OnInit {
+  private tcgService = inject(PokemonTcgService);
+
   @Input() profile!: PublicProfileDTO;
   @Output() close = new EventEmitter<void>();
+
+  activeTab: 'showcase' | 'stats' = 'showcase';
+  elementFilter = 'ALL';
+  Math = Math;
+
+  ngOnInit() {
+    this.tcgService.loadCards();
+  }
 
   onClose() {
     this.close.emit();
@@ -36,6 +49,107 @@ export class PublicProfileModalComponent {
       case 'serena': return '🎀';
       case 'red': return '⚡';
       default: return '👤';
+    }
+  }
+
+  get selectedMedalsList(): string[] {
+    if (!this.profile?.selectedMedals) return [];
+    return this.profile.selectedMedals.split(',').filter(m => !!m);
+  }
+
+  get totalWins(): number {
+    return this.profile?.statistics?.matchesWon ?? 0;
+  }
+
+  get totalLosses(): number {
+    return this.profile?.statistics?.matchesLost ?? 0;
+  }
+
+  get overallWinRate(): number {
+    return this.profile?.statistics?.winRate ?? 0;
+  }
+
+  getShowcaseSlot(position: number) {
+    return this.profile?.showcase?.find(s => s.slotPosition === position);
+  }
+
+  getCardImageById(cardId: string): string {
+    const card = this.tcgService.cards().find(c => c.id === cardId);
+    return card?.images?.small ?? card?.images?.large ?? '';
+  }
+
+  getTopPlayedPokemons(): any[] {
+    if (!this.profile?.advancedStats?.pokemonStats) return [];
+    let stats = this.profile.advancedStats.pokemonStats;
+    if (this.elementFilter && this.elementFilter !== 'ALL') {
+      stats = stats.filter((s: any) => s.pokemonType?.toUpperCase() === this.elementFilter.toUpperCase());
+    }
+    return [...stats].sort((a: any, b: any) => b.timesPlayed - a.timesPlayed).slice(0, 5);
+  }
+
+  getTopAttackers(): any[] {
+    if (!this.profile?.advancedStats?.pokemonStats) return [];
+    const stats = this.profile.advancedStats.pokemonStats;
+    return [...stats].sort((a: any, b: any) => b.damageDealt - a.damageDealt).slice(0, 5);
+  }
+
+  getEnergyStats(): any[] {
+    if (!this.profile?.advancedStats?.energyStats) return [];
+    const stats = this.profile.advancedStats.energyStats;
+    return [...stats].sort((a: any, b: any) => b.count - a.count);
+  }
+
+  getTypeColor(type: string): string {
+    if (!type) return 'var(--mut)';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return '#ff7a3d';
+      case 'WATER': return '#4aa3ff';
+      case 'GRASS': return '#46e08a';
+      case 'LIGHTNING': return '#ffce32';
+      case 'PSYCHIC': return '#a855f7';
+      case 'FIGHTING': return '#c27c50';
+      case 'DARKNESS': return '#64748b';
+      case 'METAL': return '#b8b8cc';
+      case 'FAIRY': return '#f472b6';
+      case 'DRAGON': return '#fb7185';
+      case 'COLORLESS': return '#94a3b8';
+      default: return 'var(--mut)';
+    }
+  }
+
+  getEnergyIconEmoji(type: string): string {
+    if (!type) return '⚪';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return '🔥';
+      case 'WATER': return '💧';
+      case 'GRASS': return '🌿';
+      case 'LIGHTNING': return '⚡';
+      case 'PSYCHIC': return '🔮';
+      case 'FIGHTING': return '👊';
+      case 'DARKNESS': return '🌙';
+      case 'METAL': return '🔩';
+      case 'FAIRY': return '🎀';
+      case 'DRAGON': return '🐉';
+      case 'COLORLESS': return '⚪';
+      default: return '⚪';
+    }
+  }
+
+  getEnergyLabel(type: string): string {
+    if (!type) return 'Desconocido';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return 'Fuego';
+      case 'WATER': return 'Agua';
+      case 'GRASS': return 'Planta';
+      case 'LIGHTNING': return 'Rayo';
+      case 'PSYCHIC': return 'Psíquico';
+      case 'FIGHTING': return 'Lucha';
+      case 'DARKNESS': return 'Siniestro';
+      case 'METAL': return 'Metal';
+      case 'FAIRY': return 'Hada';
+      case 'DRAGON': return 'Dragón';
+      case 'COLORLESS': return 'Normal';
+      default: return type;
     }
   }
 }
