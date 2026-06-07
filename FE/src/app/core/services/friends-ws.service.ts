@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { ChatMessageDTO, ChallengeDTO } from '../models/friends.models';
 import { AuthService } from './auth.service';
 import { Client, Stomp } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client';
 
 @Injectable({
   providedIn: 'root'
@@ -16,20 +16,29 @@ export class FriendsWsService {
   public challenges$ = new Subject<ChallengeDTO>();
 
   connect(): void {
-    if (this.stompClient && this.stompClient.connected) return;
+    if (this.stompClient && this.stompClient.active) return;
 
     const token = this.authService.token;
     if (!token) return;
 
-    // Use SockJS
-    const socket = new SockJS('http://localhost:8081/ws');
-    this.stompClient = Stomp.over(() => socket);
-    
-    this.stompClient.debug = () => {}; // Disable debug logs
-
-    this.stompClient.connect({ 'Authorization': 'Bearer ' + token }, () => {
-      this.subscribeToQueues();
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      connectHeaders: {
+        Authorization: 'Bearer ' + token
+      },
+      debug: function (str) {
+        // console.log(str);
+      },
+      onConnect: () => {
+        this.subscribeToQueues();
+      },
+      onStompError: (frame) => {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+      }
     });
+
+    this.stompClient.activate();
   }
 
   private subscribeToQueues(): void {
@@ -55,20 +64,20 @@ export class FriendsWsService {
   }
 
   sendChatMessage(message: ChatMessageDTO): void {
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.send('/app/chat.private', {}, JSON.stringify(message));
+    if (this.stompClient && this.stompClient.active) {
+      this.stompClient.publish({ destination: '/app/chat.private', body: JSON.stringify(message) });
     }
   }
 
   sendChallenge(challenge: ChallengeDTO): void {
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.send('/app/challenge.private', {}, JSON.stringify(challenge));
+    if (this.stompClient && this.stompClient.active) {
+      this.stompClient.publish({ destination: '/app/challenge.private', body: JSON.stringify(challenge) });
     }
   }
 
   disconnect(): void {
     if (this.stompClient) {
-      this.stompClient.disconnect();
+      this.stompClient.deactivate();
       this.stompClient = null;
     }
   }
