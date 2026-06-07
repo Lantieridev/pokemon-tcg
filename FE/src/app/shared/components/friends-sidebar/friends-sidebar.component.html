@@ -1,5 +1,5 @@
-<div class="friends-sidebar-overlay" *ngIf="isOpen" (click)="toggleSidebar()"></div>
-<div class="friends-sidebar" [class.open]="isOpen">
+<div class="friends-sidebar-overlay" *ngIf="isOpen()" (click)="toggleSidebar()"></div>
+<div class="friends-sidebar" [class.open]="isOpen()">
   <div class="sidebar-header">
     <h2>Social</h2>
     <button class="close-btn" (click)="toggleSidebar()">✕</button>
@@ -22,12 +22,18 @@
       <div class="friend-item" *ngFor="let f of friends">
         <div class="friend-info">
           <span class="avatar">{{f.avatarIcon || '👤'}}</span>
-          <span class="username">{{f.friendUsername}}</span>
+          <span class="username" [title]="f.friendUsername">{{f.friendUsername}}</span>
         </div>
         <div class="actions">
-          <button (click)="viewProfile(f.friendUsername)" title="Ver Perfil">👁️</button>
-          <button (click)="openChat(f)" title="Chat">💬</button>
-          <button class="danger" (click)="removeFriend(f.id)" title="Eliminar">🗑️</button>
+          <button (click)="viewProfile(f.friendUsername)" title="Ver Perfil">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+          <button (click)="openChat(f)" title="Chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </button>
+          <button class="danger" (click)="removeFriend(f.id)" title="Eliminar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
         </div>
       </div>
       <p class="empty-state" *ngIf="!friends.length">No tienes amigos aún.</p>
@@ -39,11 +45,15 @@
       <div class="request-item" *ngFor="let r of requests">
         <div class="friend-info">
           <span class="avatar">{{r.avatarIcon || '👤'}}</span>
-          <span class="username">{{r.friendUsername}}</span>
+          <span class="username" [title]="r.friendUsername">{{r.friendUsername}}</span>
         </div>
         <div class="actions">
-          <button class="success" (click)="acceptRequest(r.id)">✓</button>
-          <button class="danger" (click)="rejectRequest(r.id)">✕</button>
+          <button class="success" (click)="acceptRequest(r.id)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </button>
+          <button class="danger" (click)="rejectRequest(r.id)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
       <p class="empty-state" *ngIf="!requests.length">No hay solicitudes pendientes.</p>
