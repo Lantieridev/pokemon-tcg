@@ -192,7 +192,94 @@ public final class CardMapper {
                 .map(c -> parseType(String.valueOf(c)))
                 .toList();
 
-        return new Attack(name, baseDamage, requiredEnergies);
+        final String text = String.valueOf(raw.getOrDefault("text", ""));
+        final String effectText = inferAttackEffectText(name, text);
+
+        return new Attack(name, baseDamage, requiredEnergies, effectText);
+    }
+
+    private String inferAttackEffectText(final String attackName, final String text) {
+        if (text == null || text.isBlank() || "null".equals(text)) {
+            return "";
+        }
+        final String lower = text.toLowerCase();
+
+        // --- Coin-flip extra damage (e.g. "Flip a coin. If heads, this attack does 30 more damage.") ---
+        if (lower.contains("flip a coin") && lower.contains("more damage")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "coin_flip_extra:" + m.group(1);
+            }
+        }
+
+        // --- Coin-flip fail on tails ---
+        if (lower.contains("flip a coin") && (lower.contains("if tails, this attack does nothing") || lower.contains("if tails, that attack does nothing"))) {
+            return "coin_flip_fail";
+        }
+
+        // --- Coin-flip status conditions ---
+        if (lower.contains("flip a coin") || lower.contains("flip 2 coins")) {
+            if (lower.contains("paralyzed"))  return "coin_flip_paralysis";
+            if (lower.contains("asleep"))     return "coin_flip_sleep";
+            if (lower.contains("poisoned"))   return "coin_flip_poison";
+            if (lower.contains("burned"))     return "coin_flip_burn";
+            if (lower.contains("confused"))   return "coin_flip_confusion";
+        }
+
+        // --- Guaranteed status conditions ---
+        if (lower.contains("is now poisoned") || lower.contains("the defending pokémon is now poisoned") || lower.contains("now poisoned")) {
+            return "poison";
+        }
+        if (lower.contains("is now burned") || lower.contains("the defending pokémon is now burned") || lower.contains("now burned")) {
+            return "burn";
+        }
+        if (lower.contains("is now paralyzed") || lower.contains("the defending pokémon is now paralyzed") || lower.contains("now paralyzed")) {
+            return "paralysis";
+        }
+        if (lower.contains("is now asleep") || lower.contains("the defending pokémon is now asleep") || lower.contains("now asleep")) {
+            return "sleep";
+        }
+        if (lower.contains("is now confused") || lower.contains("the defending pokémon is now confused") || lower.contains("now confused")) {
+            return "confusion";
+        }
+
+        // --- Heal self ---
+        if (lower.contains("heal")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
+            if (m.find()) {
+                return "heal:" + m.group(1);
+            }
+        }
+
+        // --- Self damage / recoil ---
+        if (lower.contains("does") && lower.contains("damage to itself")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+to\\s+itself").matcher(lower);
+            if (m.find()) {
+                return "self_damage:" + m.group(1);
+            }
+        }
+
+        // --- Discard energy ---
+        if (lower.contains("discard") && lower.contains("energy")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("discard\\s+(\\d+)").matcher(lower);
+            if (m.find()) {
+                return "discard_energy:" + m.group(1);
+            }
+            // "Discard an Energy" = discard 1
+            if (lower.contains("discard an energy") || lower.contains("discard a")) {
+                return "discard_energy:1";
+            }
+        }
+
+        // --- Bench damage ---
+        if (lower.contains("each of your opponent's benched pok\u00e9mon") || lower.contains("opponent's benched")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "bench_damage:" + m.group(1);
+            }
+        }
+
+        return "";
     }
 
     private int parseDamage(final String damageStr) {

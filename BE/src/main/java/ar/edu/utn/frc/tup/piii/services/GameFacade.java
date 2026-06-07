@@ -250,6 +250,7 @@ public final class GameFacade {
                 session.getCoinFlipper()::flip
         )
         .defenderBench(defender.getBench().getAll())
+        .effectText(action.attack().effectText())
         .stadiumProvider(session.getBoard())
         .attackerStats(attacker.getStatisticsTracker())
         .defenderStats(defender.getStatisticsTracker())
@@ -581,19 +582,11 @@ public final class GameFacade {
         if (dto.targetIndex() == null) {
             return null;
         }
-        if (dto.trainerType() == TrainerType.POKEMON_TOOL) {
-            final var benched = board.getBenchedPokemon(playerIndex);
-            if (dto.targetIndex() >= 0 && dto.targetIndex() < benched.size()) {
-                return benched.get(dto.targetIndex());
-            }
-            return null;
-        }
-        // ITEM / SUPPORTER trainers may also specify a target (e.g. Cassius, Evosoda, Potion).
         if (dto.targetIndex() < 0) {
             return board.getActivePokemon(playerIndex);
         }
         final var benched = board.getBenchedPokemon(playerIndex);
-        if (dto.targetIndex() < benched.size()) {
+        if (dto.targetIndex() >= 0 && dto.targetIndex() < benched.size()) {
             return benched.get(dto.targetIndex());
         }
         return null;

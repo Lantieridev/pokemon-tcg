@@ -18,6 +18,7 @@ import java.util.List;
  * @param attachedEnergies energy types currently attached to this Pokémon
  * @param retreatCost     number of energy cards required to retreat
  * @param hasToolAttached true if a Pokémon Tool card is currently attached
+ * @param attachedToolCardId  card ID of the attached Pokémon Tool, or null if none
  * @param attacks         list of available attacks for this Pokémon
  */
 public record BattlePokemonDTO(
@@ -32,6 +33,7 @@ public record BattlePokemonDTO(
         List<PokemonType> attachedEnergies,
         int retreatCost,
         boolean hasToolAttached,
+        String attachedToolCardId,
         List<AttackDTO> attacks,
         List<String> statusConditions) {
 }

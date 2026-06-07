@@ -45,6 +45,7 @@ public final class MatchSession {
     private TurnManager turnManager;
     private RuleValidator ruleValidator;
     private String winnerId;
+    private String victoryReason;
     private long version = 1L;
 
     /**
@@ -521,6 +522,24 @@ public final class MatchSession {
      */
     public void setWinnerId(final String winnerId) {
         this.winnerId = winnerId;
+    }
+
+    /**
+     * Returns the victory reason for the match.
+     *
+     * @return victory reason string
+     */
+    public String getVictoryReason() {
+        return victoryReason;
+    }
+
+    /**
+     * Sets the victory reason for the match.
+     *
+     * @param victoryReason victory reason string
+     */
+    public void setVictoryReason(final String victoryReason) {
+        this.victoryReason = victoryReason;
     }
 
     /**

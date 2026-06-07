@@ -22,7 +22,25 @@ import java.util.List;
         String currentPhase,
         PendingSelectionRequestDTO pendingSelectionRequest,
         PlayerView self,
-        OpponentView opponent) {
+        OpponentView opponent,
+        String activeStadiumCardId,
+        String winnerId,
+        String victoryReason,
+        String mvpCardId,
+        Integer mvpCardDamage) {
+
+    public GameStateResponseDTO(
+        String matchId,
+        long version,
+        int turnNumber,
+        int activePlayerIndex,
+        String currentPhase,
+        PendingSelectionRequestDTO pendingSelectionRequest,
+        PlayerView self,
+        OpponentView opponent,
+        String activeStadiumCardId) {
+        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, null, null, null, null);
+    }
 
     /**
      * Full view of the receiving player's state, including the complete hand.
