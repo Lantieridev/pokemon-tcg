@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendshipDTO, ChatMessageDTO } from '../../../core/models/friends.models';
@@ -23,18 +23,21 @@ export class ChatModalComponent implements OnInit, OnDestroy {
 
   constructor(
     private friendsApi: FriendsApiService,
-    private friendsWs: FriendsWsService
+    private friendsWs: FriendsWsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.friendsApi.getChatHistory(this.friend.friendUsername).subscribe(history => {
       this.messages = history;
+      this.cdr.markForCheck();
       this.scrollToBottom();
     });
 
     this.sub = this.friendsWs.messages$.subscribe(msg => {
       if (msg.senderUsername === this.friend.friendUsername || msg.receiverUsername === this.friend.friendUsername) {
         this.messages.push(msg);
+        this.cdr.markForCheck();
         this.scrollToBottom();
       }
     });
@@ -75,5 +78,27 @@ export class ChatModalComponent implements OnInit, OnDestroy {
         container.scrollTop = container.scrollHeight;
       }
     }, 100);
+  }
+
+  isCustomAvatar(av: string | undefined): boolean {
+    return !!av && av.startsWith('avatar_');
+  }
+
+  getAvatarUrl(av: string | undefined): string {
+    if (!av) return '';
+    return `assets/achievements/avatars/${av}.png`;
+  }
+
+  getAvatarEmoji(icon: string | undefined): string {
+    if (!icon) return '👤';
+    switch (icon.toLowerCase()) {
+      case 'ash': return '🧢';
+      case 'misty': return '💧';
+      case 'brock': return '🪨';
+      case 'gary': return '👑';
+      case 'serena': return '🎀';
+      case 'red': return '⚡';
+      default: return '👤';
+    }
   }
 }
