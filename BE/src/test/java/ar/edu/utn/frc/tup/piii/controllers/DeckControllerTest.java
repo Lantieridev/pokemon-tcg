@@ -40,8 +40,14 @@ class DeckControllerTest {
     @BeforeEach
     void setUp() {
         deckService = mock(DeckService.class);
+        ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService templateService = mock(ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService.class);
+        
+        final DeckResponseDTO template = new DeckResponseDTO(
+                -1L, "Template", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), List.of());
+        when(templateService.getTemplateById(any(Long.class))).thenReturn(template);
+
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new DeckController(deckService))
+                .standaloneSetup(new DeckController(deckService, templateService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
@@ -60,8 +66,8 @@ class DeckControllerTest {
     @Test
     void getAll_returns200WithDeckList() throws Exception {
         when(deckService.getAll()).thenReturn(List.of(
-                new DeckSummaryDTO(1L, "Fire Deck", LocalDateTime.now(), 60),
-                new DeckSummaryDTO(2L, "Water Deck", LocalDateTime.now(), 60)
+                new DeckSummaryDTO(1L, "Fire Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), 60),
+                new DeckSummaryDTO(2L, "Water Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), 60)
         ));
 
         mockMvc.perform(get("/api/decks"))
@@ -74,7 +80,7 @@ class DeckControllerTest {
     @Test
     void getById_returns200WithDeck() throws Exception {
         final DeckResponseDTO response = new DeckResponseDTO(
-                42L, "My Deck", LocalDateTime.now(),
+                42L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(),
                 List.of(new DeckCardResponseDTO("xy1-1", "Bulbasaur", "Pokémon", "Basic", 4)));
 
         when(deckService.getById(42L)).thenReturn(response);
@@ -98,11 +104,11 @@ class DeckControllerTest {
     @Test
     void create_returns201WithCreatedDeck() throws Exception {
         final DeckResponseDTO response = new DeckResponseDTO(
-                7L, "New Deck", LocalDateTime.now(), List.of());
+                7L, "New Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), List.of());
 
         when(deckService.create(any(DeckRequestDTO.class))).thenReturn(response);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "New Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "New Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         mockMvc.perform(post("/api/decks")
@@ -118,7 +124,7 @@ class DeckControllerTest {
         when(deckService.create(any(DeckRequestDTO.class)))
                 .thenThrow(new InvalidDeckException("Deck must contain exactly 60 cards, but has 59"));
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "Bad Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(1L, "Bad Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 59)));
 
         mockMvc.perform(post("/api/decks")
@@ -132,12 +138,25 @@ class DeckControllerTest {
         when(deckService.create(any(DeckRequestDTO.class)))
                 .thenThrow(new NoSuchElementException("User not found: 999"));
 
-        final DeckRequestDTO request = new DeckRequestDTO(999L, "My Deck",
+        final DeckRequestDTO request = new DeckRequestDTO(999L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         mockMvc.perform(post("/api/decks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cloneTemplate_returns201WithCreatedDeck() throws Exception {
+        final DeckResponseDTO response = new DeckResponseDTO(
+                10L, "Template (Copia)", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), List.of());
+
+        when(deckService.create(any(DeckRequestDTO.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/decks/users/1/clone/-1"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.name").value("Template (Copia)"));
     }
 }

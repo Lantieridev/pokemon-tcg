@@ -21,9 +21,11 @@ import java.util.Objects;
 public final class DeckController {
 
     private final DeckService deckService;
+    private final ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService templateService;
 
-    public DeckController(final DeckService deckService) {
+    public DeckController(final DeckService deckService, final ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService templateService) {
         this.deckService = Objects.requireNonNull(deckService);
+        this.templateService = Objects.requireNonNull(templateService);
     }
 
     @GetMapping
@@ -39,6 +41,30 @@ public final class DeckController {
     @GetMapping("/{id}")
     public ResponseEntity<DeckResponseDTO> getById(@PathVariable final Long id) {
         return ResponseEntity.ok(deckService.getById(id));
+    }
+
+    @GetMapping("/templates")
+    public ResponseEntity<List<DeckSummaryDTO>> getTemplates() {
+        return ResponseEntity.ok(templateService.getTemplates());
+    }
+
+    @PostMapping("/users/{userId}/clone/{templateId}")
+    public ResponseEntity<DeckResponseDTO> cloneTemplate(
+            @PathVariable final Long userId,
+            @PathVariable final Long templateId) {
+        final DeckResponseDTO template = templateService.getTemplateById(templateId);
+        final List<ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO> cards = template.cards().stream()
+                .map(c -> new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO(c.cardId(), c.quantity()))
+                .toList();
+
+        final DeckRequestDTO request = new DeckRequestDTO(
+                userId,
+                template.name() + " (Copia)",
+                ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+                cards
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request));
     }
 
     @PostMapping
