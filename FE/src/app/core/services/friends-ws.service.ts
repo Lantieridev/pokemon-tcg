@@ -51,7 +51,7 @@ export class FriendsWsService {
 
     if (!username) return;
 
-    this.stompClient.subscribe(`/user/${username}/queue/messages`, (msg: any) => {
+    this.stompClient.subscribe('/user/queue/messages', (msg: any) => {
       if (msg.body) {
         this.zone.run(() => {
           this.messages$.next(JSON.parse(msg.body));
@@ -59,7 +59,7 @@ export class FriendsWsService {
       }
     });
 
-    this.stompClient.subscribe(`/user/${username}/queue/challenges`, (msg: any) => {
+    this.stompClient.subscribe('/user/queue/challenges', (msg: any) => {
       if (msg.body) {
         this.zone.run(() => {
           this.challenges$.next(JSON.parse(msg.body));
