@@ -55,7 +55,15 @@ export class FriendsSidebarComponent implements OnInit {
         this.toastService.success('Solicitud enviada correctamente');
         this.newFriendUsername = '';
       },
-      error: (err) => this.toastService.error(err.error.message || 'Error al enviar la solicitud')
+      error: (err) => {
+        const msg = err.error?.message || '';
+        if (msg.includes('already exists')) {
+          this.toastService.error('La solicitud a este usuario ya fue enviada');
+        } else {
+          this.toastService.error(msg || 'Error al enviar la solicitud');
+        }
+        this.newFriendUsername = '';
+      }
     });
   }
 
