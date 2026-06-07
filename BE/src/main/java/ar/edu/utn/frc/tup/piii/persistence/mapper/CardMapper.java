@@ -370,15 +370,14 @@ public final class CardMapper {
     }
 
     private PokemonToolEffectId inferToolEffectId(final String cardId, final String text) {
-        if (text == null || text.isBlank()) {
+        if (cardId == null) {
             return PokemonToolEffectId.NONE;
         }
-        final String lower = text.toLowerCase();
-        
-        if (lower.contains("attacks of the pokemon this card is attached to do 20 more damage")) {
+        final String cid = cardId.toLowerCase();
+        if (cid.contains("xy1-121") || (text != null && text.toLowerCase().contains("muscle band"))) {
             return PokemonToolEffectId.MUSCLE_BAND; // xy1-121
         }
-        if (lower.contains("damage done to the pokemon this card is attached to by an opponent's attack is reduced by 20")) {
+        if (cid.contains("xy1-119") || (text != null && text.toLowerCase().contains("hard charm"))) {
             return PokemonToolEffectId.HARD_CHARM; // xy1-119
         }
         
