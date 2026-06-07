@@ -22,6 +22,7 @@ export class FriendsSidebarComponent implements OnInit {
 
   @Output() onOpenChat = new EventEmitter<FriendshipDTO>();
   @Output() onOpenProfile = new EventEmitter<string>();
+  @Output() onSidebarClose = new EventEmitter<void>();
 
   private toastService = inject(ToastService);
 
@@ -40,6 +41,8 @@ export class FriendsSidebarComponent implements OnInit {
     this.isOpen.update(v => !v);
     if (this.isOpen()) {
       this.loadData();
+    } else {
+      this.onSidebarClose.emit();
     }
   }
 

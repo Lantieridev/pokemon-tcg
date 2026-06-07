@@ -20,7 +20,7 @@
     </div>
   </div>
 </header>
-<app-friends-sidebar #friendsSidebar (onOpenProfile)="openProfileModal($event)" (onOpenChat)="openChatModal($event)"></app-friends-sidebar>
+<app-friends-sidebar #friendsSidebar (onOpenProfile)="openProfileModal($event)" (onOpenChat)="openChatModal($event)" (onSidebarClose)="closeChatModal()"></app-friends-sidebar>
 
 @if (selectedProfile() && isProfileModalOpen()) {
   <app-public-profile-modal [profile]="selectedProfile()!" (close)="closeProfileModal()"></app-public-profile-modal>
