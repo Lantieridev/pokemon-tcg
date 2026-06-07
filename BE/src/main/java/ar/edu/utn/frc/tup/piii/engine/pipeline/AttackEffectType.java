@@ -37,5 +37,6 @@ public enum AttackEffectType {
     COIN_FLIP_PARALYSIS,
     COIN_FLIP_SLEEP,
     COIN_FLIP_CONFUSION,
+    DISABLE_ATTACK,
     FORCE_SWITCH
 }

@@ -243,6 +243,11 @@ public final class CardMapper {
             return "confusion";
         }
 
+        // --- Disable attack (e.g. Torment) ---
+        if (lower.contains("can't use that attack") || lower.contains("cant use that attack")) {
+            return "disable_attack";
+        }
+
         // --- Heal self ---
         if (lower.contains("heal")) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);

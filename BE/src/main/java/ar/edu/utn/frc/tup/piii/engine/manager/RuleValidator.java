@@ -53,6 +53,7 @@ public final class RuleValidator {
     private static final String ATTACK_BLOCKED_BY_STATUS = "attack_blocked_by_status";
     private static final String INSUFFICIENT_ENERGY_FOR_ATTACK = "insufficient_energy_for_attack";
     private static final String CANNOT_ATTACK_FIRST_TURN = "cannot_attack_first_turn";
+    private static final String ATTACK_DISABLED_BY_EFFECT = "attack_disabled_by_effect";
     private static final int MIN_TURNS_TO_EVOLVE = 1;
     private static final int MAX_ENERGY_PER_TURN = 1;
     /** Card ID of Fairy Garden in the XY1 set. */
@@ -326,6 +327,10 @@ public final class RuleValidator {
         }
         if (!getActiveStatusEffectManager(playerIndex).canAttack()) {
             return new ValidationResult.Invalid(ATTACK_BLOCKED_BY_STATUS);
+        }
+        final String disabledAttack = getActiveStatusEffectManager(playerIndex).getDisabledAttackName();
+        if (disabledAttack != null && disabledAttack.equalsIgnoreCase(action.attack().name())) {
+            return new ValidationResult.Invalid(ATTACK_DISABLED_BY_EFFECT);
         }
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_ATTACK);

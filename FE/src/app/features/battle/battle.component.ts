@@ -509,7 +509,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
     } else if (card.supertype === 'Trainer') {
       const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
-                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+                 : card.subtypes.includes('Pokémon Tool') ? 'POKEMON_TOOL' : 'ITEM';
       this.sendAction({
         type: 'PLAY_TRAINER',
         cardId: card.id,
@@ -612,7 +612,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (card.supertype === 'Trainer') {
       const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
                  : card.subtypes.includes('Stadium') ? 'STADIUM' 
-                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+                 : card.subtypes.includes('Pokémon Tool') ? 'POKEMON_TOOL' : 'ITEM';
       
       this.sendAction({
         type: 'PLAY_TRAINER',
@@ -636,7 +636,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     if (card.supertype === 'Trainer' && !card.subtypes.includes('Stadium')) {
       const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
-                 : card.subtypes.includes('Pokémon Tool') ? 'TOOL' : 'ITEM';
+                 : card.subtypes.includes('Pokémon Tool') ? 'POKEMON_TOOL' : 'ITEM';
       this.sendAction({
         type: 'PLAY_TRAINER',
         cardId: card.id,

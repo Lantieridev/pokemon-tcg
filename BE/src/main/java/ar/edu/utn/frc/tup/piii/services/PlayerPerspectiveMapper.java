@@ -46,7 +46,11 @@ public final class PlayerPerspectiveMapper {
                 if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
                     options = runtime.getDeck().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
-                    options = runtime.getDiscardPile().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                    var stream = runtime.getDiscardPile().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+                    }
+                    options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK) {
                     options = runtime.getDeck().getCards().stream().limit(7).map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 }

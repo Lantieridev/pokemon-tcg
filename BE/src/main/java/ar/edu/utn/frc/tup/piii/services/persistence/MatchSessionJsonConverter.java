@@ -618,6 +618,11 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             } else {
                 gen.writeNullField("victoryReason");
             }
+            if (value.getPendingSelectionRequest() != null) {
+                gen.writeObjectField("pendingSelectionRequest", value.getPendingSelectionRequest());
+            } else {
+                gen.writeNullField("pendingSelectionRequest");
+            }
 
             try {
                 java.lang.reflect.Field runtimesField = MatchSession.class.getDeclaredField("playerRuntimes");
@@ -673,6 +678,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             long version = node.has("version") && !node.get("version").isNull()
                     ? node.get("version").asLong()
                     : 1L;
+            ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest = node.has("pendingSelectionRequest") && !node.get("pendingSelectionRequest").isNull()
+                    ? p.getCodec().treeToValue(node.get("pendingSelectionRequest"), ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest.class)
+                    : null;
 
             if (board != null && playerRuntimes != null) {
                 board.bindRuntimes(playerRuntimes);
@@ -699,6 +707,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 java.lang.reflect.Field versionField = MatchSession.class.getDeclaredField("version");
                 versionField.setAccessible(true);
                 versionField.set(session, version);
+
+                java.lang.reflect.Field pendingReqField = MatchSession.class.getDeclaredField("pendingSelectionRequest");
+                pendingReqField.setAccessible(true);
+                pendingReqField.set(session, pendingSelectionRequest);
             } catch (Exception e) {
                 throw new IOException("Failed to restore MatchSession state fields", e);
             }

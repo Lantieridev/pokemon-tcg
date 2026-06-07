@@ -40,6 +40,7 @@ public class StatusEffectManager {
     private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
     private final CoinFlipper coinFlipper;
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
+    private String disabledAttackName;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -106,6 +107,7 @@ public class StatusEffectManager {
      */
     public void clearAll() {
         activeEffects.clear();
+        this.disabledAttackName = null;
     }
 
     /**
@@ -203,5 +205,13 @@ public class StatusEffectManager {
             case PARALIZADO -> new ParalyzedEffect();
             case ENVENENADO -> new PoisonedEffect();
         };
+    }
+
+    public String getDisabledAttackName() {
+        return disabledAttackName;
+    }
+
+    public void setDisabledAttackName(final String disabledAttackName) {
+        this.disabledAttackName = disabledAttackName;
     }
 }
