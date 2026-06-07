@@ -1,9 +1,10 @@
-import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
 import { FriendsWsService } from '../../../core/services/friends-ws.service';
 import { FriendshipDTO } from '../../../core/models/friends.models';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-friends-sidebar',
@@ -21,6 +22,8 @@ export class FriendsSidebarComponent implements OnInit {
 
   @Output() onOpenChat = new EventEmitter<FriendshipDTO>();
   @Output() onOpenProfile = new EventEmitter<string>();
+
+  private toastService = inject(ToastService);
 
   constructor(
     private friendsApi: FriendsApiService,
@@ -49,10 +52,10 @@ export class FriendsSidebarComponent implements OnInit {
     if (!this.newFriendUsername.trim()) return;
     this.friendsApi.sendFriendRequest(this.newFriendUsername).subscribe({
       next: () => {
-        alert('Request sent!');
+        this.toastService.success('Solicitud enviada correctamente');
         this.newFriendUsername = '';
       },
-      error: (err) => alert('Error: ' + err.error.message)
+      error: (err) => this.toastService.error(err.error.message || 'Error al enviar la solicitud')
     });
   }
 
