@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, NgZone } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ChatMessageDTO, ChallengeDTO } from '../models/friends.models';
 import { AuthService } from './auth.service';
@@ -10,6 +10,7 @@ import SockJS from 'sockjs-client';
 })
 export class FriendsWsService {
   private authService = inject(AuthService);
+  private zone = inject(NgZone);
   private stompClient: any = null;
   
   public messages$ = new Subject<ChatMessageDTO>();
@@ -52,13 +53,17 @@ export class FriendsWsService {
 
     this.stompClient.subscribe(`/user/${username}/queue/messages`, (msg: any) => {
       if (msg.body) {
-        this.messages$.next(JSON.parse(msg.body));
+        this.zone.run(() => {
+          this.messages$.next(JSON.parse(msg.body));
+        });
       }
     });
 
     this.stompClient.subscribe(`/user/${username}/queue/challenges`, (msg: any) => {
       if (msg.body) {
-        this.challenges$.next(JSON.parse(msg.body));
+        this.zone.run(() => {
+          this.challenges$.next(JSON.parse(msg.body));
+        });
       }
     });
   }
