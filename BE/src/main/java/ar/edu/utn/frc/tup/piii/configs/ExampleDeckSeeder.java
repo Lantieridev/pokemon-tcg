@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class LantieriDeckSeeder implements CommandLineRunner {
+public class ExampleDeckSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final DeckService deckService;
     private final DeckRepository deckRepository;
 
-    public LantieriDeckSeeder(UserRepository userRepository, DeckService deckService, DeckRepository deckRepository) {
+    public ExampleDeckSeeder(UserRepository userRepository, DeckService deckService, DeckRepository deckRepository) {
         this.userRepository = userRepository;
         this.deckService = deckService;
         this.deckRepository = deckRepository;
@@ -26,7 +26,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Optional<UserEntity> userOpt = userRepository.findByUsername("lantieri");
+        Optional<UserEntity> userOpt = userRepository.findByUsername("usuario");
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
             
@@ -87,7 +87,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
             try {
                 deckService.create(waterDeck);
                 deckService.create(fireDeck);
-                System.out.println(">>> SEEDED 2 DECKS FOR USER LANTIERI <<<");
+                System.out.println(">>> SEEDED 2 DECKS FOR USER USUARIO <<<");
             } catch (Exception e) {
                 System.err.println("Failed to seed decks: " + e.getMessage());
             }
