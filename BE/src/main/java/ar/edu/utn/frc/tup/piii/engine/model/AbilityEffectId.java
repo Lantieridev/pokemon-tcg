@@ -9,5 +9,12 @@ public enum AbilityEffectId {
     SWEET_VEIL,
     MYSTICAL_FIRE,
     MAGNETIC_DRAW,
+    SPIKY_SHIELD,
+    DESTINY_BURST,
+    WATER_SHURIKEN,
+    UPSIDE_DOWN_EVOLUTION,
+    STANCE_CHANGE,
+    DRIVE_OFF,
+    FUR_COAT,
     NONE
 }

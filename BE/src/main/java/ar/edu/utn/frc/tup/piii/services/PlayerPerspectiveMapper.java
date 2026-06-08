@@ -44,7 +44,16 @@ public final class PlayerPerspectiveMapper {
             if (session.getActivePlayerIndex() == viewerIndex) {
                 final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = session.getPlayerRuntime(viewerIndex);
                 if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
-                    options = runtime.getDeck().getCards().stream().map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                    var stream = runtime.getDeck().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc &&
+                                pc.getEvolvesFrom() != null &&
+                                req.target() != null &&
+                                pc.getEvolvesFrom().equalsIgnoreCase(req.target().getName()));
+                    }
+                    options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
                     var stream = runtime.getDiscardPile().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
@@ -52,7 +61,11 @@ public final class PlayerPerspectiveMapper {
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK) {
-                    options = runtime.getDeck().getCards().stream().limit(7).map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                    var stream = runtime.getDeck().getCards().stream().limit(7);
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.GREAT_BALL) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
+                    }
+                    options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 }
             }
             requestDto = new PendingSelectionRequestDTO(req.sourceEffect(), req.target() != null ? req.target().getCardId() : null, req.maxSelections(), req.source(), options);

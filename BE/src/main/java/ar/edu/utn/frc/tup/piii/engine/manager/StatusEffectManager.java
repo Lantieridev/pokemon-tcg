@@ -69,6 +69,10 @@ public class StatusEffectManager {
         this.playerRuntime = playerRuntime;
     }
 
+    public ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime getPlayerRuntime() {
+        return playerRuntime;
+    }
+
     /**
      * Applies the status effect of the given type to this Pokémon.
      * If the new effect occupies the rotation slot, any existing rotation-slot effect
@@ -82,8 +86,7 @@ public class StatusEffectManager {
             throw new InvalidStatusEffectException("Status effect type must not be null");
         }
         
-        if (type == StatusEffectType.DORMIDO && playerRuntime != null &&
-                playerRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)) {
+        if (ar.edu.utn.frc.tup.piii.engine.pipeline.PassiveAbilityRegistry.preventStatusEffect(type, playerRuntime)) {
             return;
         }
         StatusEffect newEffect = buildEffect(type);
@@ -91,6 +94,16 @@ public class StatusEffectManager {
             activeEffects.entrySet().removeIf(e -> e.getValue().isRotationSlot());
         }
         activeEffects.put(type, newEffect);
+    }
+
+    /**
+     * Checks if the active Pokemon meets the conditions for Sweet Veil protection.
+     * If so, clears all Special Conditions immediately.
+     */
+    public void checkSweetVeil() {
+        if (ar.edu.utn.frc.tup.piii.engine.pipeline.PassiveAbilityRegistry.preventStatusEffect(null, playerRuntime)) {
+            clearAll();
+        }
     }
 
     /**

@@ -19,6 +19,7 @@ public final class KnockoutCheckStep implements AttackPipelineStep {
         if (isKnockedOut(defender)) {
             final int prizes = defender.isEx() ? EX_PRIZES : STANDARD_PRIZES;
             ctx.getKnockoutHandler().onKnockout(defender, prizes);
+            ReactiveAbilityHandler.onKnockout(ctx, defender);
         }
         next.run();
     }

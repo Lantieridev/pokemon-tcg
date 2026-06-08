@@ -133,6 +133,13 @@ public final class GameFacade {
             case PromoteActiveAction promote   -> applyPromoteActive(promote, runtime);
             case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction selectCards -> applySelectCards(selectCards, session, runtime);
         }
+        
+        if (session.getPlayerRuntime(0) != null) {
+            session.getPlayerRuntime(0).getStatusEffectManager().checkSweetVeil();
+        }
+        if (session.getPlayerRuntime(1) != null) {
+            session.getPlayerRuntime(1).getStatusEffectManager().checkSweetVeil();
+        }
     }
 
     // --- action handlers ---

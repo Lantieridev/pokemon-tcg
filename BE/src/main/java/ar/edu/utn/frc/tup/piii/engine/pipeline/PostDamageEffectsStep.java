@@ -20,6 +20,9 @@ public final class PostDamageEffectsStep implements AttackPipelineStep {
     @Override
     public void process(final AttackContext ctx, final Runnable next) {
         resolver.apply(ctx);
+        if (ctx.getDamageResult() != null) {
+            ReactiveAbilityHandler.onDamageDealt(ctx, ctx.getDamageResult().finalDamage());
+        }
         next.run();
     }
 }

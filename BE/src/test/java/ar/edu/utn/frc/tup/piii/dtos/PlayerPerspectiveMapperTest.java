@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -255,5 +256,51 @@ class PlayerPerspectiveMapperTest {
         assertThat(responseB.victoryReason()).isEqualTo("PRIZE_CARDS");
         assertThat(responseB.mvpCardId()).isEqualTo("xy1-1");
         assertThat(responseB.mvpCardDamage()).isEqualTo(120);
+    }
+
+    @Test
+    void shouldFilterPendingSelectionOptionsBasedOnTrainerEffect() {
+        PokemonCard pikachu = new PokemonCard.Builder("xy1-1", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+        PokemonCard raichu = new PokemonCard.Builder("xy1-2", "Raichu", 90, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.STAGE_1)
+                .evolvesFrom("Pikachu")
+                .build();
+        EnergyCard basicLightning = new EnergyCard("xy1-3", "Lightning Energy", PokemonType.LIGHTNING, true);
+        EnergyCard specialEnergy = new EnergyCard("xy1-4", "Double Colorless", PokemonType.COLORLESS, false, 2, false);
+        TrainerCard itemCard = new TrainerCard.Builder("xy1-5", "Potion", TrainerType.ITEM).build();
+
+        PlayerRuntime pr = new PlayerRuntime(
+                new Deck(List.of(pikachu, raichu, basicLightning, specialEnergy, itemCard)),
+                new Hand(), new Bench(), new DiscardPile(),
+                new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(new ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper()),
+                null, List.of()
+        );
+        MatchSession customSession = new MatchSession(
+                "custom-sel", List.of("playerA", "playerB"), session.getBoard(), List.of(pr, pr));
+        customSession.setActivePlayerIndex(0);
+
+        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
+                TrainerEffectId.PROFESSORS_LETTER, null, 2, SelectionSource.DECK));
+
+        GameStateResponseDTO response = mapper.toResponse(customSession, 0);
+        assertThat(response.pendingSelectionRequest()).isNotNull();
+        assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-3");
+
+        InPlayPokemon activePikachu = new InPlayPokemon(pikachu);
+        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
+                TrainerEffectId.EVOSODA, activePikachu, 1, SelectionSource.DECK));
+
+        response = mapper.toResponse(customSession, 0);
+        assertThat(response.pendingSelectionRequest()).isNotNull();
+        assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-2");
+
+        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
+                TrainerEffectId.GREAT_BALL, null, 1, SelectionSource.TOP_7_DECK));
+
+        response = mapper.toResponse(customSession, 0);
+        assertThat(response.pendingSelectionRequest()).isNotNull();
+        assertThat(response.pendingSelectionRequest().options()).containsExactlyInAnyOrder("xy1-1", "xy1-2");
     }
 }

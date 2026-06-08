@@ -109,6 +109,13 @@ public final class PlayerRuntime {
         if (turnsInPlay != null) {
             this.turnsInPlay.putAll(turnsInPlay);
         }
+        try {
+            java.lang.reflect.Field field = StatusEffectManager.class.getDeclaredField("playerRuntime");
+            field.setAccessible(true);
+            field.set(statusEffectManager, this);
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
 

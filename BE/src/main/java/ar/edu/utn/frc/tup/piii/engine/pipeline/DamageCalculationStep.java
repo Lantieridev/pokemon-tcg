@@ -31,7 +31,10 @@ public final class DamageCalculationStep implements AttackPipelineStep {
                 ctx.getAttackerModifiers(),
                 ctx.getDefenderModifiers());
         final DamageResult result = calculator.calculate(dmgCtx, ctx.isWeaknessSuppressed());
-        ctx.setDamageResult(result);
+        
+        final int rawModifiedDamage = PassiveAbilityRegistry.modifyIncomingDamage(result.finalDamage(), ctx);
+        final DamageResult finalResult = rawModifiedDamage == result.finalDamage() ? result : new DamageResult(rawModifiedDamage, rawModifiedDamage / 10);
+        ctx.setDamageResult(finalResult);
         next.run();
     }
 }
