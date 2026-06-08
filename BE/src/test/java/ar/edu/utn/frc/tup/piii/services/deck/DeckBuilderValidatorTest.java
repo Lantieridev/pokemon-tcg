@@ -70,7 +70,7 @@ class DeckBuilderValidatorTest {
 
     @Test
     void shouldPassWhenDeckHasExactly60Cards() {
-        assertDoesNotThrow(() -> validator.validate(validDeck()));
+        assertDoesNotThrow(() -> validator.validate(validDeck(), ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 
     @Test
@@ -80,7 +80,7 @@ class DeckBuilderValidatorTest {
         deck.remove(deck.size() - 1);
         deck.add(basicEnergy("Fighting Energy", 2)); // -1
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("60"), "Error must mention 60");
     }
 
@@ -90,14 +90,14 @@ class DeckBuilderValidatorTest {
         deck.remove(deck.size() - 1);
         deck.add(basicEnergy("Fighting Energy", 5)); // +2
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("60"), "Error must mention 60");
     }
 
     @Test
     void shouldRejectEmptyDeck() {
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(Collections.emptyList()));
+                InvalidDeckException.class, () -> validator.validate(Collections.emptyList(), ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("60"), "Error must mention 60");
     }
 
@@ -109,7 +109,7 @@ class DeckBuilderValidatorTest {
         deck.add(pokemon("Ivysaur", "Stage 1", 4));
         deck.add(basicEnergy("Grass Energy", 56));
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().toLowerCase().contains("basic"),
                 "Error must mention 'basic'");
     }
@@ -136,7 +136,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Darkness Energy", 4));
         deck.add(basicEnergy("Fairy Energy", 3));
         // 1+4+4+4+4+4+4+4+4+4+4+4+4+4+4+3 = 60
-        assertDoesNotThrow(() -> validator.validate(deck));
+        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 
     @Test
@@ -159,7 +159,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Darkness Energy", 4));
         // 15 * 4 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().toLowerCase().contains("basic"));
     }
 
@@ -181,7 +181,7 @@ class DeckBuilderValidatorTest {
         over4.add(basicEnergy("Grass Energy", 50));
         // total = 4+4+2+50 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(over4));
+                InvalidDeckException.class, () -> validator.validate(over4, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("4") || ex.getMessage().toLowerCase().contains("copies"),
                 "Error must mention copy limit");
     }
@@ -191,7 +191,7 @@ class DeckBuilderValidatorTest {
         final List<DeckEntry> deck = new ArrayList<>();
         deck.add(pokemon("Bulbasaur", "Basic", 4));
         deck.add(basicEnergy("Grass Energy", 56)); // 60 total, more than 4 basic energy
-        assertDoesNotThrow(() -> validator.validate(deck));
+        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 
     @Test
@@ -202,7 +202,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Grass Energy", 51));
         // total = 4+5+51 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("4") || ex.getMessage().toLowerCase().contains("copies"));
     }
 
@@ -217,7 +217,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Grass Energy", 51));
         // total = 4+2+2+1+51 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().contains("4") || ex.getMessage().toLowerCase().contains("copies"));
     }
 
@@ -229,7 +229,7 @@ class DeckBuilderValidatorTest {
         deck.add(new DeckEntry("sw-2", "Switch", "Trainer", "Item", null, 2)); // exactly 4
         deck.add(basicEnergy("Grass Energy", 52));
         // total = 4+2+2+52 = 60
-        assertDoesNotThrow(() -> validator.validate(deck));
+        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 
     // === RULE 4: Max 1 ACE SPEC total ===
@@ -243,7 +243,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Grass Energy", 54));
         // total = 4+1+1+54 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().toLowerCase().contains("ace spec")
                 || ex.getMessage().toLowerCase().contains("ace"),
                 "Error must mention ACE SPEC");
@@ -269,7 +269,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Darkness Energy", 4));
         deck.add(basicEnergy("Fairy Energy", 3));
         // 4+1+4+4+4+4+4+4+4+4+4+4+4+4+4+3 = 60
-        assertDoesNotThrow(() -> validator.validate(deck));
+        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 
     @Test
@@ -280,7 +280,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Grass Energy", 54));
         // total = 4+2+54 = 60
         final InvalidDeckException ex = assertThrows(
-                InvalidDeckException.class, () -> validator.validate(deck));
+                InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
         assertTrue(ex.getMessage().toLowerCase().contains("ace spec")
                 || ex.getMessage().toLowerCase().contains("ace"));
     }
@@ -293,6 +293,6 @@ class DeckBuilderValidatorTest {
         deck.add(trainer("Switch", 4));
         deck.add(basicEnergy("Grass Energy", 48));
         // total = 4+4+4+48 = 60
-        assertDoesNotThrow(() -> validator.validate(deck));
+        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
 }

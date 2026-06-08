@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll() 
                         .requestMatchers("/ping").permitAll()
                         .requestMatchers("/api/rankings").permitAll() 
+                        .requestMatchers("/api/decks/**").permitAll() 
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/**").permitAll() 

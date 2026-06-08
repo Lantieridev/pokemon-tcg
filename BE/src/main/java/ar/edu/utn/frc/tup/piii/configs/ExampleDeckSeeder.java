@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class LantieriDeckSeeder implements CommandLineRunner {
+public class ExampleDeckSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final DeckService deckService;
     private final DeckRepository deckRepository;
 
-    public LantieriDeckSeeder(UserRepository userRepository, DeckService deckService, DeckRepository deckRepository) {
+    public ExampleDeckSeeder(UserRepository userRepository, DeckService deckService, DeckRepository deckRepository) {
         this.userRepository = userRepository;
         this.deckService = deckService;
         this.deckRepository = deckRepository;
@@ -26,7 +26,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Optional<UserEntity> userOpt = userRepository.findByUsername("lantieri");
+        Optional<UserEntity> userOpt = userRepository.findByUsername("usuario");
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
             
@@ -40,6 +40,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
             ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO fireDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
                     user.getId(),
                     "Mazo Fuego Dev",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-4", 4), // Charmander
@@ -64,6 +65,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
             ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO waterDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
                     user.getId(),
                     "Mazo Agua Dev",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-31", 4), // Shellder
@@ -87,7 +89,7 @@ public class LantieriDeckSeeder implements CommandLineRunner {
             try {
                 deckService.create(waterDeck);
                 deckService.create(fireDeck);
-                System.out.println(">>> SEEDED 2 DECKS FOR USER LANTIERI <<<");
+                System.out.println(">>> SEEDED 2 DECKS FOR USER USUARIO <<<");
             } catch (Exception e) {
                 System.err.println("Failed to seed decks: " + e.getMessage());
             }
