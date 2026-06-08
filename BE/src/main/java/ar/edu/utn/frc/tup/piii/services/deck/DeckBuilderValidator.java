@@ -14,11 +14,23 @@ public final class DeckBuilderValidator {
     private static final int MAX_COPIES_PER_NAME = 4;
     private static final int MAX_ACE_SPEC = 1;
 
-    public void validate(final List<DeckEntry> entries) {
-        validateTotalSize(entries);
-        validateHasBasicPokemon(entries);
+    public void validate(final List<DeckEntry> entries, final ar.edu.utn.frc.tup.piii.engine.model.DeckStatus status) {
+        if (status == ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.DRAFT) {
+            validateDraftSize(entries);
+        } else {
+            validateTotalSize(entries);
+            validateHasBasicPokemon(entries);
+        }
         validateMaxCopiesPerName(entries);
         validateAceSpec(entries);
+    }
+
+    private void validateDraftSize(final List<DeckEntry> entries) {
+        final int total = entries.stream().mapToInt(DeckEntry::quantity).sum();
+        if (total > REQUIRED_DECK_SIZE) {
+            throw new InvalidDeckException(
+                    "Draft deck cannot contain more than 60 cards, found " + total);
+        }
     }
 
     private void validateTotalSize(final List<DeckEntry> entries) {
