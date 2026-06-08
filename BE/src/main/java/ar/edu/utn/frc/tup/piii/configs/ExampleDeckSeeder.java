@@ -40,6 +40,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
             ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO fireDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
                     user.getId(),
                     "Mazo Fuego Dev",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-4", 4), // Charmander
@@ -64,6 +65,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
             ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO waterDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
                     user.getId(),
                     "Mazo Agua Dev",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-31", 4), // Shellder
