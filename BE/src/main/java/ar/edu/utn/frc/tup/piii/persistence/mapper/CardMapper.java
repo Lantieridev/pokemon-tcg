@@ -73,6 +73,13 @@ public final class CardMapper {
         ab.put("Mystical Fire",  AbilityEffectId.MYSTICAL_FIRE);
         ab.put("Magnetic Draw",  AbilityEffectId.MAGNETIC_DRAW);
         ab.put("Safeguard",      AbilityEffectId.SAFEGUARD);
+        ab.put("Spiky Shield",   AbilityEffectId.SPIKY_SHIELD);
+        ab.put("Destiny Burst",  AbilityEffectId.DESTINY_BURST);
+        ab.put("Water Shuriken", AbilityEffectId.WATER_SHURIKEN);
+        ab.put("Upside-Down Evolution", AbilityEffectId.UPSIDE_DOWN_EVOLUTION);
+        ab.put("Stance Change",  AbilityEffectId.STANCE_CHANGE);
+        ab.put("Drive Off",      AbilityEffectId.DRIVE_OFF);
+        ab.put("Fur Coat",       AbilityEffectId.FUR_COAT);
         ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 

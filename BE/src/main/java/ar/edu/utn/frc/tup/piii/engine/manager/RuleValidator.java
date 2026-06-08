@@ -23,6 +23,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.RetreatAction;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerType;
 import ar.edu.utn.frc.tup.piii.engine.model.UseAbilityAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
+import ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId;
 
 import java.util.HashMap;
 import java.util.List;
@@ -376,9 +377,59 @@ public final class RuleValidator {
         }
         
         var ability = abilityOpt.get();
-        if (ability.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MYSTICAL_FIRE || ability.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MAGNETIC_DRAW) {
-            if (source.hasUsedAbilityThisTurn(ability.effectId().name())) {
+        final AbilityEffectId effId = ability.effectId();
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MYSTICAL_FIRE || 
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MAGNETIC_DRAW ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.WATER_SHURIKEN ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
+            if (source.hasUsedAbilityThisTurn(effId.name())) {
                 return new ValidationResult.Invalid("ability_already_used_this_turn");
+            }
+        }
+        
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = getActiveStatusEffectManager(playerIndex).getPlayerRuntime();
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF) {
+            if (runtime == null || runtime.getActivePokemon() != source) {
+                return new ValidationResult.Invalid("pokemon_must_be_active");
+            }
+            final int opponentIndex = 1 - playerIndex;
+            if (benchStateProvider.getBenchSize(opponentIndex) == 0) {
+                return new ValidationResult.Invalid("opponent_bench_empty");
+            }
+        }
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.WATER_SHURIKEN) {
+            if (runtime == null) {
+                return new ValidationResult.Invalid("player_runtime_required");
+            }
+            final boolean hasWaterEnergy = runtime.getHand().getCards().stream()
+                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.WATER);
+            if (!hasWaterEnergy) {
+                return new ValidationResult.Invalid("water_energy_required_in_hand");
+            }
+        }
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE) {
+            if (runtime == null) {
+                return new ValidationResult.Invalid("player_runtime_required");
+            }
+            final boolean hasAegislash = runtime.getHand().getCards().stream()
+                    .anyMatch(c -> c.getName().equalsIgnoreCase("Aegislash") && !c.getCardId().equals(source.getCardId()));
+            if (!hasAegislash) {
+                return new ValidationResult.Invalid("aegislash_required_in_hand");
+            }
+        }
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
+            if (runtime == null || runtime.getActivePokemon() != source) {
+                return new ValidationResult.Invalid("pokemon_must_be_active");
+            }
+            if (!getActiveStatusEffectManager(playerIndex).has(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.CONFUNDIDO)) {
+                return new ValidationResult.Invalid("pokemon_must_be_confused");
             }
         }
         

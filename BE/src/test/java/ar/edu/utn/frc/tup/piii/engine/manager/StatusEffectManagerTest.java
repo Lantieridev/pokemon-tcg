@@ -49,9 +49,13 @@ class StatusEffectManagerTest {
     }
 
     @Test
-    void shouldNotApplyAsleepWhenProtectedBySweetVeil() {
+    void shouldNotApplyAsleepWhenProtectedBySweetVeilWithFairyEnergy() {
         ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime mockRuntime = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
         when(mockRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)).thenReturn(true);
+        ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState mockActive = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState.class);
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard fairyEnergy = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("xy1-fairy", "Fairy Energy", ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY, true);
+        when(mockActive.getAttachedEnergyCards()).thenReturn(java.util.List.of(fairyEnergy));
+        when(mockRuntime.getActivePokemon()).thenReturn(mockActive);
         manager.setPlayerRuntime(mockRuntime);
 
         manager.apply(StatusEffectType.DORMIDO);
@@ -59,9 +63,26 @@ class StatusEffectManagerTest {
     }
 
     @Test
-    void shouldApplyOtherEffectsEvenWhenProtectedBySweetVeil() {
+    void shouldNotApplyOtherEffectsWhenProtectedBySweetVeilWithFairyEnergy() {
         ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime mockRuntime = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
         when(mockRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)).thenReturn(true);
+        ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState mockActive = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState.class);
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard fairyEnergy = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("xy1-fairy", "Fairy Energy", ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY, true);
+        when(mockActive.getAttachedEnergyCards()).thenReturn(java.util.List.of(fairyEnergy));
+        when(mockRuntime.getActivePokemon()).thenReturn(mockActive);
+        manager.setPlayerRuntime(mockRuntime);
+
+        manager.apply(StatusEffectType.ENVENENADO);
+        assertFalse(manager.has(StatusEffectType.ENVENENADO));
+    }
+
+    @Test
+    void shouldApplyEffectsWhenSweetVeilIsActiveButNoFairyEnergy() {
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime mockRuntime = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        when(mockRuntime.hasAbility(ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SWEET_VEIL)).thenReturn(true);
+        ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState mockActive = Mockito.mock(ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState.class);
+        when(mockActive.getAttachedEnergyCards()).thenReturn(java.util.List.of());
+        when(mockRuntime.getActivePokemon()).thenReturn(mockActive);
         manager.setPlayerRuntime(mockRuntime);
 
         manager.apply(StatusEffectType.ENVENENADO);

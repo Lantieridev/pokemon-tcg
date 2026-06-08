@@ -181,6 +181,10 @@ public final class InPlayPokemon implements BattlePokemonState {
         this.usedAbilitiesThisTurn.clear();
     }
 
+    public void swapCard(final PokemonCard newCard) {
+        this.card = Objects.requireNonNull(newCard, "newCard must not be null");
+    }
+
     /**
      * Returns the current underlying Pokémon card (the topmost evolution).
      *
