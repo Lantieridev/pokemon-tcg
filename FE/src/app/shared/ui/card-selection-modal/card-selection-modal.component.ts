@@ -29,17 +29,17 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
 
         <!-- Subtitle -->
         <p class="modal-subtitle">
-          Seleccionadas: {{ selectedIds().size }} / {{ maxSelections }}
+          Seleccionadas: {{ selectedIndices().size }} / {{ maxSelections }}
         </p>
 
         <!-- Card grid -->
         <div class="card-grid">
-          @for (id of cardIds; track id) {
+          @for (id of cardIds; track $index) {
             <div
               class="card-slot"
-              [class.selected]="isSelected(id)"
-              [class.disabled]="!isSelected(id) && selectedIds().size >= maxSelections"
-              (click)="toggleCard(id)"
+              [class.selected]="isSelected($index)"
+              [class.disabled]="!isSelected($index) && selectedIndices().size >= maxSelections"
+              (click)="toggleCard($index)"
             >
               <img
                 [src]="getCardImageUrl(id)"
@@ -56,7 +56,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
           <button class="btn-cancel" (click)="onCancel()">Cancelar</button>
           <button
             class="btn-confirm"
-            [disabled]="selectedIds().size === 0"
+            [disabled]="selectedIndices().size === 0"
             (click)="onConfirm()"
           >
             Confirmar
@@ -236,29 +236,30 @@ export class CardSelectionModalComponent {
   @Output() cancel = new EventEmitter<void>();
 
   /* ── Internal state ────────────────────────────────── */
-  selectedIds = signal<Set<string>>(new Set());
+  selectedIndices = signal<Set<number>>(new Set());
 
   /* ── Methods ───────────────────────────────────────── */
 
-  toggleCard(cardId: string): void {
-    this.selectedIds.update(prev => {
+  toggleCard(index: number): void {
+    this.selectedIndices.update(prev => {
       const next = new Set(prev);
-      if (next.has(cardId)) {
-        next.delete(cardId);
+      if (next.has(index)) {
+        next.delete(index);
       } else if (next.size < this.maxSelections) {
-        next.add(cardId);
+        next.add(index);
       }
       return next;
     });
   }
 
-  isSelected(cardId: string): boolean {
-    return this.selectedIds().has(cardId);
+  isSelected(index: number): boolean {
+    return this.selectedIndices().has(index);
   }
 
   onConfirm(): void {
-    this.confirm.emit(Array.from(this.selectedIds()));
-    this.selectedIds.set(new Set());
+    const selectedIds = Array.from(this.selectedIndices()).map(idx => this.cardIds[idx]);
+    this.confirm.emit(selectedIds);
+    this.selectedIndices.set(new Set());
   }
 
   onCancel(): void {

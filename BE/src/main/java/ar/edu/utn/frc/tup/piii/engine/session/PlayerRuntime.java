@@ -149,6 +149,7 @@ public final class PlayerRuntime {
 
     public void clearActivePokemon() {
         this.activePokemon = null;
+        this.statusEffectManager.clearAll();
     }
 
     /**

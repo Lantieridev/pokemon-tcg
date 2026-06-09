@@ -49,12 +49,12 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-11", 2), // Charizard EX
                             
                             // Trainers
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-118", 4), // Professor's Letter
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-120", 4), // Roller Skates
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-123", 4), // Shauna
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 4), // Super Potion
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-116", 4), // Muscle Band
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-119", 4), // Red Card
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-123", 4), // Professor's Letter
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 4), // Roller Skates
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-127", 4), // Shauna
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-128", 4), // Super Potion
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-121", 4), // Muscle Band
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-124", 4), // Red Card
                             
                             // Energies
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-131", 22)
@@ -74,12 +74,12 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-29", 2), // Blastoise EX
                             
                             // Trainers
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-118", 4), // Professor's Letter
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-120", 4), // Roller Skates
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-123", 4), // Shauna
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 4), // Super Potion
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-116", 4), // Muscle Band
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-119", 4), // Red Card
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-123", 4), // Professor's Letter
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 4), // Roller Skates
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-127", 4), // Shauna
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-128", 4), // Super Potion
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-121", 4), // Muscle Band
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-124", 4), // Red Card
                             
                             // Energies
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-132", 22)
