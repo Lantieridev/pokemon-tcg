@@ -113,14 +113,7 @@ public final class SetupManager {
         placeActive(slot1, strategy1);
         placeBench(slot1, strategy1);
 
-        // Step 4 — Mandatory bonus draws
-        if (mulligansP0.size() > mulligansP1.size()) {
-            final int difference = mulligansP0.size() - mulligansP1.size();
-            slot1.getHand().addCards(slot1.getDeck().drawMultiple(difference));
-        } else if (mulligansP1.size() > mulligansP0.size()) {
-            final int difference = mulligansP1.size() - mulligansP0.size();
-            slot0.getHand().addCards(slot0.getDeck().drawMultiple(difference));
-        }
+        // Step 4 — No bonus draws from mulligans (always starting with 7 cards)
 
         // Step 5 — set aside Prize cards
         slot0.addPrizes(slot0.getDeck().drawMultiple(prizeCount));
@@ -169,14 +162,7 @@ public final class SetupManager {
             }
         }
 
-        // Step 4 — Mandatory bonus draws (based on mulligans)
-        if (mulligansP0.size() > mulligansP1.size()) {
-            final int difference = mulligansP0.size() - mulligansP1.size();
-            slot1.getHand().addCards(slot1.getDeck().drawMultiple(difference));
-        } else if (mulligansP1.size() > mulligansP0.size()) {
-            final int difference = mulligansP1.size() - mulligansP0.size();
-            slot0.getHand().addCards(slot0.getDeck().drawMultiple(difference));
-        }
+        // Step 4 — No bonus draws from mulligans (always starting with 7 cards)
 
         // Step 5 — set aside Prize cards
         slot0.addPrizes(slot0.getDeck().drawMultiple(prizeCount));
