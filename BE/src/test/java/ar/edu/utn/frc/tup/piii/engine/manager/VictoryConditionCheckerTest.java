@@ -396,10 +396,30 @@ class VictoryConditionCheckerTest {
                 localBattlefieldProvider,
                 result -> captured.add(result));
         
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
         localChecker.checkFieldVictory();
         
         assertEquals(1, captured.size());
         assertInstanceOf(VictoryResult.BenchOutVictory.class, captured.get(0));
         assertEquals(PLAYER_1, ((VictoryResult.BenchOutVictory) captured.get(0)).winnerPlayerIndex());
+    }
+
+    @Test
+    void shouldNotFireVictoryWhenCheckFieldVictoryIsCalledDuringSetupPhase() {
+        FakeBattlefieldStateProvider localBattlefieldProvider = new FakeBattlefieldStateProvider(null,
+                new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false));
+        benchProvider.set(PLAYER_0, BENCH_ZERO);
+        benchProvider.set(PLAYER_1, PRIZES_TWO);
+        
+        VictoryConditionChecker localChecker = new VictoryConditionChecker(
+                prizeProvider,
+                deckProvider,
+                benchProvider,
+                localBattlefieldProvider,
+                result -> captured.add(result));
+        
+        localChecker.checkFieldVictory();
+        
+        assertTrue(captured.isEmpty());
     }
 }
