@@ -185,7 +185,7 @@
           </div>
         }
         @for (b of opp()!.bench; track $index) {
-          <div (click)="zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
+          <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
             <app-field-pokemon
               [cardId]="b.cardId"
               [energies]="b.energies"
@@ -194,7 +194,8 @@
               [status]="b.status"
               [attachedToolCardId]="b.attachedToolCardId"
               [width]="70"
-              direction="up">
+              direction="up"
+              (toolClick)="zoomCard(getCardImageUrl($event))">
             </app-field-pokemon>
           </div>
         }
@@ -203,7 +204,7 @@
       <!-- OPPONENT ACTIVE -->
       @if (opp()!.active; as activeOpp) {
         <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
-             (click)="zoomCard(getCardImageUrl(activeOpp.cardId))">
+             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
           @if (oppActiveIsBurned()) {
             <div class="token-burned" title="Oponente Quemado">🔥</div>
           }
@@ -219,7 +220,8 @@
             [attachedToolCardId]="activeOpp.attachedToolCardId"
             [width]="110"
             [glow]="true"
-            direction="up">
+            direction="up"
+            (toolClick)="zoomCard(getCardImageUrl($event))">
           </app-field-pokemon>
         </div>
       } @else {
@@ -229,6 +231,27 @@
             <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
             <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
           </div>
+        </div>
+      }
+
+      <!-- Floating cancel retreat or targeting banner -->
+      @if (isRetreating() || targetingAbility()) {
+        <div class="absolute top-[30px] left-1/2 -translate-x-1/2 z-[45] flex items-center gap-4 px-6 py-3 rounded-2xl border transition-all duration-300"
+             style="background: rgba(13, 21, 33, 0.95); backdrop-filter: blur(12px); border-color: var(--accent2); box-shadow: 0 0 20px rgba(255, 206, 50, 0.3);">
+          <div class="flex items-center gap-2.5">
+            <span class="animate-ping w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+            <span class="text-sm font-chunky tracking-wide text-white uppercase">
+              @if (isRetreating()) {
+                Selecciona un Pokémon de la banca para retirar
+              } @else {
+                Selecciona el objetivo para {{ targetingAbility()?.name }}
+              }
+            </span>
+          </div>
+          <button class="px-3.5 py-1.5 rounded-xl text-xs font-chunky uppercase cursor-pointer transition-all border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95"
+                  (click)="isRetreating() ? cancelRetreat() : targetingAbility.set(null)">
+            Cancelar
+          </button>
         </div>
       }
 
@@ -244,7 +267,7 @@
       @if (me()!.active; as activeMe) {
         <div class="active-pokemon-wrapper cursor-pointer" 
              [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
-             (click)="selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe)"
+             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
              (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
              (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
              (dragover)="onDragOver($event)"
@@ -265,7 +288,8 @@
             [attachedToolCardId]="activeMe.attachedToolCardId"
             [width]="120"
             [glow]="true"
-            direction="up">
+            direction="up"
+            (toolClick)="zoomCard(getCardImageUrl($event))">
           </app-field-pokemon>
         </div>
       } @else {
@@ -286,7 +310,7 @@
         @for (b of me()!.bench; track $index) {
           <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
                [class.pulse-promote]="!me()!.active"
-               (click)="!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b))"
+               (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
                (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
                (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
                (dragover)="onDragOver($event)"
@@ -298,7 +322,8 @@
               [maxHp]="b.maxHp"
               [attachedToolCardId]="b.attachedToolCardId"
               [width]="80"
-              direction="up">
+              direction="up"
+              (toolClick)="zoomCard(getCardImageUrl($event))">
             </app-field-pokemon>
           </div>
         }
@@ -396,47 +421,62 @@
           · HP {{ menu().pokemon?.maxHp - menu().pokemon?.damage }}/{{ menu().pokemon?.maxHp }}
         </div>
 
-        <!-- Ataques disponibles del Pokémon activo -->
-        @for (atk of me()!.active!.attacks; track $index) {
-          <div class="item"
-               [class.opacity-50]="!canAttack()"
-               (click)="attack($index)">
-            <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
-            <span>{{ atk.name }}</span>
-            <span class="cost ml-auto mr-2">
-              @for (e of atk.energyCost; track $index) {
-                <app-energy-pip [type]="e" [size]="14"></app-energy-pip>
-              }
-            </span>
-            <span class="key">{{ atk.baseDamage || '—' }}</span>
-          </div>
-        }
-
-        <div class="label">Acciones</div>
-        <!-- Usar Habilidad — si el Pokémon tiene abilities -->
+        <!-- Habilidades activas en el listado superior junto a los ataques -->
         @if (menu().pokemon?.abilities) {
           @for (ab of menu().pokemon.abilities; track $index) {
+            @if (isActiveAbility(ab.name)) {
+              <div class="item animate-pulse"
+                   [class.opacity-50]="!isMyTurn()"
+                   (click)="triggerAbility(ab.name, menu().index === null ? -1 : menu().index)">
+                <app-icon name="star" svgClass="w-4 h-4" style="color:var(--p-yellow)"></app-icon>
+                <span>Habilidad: {{ ab.name }}</span>
+                <span class="key">HAB</span>
+              </div>
+            }
+          }
+        }
+
+        <!-- Ataques disponibles: solo para el Pokémon activo (menu().index === null) -->
+        @if (menu().index === null) {
+          @for (atk of me()!.active!.attacks; track $index) {
             <div class="item"
-                 [class.opacity-50]="!isMyTurn()"
-                 (click)="useAbility(menu().pokemon.cardId)">
-              <app-icon name="star" svgClass="w-4 h-4" style="color:var(--p-yellow)"></app-icon>
-              <span>{{ ab.name || 'Habilidad' }}</span>
-              <span class="key">HAB</span>
+                 [class.opacity-50]="!canAttack()"
+                 (click)="attack($index)">
+              <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
+              <span>{{ atk.name }}</span>
+              <span class="cost ml-auto mr-2">
+                @for (e of atk.energyCost; track $index) {
+                  <app-energy-pip [type]="e" [size]="14"></app-energy-pip>
+                }
+              </span>
+              <span class="key">{{ atk.baseDamage || '—' }}</span>
             </div>
           }
         }
-        <!-- Retirar — habilitado según fase -->
-        <div class="item"
-             [class.opacity-50]="!canRetreat()"
-             (click)="retreat(0, [])">
-          <app-icon name="back" svgClass="w-4 h-4" style="color:#5b6885"></app-icon>
-          <span>Retirar a la banca</span>
-          <span class="cost ml-auto mr-2">
-            @for (i of [].constructor(me()!.active!.retreatCost); track $index) {
-              <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
-            }
-          </span>
-        </div>
+
+        <div class="label">Acciones</div>
+        <!-- Retirar: solo para el Pokémon activo (menu().index === null) -->
+        @if (menu().index === null) {
+          <div class="item"
+               [class.opacity-50]="!canRetreat()"
+               (click)="startRetreat()">
+            <app-icon name="back" svgClass="w-4 h-4" style="color:#5b6885"></app-icon>
+            <span>Retirar a la banca</span>
+            <span class="cost ml-auto mr-2">
+              @for (i of [].constructor(me()!.active!.retreatCost); track $index) {
+                <app-energy-pip type="colorless" [size]="14"></app-energy-pip>
+              }
+            </span>
+          </div>
+        } @else {
+          <!-- Promover a Activo si no hay activo -->
+          @if (!me()!.active) {
+            <div class="item" (click)="promoteActive(menu().index); closeMenu()">
+              <app-icon name="arrow-up" svgClass="w-4 h-4" style="color:var(--p-blue)"></app-icon>
+              <span>Promover a Activo</span>
+            </div>
+          }
+        }
       </div>
     }
 

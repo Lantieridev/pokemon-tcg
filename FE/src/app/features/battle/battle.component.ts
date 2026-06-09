@@ -433,7 +433,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const active = this.me()?.active;
     if (!active) return;
     
-    const hasFairyEnergy = active.attachedEnergies.includes('FAIRY');
+    const hasFairyEnergy = active.energies.includes('fairy');
     const isFairyGarden = this.activeStadiumCardId() === 'xy1-117';
     const retreatCost = (isFairyGarden && hasFairyEnergy) ? 0 : active.retreatCost;
     
