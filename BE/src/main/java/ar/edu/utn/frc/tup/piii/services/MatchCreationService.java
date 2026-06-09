@@ -27,6 +27,8 @@ import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import ar.edu.utn.frc.tup.piii.services.ChatService;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
+import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
+import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -61,18 +63,22 @@ public final class MatchCreationService {
     private final MatchSessionRegistry registry;
     private final SimpMessagingTemplate messaging;
     private final ChatService chatService;
+    private final PlayerPerspectiveMapper perspectiveMapper;
 
     /**
-     * @param registry    stores active sessions (never null)
-     * @param messaging   used to broadcast the initial game state after setup (never null)
-     * @param chatService used to broadcast setup events like mulligans
+     * @param registry          stores active sessions (never null)
+     * @param messaging         used to broadcast the initial game state after setup (never null)
+     * @param chatService       used to broadcast setup events like mulligans
+     * @param perspectiveMapper maps sessions to player-specific views
      */
     public MatchCreationService(final MatchSessionRegistry registry,
                                  final SimpMessagingTemplate messaging,
-                                 final ChatService chatService) {
+                                 final ChatService chatService,
+                                 final PlayerPerspectiveMapper perspectiveMapper) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
+        this.perspectiveMapper = Objects.requireNonNull(perspectiveMapper, "perspectiveMapper must not be null");
     }
 
     /**
@@ -235,8 +241,10 @@ public final class MatchCreationService {
         if (result instanceof VictoryResult.SuddenDeath) {
             // Rulebook §6: both players start a new game with 1 Prize card each.
             session.resetForSuddenDeath();
-            messaging.convertAndSend(topicA, result);
-            messaging.convertAndSend(topicB, result);
+            final GameStateResponseDTO viewA = perspectiveMapper.toResponse(session, 0);
+            final GameStateResponseDTO viewB = perspectiveMapper.toResponse(session, 1);
+            messaging.convertAndSend(topicA, viewA);
+            messaging.convertAndSend(topicB, viewB);
             // Session stays in registry — match continues in sudden-death mode.
             return;
         }
@@ -253,8 +261,10 @@ public final class MatchCreationService {
         }
 
         session.finish();
-        messaging.convertAndSend(topicA, result);
-        messaging.convertAndSend(topicB, result);
+        final GameStateResponseDTO viewA = perspectiveMapper.toResponse(session, 0);
+        final GameStateResponseDTO viewB = perspectiveMapper.toResponse(session, 1);
+        messaging.convertAndSend(topicA, viewA);
+        messaging.convertAndSend(topicB, viewB);
         registry.remove(matchId);
     }
 }
