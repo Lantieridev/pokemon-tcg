@@ -143,6 +143,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly selectedHandIndex = signal<number | null>(null);
   readonly draggedCard = signal<PokemonTcgCard | null>(null);
   readonly draggedCardIndex = signal<number | null>(null);
+  readonly isRetreating = signal<boolean>(false);
+  readonly targetingAbility = signal<{ name: string; sourceIndex: number | null } | null>(null);
 
   readonly quickChat = QUICK_CHAT;
   Math = Math;
@@ -416,15 +418,80 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.closeMenu();
   }
 
+  startRetreat(): void {
+    if (!this.canRetreat()) return;
+    this.isRetreating.set(true);
+    this.closeMenu();
+  }
+
+  cancelRetreat(): void {
+    this.isRetreating.set(false);
+  }
+
+  onRetreatClick(targetIndex: number): void {
+    this.isRetreating.set(false);
+    const active = this.me()?.active;
+    if (!active) return;
+    
+    const hasFairyEnergy = active.attachedEnergies.includes('FAIRY');
+    const isFairyGarden = this.activeStadiumCardId() === 'xy1-117';
+    const retreatCost = (isFairyGarden && hasFairyEnergy) ? 0 : active.retreatCost;
+    
+    const energyIndices: number[] = [];
+    for (let i = 0; i < retreatCost; i++) {
+      energyIndices.push(i);
+    }
+    this.retreat(targetIndex, energyIndices);
+  }
+
   endTurn(): void {
     if (!this.canEndTurn()) return;
     this.sendAction({ type: 'END_TURN' });
   }
 
-  useAbility(cardId: string): void {
+  useAbility(abilityName: string, sourceIndex: number | null): void {
     if (!this.isMyTurn()) return;
-    this.sendAction({ type: 'USE_ABILITY', cardId });
+    this.sendAction({
+      type: 'USE_ABILITY',
+      cardId: abilityName,
+      sourceIndex: sourceIndex
+    });
     this.closeMenu();
+  }
+
+  triggerAbility(abilityName: string, sourceIndex: number | null): void {
+    this.closeMenu();
+    if (abilityName === 'Water Shuriken') {
+      this.targetingAbility.set({ name: abilityName, sourceIndex });
+    } else if (abilityName === 'Fairy Transfer') {
+      const targetIndex = sourceIndex === -1 ? 0 : -1;
+      this.sendAction({
+        type: 'USE_ABILITY',
+        cardId: abilityName,
+        sourceIndex: sourceIndex,
+        targetIndex: targetIndex,
+        selectedEnergyIndices: [0]
+      });
+    } else {
+      this.useAbility(abilityName, sourceIndex);
+    }
+  }
+
+  onAbilityTargetClick(targetType: 'active' | 'bench', targetIndex: number | null): void {
+    const targeting = this.targetingAbility();
+    if (!targeting) return;
+    this.targetingAbility.set(null);
+    this.sendAction({
+      type: 'USE_ABILITY',
+      cardId: targeting.name,
+      sourceIndex: targeting.sourceIndex,
+      targetIndex: targetType === 'active' ? -1 : targetIndex
+    });
+  }
+
+  isActiveAbility(name: string): boolean {
+    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off'];
+    return activeAbilities.includes(name);
   }
 
   confirmSelection(selectedCardIds: string[]): void {
@@ -674,13 +741,14 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // ── UI Handlers ───────────────────────────────────────────────────────────
 
-  openCardMenu(e: MouseEvent, pokemon: any): void {
+  openCardMenu(e: MouseEvent, pokemon: any, index: number | null = null): void {
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     this.menu.set({
       x: rect.right,
       y: rect.top + rect.height / 2,
       pokemon,
+      index,
     });
   }
 

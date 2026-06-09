@@ -16,5 +16,6 @@ public enum AbilityEffectId {
     STANCE_CHANGE,
     DRIVE_OFF,
     FUR_COAT,
+    FOREST_CURSE,
     NONE
 }

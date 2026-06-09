@@ -80,6 +80,7 @@ public final class CardMapper {
         ab.put("Stance Change",  AbilityEffectId.STANCE_CHANGE);
         ab.put("Drive Off",      AbilityEffectId.DRIVE_OFF);
         ab.put("Fur Coat",       AbilityEffectId.FUR_COAT);
+        ab.put("Forest's Curse", AbilityEffectId.FOREST_CURSE);
         ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 
@@ -210,6 +211,36 @@ public final class CardMapper {
             return "";
         }
         final String lower = text.toLowerCase();
+
+        // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
+        if (lower.contains("flip") && lower.contains("coin") && lower.contains("times the number of heads")) {
+            if (lower.contains("until you get tails")) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+                if (m.find()) {
+                    return "coin_flips_until_tails:" + m.group(1);
+                }
+            }
+            else if (lower.contains("for each") && lower.contains("energy")) {
+                java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
+                java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+                if (mEnergy.find() && mDamage.find()) {
+                    return "coin_flips_per_energy:" + mEnergy.group(1) + ":" + mDamage.group(1);
+                }
+            }
+            else if (lower.contains("for each damage counter")) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+                if (m.find()) {
+                    return "coin_flips_per_damage_counter:" + m.group(1);
+                }
+            }
+            else {
+                java.util.regex.Matcher mCoins = java.util.regex.Pattern.compile("flip\\s+(\\d+)\\s+coins").matcher(lower);
+                java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+                if (mCoins.find() && mDamage.find()) {
+                    return "coin_flips_multiplier:" + mCoins.group(1) + ":" + mDamage.group(1);
+                }
+            }
+        }
 
         // --- Coin-flip extra damage (e.g. "Flip a coin. If heads, this attack does 30 more damage.") ---
         if (lower.contains("flip a coin") && lower.contains("more damage")) {

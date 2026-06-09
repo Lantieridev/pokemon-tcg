@@ -154,7 +154,7 @@ public final class AbilityEffectResolver {
                     runtime.getDeck().shuffle();
                 }
             };
-            case SAFEGUARD, SWEET_VEIL, FUR_COAT, SPIKY_SHIELD, DESTINY_BURST -> null;
+            case SAFEGUARD, SWEET_VEIL, FUR_COAT, SPIKY_SHIELD, DESTINY_BURST, FOREST_CURSE -> null;
             case NONE -> null;
         };
         return Optional.ofNullable(effect);

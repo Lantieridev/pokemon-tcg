@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
 import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
 import ar.edu.utn.frc.tup.piii.engine.model.Attack;
@@ -67,17 +68,32 @@ public final class RuleValidator {
     private final HandStateProvider handStateProvider;
     /** Optional — null means no Stadium awareness (no effects applied). */
     private final StadiumStateProvider stadiumProvider;
+    private final BattlefieldStateProvider battlefieldProvider;
 
     /**
-     * Full constructor. Accepts one {@link StatusEffectManager} per player and an optional
-     * {@link StadiumStateProvider} for Stadium-dependent rule modifications (e.g. Fairy Garden).
-     *
-     * @param turnManager          manages turn phases and player state (must not be null)
-     * @param statusEffectManagers one SEM per player, indexed by player index (must not be null)
-     * @param turnInPlayProvider   reports how many turns a Pokémon has been in play (must not be null)
-     * @param benchStateProvider   provides bench size per player (must not be null)
-     * @param handStateProvider    provides read-only access to player's hands (must not be null)
-     * @param stadiumProvider      provides the active Stadium card, or null if not needed
+     * Full constructor. Accepts one {@link StatusEffectManager} per player, an optional
+     * {@link StadiumStateProvider} for Stadium-dependent rule modifications (e.g. Fairy Garden),
+     * and an optional {@link BattlefieldStateProvider} for Pokémon state checks (e.g. Trevenant).
+     */
+    public RuleValidator(final TurnManager turnManager,
+                         final List<StatusEffectManager> statusEffectManagers,
+                         final PokemonTurnInPlayProvider turnInPlayProvider,
+                         final BenchStateProvider benchStateProvider,
+                         final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider,
+                         final StadiumStateProvider stadiumProvider,
+                         final BattlefieldStateProvider battlefieldProvider) {
+        this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
+        this.statusEffectManagers = List.copyOf(
+                Objects.requireNonNull(statusEffectManagers, "statusEffectManagers"));
+        this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
+        this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
+        this.handStateProvider = Objects.requireNonNull(handStateProvider, "handStateProvider");
+        this.stadiumProvider = stadiumProvider;
+        this.battlefieldProvider = battlefieldProvider;
+    }
+
+    /**
+     * Backward-compatible 6-argument constructor.
      */
     public RuleValidator(final TurnManager turnManager,
                          final List<StatusEffectManager> statusEffectManagers,
@@ -85,13 +101,8 @@ public final class RuleValidator {
                          final BenchStateProvider benchStateProvider,
                          final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider,
                          final StadiumStateProvider stadiumProvider) {
-        this.turnManager = Objects.requireNonNull(turnManager, "turnManager");
-        this.statusEffectManagers = List.copyOf(
-                Objects.requireNonNull(statusEffectManagers, "statusEffectManagers"));
-        this.turnInPlayProvider = Objects.requireNonNull(turnInPlayProvider, "turnInPlayProvider");
-        this.benchStateProvider = Objects.requireNonNull(benchStateProvider, "benchStateProvider");
-        this.handStateProvider = Objects.requireNonNull(handStateProvider, "handStateProvider");
-        this.stadiumProvider = stadiumProvider; // nullable — no Stadium awareness if null
+        this(turnManager, statusEffectManagers, turnInPlayProvider, benchStateProvider, handStateProvider, stadiumProvider,
+             turnInPlayProvider instanceof BattlefieldStateProvider bp ? bp : null);
     }
 
     /**
@@ -108,7 +119,8 @@ public final class RuleValidator {
                          final PokemonTurnInPlayProvider turnInPlayProvider,
                          final BenchStateProvider benchStateProvider,
                          final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider) {
-        this(turnManager, statusEffectManagers, turnInPlayProvider, benchStateProvider, handStateProvider, null);
+        this(turnManager, statusEffectManagers, turnInPlayProvider, benchStateProvider, handStateProvider, null,
+             turnInPlayProvider instanceof BattlefieldStateProvider bp ? bp : null);
     }
 
     /**
@@ -125,7 +137,8 @@ public final class RuleValidator {
                          final PokemonTurnInPlayProvider turnInPlayProvider,
                          final BenchStateProvider benchStateProvider,
                          final ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider handStateProvider) {
-        this(turnManager, List.of(statusEffectManager), turnInPlayProvider, benchStateProvider, handStateProvider, null);
+        this(turnManager, List.of(statusEffectManager), turnInPlayProvider, benchStateProvider, handStateProvider, null,
+             turnInPlayProvider instanceof BattlefieldStateProvider bp ? bp : null);
     }
 
     /**
@@ -265,6 +278,17 @@ public final class RuleValidator {
 
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action, final int playerIndex) {
         MainPhase mainPhase = turnManager.requireMainPhase();
+
+        final int opponentIndex = 1 - playerIndex;
+        if (battlefieldProvider != null) {
+            final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(opponentIndex);
+            if (opponentActive != null && hasAbility(opponentActive, AbilityEffectId.FOREST_CURSE)) {
+                if (action.trainerType() == TrainerType.ITEM) {
+                    return new ValidationResult.Invalid("opponent_forests_curse_active");
+                }
+            }
+        }
+
         if (action.effectId() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
             if (action.target() == null) {
                 return new ValidationResult.Invalid("target_pokemon_required");
@@ -531,5 +555,9 @@ public final class RuleValidator {
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.
         return new ValidationResult.Valid();
+    }
+
+    private boolean hasAbility(final BattlePokemonState pokemon, final AbilityEffectId abilityId) {
+        return pokemon != null && pokemon.getAbilities().stream().anyMatch(a -> a.effectId() == abilityId);
     }
 }

@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
 import ar.edu.utn.frc.tup.piii.engine.listener.PokemonTurnInPlayProvider;
+import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -316,5 +317,145 @@ class PokemonAbilitiesTest {
         when(activeSem.has(StatusEffectType.CONFUNDIDO)).thenReturn(true);
         result = ruleValidator.validate(action, 0);
         assertTrue(result instanceof ValidationResult.Valid);
+    }
+
+    @Test
+    void testTrevenantForestsCurseItemBlocking() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+        StadiumStateProvider ssp = mock(StadiumStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider bfp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp, ssp, bfp);
+
+        InPlayPokemon trevenant = new InPlayPokemon(new PokemonCard.Builder("trevenant", "Trevenant", 110, PokemonType.PSYCHIC)
+                .abilities(List.of(new Ability("Forest's Curse", "", AbilityEffectId.FOREST_CURSE)))
+                .build());
+
+        when(bfp.getActivePokemon(1)).thenReturn(trevenant);
+        when(turnManager.requireMainPhase()).thenReturn(mock(MainPhase.class));
+
+        // 1. Play Item card -> Should be invalid
+        PlayTrainerAction playItem = new PlayTrainerAction(TrainerType.ITEM, null, "xy1-125", TrainerEffectId.ROLLER_SKATES);
+        ValidationResult result = ruleValidator.validate(playItem, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("opponent_forests_curse_active", ((ValidationResult.Invalid) result).reason());
+
+        // 2. Play Supporter card -> Should be valid (or pass Trevenant check)
+        PlayTrainerAction playSupporter = new PlayTrainerAction(TrainerType.SUPPORTER, null, "xy1-127", TrainerEffectId.SHAUNA);
+        result = ruleValidator.validate(playSupporter, 0);
+        assertFalse(result instanceof ValidationResult.Invalid && "opponent_forests_curse_active".equals(((ValidationResult.Invalid) result).reason()));
+    }
+
+    @Test
+    void testPreDamageEffectsStepCoinFlipsMultiplier() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Flash Needle", 40, List.of(), "coin_flips_multiplier:3:40");
+
+        when(coinFlipper.flip()).thenReturn(true, true, false); // 2 heads, 1 tail
+
+        AttackContext ctx = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .effectText(attack.effectText())
+                .build();
+
+        PreDamageEffectsStep step = new PreDamageEffectsStep();
+        step.process(ctx, () -> {});
+
+        // 2 heads of 40 = 80 damage
+        assertEquals(1, ctx.getAttackerModifiers().size());
+        int finalDmg = ctx.getAttackerModifiers().get(0).apply(40);
+        assertEquals(80, finalDmg);
+    }
+
+    @Test
+    void testPreDamageEffectsStepCoinFlipsUntilTails() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Continuous Tumble", 30, List.of(), "coin_flips_until_tails:30");
+
+        when(coinFlipper.flip()).thenReturn(true, true, false); // 2 heads, then tail
+
+        AttackContext ctx = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .effectText(attack.effectText())
+                .build();
+
+        PreDamageEffectsStep step = new PreDamageEffectsStep();
+        step.process(ctx, () -> {});
+
+        assertEquals(1, ctx.getAttackerModifiers().size());
+        int finalDmg = ctx.getAttackerModifiers().get(0).apply(30);
+        assertEquals(60, finalDmg);
+    }
+
+    @Test
+    void testPreDamageEffectsStepCoinFlipsPerEnergy() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Rock Black", 50, List.of(), "coin_flips_per_energy:Fighting:50");
+
+        EnergyCard energy1 = new EnergyCard("energy-1", "Fighting Energy", PokemonType.FIGHTING, true);
+        EnergyCard energy2 = new EnergyCard("energy-2", "Fighting Energy", PokemonType.FIGHTING, true);
+        when(attacker.getAttachedEnergyCards()).thenReturn(List.of(energy1, energy2));
+
+        when(coinFlipper.flip()).thenReturn(true, false); // 1 head, 1 tail
+
+        AttackContext ctx = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .effectText(attack.effectText())
+                .build();
+
+        PreDamageEffectsStep step = new PreDamageEffectsStep();
+        step.process(ctx, () -> {});
+
+        assertEquals(1, ctx.getAttackerModifiers().size());
+        int finalDmg = ctx.getAttackerModifiers().get(0).apply(50);
+        assertEquals(50, finalDmg);
+    }
+
+    @Test
+    void testPreDamageEffectsStepCoinFlipsPerDamageCounter() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Seething Anger", 30, List.of(), "coin_flips_per_damage_counter:30");
+
+        when(attacker.getDamageCounters()).thenReturn(4); // 4 counters
+        when(coinFlipper.flip()).thenReturn(true, true, false, false); // 2 heads, 2 tails
+
+        AttackContext ctx = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .effectText(attack.effectText())
+                .build();
+
+        PreDamageEffectsStep step = new PreDamageEffectsStep();
+        step.process(ctx, () -> {});
+
+        assertEquals(1, ctx.getAttackerModifiers().size());
+        int finalDmg = ctx.getAttackerModifiers().get(0).apply(30);
+        assertEquals(60, finalDmg);
+    }
+
+    @Test
+    void testPlayerRuntimeClearActivePokemonResetsStatusEffects() {
+        Deck deck = mock(Deck.class);
+        Hand hand = mock(Hand.class);
+        Bench bench = mock(Bench.class);
+        DiscardPile dp = mock(DiscardPile.class);
+        StatusEffectManager sem = mock(StatusEffectManager.class);
+        BattlePokemonState active = mock(BattlePokemonState.class);
+        List<Card> prizes = new ArrayList<>();
+
+        PlayerRuntime runtime = new PlayerRuntime(deck, hand, bench, dp, sem, active, prizes);
+        runtime.clearActivePokemon();
+
+        assertNull(runtime.getActivePokemon());
+        verify(sem, times(1)).clearAll();
     }
 }
