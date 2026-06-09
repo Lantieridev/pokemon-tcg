@@ -28,6 +28,7 @@ import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { ActionRequestDTO, SpecialCondition, PokemonTcgCard, PokemonType } from '../../core/models/game-state.models';
 import { CARDS } from '../../shared/data/cards.mock';
 import { LOCAL_CARDS_DB } from '../../shared/data/cards-local-db';
+import { ToastService } from '../../core/services/toast.service';
 
 // ── Chat & Log (UI local, sin lógica de negocio) ─────────────────────────────
 
@@ -45,7 +46,7 @@ interface LogEntry {
 }
 
 interface ChatEntry {
-  from: 'me' | 'opp';
+  from: 'me' | 'opp' | 'system';
   text: string;
   t: string;
 }
@@ -67,6 +68,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   private matchBackend = inject(MatchBackendService);
   private authService = inject(AuthService);
   readonly tcgService = inject(PokemonTcgService);
+  private toastService = inject(ToastService);
 
   // ── Alias del store para el template ──────────────────────────────────────
   readonly me = this.store.me;
@@ -351,11 +353,19 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (history) => {
         const username = this.authService.username;
         const mapped = history.map(msg => ({
-          from: msg.sender === username ? 'me' : 'opp',
+          from: msg.sender === 'SISTEMA' || msg.sender === 'SYSTEM' ? 'system'
+              : msg.sender === username ? 'me' : 'opp',
           text: msg.message,
           t: new Date(msg.timestamp).toTimeString().slice(0, 5)
         }));
         this.chat.set(mapped as ChatEntry[]);
+
+        // Show Toast alerts for system messages (Mulligans)
+        mapped.forEach(msg => {
+          if (msg.from === 'system') {
+            this.toastService.info(msg.text);
+          }
+        });
       },
       error: (err) => {
         console.warn('[Battle] Error cargando historial de chat:', err);
@@ -387,11 +397,15 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       const chatSub = this.wsService.chatMessage$.subscribe(msg => {
         const username = this.authService.username;
         const mapped: ChatEntry = {
-          from: msg.sender === username ? 'me' : 'opp',
+          from: msg.sender === 'SISTEMA' || msg.sender === 'SYSTEM' ? 'system'
+              : msg.sender === username ? 'me' : 'opp',
           text: msg.message,
           t: new Date().toTimeString().slice(0, 5)
         };
         this.chat.update(c => [...c, mapped]);
+        if (mapped.from === 'system') {
+          this.toastService.info(mapped.text);
+        }
       });
       this.wsSub.add(chatSub);
     } catch (err) {

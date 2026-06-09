@@ -97,13 +97,22 @@ public final class SetupManager {
         final List<List<Card>> mulligansP1 = new ArrayList<>();
 
         while (!hasBasicPokemon(slot0.getHand()) || !hasBasicPokemon(slot1.getHand())) {
-            if (!hasBasicPokemon(slot0.getHand())) {
+            final boolean p0NeedsMulligan = !hasBasicPokemon(slot0.getHand());
+            final boolean p1NeedsMulligan = !hasBasicPokemon(slot1.getHand());
+
+            if (p0NeedsMulligan) {
                 mulligansP0.add(new ArrayList<>(slot0.getHand().getCards()));
                 doMulligan(slot0);
+                if (!p1NeedsMulligan) {
+                    slot1.getHand().addCards(slot1.getDeck().drawMultiple(1));
+                }
             }
-            if (!hasBasicPokemon(slot1.getHand())) {
+            if (p1NeedsMulligan) {
                 mulligansP1.add(new ArrayList<>(slot1.getHand().getCards()));
                 doMulligan(slot1);
+                if (!p0NeedsMulligan) {
+                    slot0.getHand().addCards(slot0.getDeck().drawMultiple(1));
+                }
             }
         }
 
@@ -152,13 +161,22 @@ public final class SetupManager {
         final List<List<Card>> mulligansP1 = new ArrayList<>();
 
         while (!hasBasicPokemon(slot0.getHand()) || !hasBasicPokemon(slot1.getHand())) {
-            if (!hasBasicPokemon(slot0.getHand())) {
+            final boolean p0NeedsMulligan = !hasBasicPokemon(slot0.getHand());
+            final boolean p1NeedsMulligan = !hasBasicPokemon(slot1.getHand());
+
+            if (p0NeedsMulligan) {
                 mulligansP0.add(new ArrayList<>(slot0.getHand().getCards()));
                 doMulligan(slot0);
+                if (!p1NeedsMulligan) {
+                    slot1.getHand().addCards(slot1.getDeck().drawMultiple(1));
+                }
             }
-            if (!hasBasicPokemon(slot1.getHand())) {
+            if (p1NeedsMulligan) {
                 mulligansP1.add(new ArrayList<>(slot1.getHand().getCards()));
                 doMulligan(slot1);
+                if (!p0NeedsMulligan) {
+                    slot0.getHand().addCards(slot0.getDeck().drawMultiple(1));
+                }
             }
         }
 

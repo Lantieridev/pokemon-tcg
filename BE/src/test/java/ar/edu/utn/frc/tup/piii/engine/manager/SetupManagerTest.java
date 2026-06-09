@@ -249,25 +249,25 @@ class SetupManagerTest {
     }
 
     @Test
-    void player0Mulligan_once_player1DrawsNoBonusCard() {
+    void player0Mulligan_once_player1DrawsOneBonusCard() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        assertEquals(INITIAL_HAND - 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     @Test
-    void player0Mulligan_once_player1DeclinesBonus_noBonusDrawn() {
+    void player0Mulligan_once_player1DeclinesBonus_handUnchanged() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(7)), simpleStrategy(),
                          s1, declinesBonusStrategy());
 
-        assertEquals(INITIAL_HAND - 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     @Test
@@ -295,14 +295,14 @@ class SetupManagerTest {
     }
 
     @Test
-    void player1Mulligan_once_player0DrawsNoBonusCard() {
+    void player1Mulligan_once_player0DrawsOneBonusCard() {
         final PlayerSetupSlot s0 = slot(allBasicsDeck());
 
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(s0, simpleStrategy(),
                          slot(deckWithLeadingNonBasics(7)), simpleStrategy());
 
-        assertEquals(INITIAL_HAND - 1, s0.getHand().size());
+        assertEquals(INITIAL_HAND, s0.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -319,14 +319,14 @@ class SetupManagerTest {
     }
 
     @Test
-    void player0Mulligan_threeTimes_player1DrawsNoBonusCards() {
+    void player0Mulligan_threeTimes_player1DrawsThreeBonusCards() {
         final PlayerSetupSlot s1 = slot(allBasicsDeck());
 
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(21)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        assertEquals(INITIAL_HAND - 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND - 1 + 3, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
@@ -355,14 +355,14 @@ class SetupManagerTest {
     }
 
     @Test
-    void crossMulligan_player1DrawsNoBonusCards() {
+    void crossMulligan_player1DrawsNetBonusCards() {
         final PlayerSetupSlot s1 = slot(deckWithLeadingNonBasics(7));
 
         new SetupManager(HEADS, d -> { }, 6)
                 .execute(slot(deckWithLeadingNonBasics(14)), simpleStrategy(),
                          s1, simpleStrategy());
 
-        assertEquals(INITIAL_HAND - 1, s1.getHand().size());
+        assertEquals(INITIAL_HAND, s1.getHand().size());
     }
 
     // -------------------------------------------------------------------------
