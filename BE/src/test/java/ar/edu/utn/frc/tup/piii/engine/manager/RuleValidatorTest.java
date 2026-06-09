@@ -531,6 +531,33 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldAllowFreeRetreatWhenFairyGardenActiveAndPokemonHasRainbowEnergy() {
+        final TrainerCard fairyGarden = new TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM)
+                .build();
+        final RuleValidator fairyValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider,
+                () -> fairyGarden);
+
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        active.setRetreatCost(2); // normally costs 2
+        EnergyCard rainbow = new EnergyCard("rainbow-1", "Rainbow Energy", PokemonType.COLORLESS, false, 1, true);
+        active.attachEnergy(rainbow); // triggers Fairy Garden because Rainbow provides all types including Fairy
+
+        final ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(statusEffectManager.canRetreat()).thenReturn(true);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        benchProvider.set(0, 1);
+
+        final ValidationResult result = fairyValidator.validate(
+                new RetreatAction(active, 0, java.util.Collections.emptyList()));
+
+        assertInstanceOf(ValidationResult.Valid.class, result,
+                "Fairy Garden must allow free retreat when Pokémon has Rainbow Energy");
+    }
+
+    @Test
     void shouldNotReduceRetreatCostWhenFairyGardenActiveButNoPokemonHasFairyEnergy() {
         final TrainerCard fairyGarden = new TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM)
                 .build();

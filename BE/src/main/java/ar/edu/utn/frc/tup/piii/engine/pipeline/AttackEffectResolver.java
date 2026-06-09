@@ -53,6 +53,8 @@ public final class AttackEffectResolver {
         m.put("coin_flip_sleep",     AttackEffectType.COIN_FLIP_SLEEP);
         m.put("coin_flip_confusion", AttackEffectType.COIN_FLIP_CONFUSION);
         m.put("disable_attack",      AttackEffectType.DISABLE_ATTACK);
+        m.put("prevent_damage",           AttackEffectType.PREVENT_DAMAGE);
+        m.put("coin_flip_prevent_damage",  AttackEffectType.COIN_FLIP_PREVENT_DAMAGE);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -101,6 +103,14 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.DORMIDO); });
         m.put(AttackEffectType.COIN_FLIP_CONFUSION,
                 (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.CONFUNDIDO); });
+        m.put(AttackEffectType.PREVENT_DAMAGE,
+                (amount, ctx) -> ctx.getAttackerStatusManager().setDamagePreventedNextTurn(true));
+        m.put(AttackEffectType.COIN_FLIP_PREVENT_DAMAGE,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        ctx.getAttackerStatusManager().setDamagePreventedNextTurn(true);
+                    }
+                });
         m.put(AttackEffectType.DISABLE_ATTACK,
                 (amount, ctx) -> {
                     var attacks = ctx.getDefender().getAttacks();

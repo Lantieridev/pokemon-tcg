@@ -500,7 +500,11 @@ public final class GameFacade {
                     indices = new java.util.ArrayList<>();
                     BattlePokemonState active = board.getActivePokemon(playerIndex);
                     if (active != null) {
-                        int cost = active.getRetreatCost();
+                        TrainerCard stadium = board.getActiveStadium();
+                        boolean isFairyGarden = stadium != null && "xy1-117".equals(stadium.getCardId());
+                        boolean hasFairyEnergy = active.getAttachedEnergies().contains(PokemonType.FAIRY)
+                                || active.getAttachedEnergyCards().stream().anyMatch(EnergyCard::isProvidesAllTypes);
+                        int cost = (isFairyGarden && hasFairyEnergy) ? 0 : active.getRetreatCost();
                         for (int i = 0; i < Math.min(cost, active.getAttachedEnergies().size()); i++) {
                             indices.add(i);
                         }

@@ -106,7 +106,11 @@ public final class CardMapper {
      */
     public Card map(final CardEntity entity) {
         Objects.requireNonNull(entity, "entity must not be null");
-        final Function<CardEntity, Card> fn = dispatchers.get(entity.getSupertype());
+        String supertype = entity.getSupertype();
+        if (supertype != null && supertype.startsWith("Pok")) {
+            supertype = "Pokémon";
+        }
+        final Function<CardEntity, Card> fn = dispatchers.get(supertype);
         if (fn == null) {
             throw new IllegalArgumentException("Unknown supertype: " + entity.getSupertype());
         }
@@ -145,7 +149,16 @@ public final class CardMapper {
 
     private TrainerCard mapTrainer(final CardEntity entity) {
         final String subtype = subtype(entity);
-        final TrainerType trainerType = TRAINER_TYPE_BY_SUBTYPE.getOrDefault(subtype, TrainerType.ITEM);
+        TrainerType trainerType = TrainerType.ITEM;
+        if (subtype != null) {
+            if (subtype.contains("Tool")) {
+                trainerType = TrainerType.POKEMON_TOOL;
+            } else if (subtype.contains("Supporter")) {
+                trainerType = TrainerType.SUPPORTER;
+            } else if (subtype.contains("Stadium")) {
+                trainerType = TrainerType.STADIUM;
+            }
+        }
 
         final List<Object> rules = toList(entity.getRules());
         final boolean aceSpec = rules.stream()
@@ -284,6 +297,14 @@ public final class CardMapper {
         // --- Disable attack (e.g. Torment) ---
         if (lower.contains("can't use that attack") || lower.contains("cant use that attack")) {
             return "disable_attack";
+        }
+
+        // --- Damage prevention ---
+        if (lower.contains("prevent all damage done to this pok")) {
+            if (lower.contains("flip a coin")) {
+                return "coin_flip_prevent_damage";
+            }
+            return "prevent_damage";
         }
 
         // --- Heal self ---

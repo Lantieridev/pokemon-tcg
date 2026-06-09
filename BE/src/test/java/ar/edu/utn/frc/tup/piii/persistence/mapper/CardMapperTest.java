@@ -229,6 +229,37 @@ class CardMapperTest {
         assertEquals("coin_flip_fail", pokemon.getAttacks().get(2).effectText());
     }
 
+    @Test
+    void shouldMapPokemonWithEncodingCorruptedSupertype() {
+        final CardEntity entity = CardEntity.builder()
+                .id("xy1-x").name("Test").supertype("PokÃ©mon").subtype("Basic").hp(60)
+                .rules("[]").attacks("[]").weaknesses("[]").resistances("[]").retreatCost("[]")
+                .setId("xy1").build();
+        final Card card = mapper.map(entity);
+        assertInstanceOf(PokemonCard.class, card);
+    }
+
+    @Test
+    void shouldMapTrainerWithCorruptedSubtypeTool() {
+        final CardEntity entity = trainerEntity("xy1-tool", "Tool", "PokÃ©mon Tool", "[]");
+        final TrainerCard trainer = assertInstanceOf(TrainerCard.class, mapper.map(entity));
+        assertEquals(TrainerType.POKEMON_TOOL, trainer.getTrainerType());
+    }
+
+    @Test
+    void shouldParsePreventDamageAttackEffectTexts() {
+        final CardEntity entity = pokemonEntity("xy1-x", "TestMon", "Basic", 60,
+                "[{\"name\":\"Scrunch\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"\",\"text\":\"Flip a coin. If heads, prevent all damage done to this Pokémon during your opponent's next turn.\"},"
+                + "{\"name\":\"Shield\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"\",\"text\":\"Prevent all damage done to this Pokémon during your opponent's next turn.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pokemon = assertInstanceOf(PokemonCard.class, mapper.map(entity));
+        assertEquals(2, pokemon.getAttacks().size());
+        assertEquals("coin_flip_prevent_damage", pokemon.getAttacks().get(0).effectText());
+        assertEquals("prevent_damage", pokemon.getAttacks().get(1).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,

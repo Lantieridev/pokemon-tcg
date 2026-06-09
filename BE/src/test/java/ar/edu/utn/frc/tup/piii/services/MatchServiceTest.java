@@ -82,7 +82,18 @@ class MatchServiceTest {
         final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
         final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
         board = new MatchBoard(List.of(player0, player1));
-        session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board);
+
+        ar.edu.utn.frc.tup.piii.engine.model.Card dummyCard = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 10, PokemonType.FIRE).build();
+        ar.edu.utn.frc.tup.piii.engine.model.Deck dummyDeck = new ar.edu.utn.frc.tup.piii.engine.model.Deck(List.of(dummyCard));
+        ar.edu.utn.frc.tup.piii.engine.model.Hand dummyHand = new ar.edu.utn.frc.tup.piii.engine.model.Hand();
+        ar.edu.utn.frc.tup.piii.engine.model.Bench dummyBench = new ar.edu.utn.frc.tup.piii.engine.model.Bench();
+        ar.edu.utn.frc.tup.piii.engine.model.DiscardPile dummyDiscard = new ar.edu.utn.frc.tup.piii.engine.model.DiscardPile();
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem0 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem1 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime0 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem0, active);
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime1 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem1, active);
+
+        session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board, List.of(runtime0, runtime1));
         session.setup();
         session.start();
 
@@ -177,5 +188,26 @@ class MatchServiceTest {
 
         verify(penaltyService).registerMatchFinished(PLAYER_A_ID, true);
         verify(penaltyService).registerMatchFinished(PLAYER_B_ID, true);
+    }
+
+    @Test
+    void shouldClearDamagePreventedFlagOnOpponentTurnEnd() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.END_TURN, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction());
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        session.getPlayerRuntime(0).getStatusEffectManager().setDamagePreventedNextTurn(true);
+        session.getPlayerRuntime(1).getStatusEffectManager().setDamagePreventedNextTurn(true);
+
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                session.getPlayerRuntime(0).getStatusEffectManager().isDamagePreventedNextTurn());
+        org.junit.jupiter.api.Assertions.assertFalse(
+                session.getPlayerRuntime(1).getStatusEffectManager().isDamagePreventedNextTurn());
     }
 }

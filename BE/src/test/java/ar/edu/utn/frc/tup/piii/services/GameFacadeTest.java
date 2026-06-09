@@ -112,6 +112,65 @@ class GameFacadeTest {
     }
 
     @Test
+    void shouldAutoPopulateRetreatEnergyIndicesBasedOnCost() {
+        activePokemon.setRetreatCost(2);
+        
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard energy1 = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Fire Energy", PokemonType.FIRE, true, 1, false);
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard energy2 = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e2", "Fire Energy", PokemonType.FIRE, true, 1, false);
+        activePokemon.attachEnergy(energy1);
+        activePokemon.attachEnergy(energy2);
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
+
+        assertThat(action).isInstanceOf(RetreatAction.class);
+        final RetreatAction retreatAction = (RetreatAction) action;
+        assertThat(retreatAction.energyIndicesToDiscard()).containsExactly(0, 1);
+    }
+
+    @Test
+    void shouldAutoPopulateZeroRetreatEnergyIndicesWhenFairyGardenAndFairyEnergyActive() {
+        activePokemon.setRetreatCost(2);
+        
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard fairyEnergy = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Fairy Energy", PokemonType.FAIRY, true, 1, false);
+        activePokemon.attachEnergy(fairyEnergy);
+
+        final ar.edu.utn.frc.tup.piii.engine.model.TrainerCard fairyGarden = new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM).build();
+        board.replaceStadium(fairyGarden);
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
+
+        assertThat(action).isInstanceOf(RetreatAction.class);
+        final RetreatAction retreatAction = (RetreatAction) action;
+        assertThat(retreatAction.energyIndicesToDiscard()).isEmpty();
+    }
+
+    @Test
+    void shouldAutoPopulateZeroRetreatEnergyIndicesWhenFairyGardenAndRainbowEnergyActive() {
+        activePokemon.setRetreatCost(2);
+        
+        ar.edu.utn.frc.tup.piii.engine.model.EnergyCard rainbowEnergy = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Rainbow Energy", PokemonType.COLORLESS, false, 1, true);
+        activePokemon.attachEnergy(rainbowEnergy);
+
+        final ar.edu.utn.frc.tup.piii.engine.model.TrainerCard fairyGarden = new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("xy1-117", "Fairy Garden", TrainerType.STADIUM).build();
+        board.replaceStadium(fairyGarden);
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+
+        final Action action = facade.toEngineAction(session, PLAYER_INDEX, dto);
+
+        assertThat(action).isInstanceOf(RetreatAction.class);
+        final RetreatAction retreatAction = (RetreatAction) action;
+        assertThat(retreatAction.energyIndicesToDiscard()).isEmpty();
+    }
+
+    @Test
     void shouldProducePlayTrainerActionWhenTypeIsPlayTrainer() {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.PLAY_TRAINER, null, null, null, TrainerType.SUPPORTER, null);

@@ -13,6 +13,7 @@ public class ManualFlywayConfig {
         Objects.requireNonNull(dataSource, "dataSource must not be null");
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
+                .encoding("UTF-8")
                 .baselineOnMigrate(true)
                 .outOfOrder(true)
                 .locations("classpath:db/migration")
