@@ -125,6 +125,7 @@ public class MatchService {
         final ReentrantLock lock = session.getLock();
         lock.lock();
         try {
+            session.clearLastCoinFlips();
             final int playerIndex = session.indexOf(playerId);
 
             boolean isAuthorized = false;
@@ -314,7 +315,15 @@ public class MatchService {
                     turnManager.endBetweenTurns();
                 }
             }
-            default -> facade.apply(session, action, turnManager);
+            default -> {
+                facade.apply(session, action, turnManager);
+                if (session.getVictoryConditionChecker() != null) {
+                    session.getVictoryConditionChecker().checkFieldVictory();
+                }
+                if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                    checkForPendingPromotion(session);
+                }
+            }
         }
     }
 

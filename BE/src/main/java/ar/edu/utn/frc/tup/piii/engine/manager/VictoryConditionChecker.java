@@ -106,6 +106,16 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
             fireVictory(new VictoryResult.PrizeVictory(defender));
             return;
         }
+        checkFieldVictory();
+    }
+
+    /**
+     * Evaluates field victory conditions (if any player has 0 active and 0 benched Pokémon).
+     */
+    public void checkFieldVictory() {
+        if (victoryFired) {
+            return;
+        }
         final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
         final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
 

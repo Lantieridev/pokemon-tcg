@@ -233,22 +233,55 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     @Override
     public void removeEnergies(final int count) {
-        for (int i = 0; i < count && !attachedEnergies.isEmpty(); i++) {
-            attachedEnergies.remove(attachedEnergies.size() - 1);
-            attachedEnergyCards.remove(attachedEnergyCards.size() - 1);
+        final List<Integer> indices = new ArrayList<>();
+        final int size = attachedEnergies.size();
+        for (int i = 0; i < count; i++) {
+            final int idx = size - 1 - i;
+            if (idx >= 0) {
+                indices.add(idx);
+            }
         }
+        removeEnergies(indices);
     }
 
     @Override
     public void removeEnergies(final java.util.List<Integer> indices) {
-        java.util.List<Integer> sortedIndices = new java.util.ArrayList<>(indices);
-        sortedIndices.sort(java.util.Collections.reverseOrder());
-        for (int index : sortedIndices) {
+        final List<Integer> sortedIndices = new ArrayList<>(indices);
+        sortedIndices.sort(Collections.reverseOrder());
+        
+        final java.util.Set<Integer> cardIndicesToRemove = new java.util.TreeSet<>(Collections.reverseOrder());
+        for (final int index : sortedIndices) {
             if (index >= 0 && index < attachedEnergies.size()) {
-                attachedEnergies.remove(index);
-                attachedEnergyCards.remove(index);
+                final int cardIdx = mapEnergyIndexToCardIndex(index);
+                if (cardIdx != -1) {
+                    cardIndicesToRemove.add(cardIdx);
+                }
             }
         }
+        
+        for (final int cardIdx : cardIndicesToRemove) {
+            attachedEnergyCards.remove(cardIdx);
+        }
+        
+        attachedEnergies.clear();
+        for (final EnergyCard ec : attachedEnergyCards) {
+            for (int i = 0; i < ec.getEnergyCount(); i++) {
+                attachedEnergies.add(ec.getEnergyType());
+            }
+        }
+    }
+
+    private int mapEnergyIndexToCardIndex(final int energyIndex) {
+        int currentEnergyCount = 0;
+        for (int i = 0; i < attachedEnergyCards.size(); i++) {
+            final EnergyCard ec = attachedEnergyCards.get(i);
+            final int count = ec.getEnergyCount();
+            if (energyIndex >= currentEnergyCount && energyIndex < currentEnergyCount + count) {
+                return i;
+            }
+            currentEnergyCount += count;
+        }
+        return -1;
     }
 
     @Override

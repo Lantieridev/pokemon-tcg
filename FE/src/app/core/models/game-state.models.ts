@@ -101,6 +101,7 @@ export interface GameStateResponseDTO {
   mvpCardDamage?: number | null;
   self: PlayerView;
   opponent: OpponentView;
+  lastCoinFlips?: boolean[] | null;
 }
 
 // ─── DTOs de acción (cliente → servidor) ─────────────────────────────────────

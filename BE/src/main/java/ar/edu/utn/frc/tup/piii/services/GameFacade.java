@@ -256,6 +256,8 @@ public final class GameFacade {
                 session.getKnockoutHandler(),
                 session.getCoinFlipper()::flip
         )
+        .attackerRuntime(attacker)
+        .defenderRuntime(defender)
         .defenderBench(defender.getBench().getAll())
         .effectText(action.attack().effectText())
         .stadiumProvider(session.getBoard())
@@ -369,10 +371,14 @@ public final class GameFacade {
         if (target == null) {
             return;
         }
-        final List<BattlePokemonState> benchSlots = runtime.getBench().getAll();
-        final int idx = benchSlots.indexOf(target);
-        if (idx >= 0) {
-            runtime.getBench().remove(idx);
+        if (target.equals(runtime.getActivePokemon())) {
+            runtime.clearActivePokemon();
+        } else {
+            final List<BattlePokemonState> benchSlots = runtime.getBench().getAll();
+            final int idx = benchSlots.indexOf(target);
+            if (idx >= 0) {
+                runtime.getBench().remove(idx);
+            }
         }
         // Collect all underlying cards to shuffle into the deck.
         final List<Card> toShuffle = new ArrayList<>();

@@ -667,6 +667,49 @@
     </div>
   }
 
+  <!-- Attack Coin Flip Overlay -->
+  @if (isAttackCoinFlipping()) {
+    <div class="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md">
+      <div class="coin-container">
+        <div class="coin" [class.flip-heads]="currentAttackFlipResult() === 'heads'" [class.flip-tails]="currentAttackFlipResult() === 'tails'">
+          <div class="coin-side front">
+            <span class="coin-symbol">⚡</span>
+          </div>
+          <div class="coin-side back">
+            <span class="coin-symbol">☠</span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-12 text-center">
+        <h2 class="text-3xl font-display font-bold tracking-[0.2em] text-[#ffcb05] uppercase drop-shadow-[0_2px_10px_rgba(255,203,5,0.3)] animate-fade-in">Lanzamiento de Moneda</h2>
+        <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de ataque / entrenador...</p>
+        
+        <!-- Sequential display -->
+        <div class="mt-8 flex items-center justify-center gap-3">
+          @for (flip of attackCoinFlips(); track $index) {
+            @if ($index < currentAttackFlipIndex() || ($index === currentAttackFlipIndex() && currentAttackFlipResult() !== null)) {
+              <div class="w-10 h-10 rounded-full flex items-center justify-center border font-chunky text-sm shadow-md animate-scale-up"
+                   [style.background]="flip ? 'linear-gradient(135deg, #2ecc71, #27ae60)' : 'linear-gradient(135deg, #e74c3c, #c0392b)'"
+                   [style.borderColor]="flip ? '#2ecc71' : '#e74c3c'"
+                   style="color: #fff;">
+                {{ flip ? '⚡' : '☠' }}
+              </div>
+            } @else if ($index === currentAttackFlipIndex()) {
+              <div class="w-10 h-10 rounded-full flex items-center justify-center border border-dashed border-[#ffcb05] font-chunky text-sm animate-pulse"
+                   style="color: #ffcb05;">
+                ?
+              </div>
+            } @else {
+              <div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 bg-white/5 font-chunky text-sm text-white/30">
+                -
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Game Over Overlay -->
   @if (isFinished() && me() && opp()) {
     <div class="fixed inset-0 z-[60] flex items-center justify-center" style="background: rgba(8, 6, 16, 0.93); backdrop-filter: blur(16px); animation: fadeIn 0.4s ease-out;">

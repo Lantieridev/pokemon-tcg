@@ -117,7 +117,8 @@ public final class PlayerPerspectiveMapper {
                 winnerId,
                 victoryReason,
                 mvpCardId,
-                mvpCardDamage);
+                mvpCardDamage,
+                session.getLastCoinFlips());
     }
 
     private GameStateResponseDTO.PlayerView buildPlayerView(final MatchSession session, final int playerIndex) {

@@ -147,6 +147,23 @@ class InPlayPokemonTest {
     }
 
     @Test
+    void removeSpecialEnergyDiscardEntireCard() {
+        final InPlayPokemon p = new InPlayPokemon(pikachu());
+        p.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.LIGHTNING, true));
+        p.attachEnergy(new EnergyCard("dce", "Double Colorless Energy", PokemonType.COLORLESS, false, 2, false));
+        
+        assertEquals(3, p.getAttachedEnergies().size());
+        assertEquals(2, p.getAttachedEnergyCards().size());
+        
+        p.removeEnergies(List.of(1));
+        
+        assertEquals(1, p.getAttachedEnergies().size());
+        assertEquals(PokemonType.LIGHTNING, p.getAttachedEnergies().get(0));
+        assertEquals(1, p.getAttachedEnergyCards().size());
+        assertEquals("e1", p.getAttachedEnergyCards().get(0).getCardId());
+    }
+
+    @Test
     void removeEnergiesMoreThanAttachedShouldClearAll() {
         final InPlayPokemon p = new InPlayPokemon(pikachu());
         p.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.LIGHTNING, true));

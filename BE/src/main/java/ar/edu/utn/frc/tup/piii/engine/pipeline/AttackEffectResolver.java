@@ -1,6 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine.pipeline;
 
 import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -121,9 +123,27 @@ public final class AttackEffectResolver {
         // FR-TODO: move_energy requires attacker bench runtime access — deferred.
         m.put(AttackEffectType.MOVE_ENERGY,
                 (amount, ctx) -> { });
-        // FR-TODO: force_switch requires opponent runtime access — deferred.
         m.put(AttackEffectType.FORCE_SWITCH,
-                (amount, ctx) -> { });
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
+                        final BattlePokemonState oldActive = attacker.getActivePokemon();
+                        final BattlePokemonState newActive = attacker.getBench().promote(0);
+                        attacker.setActivePokemon(newActive);
+                        attacker.getBench().place(oldActive);
+                        attacker.getStatusEffectManager().clearAll();
+                        attacker.recordPokemonEntered(oldActive);
+                    }
+                    final PlayerRuntime defender = ctx.getDefenderRuntime();
+                    if (defender != null && !defender.getBench().getAll().isEmpty()) {
+                        final BattlePokemonState oldActive = defender.getActivePokemon();
+                        final BattlePokemonState newActive = defender.getBench().promote(0);
+                        defender.setActivePokemon(newActive);
+                        defender.getBench().place(oldActive);
+                        defender.getStatusEffectManager().clearAll();
+                        defender.recordPokemonEntered(oldActive);
+                    }
+                });
         this.handlers = Collections.unmodifiableMap(m);
     }
 
