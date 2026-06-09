@@ -57,6 +57,7 @@ class VictoryConditionCheckerTest {
                 benchProvider,
                 battlefieldProvider,
                 result -> captured.add(result));
+        checker.setInitialPlacementComplete(true, true);
     }
 
     // --- 6.1 constructor null-guard ---
@@ -395,6 +396,7 @@ class VictoryConditionCheckerTest {
                 benchProvider,
                 localBattlefieldProvider,
                 result -> captured.add(result));
+        localChecker.setInitialPlacementComplete(true, true);
         
         localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
         localChecker.checkFieldVictory();
@@ -417,7 +419,9 @@ class VictoryConditionCheckerTest {
                 benchProvider,
                 localBattlefieldProvider,
                 result -> captured.add(result));
+        localChecker.setInitialPlacementComplete(false, false);
         
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
         localChecker.checkFieldVictory();
         
         assertTrue(captured.isEmpty());

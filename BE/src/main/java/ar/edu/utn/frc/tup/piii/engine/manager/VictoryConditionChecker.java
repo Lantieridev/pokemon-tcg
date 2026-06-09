@@ -53,6 +53,12 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
     /** True once a VictoryResult has been delivered — prevents double-firing. */
     private boolean victoryFired = false;
 
+    /** True if Player 0 has placed their starting Active Pokémon. */
+    private boolean player0PlacedActive = false;
+
+    /** True if Player 1 has placed their starting Active Pokémon. */
+    private boolean player1PlacedActive = false;
+
     /**
      * Creates a new VictoryConditionChecker.
      *
@@ -74,6 +80,24 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
         this.battlefieldProvider = Objects.requireNonNull(battlefieldProvider,
                 "battlefieldProvider must not be null");
         this.victoryHandler = Objects.requireNonNull(victoryHandler, "victoryHandler must not be null");
+
+        if (this.battlefieldProvider.getActivePokemon(0) != null) {
+            this.player0PlacedActive = true;
+        }
+        if (this.battlefieldProvider.getActivePokemon(1) != null) {
+            this.player1PlacedActive = true;
+        }
+    }
+
+    /**
+     * For testing purposes, allows setting whether the initial active Pokémon placement is considered complete.
+     *
+     * @param p0Complete true if player 0 initial placement is complete
+     * @param p1Complete true if player 1 initial placement is complete
+     */
+    public void setInitialPlacementComplete(final boolean p0Complete, final boolean p1Complete) {
+        this.player0PlacedActive = p0Complete;
+        this.player1PlacedActive = p1Complete;
     }
 
     /**
@@ -116,6 +140,18 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
         if (victoryFired || activePlayerIndex == UNSTARTED_PLAYER_INDEX) {
             return;
         }
+
+        if (battlefieldProvider.getActivePokemon(0) != null) {
+            player0PlacedActive = true;
+        }
+        if (battlefieldProvider.getActivePokemon(1) != null) {
+            player1PlacedActive = true;
+        }
+
+        if (!player0PlacedActive || !player1PlacedActive) {
+            return;
+        }
+
         final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
         final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
 
