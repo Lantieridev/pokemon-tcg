@@ -550,28 +550,36 @@
 
       <div #chatRef class="flex-1 overflow-y-auto scroll px-3 py-2 space-y-2">
         @for (m of chat(); track $index) {
-          <div class="flex" [class.justify-end]="m.from === 'me'" [class.justify-start]="m.from !== 'me'">
-            <div class="flex items-end gap-1.5 max-w-[88%]">
-              @if (m.from !== 'me') {
-                <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
-                     style="background:var(--accent); color:var(--txt); border:1px solid var(--line)">
-                  {{ opp()?.avatar }}
-                </div>
-              }
-              <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border border-[var(--line)] shadow-lg"
-                   [style.background]="m.from === 'me' ? 'var(--surface)' : 'var(--bg2)'"
-                   [style.borderRadius]="m.from === 'me' ? '14px 14px 4px 14px' : '14px 14px 14px 4px'"
-                   style="color:var(--txt); backdrop-filter:blur(8px)">
-                {{ m.text }}
+          @if (m.from === 'system') {
+            <div class="flex justify-center my-1.5 animate-fade-in">
+              <div class="px-3 py-1.5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 text-yellow-300 font-chunky text-[10px] tracking-wide uppercase text-center max-w-[90%] shadow-lg backdrop-blur-md">
+                📢 {{ m.text }}
               </div>
-              @if (m.from === 'me') {
-                <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
-                     style="background:var(--bg2); color:var(--txt); border:1px solid var(--line)">
-                  {{ me()?.avatar }}
-                </div>
-              }
             </div>
-          </div>
+          } @else {
+            <div class="flex" [class.justify-end]="m.from === 'me'" [class.justify-start]="m.from !== 'me'">
+              <div class="flex items-end gap-1.5 max-w-[88%]">
+                @if (m.from !== 'me') {
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
+                       style="background:var(--accent); color:var(--txt); border:1px solid var(--line)">
+                    {{ opp()?.avatar }}
+                  </div>
+                }
+                <div class="px-2.5 py-1.5 rounded-xl text-[12px] font-semibold leading-tight border border-[var(--line)] shadow-lg"
+                     [style.background]="m.from === 'me' ? 'var(--surface)' : 'var(--bg2)'"
+                     [style.borderRadius]="m.from === 'me' ? '14px 14px 4px 14px' : '14px 14px 14px 4px'"
+                     style="color:var(--txt); backdrop-filter:blur(8px)">
+                  {{ m.text }}
+                </div>
+                @if (m.from === 'me') {
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center font-chunky text-[8px] shrink-0"
+                       style="background:var(--bg2); color:var(--txt); border:1px solid var(--line)">
+                    {{ me()?.avatar }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
         }
       </div>
 

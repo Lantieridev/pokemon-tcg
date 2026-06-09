@@ -115,6 +115,24 @@ public final class MatchCreationService {
         final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
         final int firstPlayerIndex = setupResult.firstPlayerIndex();
 
+        // Broadcast mulligans to chat history so they appear on screen as alerts
+        final int mullP0 = setupResult.mulligansP0().size();
+        final int mullP1 = setupResult.mulligansP1().size();
+        if (mullP0 > 0) {
+            chatService.addMessage(matchId, ChatMessageResponse.builder()
+                    .sender("SISTEMA")
+                    .message(playerAId + " declaró " + mullP0 + " Mulligan(s) por no tener Pokémon Básicos en su mano.")
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+        if (mullP1 > 0) {
+            chatService.addMessage(matchId, ChatMessageResponse.builder()
+                    .sender("SISTEMA")
+                    .message(playerBId + " declaró " + mullP1 + " Mulligan(s) por no tener Pokémon Básicos en su mano.")
+                    .timestamp(LocalDateTime.now())
+                    .build());
+        }
+
         // --- Build PlayerRuntimes with prize piles from setup ---
         final PlayerRuntime runtime0 = new PlayerRuntime(
                 deck0, hand0, bench0, dp0, sem0,
