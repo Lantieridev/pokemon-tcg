@@ -368,4 +368,13 @@ class StatusEffectManagerTest {
         assertDoesNotThrow(() -> manager.processBetweenTurns(fakeState));
         assertFalse(manager.has(StatusEffectType.PARALIZADO));
     }
+
+    @Test
+    void shouldTrackAndClearDamagePreventedNextTurnFlag() {
+        assertFalse(manager.isDamagePreventedNextTurn());
+        manager.setDamagePreventedNextTurn(true);
+        assertTrue(manager.isDamagePreventedNextTurn());
+        manager.clearAll();
+        assertFalse(manager.isDamagePreventedNextTurn());
+    }
 }

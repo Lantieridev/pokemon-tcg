@@ -264,6 +264,7 @@ export class CardSelectionModalComponent {
 
   onCancel(): void {
     this.cancel.emit();
+    this.selectedIndices.set(new Set());
   }
 
   getCardImageUrl(cardId: string): string {

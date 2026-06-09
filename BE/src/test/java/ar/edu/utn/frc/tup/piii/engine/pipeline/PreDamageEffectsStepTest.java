@@ -103,4 +103,18 @@ class PreDamageEffectsStepTest {
         step.process(ctx, () -> {});
         assertTrue(ctx.isAttackBlocked());
     }
+
+    @Test
+    void testProcess_withDamagePreventedNextTurn_addsModifierToZero() {
+        StatusEffectManager defenderSem = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(defenderSem.isDamagePreventedNextTurn()).thenReturn(true);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Tackle", 20, List.of()), mock(StatusEffectManager.class), defenderSem, mock(KnockoutHandler.class), () -> true).build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getDefenderModifiers().isEmpty());
+        int finalDamage = ctx.getDefenderModifiers().get(0).apply(50);
+        org.junit.jupiter.api.Assertions.assertEquals(0, finalDamage);
+    }
 }

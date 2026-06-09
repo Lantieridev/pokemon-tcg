@@ -273,7 +273,8 @@ public final class RuleValidator {
      * Required by Fairy Garden's free-retreat condition.
      */
     private boolean hasFairyEnergy(final BattlePokemonState pokemon) {
-        return pokemon.getAttachedEnergies().contains(PokemonType.FAIRY);
+        return pokemon.getAttachedEnergies().contains(PokemonType.FAIRY)
+                || pokemon.getAttachedEnergyCards().stream().anyMatch(EnergyCard::isProvidesAllTypes);
     }
 
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action, final int playerIndex) {

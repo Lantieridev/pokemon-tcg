@@ -353,6 +353,8 @@ public class MatchService {
                 sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon());
                 if (i == turnManager.activePlayerIndex()) {
                     sem.setDisabledAttackName(null);
+                } else {
+                    sem.setDamagePreventedNextTurn(false);
                 }
             }
         }

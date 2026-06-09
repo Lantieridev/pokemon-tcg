@@ -86,6 +86,11 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
             ctx.setAttackBlocked(true);
         }
 
+        // Check for next-turn damage prevention effect (e.g. from Scrunch / Acurruque)
+        if (ctx.getDefenderStatusManager() != null && ctx.getDefenderStatusManager().isDamagePreventedNextTurn()) {
+            ctx.addDefenderModifier(dmg -> 0);
+        }
+
         next.run();
     }
 

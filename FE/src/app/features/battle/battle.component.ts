@@ -301,6 +301,28 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     });
+
+    // Clear selection when it's no longer our turn
+    effect(() => {
+      if (!this.isMyTurn()) {
+        this.selectedHandIndex.set(null);
+        this.selectedHandCard.set(null);
+      }
+    });
+
+    // Clear selection if hand updates and selected card is no longer at that index
+    effect(() => {
+      const hand = this.me()?.hand;
+      const index = this.selectedHandIndex();
+      const selectedCard = this.selectedHandCard();
+      if (!hand || index === null || selectedCard === null) {
+        return;
+      }
+      if (index >= hand.length || hand[index] !== selectedCard.id) {
+        this.selectedHandIndex.set(null);
+        this.selectedHandCard.set(null);
+      }
+    });
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -768,6 +790,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   closeMenu(): void {
     this.menu.set(null);
+    this.selectedHandIndex.set(null);
+    this.selectedHandCard.set(null);
   }
 
   sendChat(text: string): void {
