@@ -9,8 +9,8 @@ import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageModifier;
 import ar.edu.utn.frc.tup.piii.engine.model.DamageResult;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +39,8 @@ public final class AttackContext {
     private final StadiumStateProvider stadiumProvider;
     private final MatchStatisticsTracker attackerStats;
     private final MatchStatisticsTracker defenderStats;
+    private final PlayerRuntime attackerRuntime;
+    private final PlayerRuntime defenderRuntime;
 
     // --- Mutable pipeline state ---
     private boolean attackBlocked;
@@ -60,6 +62,8 @@ public final class AttackContext {
         this.stadiumProvider = b.stadiumProvider;
         this.attackerStats = b.attackerStats;
         this.defenderStats = b.defenderStats;
+        this.attackerRuntime = b.attackerRuntime;
+        this.defenderRuntime = b.defenderRuntime;
     }
 
     // --- Immutable getters ---
@@ -104,6 +108,14 @@ public final class AttackContext {
 
     public CoinFlipper getCoinFlipper() {
         return coinFlipper;
+    }
+
+    public PlayerRuntime getAttackerRuntime() {
+        return attackerRuntime;
+    }
+
+    public PlayerRuntime getDefenderRuntime() {
+        return defenderRuntime;
     }
 
     /**
@@ -194,6 +206,8 @@ public final class AttackContext {
         private StadiumStateProvider stadiumProvider = () -> null;
         private MatchStatisticsTracker attackerStats = new MatchStatisticsTracker();
         private MatchStatisticsTracker defenderStats = new MatchStatisticsTracker();
+        private PlayerRuntime attackerRuntime;
+        private PlayerRuntime defenderRuntime;
 
         /**
          * @param attacker              the attacking Pokémon (never null)
@@ -270,6 +284,16 @@ public final class AttackContext {
             if (stats != null) {
                 this.defenderStats = stats;
             }
+            return this;
+        }
+
+        public Builder attackerRuntime(final PlayerRuntime attackerRuntime) {
+            this.attackerRuntime = attackerRuntime;
+            return this;
+        }
+
+        public Builder defenderRuntime(final PlayerRuntime defenderRuntime) {
+            this.defenderRuntime = defenderRuntime;
             return this;
         }
 

@@ -27,7 +27,8 @@ import java.util.List;
         String winnerId,
         String victoryReason,
         String mvpCardId,
-        Integer mvpCardDamage) {
+        Integer mvpCardDamage,
+        List<Boolean> lastCoinFlips) {
 
     public GameStateResponseDTO(
         String matchId,
@@ -39,7 +40,7 @@ import java.util.List;
         PlayerView self,
         OpponentView opponent,
         String activeStadiumCardId) {
-        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, null, null, null, null);
+        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, null, null, null, null, List.of());
     }
 
     /**

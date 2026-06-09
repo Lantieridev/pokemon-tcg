@@ -159,6 +159,11 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly animatedPrizeCount = signal(0);
   readonly animatedOppPrizeCount = signal(0);
 
+  readonly isAttackCoinFlipping = signal<boolean>(false);
+  readonly attackCoinFlips = signal<boolean[]>([]);
+  readonly currentAttackFlipIndex = signal<number>(-1);
+  readonly currentAttackFlipResult = signal<'heads' | 'tails' | null>(null);
+
   // ── Computed helpers ──────────────────────────────────────────────────────
   readonly myEmptyBench = computed(() =>
     Array(Math.max(0, 5 - (this.me()?.bench.length ?? 0))).fill(0)
@@ -429,6 +434,12 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.toastService.info(mapped.text);
         }
       });
+      const stateSub = this.wsService.gameState$.subscribe(state => {
+        if (state.lastCoinFlips && state.lastCoinFlips.length > 0) {
+          this.runAttackCoinFlips(state.lastCoinFlips);
+        }
+      });
+      this.wsSub.add(stateSub);
       this.wsSub.add(chatSub);
     } catch (err) {
       this.connectionError.set('No se pudo conectar. ¿Estás autenticado?');
@@ -891,5 +902,34 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         }, 800);
       }
     }, 200);
+  }
+
+  runAttackCoinFlips(flips: boolean[]): void {
+    if (this.isAttackCoinFlipping()) return;
+    this.isAttackCoinFlipping.set(true);
+    this.attackCoinFlips.set(flips);
+    this.animateFlip(0);
+  }
+
+  private animateFlip(index: number): void {
+    const flips = this.attackCoinFlips();
+    if (index >= flips.length) {
+      setTimeout(() => {
+        this.isAttackCoinFlipping.set(false);
+        this.currentAttackFlipIndex.set(-1);
+        this.currentAttackFlipResult.set(null);
+      }, 1500);
+      return;
+    }
+
+    this.currentAttackFlipIndex.set(index);
+    this.currentAttackFlipResult.set(null);
+
+    setTimeout(() => {
+      this.currentAttackFlipResult.set(flips[index] ? 'heads' : 'tails');
+      setTimeout(() => {
+        this.animateFlip(index + 1);
+      }, 2000);
+    }, 50);
   }
 }

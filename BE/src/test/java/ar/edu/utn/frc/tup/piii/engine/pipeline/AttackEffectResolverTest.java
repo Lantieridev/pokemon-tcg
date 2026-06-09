@@ -9,6 +9,9 @@ import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
+import ar.edu.utn.frc.tup.piii.engine.model.Bench;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -255,10 +258,55 @@ class AttackEffectResolverTest {
     }
 
     @Test
-    void shouldResolveForceSwitchTypeAndBeNoOp() {
+    void shouldResolveForceSwitchTypeAndExecuteSwitch() {
         assertEquals(AttackEffectType.FORCE_SWITCH, resolver.resolveType("force_switch"));
-        final AttackContext ctx = buildCtx("force_switch");
-        resolver.apply(ctx); // FR-TODO: no-op, must not throw
+        
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final PlayerRuntime defenderRuntime = mock(PlayerRuntime.class);
+        
+        final Bench attackerBench = mock(Bench.class);
+        final Bench defenderBench = mock(Bench.class);
+        
+        final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState activeDefender = mock(BattlePokemonState.class);
+        
+        final BattlePokemonState benchAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState benchDefender = mock(BattlePokemonState.class);
+        
+        final StatusEffectManager attackerSM = mock(StatusEffectManager.class);
+        final StatusEffectManager defenderSM = mock(StatusEffectManager.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
+        org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benchAttacker));
+        org.mockito.Mockito.when(attackerRuntime.getActivePokemon()).thenReturn(activeAttacker);
+        org.mockito.Mockito.when(attackerBench.promote(0)).thenReturn(benchAttacker);
+        org.mockito.Mockito.when(attackerRuntime.getStatusEffectManager()).thenReturn(attackerSM);
+        
+        org.mockito.Mockito.when(defenderRuntime.getBench()).thenReturn(defenderBench);
+        org.mockito.Mockito.when(defenderBench.getAll()).thenReturn(List.of(benchDefender));
+        org.mockito.Mockito.when(defenderRuntime.getActivePokemon()).thenReturn(activeDefender);
+        org.mockito.Mockito.when(defenderBench.promote(0)).thenReturn(benchDefender);
+        org.mockito.Mockito.when(defenderRuntime.getStatusEffectManager()).thenReturn(defenderSM);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("force_switch")
+                .attackerRuntime(attackerRuntime)
+                .defenderRuntime(defenderRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(attackerRuntime).setActivePokemon(benchAttacker);
+        org.mockito.Mockito.verify(attackerBench).place(activeAttacker);
+        org.mockito.Mockito.verify(attackerSM).clearAll();
+        org.mockito.Mockito.verify(attackerRuntime).recordPokemonEntered(activeAttacker);
+        
+        org.mockito.Mockito.verify(defenderRuntime).setActivePokemon(benchDefender);
+        org.mockito.Mockito.verify(defenderBench).place(activeDefender);
+        org.mockito.Mockito.verify(defenderSM).clearAll();
+        org.mockito.Mockito.verify(defenderRuntime).recordPokemonEntered(activeDefender);
     }
 
     // --- apply: coin-flip status effects ---

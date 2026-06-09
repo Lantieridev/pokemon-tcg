@@ -13,6 +13,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.Hand;
 import ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.PlaceBasicPokemonAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonCard;
@@ -31,6 +32,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.MainPhase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -327,6 +329,35 @@ class GameFacadeApplyTest {
         // and Player 0's active Pokémon remains untouched.
         assertSame(benchPokemon1, runtime1.getActivePokemon(), "Player 1's benched Pokémon should be promoted");
         assertSame(active0, runtime0.getActivePokemon(), "Player 0's active Pokémon should remain unchanged");
+    }
+
+    @Test
+    void shouldApplyCassiusAndClearActivePokemonAndShuffleDeck() {
+        final PokemonCard squirtle = buildPokemon("xy1-014", "Squirtle", 50, 1, EvolutionStage.BASIC);
+        active0 = new InPlayPokemon(squirtle);
+        active0.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.WATER, true));
+        
+        final Hand hand = new Hand();
+        final Bench bench = new Bench();
+        final Card dummyCard = buildPokemon("dummy", "Dummy", 10, 1, EvolutionStage.BASIC);
+        final Deck deck = new Deck(new ArrayList<>(List.of(dummyCard)));
+        final DiscardPile discard = new DiscardPile();
+        runtime0 = new PlayerRuntime(deck, hand, bench, discard, sem0, active0);
+        
+        session = new MatchSession(MATCH_ID, List.of("alice", "bob"), session.getBoard(), List.of(runtime0, runtime1));
+        session.setCoinFlipper(() -> true);
+        session.setActivePlayerIndex(PLAYER_0);
+        
+        final TrainerCard cassius = new TrainerCard.Builder("xy1-115", "Cassius", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.CASSIUS)
+                .build();
+        hand.addCard(cassius);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, active0, "xy1-115"));
+        
+        org.junit.jupiter.api.Assertions.assertNull(runtime0.getActivePokemon());
+        assertEquals(3, runtime0.getDeck().size());
+        org.junit.jupiter.api.Assertions.assertFalse(runtime0.hasPokemonInPlay(active0));
     }
 
     // --- helpers ---

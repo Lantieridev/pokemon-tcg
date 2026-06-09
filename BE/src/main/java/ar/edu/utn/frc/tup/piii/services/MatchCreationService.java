@@ -206,6 +206,7 @@ public final class MatchCreationService {
         session.setKnockoutHandler(koResolution);
         session.setTurnManager(turnManager);
         session.setRuleValidator(ruleValidator);
+        session.setVictoryConditionChecker(vcc);
         session.setup();
         session.start();
 

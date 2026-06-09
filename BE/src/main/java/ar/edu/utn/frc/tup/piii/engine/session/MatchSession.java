@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.engine.exception.IllegalMatchStateTransitionExcep
 import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
+import ar.edu.utn.frc.tup.piii.engine.manager.VictoryConditionChecker;
 import ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper;
 
 import java.util.ArrayList;
@@ -42,6 +43,8 @@ public final class MatchSession {
     private int activePlayerIndex = UNSET_PLAYER_INDEX;
     private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
     private CoinFlipper coinFlipper;
+    private VictoryConditionChecker victoryConditionChecker;
+    private final List<Boolean> lastCoinFlips = new ArrayList<>();
     private TurnManager turnManager;
     private RuleValidator ruleValidator;
     private String winnerId;
@@ -399,8 +402,32 @@ public final class MatchSession {
         return coinFlipper;
     }
 
-    public void setCoinFlipper(final CoinFlipper coinFlipper) {
-        this.coinFlipper = Objects.requireNonNull(coinFlipper);
+    public void setCoinFlipper(final CoinFlipper baseFlipper) {
+        Objects.requireNonNull(baseFlipper);
+        this.coinFlipper = new CoinFlipper() {
+            @Override
+            public boolean flip() {
+                final boolean result = baseFlipper.flip();
+                lastCoinFlips.add(result);
+                return result;
+            }
+        };
+    }
+
+    public VictoryConditionChecker getVictoryConditionChecker() {
+        return victoryConditionChecker;
+    }
+
+    public void setVictoryConditionChecker(final VictoryConditionChecker victoryConditionChecker) {
+        this.victoryConditionChecker = victoryConditionChecker;
+    }
+
+    public List<Boolean> getLastCoinFlips() {
+        return List.copyOf(lastCoinFlips);
+    }
+
+    public void clearLastCoinFlips() {
+        this.lastCoinFlips.clear();
     }
 
     /**
