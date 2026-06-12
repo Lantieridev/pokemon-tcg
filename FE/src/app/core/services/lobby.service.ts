@@ -124,7 +124,7 @@ export class LobbyService {
 
   // ── Partida Pública ────────────────────────────────────────────────────────
 
-  async joinPublicQueue(): Promise<void> {
+  async joinPublicQueue(isRanked: boolean = false): Promise<void> {
     const deckId = this.selectedDeckId();
     if (!deckId) {
       this.lobbyError.set('Seleccioná un mazo antes de buscar partida.');
@@ -135,7 +135,7 @@ export class LobbyService {
 
     try {
       const res = await firstValueFrom(
-        this.http.post<LobbyResponse>(`${this.BASE}/queue`, { deckId })
+        this.http.post<LobbyResponse>(`${this.BASE}/queue`, { deckId, isRanked })
       );
       if (res.status === 'MATCH_READY' && res.matchId) {
         // Emparejado inmediatamente (había alguien en la cola)

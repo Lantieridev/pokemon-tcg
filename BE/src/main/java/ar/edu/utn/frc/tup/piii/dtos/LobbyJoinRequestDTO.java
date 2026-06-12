@@ -5,5 +5,5 @@ package ar.edu.utn.frc.tup.piii.dtos;
  *
  * @param deckId the deck the player wants to use for the match
  */
-public record LobbyJoinRequestDTO(Long deckId) {
+public record LobbyJoinRequestDTO(Long deckId, Boolean isRanked) {
 }

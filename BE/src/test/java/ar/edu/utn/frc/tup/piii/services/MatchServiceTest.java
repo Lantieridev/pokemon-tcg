@@ -108,6 +108,12 @@ class MatchServiceTest {
                 MATCH_ID, 1L, 1, 0, "ACTIVE", null,
                 new GameStateResponseDTO.PlayerView(PLAYER_A_ID, null, List.of(), List.of(), 45, 6),
                 new GameStateResponseDTO.OpponentView(PLAYER_B_ID, null, List.of(), 0, 45, 6),
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
                 null);
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
 

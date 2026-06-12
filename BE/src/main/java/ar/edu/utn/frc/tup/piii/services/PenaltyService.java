@@ -92,4 +92,20 @@ public interface PenaltyService {
      *                              false if the penalized user forfeited/abandoned
      */
     void registerMatchFinished(String username, boolean completedLegitimately);
+
+    /**
+     * Checks if a user is currently banned from ranked matches.
+     *
+     * @param username the username to check
+     * @return true if they have an active ranked ban
+     */
+    boolean isRankedBanned(String username);
+
+    /**
+     * Applies a temporary ban specifically for ranked matchmaking.
+     *
+     * @param username the username to penalize
+     * @param minutes  duration of the ban in minutes
+     */
+    void applyRankedBan(String username, int minutes);
 }

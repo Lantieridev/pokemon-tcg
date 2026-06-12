@@ -57,6 +57,7 @@ export class MatchStore {
   readonly victoryReason = computed(() => this.state()?.victoryReason ?? null);
   readonly mvpCardId = computed(() => this.state()?.mvpCardId ?? null);
   readonly mvpCardDamage = computed(() => this.state()?.mvpCardDamage ?? null);
+  readonly mmrChange = computed(() => this.state()?.mmrChange ?? null);
 
   readonly isMyTurn = computed(() => {
     const s = this.state();

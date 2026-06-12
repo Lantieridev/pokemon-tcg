@@ -50,6 +50,9 @@ public final class MatchSession {
     private String winnerId;
     private String victoryReason;
     private long version = 1L;
+    private final boolean isRanked;
+    private Integer mmrChangeA;
+    private Integer mmrChangeB;
 
     /**
      * Set when a player's Active Pokémon has been knocked out and they must promote
@@ -73,17 +76,27 @@ public final class MatchSession {
      * @param playerIds      list of player identifiers — exactly 2 (never null)
      * @param board          the match board holding both players' state (never null)
      * @param playerRuntimes live mutable state per player; null for legacy callers
+     * @param isRanked       whether this is a ranked match
      */
     public MatchSession(final String matchId,
                         final List<String> playerIds,
                         final MatchBoard board,
-                        final List<PlayerRuntime> playerRuntimes) {
+                        final List<PlayerRuntime> playerRuntimes,
+                        final boolean isRanked) {
         this.matchId = Objects.requireNonNull(matchId, "matchId must not be null");
         this.playerIds = Objects.requireNonNull(playerIds, "playerIds must not be null");
         this.board = Objects.requireNonNull(board, "board must not be null");
         this.playerRuntimes = playerRuntimes != null ? List.copyOf(playerRuntimes) : null;
+        this.isRanked = isRanked;
         this.state = MatchSessionState.WAITING;
         this.lock = new ReentrantLock();
+    }
+
+    public MatchSession(final String matchId,
+                        final List<String> playerIds,
+                        final MatchBoard board,
+                        final List<PlayerRuntime> playerRuntimes) {
+        this(matchId, playerIds, board, playerRuntimes, false);
     }
 
     /**
@@ -96,7 +109,7 @@ public final class MatchSession {
     public MatchSession(final String matchId,
                         final List<String> playerIds,
                         final MatchBoard board) {
-        this(matchId, playerIds, board, null);
+        this(matchId, playerIds, board, null, false);
     }
 
     /**
@@ -583,5 +596,30 @@ public final class MatchSession {
      */
     public void incrementVersion() {
         this.version++;
+    }
+
+    /**
+     * Returns whether the match is ranked.
+     *
+     * @return true if ranked, false otherwise
+     */
+    public boolean isRanked() {
+        return isRanked;
+    }
+
+    public Integer getMmrChangeA() {
+        return mmrChangeA;
+    }
+
+    public void setMmrChangeA(Integer mmrChangeA) {
+        this.mmrChangeA = mmrChangeA;
+    }
+
+    public Integer getMmrChangeB() {
+        return mmrChangeB;
+    }
+
+    public void setMmrChangeB(Integer mmrChangeB) {
+        this.mmrChangeB = mmrChangeB;
     }
 }

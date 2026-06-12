@@ -60,7 +60,7 @@ public final class LobbyController {
     public LobbyResponseDTO joinQueue(final Principal principal,
                                       @RequestBody final LobbyJoinRequestDTO request) {
         Objects.requireNonNull(principal, "User must be authenticated");
-        return lobbyService.joinQueue(principal.getName(), request.deckId());
+        return lobbyService.joinQueue(principal.getName(), request.deckId(), request.isRanked());
     }
 
     /**
