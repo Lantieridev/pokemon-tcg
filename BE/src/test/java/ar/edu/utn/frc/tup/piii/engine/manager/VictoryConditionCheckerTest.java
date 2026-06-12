@@ -426,4 +426,121 @@ class VictoryConditionCheckerTest {
         
         assertTrue(captured.isEmpty());
     }
+
+    @Test
+    void shouldEmitSuddenDeathWhenBothPlayersTakeLastPrizeMutually() {
+        prizeProvider.set(PLAYER_0, PRIZES_ZERO);
+        prizeProvider.set(PLAYER_1, PRIZES_ZERO);
+        benchProvider.set(PLAYER_0, PRIZES_TWO);
+        benchProvider.set(PLAYER_1, PRIZES_TWO);
+        checker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        FakeBattlePokemonState knocked = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        checker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.SuddenDeath.class, captured.get(0));
+    }
+
+    @Test
+    void shouldEmitPrizeVictoryForPlayerWithMoreConditionsMet() {
+        // Player 0 takes last prize (meets Prize Victory condition)
+        prizeProvider.set(PLAYER_0, PRIZES_ZERO);
+        // Player 1 still has prizes remaining (meets 0 prize conditions)
+        prizeProvider.set(PLAYER_1, PRIZES_TWO);
+
+        // BOTH players end up with no Pokémon on the board (both meet the other player's bench-out condition)
+        // Player 0 gets: 1 (prizes) + 1 (bench-out player 1) = 2 conditions
+        // Player 1 gets: 0 (prizes) + 1 (bench-out player 0) = 1 condition
+        // Therefore, Player 0 should be declared the winner directly, without a Sudden Death tiebreaker.
+        benchProvider.set(PLAYER_0, BENCH_ZERO);
+        benchProvider.set(PLAYER_1, BENCH_ZERO);
+        
+        FakeBattlefieldStateProvider localBattlefieldProvider = new FakeBattlefieldStateProvider(null, null);
+        VictoryConditionChecker localChecker = new VictoryConditionChecker(
+                prizeProvider,
+                deckProvider,
+                benchProvider,
+                localBattlefieldProvider,
+                result -> captured.add(result));
+        localChecker.setInitialPlacementComplete(true, true);
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        FakeBattlePokemonState knocked = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        localChecker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.PrizeVictory.class, captured.get(0));
+        assertEquals(PLAYER_0, ((VictoryResult.PrizeVictory) captured.get(0)).winnerPlayerIndex());
+    }
+
+    @Test
+    void shouldEmitSuddenDeathWhenBothPlayersMeetEqualNumberOfConditions() {
+        // BOTH players take last prize (1 condition each)
+        prizeProvider.set(PLAYER_0, PRIZES_ZERO);
+        prizeProvider.set(PLAYER_1, PRIZES_ZERO);
+        
+        // BOTH players end up with empty benches (1 condition each)
+        // Total conditions met: Player 0 = 2, Player 1 = 2
+        // Equal conditions met -> Sudden Death tiebreaker.
+        benchProvider.set(PLAYER_0, BENCH_ZERO);
+        benchProvider.set(PLAYER_1, BENCH_ZERO);
+
+        FakeBattlefieldStateProvider localBattlefieldProvider = new FakeBattlefieldStateProvider(null, null);
+        VictoryConditionChecker localChecker = new VictoryConditionChecker(
+                prizeProvider,
+                deckProvider,
+                benchProvider,
+                localBattlefieldProvider,
+                result -> captured.add(result));
+        localChecker.setInitialPlacementComplete(true, true);
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        FakeBattlePokemonState knocked = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        localChecker.onKnockout(knocked, PRIZES_TO_TAKE);
+
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.SuddenDeath.class, captured.get(0));
+    }
+
+    @Test
+    void shouldDeferVictoryEvaluationUntilAllPendingKnockoutsAreProcessed() {
+        // Player 0 took last prize card
+        prizeProvider.set(PLAYER_0, PRIZES_ZERO);
+        prizeProvider.set(PLAYER_1, PRIZES_TWO);
+        benchProvider.set(PLAYER_0, PRIZES_TWO);
+        benchProvider.set(PLAYER_1, PRIZES_TWO);
+
+        // Put active pokemon for both players. Player 1 active has lethal damage (100 damage)
+        FakeBattlePokemonState p0Active = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        FakeBattlePokemonState p1Active = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        p1Active.addDamageCounters(10); // 10 counters * 10 = 100 damage (lethal)
+        
+        FakeBattlefieldStateProvider localBattlefieldProvider = new FakeBattlefieldStateProvider(p0Active, p1Active);
+        
+        VictoryConditionChecker localChecker = new VictoryConditionChecker(
+                prizeProvider,
+                deckProvider,
+                benchProvider,
+                localBattlefieldProvider,
+                result -> captured.add(result));
+        localChecker.setInitialPlacementComplete(true, true);
+        localChecker.on(new PhaseEvent.TurnStarted(PLAYER_0, new DrawPhase()));
+
+        // We process KO for some other pokemon (e.g. a benched pokemon), while active pokemon has pending lethal damage
+        FakeBattlePokemonState someBenched = new FakeBattlePokemonState(MAX_HP, PokemonType.FIRE, null, null, false);
+        localChecker.onKnockout(someBenched, PRIZES_TO_TAKE);
+
+        // Since p1Active still has pending lethal damage, victory check should be deferred
+        assertTrue(captured.isEmpty());
+
+        // Now remove the damage from p1Active (as if it was processed and removed)
+        p1Active.setDamageCounters(0);
+        localChecker.onKnockout(p1Active, PRIZES_TO_TAKE);
+
+        // Now that there are no pending knockouts, victory should fire
+        assertEquals(1, captured.size());
+        assertInstanceOf(VictoryResult.PrizeVictory.class, captured.get(0));
+        assertEquals(PLAYER_0, ((VictoryResult.PrizeVictory) captured.get(0)).winnerPlayerIndex());
+    }
 }

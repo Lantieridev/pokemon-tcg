@@ -230,6 +230,23 @@ class CardMapperTest {
     }
 
     @Test
+    void shouldParseChesnaughtAndFurfrouAttacks() {
+        final CardEntity chesnaught = pokemonEntity("xy1-14", "Chesnaught", "Stage 2", 160,
+                "[{\"name\":\"Touchdown\",\"cost\":[\"Grass\",\"Grass\",\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":4,"
+                + "\"damage\":\"90\",\"text\":\"Heal 20 damage from this Pokémon.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pcChes = assertInstanceOf(PokemonCard.class, mapper.map(chesnaught));
+        assertEquals("heal:20", pcChes.getAttacks().get(0).effectText());
+
+        final CardEntity furfrou = pokemonEntity("xy1-114", "Furfrou", "Basic", 90,
+                "[{\"name\":\"Energy Cutoff\",\"cost\":[\"Colorless\",\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":3,"
+                + "\"damage\":\"80\",\"text\":\"Flip a coin. If heads, discard an Energy attached to your opponent's Active Pokémon.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pcFurfrou = assertInstanceOf(PokemonCard.class, mapper.map(furfrou));
+        assertEquals("coin_flip_discard_opponent_energy:1", pcFurfrou.getAttacks().get(0).effectText());
+    }
+
+    @Test
     void shouldMapPokemonWithEncodingCorruptedSupertype() {
         final CardEntity entity = CardEntity.builder()
                 .id("xy1-x").name("Test").supertype("PokÃ©mon").subtype("Basic").hp(60)

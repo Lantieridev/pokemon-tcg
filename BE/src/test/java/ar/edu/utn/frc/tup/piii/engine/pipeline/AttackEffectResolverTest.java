@@ -191,6 +191,31 @@ class AttackEffectResolverTest {
     }
 
     @Test
+    void shouldDiscardEnergyFromDefender() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtx("discard_opponent_energy:1");
+        resolver.apply(ctx);
+        assertEquals(1, defender.getAttachedEnergies().size());
+    }
+
+    @Test
+    void shouldDiscardEnergyFromDefenderOnHeads() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_discard_opponent_energy:1", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defender.getAttachedEnergies().isEmpty());
+    }
+
+    @Test
+    void shouldNotDiscardEnergyFromDefenderOnTails() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_discard_opponent_energy:1", () -> false);
+        resolver.apply(ctx);
+        assertEquals(1, defender.getAttachedEnergies().size());
+    }
+
+    @Test
     void shouldBeNoOpForCoinFlipExtraType() {
         final int defenderCountersBefore = defender.getDamageCounters();
         final AttackContext ctx = buildCtx("coin_flip_extra:20");
@@ -423,5 +448,141 @@ class AttackEffectResolverTest {
                 mock(KnockoutHandler.class), coinFlipper)
                 .effectText(effectText)
                 .build();
+    }
+
+    @Test
+    void shouldResolveCoinFlipSwitchSelfOnHeads() {
+        assertEquals(AttackEffectType.COIN_FLIP_SWITCH_SELF, resolver.resolveType("coin_flip_switch_self"));
+        
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final Bench attackerBench = mock(Bench.class);
+        final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState benchAttacker = mock(BattlePokemonState.class);
+        final StatusEffectManager attackerSM = mock(StatusEffectManager.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
+        org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benchAttacker));
+        org.mockito.Mockito.when(attackerRuntime.getActivePokemon()).thenReturn(activeAttacker);
+        org.mockito.Mockito.when(attackerBench.promote(0)).thenReturn(benchAttacker);
+        org.mockito.Mockito.when(attackerRuntime.getStatusEffectManager()).thenReturn(attackerSM);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> true) // Heads
+                .effectText("coin_flip_switch_self")
+                .attackerRuntime(attackerRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(attackerRuntime).setActivePokemon(benchAttacker);
+        org.mockito.Mockito.verify(attackerBench).place(activeAttacker);
+    }
+
+    @Test
+    void shouldNotSwitchSelfOnTails() {
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> false) // Tails
+                .effectText("coin_flip_switch_self")
+                .attackerRuntime(attackerRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verifyNoInteractions(attackerRuntime);
+    }
+
+    @Test
+    void shouldResolveHealAnyCorrectly() {
+        assertEquals(AttackEffectType.HEAL_ANY, resolver.resolveType("heal_any:20"));
+        
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final Bench attackerBench = mock(Bench.class);
+        final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState benched1 = mock(BattlePokemonState.class);
+        final BattlePokemonState benched2 = mock(BattlePokemonState.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getActivePokemon()).thenReturn(activeAttacker);
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
+        org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benched1, benched2));
+        
+        org.mockito.Mockito.when(activeAttacker.getDamageCounters()).thenReturn(2);
+        org.mockito.Mockito.when(benched1.getDamageCounters()).thenReturn(4); // Most damaged
+        org.mockito.Mockito.when(benched2.getDamageCounters()).thenReturn(1);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("heal_any:20")
+                .attackerRuntime(attackerRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(benched1).heal(20);
+        org.mockito.Mockito.verify(activeAttacker, org.mockito.Mockito.never()).heal(20);
+        org.mockito.Mockito.verify(benched2, org.mockito.Mockito.never()).heal(20);
+    }
+
+    @Test
+    void shouldResolveHealBenchCorrectly() {
+        assertEquals(AttackEffectType.HEAL_BENCH, resolver.resolveType("heal_bench:60"));
+        
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final Bench attackerBench = mock(Bench.class);
+        final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState benched1 = mock(BattlePokemonState.class);
+        final BattlePokemonState benched2 = mock(BattlePokemonState.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getActivePokemon()).thenReturn(activeAttacker);
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
+        org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benched1, benched2));
+        
+        org.mockito.Mockito.when(benched1.getDamageCounters()).thenReturn(1);
+        org.mockito.Mockito.when(benched2.getDamageCounters()).thenReturn(5); // Most damaged on bench
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("heal_bench:60")
+                .attackerRuntime(attackerRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(benched2).heal(60);
+        org.mockito.Mockito.verify(activeAttacker, org.mockito.Mockito.never()).heal(60);
+        org.mockito.Mockito.verify(benched1, org.mockito.Mockito.never()).heal(60);
+    }
+
+    @Test
+    void shouldResolveHealAllCorrectly() {
+        assertEquals(AttackEffectType.HEAL_ALL, resolver.resolveType("heal_all:10"));
+        
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final Bench attackerBench = mock(Bench.class);
+        final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
+        final BattlePokemonState benched1 = mock(BattlePokemonState.class);
+        final BattlePokemonState benched2 = mock(BattlePokemonState.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getActivePokemon()).thenReturn(activeAttacker);
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
+        org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benched1, benched2));
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class),
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("heal_all:10")
+                .attackerRuntime(attackerRuntime)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(activeAttacker).heal(10);
+        org.mockito.Mockito.verify(benched1).heal(10);
+        org.mockito.Mockito.verify(benched2).heal(10);
     }
 }

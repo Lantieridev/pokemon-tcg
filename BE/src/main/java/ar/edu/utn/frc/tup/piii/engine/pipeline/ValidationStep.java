@@ -1,6 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine.pipeline;
 
 import ar.edu.utn.frc.tup.piii.engine.model.AttackModifierResult;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public final class ValidationStep implements AttackPipelineStep {
 
     @Override
     public void process(final AttackContext ctx, final Runnable next) {
-        if (!hasRequiredEnergy(ctx.getAttack().requiredEnergies(), ctx.getAttacker().getAttachedEnergies())) {
+        if (!hasRequiredEnergy(ctx.getAttack().requiredEnergies(), ctx.getAttacker())) {
             ctx.setAttackBlocked(true);
             return;
         }
@@ -34,26 +36,46 @@ public final class ValidationStep implements AttackPipelineStep {
         next.run();
     }
 
-    private boolean hasRequiredEnergy(final List<PokemonType> required, final List<PokemonType> attached) {
-        final Map<PokemonType, Long> reqByType = required.stream()
-                .filter(t -> t != PokemonType.COLORLESS)
-                .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
-
-        final Map<PokemonType, Long> attByType = attached.stream()
-                .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
-
-        long usedForSpecific = 0L;
-        for (final Map.Entry<PokemonType, Long> entry : reqByType.entrySet()) {
-            final long available = attByType.getOrDefault(entry.getKey(), 0L);
-            if (available < entry.getValue()) {
-                return false;
+    private boolean hasRequiredEnergy(final List<PokemonType> required, final BattlePokemonState attacker) {
+        final List<EnergyCard> energyCards = attacker.getAttachedEnergyCards();
+        final List<PokemonType> pool = new java.util.ArrayList<>(attacker.getAttachedEnergies());
+        final List<Boolean> wildcard = new java.util.ArrayList<>();
+        
+        for (final EnergyCard ec : energyCards) {
+            for (int i = 0; i < ec.getEnergyCount(); i++) {
+                wildcard.add(ec.isProvidesAllTypes());
             }
-            usedForSpecific += entry.getValue();
         }
 
-        final long colorlessNeeded = required.stream()
-                .filter(t -> t == PokemonType.COLORLESS)
-                .count();
-        return (attached.size() - usedForSpecific) >= colorlessNeeded;
+        int colorlessRequired = 0;
+        for (final PokemonType req : required) {
+            if (req == PokemonType.COLORLESS) {
+                colorlessRequired++;
+                continue;
+            }
+            boolean satisfied = false;
+            for (int i = 0; i < pool.size(); i++) {
+                if (!wildcard.get(i) && pool.get(i) == req) {
+                    pool.remove(i);
+                    wildcard.remove(i);
+                    satisfied = true;
+                    break;
+                }
+            }
+            if (!satisfied) {
+                for (int i = 0; i < pool.size(); i++) {
+                    if (wildcard.get(i)) {
+                        pool.remove(i);
+                        wildcard.remove(i);
+                        satisfied = true;
+                        break;
+                    }
+                }
+            }
+            if (!satisfied) {
+                return false;
+            }
+        }
+        return pool.size() >= colorlessRequired;
     }
 }
