@@ -268,6 +268,11 @@ public final class CardMapper {
             return "coin_flip_fail";
         }
 
+        // --- Coin-flip switch self ---
+        if (lower.contains("flip a coin") && lower.contains("switch this pok") && lower.contains("benched")) {
+            return "coin_flip_switch_self";
+        }
+
         // --- Coin-flip status conditions ---
         if (lower.contains("flip a coin") || lower.contains("flip 2 coins")) {
             if (lower.contains("paralyzed"))  return "coin_flip_paralysis";
@@ -307,11 +312,20 @@ public final class CardMapper {
             return "prevent_damage";
         }
 
-        // --- Heal self ---
+        // --- Heal ---
         if (lower.contains("heal")) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
             if (m.find()) {
-                return "heal:" + m.group(1);
+                String amt = m.group(1);
+                if (lower.contains("1 of your benched pok")) {
+                    return "heal_bench:" + amt;
+                } else if (lower.contains("1 of your pok")) {
+                    return "heal_any:" + amt;
+                } else if (lower.contains("each of your pok")) {
+                    return "heal_all:" + amt;
+                } else {
+                    return "heal:" + amt;
+                }
             }
         }
 
