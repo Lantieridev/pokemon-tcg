@@ -22,8 +22,10 @@
               🏅 {{ profile.activeTitle }}
             </span>
             <!-- Selected Medals Showcase -->
-            <div *ngIf="selectedMedalsList.length > 0" style="display: flex; gap: 8px; align-items: center; margin-left: 4px;">
-              <img *ngFor="let medal of selectedMedalsList" [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+            <div *ngIf="selectedMedalsList.length > 0" style="display: flex; gap: 8px; align-items: center; margin-left: 8px;">
+              <div *ngFor="let medal of selectedMedalsList" style="width: 34px; height: 34px; border-radius: 9px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
+              </div>
             </div>
           </div>
           

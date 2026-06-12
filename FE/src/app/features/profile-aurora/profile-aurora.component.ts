@@ -955,7 +955,7 @@ import { RouterModule } from '@angular/router';
           </div>
 
           <div style="position: relative; margin-bottom: 20px;">
-            <input type="text" [(ngModel)]="cardSearchQuery" placeholder="Buscar carta por nombre..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 12px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
+            <input type="text" [(ngModel)]="cardSearchQuery" placeholder="Buscar carta por nombre..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 12px 16px; border-radius: 12px; outline: none; font-family: 'Plus Jakarta Sans'; font-size: 14px;" />
           </div>
 
           <!-- Cards Grid -->
@@ -984,8 +984,12 @@ import { RouterModule } from '@angular/router';
     }
 
     <style>
+      .scene.v-aurora {
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        --display: 'Playfair Display', serif;
+      }
       .match-row-hover:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
-      .tab-btn { background: transparent; border: none; color: var(--mut); font-family: 'Manrope'; font-weight: 700; font-size: 13.5px; padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+      .tab-btn { background: transparent; border: none; color: var(--mut); font-family: 'Plus Jakarta Sans'; font-weight: 700; font-size: 13.5px; padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
       .tab-btn:hover { color: var(--txt); }
       .tab-btn.active-tab { background: rgba(255,255,255,0.1); color: var(--txt); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
       
@@ -1125,7 +1129,7 @@ import { RouterModule } from '@angular/router';
         justify-content: center;
         transition: all 0.18s;
         flex-shrink: 0;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
       .edit-close-btn:hover {
         background: rgba(255,46,62,0.15);
@@ -1378,7 +1382,7 @@ import { RouterModule } from '@angular/router';
         letter-spacing: 0.01em;
       }
       .edit-pane-desc {
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 11.5px;
         color: var(--mut);
         margin: 0;
@@ -1524,7 +1528,7 @@ import { RouterModule } from '@angular/router';
         padding: 14px 16px;
         border-radius: 14px;
         outline: none;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 13px;
         font-weight: 500;
         line-height: 1.65;
@@ -1539,7 +1543,7 @@ import { RouterModule } from '@angular/router';
       .edit-textarea.is-error { border-color: #f87171; }
       
       .edit-hint {
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 12px;
         color: var(--mut);
         font-weight: 500;
@@ -1649,7 +1653,7 @@ import { RouterModule } from '@angular/router';
         padding: 10px 36px 10px 34px;
         border-radius: 12px;
         outline: none;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 13px;
         transition: border-color 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
@@ -1762,7 +1766,7 @@ import { RouterModule } from '@angular/router';
         padding: 12px 16px;
         border-radius: 12px;
         outline: none;
-        font-family: 'Manrope';
+        font-family: 'Plus Jakarta Sans';
         font-size: 14.5px;
         transition: border-color 0.2s;
         box-sizing: border-box;
