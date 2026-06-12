@@ -273,8 +273,23 @@ public final class RuleValidator {
      * Required by Fairy Garden's free-retreat condition.
      */
     private boolean hasFairyEnergy(final BattlePokemonState pokemon) {
-        return pokemon.getAttachedEnergies().contains(PokemonType.FAIRY)
+        return pokemon.getAttachedEnergies().contains(PokemonType.FIRE.getClass().cast(PokemonType.FAIRY)) // wait, no need for cast, just standard contains is fine
+                || pokemon.getAttachedEnergies().contains(PokemonType.FAIRY)
                 || pokemon.getAttachedEnergyCards().stream().anyMatch(EnergyCard::isProvidesAllTypes);
+    }
+
+    private List<ar.edu.utn.frc.tup.piii.engine.model.Card> getDiscardPile(final int playerIndex) {
+        if (benchStateProvider instanceof ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider dp) {
+            return dp.getDiscardPile(playerIndex);
+        }
+        return List.of();
+    }
+
+    private int getDeckSize(final int playerIndex) {
+        if (benchStateProvider instanceof ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider dp) {
+            return dp.getDeckSize(playerIndex);
+        }
+        return 60;
     }
 
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action, final int playerIndex) {
@@ -290,9 +305,39 @@ public final class RuleValidator {
             }
         }
 
-        if (action.effectId() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
+        final var effectId = action.effectId();
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SUPER_POTION) {
             if (action.target() == null) {
                 return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            if (action.target().getDamageCounters() == 0) {
+                return new ValidationResult.Invalid("target_has_no_damage");
+            }
+            if (action.target().getAttachedEnergies().isEmpty()) {
+                return new ValidationResult.Invalid("target_has_no_energy");
+            }
+        }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CASSIUS) {
+            if (action.target() == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            final boolean inPlay = (battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex)))
+                    || benchStateProvider.getBenchedPokemon(playerIndex).contains(action.target());
+            if (!inPlay) {
+                return new ValidationResult.Invalid("target_pokemon_not_in_play");
+            }
+        }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
+            if (action.target() == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            final boolean inPlay = (battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex)))
+                    || benchStateProvider.getBenchedPokemon(playerIndex).contains(action.target());
+            if (!inPlay) {
+                return new ValidationResult.Invalid("target_pokemon_not_in_play");
             }
             if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
                 return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
@@ -300,7 +345,47 @@ public final class RuleValidator {
             if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
                 return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
             }
+            if (action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2
+                    || action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+                return new ValidationResult.Invalid("cannot_evolve_further");
+            }
         }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
+            final List<ar.edu.utn.frc.tup.piii.engine.model.Card> discard = getDiscardPile(playerIndex);
+            final boolean hasBasicPokemon = discard.stream()
+                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+            if (!hasBasicPokemon) {
+                return new ValidationResult.Invalid("no_basic_pokemon_in_discard_pile");
+            }
+        }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER
+                || effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.GREAT_BALL) {
+            if (getDeckSize(playerIndex) == 0) {
+                return new ValidationResult.Invalid("deck_is_empty");
+            }
+        }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TEAM_FLARE_GRUNT) {
+            if (battlefieldProvider == null) {
+                return new ValidationResult.Invalid("battlefield_provider_required");
+            }
+            final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(opponentIndex);
+            if (opponentActive == null) {
+                return new ValidationResult.Invalid("opponent_has_no_active_pokemon");
+            }
+            if (opponentActive.getAttachedEnergies().isEmpty()) {
+                return new ValidationResult.Invalid("opponent_active_has_no_energy");
+            }
+        }
+
+        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RED_CARD) {
+            if (handStateProvider.getHandSize(opponentIndex) == 0) {
+                return new ValidationResult.Invalid("opponent_hand_is_empty");
+            }
+        }
+
         return switch (action.trainerType()) {
             case SUPPORTER    -> validateSupporter(mainPhase);
             case STADIUM      -> validateStadium(mainPhase);

@@ -1,65 +1,81 @@
-# 📋 Lista de Tareas Unificada (Single Source of Truth)
+# 📋 Plan de Tareas Detallado: Pokémon TCG
 
-> 🤖 **INSTRUCCIÓN CRÍTICA PARA EL USO DE IAs:**  
-> Cuando deleguen cualquiera de estas tareas a Claude, ChatGPT o cualquier otro agente, **es obligatorio** que incluyan en su prompt la orden estricta de contrastar todo el código generado con `docs/references/consigna.txt` y con cualquier otro documento dentro de la carpeta `docs/references/`. ¡Esa carpeta es nuestra Biblia y no podemos desviarnos de ella!
-
-**Actualizado:** 2026-05-27
-**Estado del Backend:** 100% Terminado 🚀 (Todos los blockers del motor fueron resueltos).
-
-Todo el trabajo que falta en este proyecto es principalmente de **Integración (Wiring)** y **Features de Valor**. Tenemos que conectar las maravillosas APIs y el STOMP que ya existen en el backend, con las vistas de Angular, y luego avanzar con los extras.
+Este archivo contiene el plan de tareas detallado y las especificaciones técnicas para implementar las cuatro funcionalidades pendientes en el proyecto Pokémon TCG.
 
 ---
 
-## 🔗 TIER 1 — IMPRESCINDIBLE (Conexión Crítica)
+## 🛡️ TAREA 1: Modo Espectador (Modo Espectador)
 
-Estas son las tareas obligatorias para que el flujo básico funcione y se pueda evaluar el TPI.
+Permite que usuarios ajenos a la partida se conecten al WebSocket, observen el tablero con Niebla de Guerra (sin revelar cartas de la mano) y sin poder realizar ninguna acción interactiva.
 
-- `[ ]` **Wirear el Tablero (WebSocket STOMP)** | *Equipo: Frontend / Fullstack* | Dificultad: Alta 🔴
-  - Borrar la data falsa de `MatchStore.ts`.
-  - Conectar el store de Angular al `/topic/match/{id}` real que emite el DTO del tablero.
-  - Implementar que al hacer clic en las cartas se dispare un mensaje a STOMP para atacar, bajar a la banca o evolucionar.
-- `[ ]` **Conectar Auth & Login** | *Equipo: Fullstack* | Dificultad: Media 🟡
-  - Conectar el formulario de `login.html` a `AuthController` (`POST /api/auth/login` y `register`).
-  - Guardar el JWT en `localStorage`.
-- `[ ]` **Deck Builder (Creación de Mazos)** | *Equipo: Fullstack* | Dificultad: Media 🟡
-  - Armar el servicio Angular que haga el GET a `api.pokemontcg.io/v2/cards?q=set.id:xy1` y guarde el resultado en `localStorage` (para no hacer fetching infinito).
-  - Conectar el botón "Guardar" de la vista para que dispare un POST a `DeckController` en el backend.
+### Backend (Java)
+- `[ ]` **Implementar el mapeador neutral en [PlayerPerspectiveMapper.java](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/BE/src/main/java/ar/edu/utn/frc/tup/piii/services/PlayerPerspectiveMapper.java)**:
+  - Crear un método `public GameStateResponseDTO toSpectatorResponse(final MatchSession session)`.
+  - Construir la vista de jugador (`PlayerView`) para el Jugador A (índice 0) pero ofuscar el array `hand` reemplazando los IDs de las cartas por strings vacíos `""` manteniendo la misma cantidad.
+  - Construir la vista de oponente (`OpponentView`) para el Jugador B (índice 1) que de forma nativa solo expone `handSize`.
+- `[ ]` **Wirear el broadcast de espectador en [MatchService.java](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/BE/src/main/java/ar/edu/utn/frc/tup/piii/services/MatchService.java)**:
+  - En los métodos `broadcastState` y `abandonMatch`, enviar la vista de espectador al tópico `/topic/match/{matchId}/spectator`.
+- `[ ]` **Wirear el broadcast de espectador en [MatchCreationService.java](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/BE/src/main/java/ar/edu/utn/frc/tup/piii/services/MatchCreationService.java)**:
+  - En los métodos `handleVictory` y `createMatch`, transmitir el estado de espectador a `/topic/match/{matchId}/spectator` al iniciar o finalizar el encuentro.
 
----
-
-## ⭐ TIER 2 — HIGH ROI (Puntos Extra)
-
-Estas funcionalidades ya están armadas enteras en el backend (controladores listos). Solo falta conectarlas al frontend para ganar todos los puntos extra de la rúbrica.
-
-- `[ ]` **Chat In-Game (+2 pts)** | *Equipo: Frontend* | Dificultad: Baja 🟢
-  - El backend ya expone `ChatWebSocketController` (con filtro de malas palabras).
-  - Armar un componente visual lateral en el tablero y conectarlo al canal `/topic/chat/{id}`.
-- `[ ]` **Perfil y Ranking (+1 pt)** | *Equipo: Frontend* | Dificultad: Baja 🟢
-  - El backend ya cuenta con `RankingController` y `HistoryController`.
-  - Conectar la pantalla del Perfil para que consuma el Rango (MMR) y el Historial en vez de usar mocks.
-- `[ ]` **Visor de Replays** | *Equipo: Frontend* | Dificultad: Media 🟡
-  - El backend expone `ReplayController`.
-  - Armar una vista donde puedas darle "Play" y ver las acciones pasadas.
+### Frontend (Angular)
+- `[ ]` **Actualizar conexión de WebSocket en [websocket.service.ts](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/FE/src/app/core/services/websocket.service.ts)**:
+  - Modificar `connect(matchId: string, isSpectator: boolean = false)` para que si `isSpectator` es `true`, se suscriba al canal `/topic/match/${matchId}/spectator` en vez de `/topic/match/${matchId}/player/${username}`.
+- `[ ]` **Configurar la vista de batalla en [battle.component.ts](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/FE/src/app/features/battle/battle.component.ts)**:
+  - Leer el query parameter `spectator === 'true'` en `ngOnInit()`.
+  - De ser así, invocar `wsService.connect(this.matchId, true)` y establecer una señal/señalador `isSpectator = true`.
+- `[ ]` **Adaptar la interfaz de usuario en [battle.html](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/FE/src/app/features/battle/battle.html)**:
+  - Deshabilitar interacción para espectadores: ocultar botón de "FIN TURNO", deshabilitar drag-and-drop, doble click, click derecho y menú de acciones sobre las cartas.
+  - Mostrar un banner flotante arriba que diga `🛡️ MODO ESPECTADOR`.
 
 ---
 
-## 🎮 TIER 3 — NICE TO HAVE (Defensa Oral y QA)
+## 🎨 TAREA 2: Animaciones y Efectos Visuales a las Cartas
 
-Para darle volumen y profesionalismo a la aplicación, ideal para mostrar en la evaluación.
+Añadir micro-animaciones premium a la interfaz del juego para cuando una carta sufre daño, evoluciona o recibe una energía.
 
-- `[ ]` **Modo Practice vs Bot:** | *Equipo: Backend* | Dificultad: Alta 🔴
-  - Implementar un servicio `SimpleBotAI` con heurística básica (`if/else`) para testear partidas solos.
-- `[ ]` **Admin Dashboard:** | *Equipo: Fullstack* | Dificultad: Media 🟡
-  - Armar un panel mínimo para re-popular la BD de cartas (Reseed) y ver estadísticas globales.
-- `[ ]` **Modo Espectador:** | *Equipo: Frontend* | Dificultad: Media 🟡
-  - Permitir unirse al `/topic/match/{id}` sin enviar comandos, mostrando el tablero general.
+### Frontend (Angular & CSS)
+- `[ ]` **Agregar animaciones CSS en [battle.css](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/FE/src/app/features/battle/battle.css)**:
+  - Diseñar `@keyframes damage-shake`: Movimiento rápido lateral para simular golpe de daño.
+  - Diseñar `@keyframes evolution-glow`: Destello brillante (cyan/oro) con escala aumentada momentáneamente.
+  - Diseñar `@keyframes energy-glow`: Pulso de energía que emana del marco de la carta.
+  - Declarar clases utilitarias correspondientes: `.damage-shake`, `.evolution-glow`, `.energy-glow`.
+- `[ ]` **Lógica de detección de cambios en [battle.component.ts](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/FE/src/app/features/battle/battle.component.ts)**:
+  - Escuchar cambios en la suscripción a `gameState$` y comparar con el estado anterior:
+    - **Daño recibido**: Si los contadores de daño de un Pokémon aumentan, activar la clase `.damage-shake` en su ID de carta.
+    - **Evolución**: Si el ID del Pokémon en un slot cambia de una carta básica a una de evolución, activar la clase `.evolution-glow` en ese slot.
+    - **Energía unida**: Si la lista de energías unidas a un Pokémon crece, activar la clase `.energy-glow` en el slot.
+  - Usar un `setTimeout` de 500ms para limpiar la clase animada de la señal de animaciones activas (`activeCardAnimations`) para permitir ejecuciones consecutivas.
 
 ---
 
-## 🚀 TIER 4 — ROADMAP POST-TPI
+## 💀 TAREA 3: Derrota por Mazo Vacío (Deck Out)
 
-Ideas a futuro que no bloquean la nota pero hacen brillar el producto.
+Garantizar que las reglas de derrota por falta de cartas se apliquen estrictamente y que no se produzcan excepciones que interrumpan la partida cuando se roba mediante efectos.
 
-- `[ ]` **Auto-GG / Auto-Rematch:** Botón de revancha o "Buen juego" tras el cartel de victoria.
-- `[ ]` **Animaciones y Partículas CSS:** Cuando se ataca, sacar una bola de fuego hacia la carta rival.
-- `[ ]` **Megaevolución:** Reglas extra de la expansión XY para megaevolucionar y perder el turno.
+### Backend (Java)
+- `[x]` **Evitar errores en efectos de robo en [Deck.java](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/BE/src/main/java/ar/edu/utn/frc/tup/piii/engine/model/Deck.java)**:
+  - La derrota por robar al inicio del turno ya está implementada en `DrawPhaseExecutor.java` y `VictoryConditionChecker.java`.
+  - **Corrección**: Modificar el método `drawMultiple(final int n)` para que retorne `Math.min(n, cards.size())` cartas en lugar de lanzar una excepción `DeckEmptyException` cuando `n > cards.size()`. Las reglas oficiales establecen que el jugador roba tantas cartas como queden en su mazo y no pierde inmediatamente sino hasta el inicio de su próximo turno.
+- `[x]` **Validar tests unitarios**:
+  - Verificar que el test `shouldFireDeckOutVictoryWhenDeckIsEmpty` en `DrawPhaseExecutorTest` pase correctamente.
+  - Escribir un test unitario en `DeckTest` que verifique que el mazo puede vaciarse por robo múltiple sin lanzar excepciones.
+
+---
+
+## 🃏 TAREA 4: Efectos Secundarios de Cartas de Entrenadores
+
+Agregar las reglas de validación en el backend para evitar que cartas de Entrenador de uso complejo se jueguen de manera ilegal o sin efecto válido.
+
+### Backend (Java)
+- `[x]` **Implementar validaciones detalladas en [RuleValidator.java](file:///c:/Users/Ornella/Documents/TUP/3%C2%B0%20Cuatrimestre/Progra%203/TPI/BE/src/main/java/ar/edu/utn/frc/tup/piii/engine/manager/RuleValidator.java)**:
+  - Agregar reglas de validación específicas en el método `validatePlayTrainer` para los siguientes efectos:
+    - **Super Poción (`SUPER_POTION`)**: Validar que el Pokémon objetivo tenga daño y al menos una energía unida.
+    - **Cassius (`CASSIUS`)**: Validar que el Pokémon objetivo esté en juego.
+    - **Evosoda (`EVOSODA`)**: Validar que el Pokémon objetivo esté en juego, pueda evolucionar y no haya sido bajado en este turno.
+    - **Max Revive (`MAX_REVIVE`)**: Validar que haya al menos una carta de Pokémon Básico en la pila de descarte.
+    - **Carta del Profesor (`PROFESSORS_LETTER`)** y **Super Bola (`GREAT_BALL`)**: Validar que el mazo del jugador tenga al menos una carta.
+    - **Recluta del Team Flare (`TEAM_FLARE_GRUNT`)**: Validar que el Pokémon activo del oponente tenga al menos una energía unida.
+    - **Carta Roja (`RED_CARD`)**: Validar que la mano del oponente tenga al menos una carta.
+- `[x]` **Pruebas Unitarias**:
+  - Escribir pruebas unitarias correspondientes en `RuleValidatorTest.java` para asegurar la correcta validación y rechazo de acciones inválidas.

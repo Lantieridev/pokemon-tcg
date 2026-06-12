@@ -27,7 +27,8 @@ public final class MatchBoard
                    HandStateProvider,
                    PrizeStateProvider,
                    PokemonTurnInPlayProvider,
-                   StadiumStateProvider {
+                   StadiumStateProvider,
+                   ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider {
 
     private static final int REQUIRED_PLAYER_COUNT = 2;
 
@@ -151,6 +152,11 @@ public final class MatchBoard
     }
 
     @Override
+    public int getHandSize(final int playerIndex) {
+        return getHandOf(playerIndex).size();
+    }
+
+    @Override
     public java.util.Optional<Card> getCardInHand(final int playerIndex, final String cardId) {
         if (boundRuntimes != null) {
             return boundRuntimes.get(playerIndex).getHand().getCards().stream()
@@ -210,5 +216,13 @@ public final class MatchBoard
         final TrainerCard previous = activeStadium;
         activeStadium = newStadium;
         return previous;
+    }
+
+    @Override
+    public List<Card> getDiscardPile(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getDiscardPile().getCards();
+        }
+        return List.of();
     }
 }

@@ -18,5 +18,15 @@ public interface HandStateProvider {
      *         {@link Optional#empty()} if the player doesn't have it
      *         (or the snapshot only carries IDs, not full cards).
      */
+    /**
+     * Returns the size of the player's hand.
+     *
+     * @param playerIndex zero-based player index
+     * @return hand size
+     */
+    default int getHandSize(int playerIndex) {
+        return 0;
+    }
+
     Optional<Card> getCardInHand(int playerIndex, String cardId);
 }
