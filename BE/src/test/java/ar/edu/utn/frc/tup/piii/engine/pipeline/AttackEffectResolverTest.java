@@ -191,6 +191,31 @@ class AttackEffectResolverTest {
     }
 
     @Test
+    void shouldDiscardEnergyFromDefender() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtx("discard_opponent_energy:1");
+        resolver.apply(ctx);
+        assertEquals(1, defender.getAttachedEnergies().size());
+    }
+
+    @Test
+    void shouldDiscardEnergyFromDefenderOnHeads() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_discard_opponent_energy:1", () -> true);
+        resolver.apply(ctx);
+        assertTrue(defender.getAttachedEnergies().isEmpty());
+    }
+
+    @Test
+    void shouldNotDiscardEnergyFromDefenderOnTails() {
+        defender.addAttachedEnergy(PokemonType.WATER);
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_discard_opponent_energy:1", () -> false);
+        resolver.apply(ctx);
+        assertEquals(1, defender.getAttachedEnergies().size());
+    }
+
+    @Test
     void shouldBeNoOpForCoinFlipExtraType() {
         final int defenderCountersBefore = defender.getDamageCounters();
         final AttackContext ctx = buildCtx("coin_flip_extra:20");

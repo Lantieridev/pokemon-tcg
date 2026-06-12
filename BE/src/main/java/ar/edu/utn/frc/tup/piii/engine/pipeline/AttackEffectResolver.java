@@ -61,6 +61,8 @@ public final class AttackEffectResolver {
         m.put("heal_any",                 AttackEffectType.HEAL_ANY);
         m.put("heal_bench",               AttackEffectType.HEAL_BENCH);
         m.put("heal_all",                 AttackEffectType.HEAL_ALL);
+        m.put("discard_opponent_energy",            AttackEffectType.DISCARD_OPPONENT_ENERGY);
+        m.put("coin_flip_discard_opponent_energy",  AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -209,6 +211,22 @@ public final class AttackEffectResolver {
                         }
                         for (BattlePokemonState p : attacker.getBench().getAll()) {
                             p.heal(amount);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_ENERGY,
+                (amount, ctx) -> {
+                    final BattlePokemonState defender = ctx.getDefender();
+                    if (defender != null && !defender.getAttachedEnergies().isEmpty()) {
+                        defender.removeEnergies(amount);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        final BattlePokemonState defender = ctx.getDefender();
+                        if (defender != null && !defender.getAttachedEnergies().isEmpty()) {
+                            defender.removeEnergies(amount);
                         }
                     }
                 });

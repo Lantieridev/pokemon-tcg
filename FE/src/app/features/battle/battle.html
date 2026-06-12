@@ -1,5 +1,5 @@
 @if (me() && opp()) {
-<div class="scene v-aurora absolute inset-0 flex" (click)="closeMenu()" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
+<div class="scene v-aurora absolute inset-0 flex" (click)="closeMenu()">
   <!-- aurora mesh -->
   <div class="mesh absolute inset-0 opacity-40 pointer-events-none">
     <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
@@ -172,7 +172,7 @@
     </div>
 
     <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
-    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]">
+    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
       
       <!-- OPPONENT BENCH -->
       <div class="flex items-end gap-3" style="transform: rotate(180deg)">

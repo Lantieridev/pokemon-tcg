@@ -338,14 +338,20 @@ public final class CardMapper {
         }
 
         // --- Discard energy ---
-        if (lower.contains("discard") && lower.contains("energy")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("discard\\s+(\\d+)").matcher(lower);
+        if (lower.contains("discard") && (lower.contains("energy") || lower.contains("a darkness energy"))) {
+            final boolean opponent = lower.contains("opponent") || lower.contains("defending");
+            final boolean coinFlip = lower.contains("flip a coin") || lower.contains("flip");
+            int amount = 1;
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("discard\\s+(\\d+)").matcher(lower);
             if (m.find()) {
-                return "discard_energy:" + m.group(1);
+                amount = Integer.parseInt(m.group(1));
             }
-            // "Discard an Energy" = discard 1
-            if (lower.contains("discard an energy") || lower.contains("discard a")) {
-                return "discard_energy:1";
+            
+            final String prefix = coinFlip ? "coin_flip_" : "";
+            if (opponent) {
+                return prefix + "discard_opponent_energy:" + amount;
+            } else {
+                return prefix + "discard_energy:" + amount;
             }
         }
 
