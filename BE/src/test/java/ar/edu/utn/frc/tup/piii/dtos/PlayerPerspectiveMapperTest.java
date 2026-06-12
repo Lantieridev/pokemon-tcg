@@ -301,6 +301,6 @@ class PlayerPerspectiveMapperTest {
 
         response = mapper.toResponse(customSession, 0);
         assertThat(response.pendingSelectionRequest()).isNotNull();
-        assertThat(response.pendingSelectionRequest().options()).containsExactlyInAnyOrder("xy1-1", "xy1-2");
+        assertThat(response.pendingSelectionRequest().options()).containsExactlyInAnyOrder("xy1-1", "xy1-2", "xy1-3", "xy1-4", "xy1-5");
     }
 }

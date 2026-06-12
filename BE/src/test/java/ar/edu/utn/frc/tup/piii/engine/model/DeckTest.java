@@ -77,9 +77,11 @@ class DeckTest {
     }
 
     @Test
-    void drawMultipleShouldThrowWhenInsufficientCards() {
+    void drawMultipleShouldReturnAvailableCardsWhenInsufficient() {
         final Deck deck = new Deck(buildCards(3));
-        assertThrows(DeckEmptyException.class, () -> deck.drawMultiple(4));
+        final List<Card> drawn = deck.drawMultiple(4);
+        assertEquals(3, drawn.size());
+        assertTrue(deck.isEmpty());
     }
 
     @Test

@@ -67,12 +67,9 @@ public final class Deck {
      * @throws DeckEmptyException if fewer than {@code n} cards remain
      */
     public List<Card> drawMultiple(final int n) {
-        if (n > cards.size()) {
-            throw new DeckEmptyException(
-                    "Cannot draw " + n + " cards — only " + cards.size() + " remain");
-        }
-        final List<Card> drawn = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) {
+        final int limit = Math.min(n, cards.size());
+        final List<Card> drawn = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
             drawn.add(cards.remove(0));
         }
         return drawn;

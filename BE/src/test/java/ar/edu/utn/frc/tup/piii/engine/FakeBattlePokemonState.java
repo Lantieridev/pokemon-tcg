@@ -84,6 +84,10 @@ public class FakeBattlePokemonState implements BattlePokemonState {
         damageCounters += amount;
     }
 
+    public void setDamageCounters(final int damageCounters) {
+        this.damageCounters = damageCounters;
+    }
+
     @Override
     public int getMaxHp() {
         return maxHp;

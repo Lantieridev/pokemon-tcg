@@ -57,6 +57,12 @@ public final class AttackEffectResolver {
         m.put("disable_attack",      AttackEffectType.DISABLE_ATTACK);
         m.put("prevent_damage",           AttackEffectType.PREVENT_DAMAGE);
         m.put("coin_flip_prevent_damage",  AttackEffectType.COIN_FLIP_PREVENT_DAMAGE);
+        m.put("coin_flip_switch_self",     AttackEffectType.COIN_FLIP_SWITCH_SELF);
+        m.put("heal_any",                 AttackEffectType.HEAL_ANY);
+        m.put("heal_bench",               AttackEffectType.HEAL_BENCH);
+        m.put("heal_all",                 AttackEffectType.HEAL_ALL);
+        m.put("discard_opponent_energy",            AttackEffectType.DISCARD_OPPONENT_ENERGY);
+        m.put("coin_flip_discard_opponent_energy",  AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -142,6 +148,86 @@ public final class AttackEffectResolver {
                         defender.getBench().place(oldActive);
                         defender.getStatusEffectManager().clearAll();
                         defender.recordPokemonEntered(oldActive);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIP_SWITCH_SELF,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                        if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
+                            final BattlePokemonState oldActive = attacker.getActivePokemon();
+                            final BattlePokemonState newActive = attacker.getBench().promote(0);
+                            attacker.setActivePokemon(newActive);
+                            attacker.getBench().place(oldActive);
+                            attacker.getStatusEffectManager().clearAll();
+                            attacker.recordPokemonEntered(oldActive);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.HEAL_ANY,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        BattlePokemonState target = null;
+                        int maxDamage = 0;
+                        if (attacker.getActivePokemon() != null) {
+                            maxDamage = attacker.getActivePokemon().getDamageCounters();
+                            target = attacker.getActivePokemon();
+                        }
+                        for (BattlePokemonState p : attacker.getBench().getAll()) {
+                            if (p.getDamageCounters() > maxDamage) {
+                                maxDamage = p.getDamageCounters();
+                                target = p;
+                            }
+                        }
+                        if (target != null) {
+                            target.heal(amount);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.HEAL_BENCH,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        BattlePokemonState target = null;
+                        int maxDamage = 0;
+                        for (BattlePokemonState p : attacker.getBench().getAll()) {
+                            if (p.getDamageCounters() > maxDamage) {
+                                maxDamage = p.getDamageCounters();
+                                target = p;
+                            }
+                        }
+                        if (target != null) {
+                            target.heal(amount);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.HEAL_ALL,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        if (attacker.getActivePokemon() != null) {
+                            attacker.getActivePokemon().heal(amount);
+                        }
+                        for (BattlePokemonState p : attacker.getBench().getAll()) {
+                            p.heal(amount);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_ENERGY,
+                (amount, ctx) -> {
+                    final BattlePokemonState defender = ctx.getDefender();
+                    if (defender != null && !defender.getAttachedEnergies().isEmpty()) {
+                        defender.removeEnergies(amount);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        final BattlePokemonState defender = ctx.getDefender();
+                        if (defender != null && !defender.getAttachedEnergies().isEmpty()) {
+                            defender.removeEnergies(amount);
+                        }
                     }
                 });
         this.handlers = Collections.unmodifiableMap(m);
