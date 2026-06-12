@@ -101,7 +101,8 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
     }
 
     /**
-     * Called when a Pokémon is knocked out. Checks prize victory, then bench-out victory.
+     * Called when a Pokémon is knocked out. Checks victory conditions once all
+     * simultaneous knockouts in the current batch have been processed.
      * Skipped entirely if no TurnStarted event has been received yet.
      *
      * @param knocked      the Pokémon that was knocked out
@@ -112,31 +113,21 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
         if (victoryFired || activePlayerIndex == UNSTARTED_PLAYER_INDEX) {
             return;
         }
-        int attacker = activePlayerIndex;
-        int defender = PLAYER_COUNT - 1 - attacker;
+        
+        // Defer victory checking if there are other pending K.O.s on the board in the same batch
+        if (hasPendingKnockouts()) {
+            return;
+        }
 
-        boolean attackerWins = prizeProvider.getRemainingPrizes(attacker) == 0;
-        boolean defenderWins = prizeProvider.getRemainingPrizes(defender) == 0;
-
-        if (attackerWins && defenderWins) {
-            fireVictory(new VictoryResult.SuddenDeath());
-            return;
-        }
-        if (attackerWins) {
-            fireVictory(new VictoryResult.PrizeVictory(attacker));
-            return;
-        }
-        if (defenderWins) {
-            fireVictory(new VictoryResult.PrizeVictory(defender));
-            return;
-        }
-        checkFieldVictory();
+        evaluateVictory();
     }
 
     /**
-     * Evaluates field victory conditions (if any player has 0 active and 0 benched Pokémon).
+     * Evaluates all victory conditions (Prize cards and Bench-out) for both players.
+     * Compares the number of conditions met by each player to declare a sole winner
+     * or trigger a Sudden Death tiebreaker.
      */
-    public void checkFieldVictory() {
+    public void evaluateVictory() {
         if (victoryFired || activePlayerIndex == UNSTARTED_PLAYER_INDEX) {
             return;
         }
@@ -148,26 +139,98 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
             player1PlacedActive = true;
         }
 
-        if (!player0PlacedActive || !player1PlacedActive) {
-            return;
+        // 1. Prize conditions
+        final boolean p0WinsPrize = prizeProvider.getRemainingPrizes(0) == 0;
+        final boolean p1WinsPrize = prizeProvider.getRemainingPrizes(1) == 0;
+
+        // 2. Bench-out conditions (only if initial placement is complete)
+        boolean p0WinsBench = false;
+        boolean p1WinsBench = false;
+        if (player0PlacedActive && player1PlacedActive) {
+            final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
+            final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
+
+            final boolean p0BenchEmpty = benchProvider.getBenchSize(0) == 0;
+            final boolean p1BenchEmpty = benchProvider.getBenchSize(1) == 0;
+
+            p0WinsBench = p1ActiveNull && p1BenchEmpty; // Player 0 wins because Player 1 is benched out
+            p1WinsBench = p0ActiveNull && p0BenchEmpty; // Player 1 wins because Player 0 is benched out
         }
 
-        final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
-        final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
-
-        final boolean p0BenchEmpty = benchProvider.getBenchSize(0) == 0;
-        final boolean p1BenchEmpty = benchProvider.getBenchSize(1) == 0;
-
-        final boolean p0Loses = p0ActiveNull && p0BenchEmpty;
-        final boolean p1Loses = p1ActiveNull && p1BenchEmpty;
-
-        if (p0Loses && p1Loses) {
-            fireVictory(new VictoryResult.SuddenDeath());
-        } else if (p0Loses) {
-            fireVictory(new VictoryResult.BenchOutVictory(1));
-        } else if (p1Loses) {
-            fireVictory(new VictoryResult.BenchOutVictory(0));
+        // Count conditions met
+        int conditions0 = 0;
+        if (p0WinsPrize) {
+            conditions0++;
         }
+        if (p0WinsBench) {
+            conditions0++;
+        }
+
+        int conditions1 = 0;
+        if (p1WinsPrize) {
+            conditions1++;
+        }
+        if (p1WinsBench) {
+            conditions1++;
+        }
+
+        if (conditions0 > 0 && conditions1 > 0) {
+            if (conditions0 == conditions1) {
+                fireVictory(new VictoryResult.SuddenDeath());
+            } else if (conditions0 > conditions1) {
+                // Player 0 met more conditions
+                if (p0WinsPrize) {
+                    fireVictory(new VictoryResult.PrizeVictory(0));
+                } else {
+                    fireVictory(new VictoryResult.BenchOutVictory(0));
+                }
+            } else {
+                // Player 1 met more conditions
+                if (p1WinsPrize) {
+                    fireVictory(new VictoryResult.PrizeVictory(1));
+                } else {
+                    fireVictory(new VictoryResult.BenchOutVictory(1));
+                }
+            }
+        } else if (conditions0 > 0) {
+            if (p0WinsPrize) {
+                fireVictory(new VictoryResult.PrizeVictory(0));
+            } else {
+                fireVictory(new VictoryResult.BenchOutVictory(0));
+            }
+        } else if (conditions1 > 0) {
+            if (p1WinsPrize) {
+                fireVictory(new VictoryResult.PrizeVictory(1));
+            } else {
+                fireVictory(new VictoryResult.BenchOutVictory(1));
+            }
+        }
+    }
+
+    /**
+     * Evaluates field victory conditions. Delegated to evaluateVictory.
+     */
+    public void checkFieldVictory() {
+        evaluateVictory();
+    }
+
+    private boolean hasPendingKnockouts() {
+        for (int i = 0; i < PLAYER_COUNT; i++) {
+            final BattlePokemonState active = battlefieldProvider.getActivePokemon(i);
+            if (active != null && isKnockedOut(active)) {
+                return true;
+            }
+            for (final BattlePokemonState benched : benchProvider.getBenchedPokemon(i)) {
+                if (isKnockedOut(benched)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isKnockedOut(final BattlePokemonState state) {
+        return state.getDamageCounters() * 10 >= state.getMaxHp();
     }
 
     /**
