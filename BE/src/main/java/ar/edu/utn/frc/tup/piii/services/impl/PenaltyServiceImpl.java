@@ -320,4 +320,55 @@ public class PenaltyServiceImpl implements PenaltyService {
             }
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isRankedBanned(final String username) {
+        if (username == null) {
+            return false;
+        }
+
+        if (isPermanentlyBanned(username)) {
+            return true;
+        }
+
+        final List<UserPenaltyEntity> activePenalties = userPenaltyRepository.findByUserUsernameAndIsActiveTrue(username);
+        for (final UserPenaltyEntity penalty : activePenalties) {
+            if (Boolean.TRUE.equals(penalty.getIsPending())) {
+                continue;
+            }
+
+            if ("RANKED_BAN".equalsIgnoreCase(penalty.getPenaltyType()) && penalty.getExpiration() != null) {
+                if (LocalDateTime.now().isBefore(penalty.getExpiration())) {
+                    return true;
+                } else {
+                    // Penalty expired
+                    penalty.setIsActive(false);
+                    userPenaltyRepository.save(penalty);
+                }
+            } else if ("BAN".equalsIgnoreCase(penalty.getPenaltyType()) && penalty.getExpiration() != null) {
+                if (LocalDateTime.now().isBefore(penalty.getExpiration())) {
+                    return true; // A general BAN also prevents playing ranked
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void applyRankedBan(final String username, final int minutes) {
+        if (username == null) {
+            return;
+        }
+
+        userRepository.findByUsername(username).ifPresent(user -> {
+            userPenaltyRepository.save(UserPenaltyEntity.builder()
+                    .user(user)
+                    .penaltyType("RANKED_BAN")
+                    .expiration(LocalDateTime.now().plusMinutes(minutes))
+                    .isActive(true)
+                    .isPending(false)
+                    .build());
+        });
+    }
 }

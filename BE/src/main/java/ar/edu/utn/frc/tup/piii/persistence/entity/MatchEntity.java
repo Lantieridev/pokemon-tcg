@@ -37,6 +37,10 @@ public class MatchEntity {
     @JoinColumn(name = "winner_id")
     private UserEntity winner;
 
+    @Column(name = "is_ranked", nullable = false)
+    @Builder.Default
+    private Boolean isRanked = false;
+
     @Column(name = "current_state", length = 100000)
     @Convert(converter = ar.edu.utn.frc.tup.piii.services.persistence.MatchSessionJsonConverter.class)
     private ar.edu.utn.frc.tup.piii.engine.session.MatchSession currentState;

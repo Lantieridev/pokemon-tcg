@@ -1,7 +1,7 @@
 package ar.edu.utn.frc.tup.piii.persistence.repository;
 
 import ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto;
-import ar.edu.utn.frc.tup.piii.dtos.RankingDto;
+
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import org.springframework.data.domain.Pageable;
@@ -21,15 +21,7 @@ public interface MatchRepository extends JpaRepository<MatchEntity, Long> {
            "FROM MatchEntity m WHERE m.player1.username = :username OR m.player2.username = :username ORDER BY m.createdAt DESC")
      List<MatchHistoryProjectionDto> findMatchesByUsername(@Param("username") String username);
  
- 
- 
-     @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.RankingDto(m.winner.username, COUNT(m)) " +
-            "FROM MatchEntity m " +
-            "WHERE m.winner IS NOT NULL AND m.status = 'FINISHED' " +
-            "GROUP BY m.winner.username " +
-            "ORDER BY COUNT(m) DESC")
-     Slice<RankingDto> getGlobalRanking(Pageable pageable);
- 
+
      @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.MatchHistoryProjectionDto(" +
             "m.id, m.status, p1.username, p2.username, w.username, m.createdAt, m.player1StatsJson, m.player2StatsJson) " +
             "FROM MatchEntity m " +

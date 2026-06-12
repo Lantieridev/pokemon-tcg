@@ -613,13 +613,22 @@ type PrivateMode = 'create' | 'join';
             @if (activeTab() === 'public') {
 
               @if (lobby.queueStatus() === 'idle') {
-                <button
-                  id="btn-find-match"
-                  class="action-btn primary"
-                  [disabled]="lobby.decks().length === 0"
-                  (click)="lobby.joinPublicQueue()">
-                  🔍 Buscar Rival
-                </button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                  <button
+                    id="btn-find-match"
+                    class="action-btn secondary"
+                    [disabled]="lobby.decks().length === 0"
+                    (click)="lobby.joinPublicQueue(false)">
+                    🙂 Casual
+                  </button>
+                  <button
+                    id="btn-find-match-ranked"
+                    class="action-btn primary"
+                    [disabled]="lobby.decks().length === 0"
+                    (click)="lobby.joinPublicQueue(true)">
+                    🏆 Ranked
+                  </button>
+                </div>
               }
 
               @if (lobby.queueStatus() === 'waiting') {

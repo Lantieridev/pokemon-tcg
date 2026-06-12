@@ -66,6 +66,7 @@ public class AsyncPersistenceListener {
         entity.setPlayer1(player1);
         entity.setPlayer2(player2);
         entity.setWinner(winner);
+        entity.setIsRanked(session.isRanked());
         entity.setCurrentState(session);
 
         // Serialize match-specific statistics

@@ -67,6 +67,7 @@ public class MatchService {
     private final ProfileService profileService;
     private final UserRepository userRepository;
     private final BotDecisionService botDecisionService;
+    private final MmrCalculationService mmrCalculationService;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -93,6 +94,7 @@ public class MatchService {
                         final ProfileService profileService,
                         final UserRepository userRepository,
                         @Lazy final BotDecisionService botDecisionService,
+                        final MmrCalculationService mmrCalculationService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -105,6 +107,7 @@ public class MatchService {
         this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.botDecisionService = botDecisionService;
+        this.mmrCalculationService = Objects.requireNonNull(mmrCalculationService, "mmrCalculationService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -202,6 +205,9 @@ public class MatchService {
                         profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
                     });
                     penaltyService.registerMatchFinished(participantId, true);
+                // Handle MMR updates if ranked
+                if (session.isRanked()) {
+                    updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
                 }
             }
         } finally {
@@ -441,6 +447,16 @@ public class MatchService {
                     }
                     penaltyService.registerMatchFinished(participantId, completedLegitimately);
                 }
+
+                // Apply ranked abandonment penalties
+                if (session.isRanked()) {
+                    // Standard forfeit MMR loss (winner gets MMR, forfeiting player loses MMR)
+                    if (winnerUsername != null) {
+                        updateMmr(session, winnerUsername, forfeitingPlayerId);
+                    }
+                    // Apply 15 minute ranked ban for abandoning
+                    penaltyService.applyRankedBan(forfeitingPlayerId, 15);
+                }
             } finally {
                 lock.unlock();
             }
@@ -456,6 +472,38 @@ public class MatchService {
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdA(), viewA);
         messaging.convertAndSend(
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdB(), viewB);
+    }
+
+    private void updateMmr(MatchSession session, String winnerId, String loserId) {
+        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity winner = userRepository.findByUsername(winnerId).orElse(null);
+        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity loser = userRepository.findByUsername(loserId).orElse(null);
+
+        if (winner != null && loser != null) {
+            int winnerMmr = winner.getMmr() != null ? winner.getMmr() : 1000;
+            int loserMmr = loser.getMmr() != null ? loser.getMmr() : 1000;
+
+            int winnerRankedMatches = winner.getRankedMatchesPlayed() != null ? winner.getRankedMatchesPlayed() : 0;
+            int loserRankedMatches = loser.getRankedMatchesPlayed() != null ? loser.getRankedMatchesPlayed() : 0;
+
+            int newWinnerMmr = mmrCalculationService.calculateNewMmr(winnerMmr, loserMmr, true, winnerRankedMatches);
+            int newLoserMmr = mmrCalculationService.calculateNewMmr(loserMmr, winnerMmr, false, loserRankedMatches);
+
+            winner.setMmr(newWinnerMmr);
+            winner.setRankedMatchesPlayed(winnerRankedMatches + 1);
+            loser.setMmr(newLoserMmr);
+            loser.setRankedMatchesPlayed(loserRankedMatches + 1);
+
+            userRepository.save(winner);
+            userRepository.save(loser);
+            
+            if (winnerId.equals(session.getPlayerIdA())) {
+                session.setMmrChangeA(newWinnerMmr - winnerMmr);
+                session.setMmrChangeB(newLoserMmr - loserMmr);
+            } else {
+                session.setMmrChangeB(newWinnerMmr - winnerMmr);
+                session.setMmrChangeA(newLoserMmr - loserMmr);
+            }
+        }
     }
 
     private int getCurrentTurnNumber(final MatchSession session) {

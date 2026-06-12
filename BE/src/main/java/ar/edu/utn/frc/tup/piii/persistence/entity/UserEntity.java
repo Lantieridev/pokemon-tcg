@@ -102,6 +102,10 @@ public class UserEntity {
     @Builder.Default
     private Set<String> unlockedTitles = new HashSet<>();
 
+    @Column(name = "ranked_matches_played")
+    @Builder.Default
+    private Integer rankedMatchesPlayed = 0;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

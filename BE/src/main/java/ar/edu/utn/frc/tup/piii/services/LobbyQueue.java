@@ -21,8 +21,11 @@ public final class LobbyQueue {
     private static final int ROOM_CODE_LENGTH = 6;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    /** FIFO queue of players waiting for a public match. */
+    /** FIFO queue of players waiting for a public casual match. */
     private final ConcurrentLinkedQueue<QueueEntry> publicQueue = new ConcurrentLinkedQueue<>();
+
+    /** FIFO queue of players waiting for a ranked match. */
+    private final ConcurrentLinkedQueue<RankedQueueEntry> rankedQueue = new ConcurrentLinkedQueue<>();
 
     /** Active private rooms: roomCode → room data. */
     private final ConcurrentHashMap<String, RoomEntry> privateRooms = new ConcurrentHashMap<>();
@@ -39,6 +42,12 @@ public final class LobbyQueue {
     }
 
     /**
+     * An entry in the ranked matchmaking queue.
+     */
+    public record RankedQueueEntry(String playerId, Long deckId, int mmr, long joinedAt) {
+    }
+
+    /**
      * A pending private room created by one player and waiting for another.
      *
      * @param roomCode  the 6-character alphanumeric code to share with the opponent
@@ -51,7 +60,7 @@ public final class LobbyQueue {
     // ── Public queue operations ───────────────────────────────────────────────
 
     /**
-     * Adds a player to the public matchmaking queue.
+     * Adds a player to the public casual matchmaking queue.
      * No-op if the player is already queued (prevents duplicates).
      *
      * @param playerId the player's username (never null)
@@ -62,6 +71,21 @@ public final class LobbyQueue {
                 .anyMatch(e -> e.playerId().equals(playerId));
         if (!alreadyQueued) {
             publicQueue.add(new QueueEntry(playerId, deckId));
+        }
+    }
+
+    /**
+     * Adds a player to the ranked matchmaking queue.
+     *
+     * @param playerId the player's username
+     * @param deckId   the deck to use
+     * @param mmr      the player's current MMR
+     */
+    public void enqueueRanked(final String playerId, final Long deckId, final int mmr) {
+        final boolean alreadyQueued = rankedQueue.stream()
+                .anyMatch(e -> e.playerId().equals(playerId));
+        if (!alreadyQueued) {
+            rankedQueue.add(new RankedQueueEntry(playerId, deckId, mmr, System.currentTimeMillis()));
         }
     }
 
@@ -86,22 +110,42 @@ public final class LobbyQueue {
     }
 
     /**
-     * Removes a player from the public queue (used when they cancel the search).
+     * Polls an opponent from the ranked queue who is within the strictly allowed MMR tolerance (+/- 100).
+     */
+    public Optional<RankedQueueEntry> pollRankedOpponent(final String requestingPlayerId, final int requestingMmr) {
+        for (final RankedQueueEntry entry : rankedQueue) {
+            if (!entry.playerId().equals(requestingPlayerId)) {
+                if (Math.abs(entry.mmr() - requestingMmr) <= 100) {
+                    if (rankedQueue.remove(entry)) {
+                        return Optional.of(entry);
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Removes a player from the public or ranked queue (used when they cancel the search).
      *
      * @param playerId the player to remove
      * @return {@code true} if the player was in the queue and was removed
      */
     public boolean removeFromQueue(final String playerId) {
-        return publicQueue.removeIf(e -> e.playerId().equals(playerId));
+        boolean removedFromCasual = publicQueue.removeIf(e -> e.playerId().equals(playerId));
+        boolean removedFromRanked = rankedQueue.removeIf(e -> e.playerId().equals(playerId));
+        return removedFromCasual || removedFromRanked;
     }
 
     /**
-     * Returns {@code true} if the player is currently in the public queue.
+     * Returns {@code true} if the player is currently in the public or ranked queue.
      *
      * @param playerId the player's username
      */
     public boolean isInQueue(final String playerId) {
-        return publicQueue.stream().anyMatch(e -> e.playerId().equals(playerId));
+        boolean inCasual = publicQueue.stream().anyMatch(e -> e.playerId().equals(playerId));
+        boolean inRanked = rankedQueue.stream().anyMatch(e -> e.playerId().equals(playerId));
+        return inCasual || inRanked;
     }
 
     // ── Private room operations ───────────────────────────────────────────────

@@ -737,6 +737,15 @@
           <p class="mt-2 text-sm tracking-wide text-white/80 font-chunky max-w-sm mx-auto leading-relaxed">
             {{ victoryReasonText() }}
           </p>
+
+          <!-- MMR Change -->
+          @if (mmrChange() !== null) {
+            <div class="mt-4 px-4 py-2 rounded-full border bg-white/5 font-chunky text-lg shadow-inner"
+                 [style.borderColor]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')"
+                 [style.color]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')">
+              MMR: {{ (mmrChange() ?? 0) > 0 ? '+' : '' }}{{ mmrChange() }}
+            </div>
+          }
         </div>
 
         <!-- MVP Card Section -->

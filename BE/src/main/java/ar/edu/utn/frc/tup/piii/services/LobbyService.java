@@ -10,6 +10,10 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 
 /**
  * Orchestrates public matchmaking (queue) and private room matching.
@@ -30,6 +34,8 @@ public final class LobbyService {
     private final MatchCreationService matchCreationService;
     private final CardResolutionService cardResolutionService;
     private final SimpMessagingTemplate messaging;
+    private final PenaltyService penaltyService;
+    private final UserRepository userRepository;
 
     /** Guards the "poll + enqueue" section to avoid pairing a player with themselves
      * or creating duplicate matches when two requests arrive concurrently. */
@@ -46,13 +52,17 @@ public final class LobbyService {
     public LobbyService(final LobbyQueue lobbyQueue,
                         final MatchCreationService matchCreationService,
                         final CardResolutionService cardResolutionService,
-                        final SimpMessagingTemplate messaging) {
+                        final SimpMessagingTemplate messaging,
+                        final PenaltyService penaltyService,
+                        final UserRepository userRepository) {
         this.lobbyQueue = Objects.requireNonNull(lobbyQueue, "lobbyQueue must not be null");
         this.matchCreationService = Objects.requireNonNull(matchCreationService,
                 "matchCreationService must not be null");
         this.cardResolutionService = Objects.requireNonNull(cardResolutionService,
                 "cardResolutionService must not be null");
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
+        this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
+        this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
     }
 
     // ── Public matchmaking ────────────────────────────────────────────────────
@@ -67,33 +77,60 @@ public final class LobbyService {
      *
      * @param playerId the authenticated player's username (never null)
      * @param deckId   the deck they want to use (never null)
+     * @param isRanked true if searching for a ranked match
      * @return {@link LobbyResponseDTO#queued()} if waiting, or
      *         {@link LobbyResponseDTO#matchReady(String, String)} if a match was created
      * @throws IllegalArgumentException if {@code deckId} is invalid
      */
-    public LobbyResponseDTO joinQueue(final String playerId, final Long deckId) {
+    public LobbyResponseDTO joinQueue(final String playerId, final Long deckId, final Boolean isRanked) {
         Objects.requireNonNull(playerId, "playerId must not be null");
         Objects.requireNonNull(deckId, "deckId must not be null");
 
+        final boolean ranked = Boolean.TRUE.equals(isRanked);
+
+        if (ranked && penaltyService.isRankedBanned(playerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are currently banned from Ranked matches.");
+        }
+
         queueLock.lock();
         try {
-            final Optional<LobbyQueue.QueueEntry> opponentOpt = lobbyQueue.pollOpponent(playerId);
+            if (ranked) {
+                UserEntity user = userRepository.findByUsername(playerId)
+                        .orElseThrow(() -> new NoSuchElementException("User not found"));
+                int mmr = user.getMmr();
 
-            if (opponentOpt.isEmpty()) {
-                // No opponent yet — add to queue and wait
-                lobbyQueue.enqueue(playerId, deckId);
-                return LobbyResponseDTO.queued();
+                final Optional<LobbyQueue.RankedQueueEntry> opponentOpt = lobbyQueue.pollRankedOpponent(playerId, mmr);
+                if (opponentOpt.isEmpty()) {
+                    lobbyQueue.enqueueRanked(playerId, deckId, mmr);
+                    return LobbyResponseDTO.queued();
+                }
+
+                final LobbyQueue.RankedQueueEntry opponent = opponentOpt.get();
+                final String matchId = createMatch(playerId, deckId, opponent.playerId(), opponent.deckId(), true);
+
+                final LobbyResponseDTO readyForOpponent = LobbyResponseDTO.matchReady(matchId, playerId);
+                messaging.convertAndSend(LOBBY_TOPIC + opponent.playerId(), readyForOpponent);
+
+                return LobbyResponseDTO.matchReady(matchId, opponent.playerId());
+            } else {
+                final Optional<LobbyQueue.QueueEntry> opponentOpt = lobbyQueue.pollOpponent(playerId);
+
+                if (opponentOpt.isEmpty()) {
+                    // No opponent yet — add to queue and wait
+                    lobbyQueue.enqueue(playerId, deckId);
+                    return LobbyResponseDTO.queued();
+                }
+
+                // Found an opponent — create the match
+                final LobbyQueue.QueueEntry opponent = opponentOpt.get();
+                final String matchId = createMatch(playerId, deckId, opponent.playerId(), opponent.deckId(), false);
+
+                // Notify both via WS (the joining player gets the response directly over HTTP)
+                final LobbyResponseDTO readyForOpponent = LobbyResponseDTO.matchReady(matchId, playerId);
+                messaging.convertAndSend(LOBBY_TOPIC + opponent.playerId(), readyForOpponent);
+
+                return LobbyResponseDTO.matchReady(matchId, opponent.playerId());
             }
-
-            // Found an opponent — create the match
-            final LobbyQueue.QueueEntry opponent = opponentOpt.get();
-            final String matchId = createMatch(playerId, deckId, opponent.playerId(), opponent.deckId());
-
-            // Notify both via WS (the joining player gets the response directly over HTTP)
-            final LobbyResponseDTO readyForOpponent = LobbyResponseDTO.matchReady(matchId, playerId);
-            messaging.convertAndSend(LOBBY_TOPIC + opponent.playerId(), readyForOpponent);
-
-            return LobbyResponseDTO.matchReady(matchId, opponent.playerId());
 
         } finally {
             queueLock.unlock();
@@ -171,7 +208,7 @@ public final class LobbyService {
 
         final String matchId = createMatch(
                 room.creatorId(), room.deckId(),
-                joiningPlayerId, deckId);
+                joiningPlayerId, deckId, false);
 
         // Notify creator via WebSocket
         final LobbyResponseDTO readyForCreator = LobbyResponseDTO.matchReady(matchId, joiningPlayerId);
@@ -185,9 +222,11 @@ public final class LobbyService {
     private String createMatch(final String playerAId,
                                final Long deckAId,
                                final String playerBId,
-                               final Long deckBId) {
+                               final Long deckBId,
+                               final boolean isRanked) {
         final List<Card> deckA = cardResolutionService.resolveCards(deckAId);
         final List<Card> deckB = cardResolutionService.resolveCards(deckBId);
-        return matchCreationService.createMatch(playerAId, playerBId, deckA, deckB);
+        // We will pass isRanked to matchCreationService
+        return matchCreationService.createMatch(playerAId, playerBId, deckA, deckB, isRanked);
     }
 }
