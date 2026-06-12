@@ -8,6 +8,10 @@ const TYPE_GLYPH: Record<string, string> = {
   lightning: '⚡',
   psychic:   '👁',
   fighting:  '✊',
+  darkness:  '🌑',
+  metal:     '🛡',
+  fairy:     '🎀',
+  dragon:    '🐉',
   colorless: '✦',
 };
 
@@ -32,10 +36,12 @@ export class EnergyPipComponent {
   @Input() glow: boolean = false;
 
   get color(): string {
-    return TYPE_COLORS[this.type]?.hex || '#cfd6e4';
+    const t = this.type?.toLowerCase();
+    return TYPE_COLORS[t]?.hex || '#cfd6e4';
   }
 
   get glyph(): string {
-    return TYPE_GLYPH[this.type] || '✦';
+    const t = this.type?.toLowerCase();
+    return TYPE_GLYPH[t] || '✦';
   }
 }

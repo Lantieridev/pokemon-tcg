@@ -67,6 +67,10 @@ export const TYPE_COLORS: Record<string, { hex: string, glow: string, rgb: strin
   lightning: { hex: '#ffcc33', glow: 'rgba(255,204,51,0.55)', rgb: '255,204,51' },
   psychic:   { hex: '#c87bff', glow: 'rgba(200,123,255,0.5)', rgb: '200,123,255' },
   fighting:  { hex: '#d97d4a', glow: 'rgba(217,125,74,0.5)',  rgb: '217,125,74' },
+  darkness:  { hex: '#5a4a6a', glow: 'rgba(90,74,106,0.5)',    rgb: '90,74,106' },
+  metal:     { hex: '#b8b8cc', glow: 'rgba(184,184,204,0.5)',  rgb: '184,184,204' },
+  fairy:     { hex: '#ff8fd4', glow: 'rgba(255,143,212,0.5)',  rgb: '255,143,212' },
+  dragon:    { hex: '#7038f8', glow: 'rgba(112,56,248,0.5)',   rgb: '112,56,248' },
   colorless: { hex: '#cfd6e4', glow: 'rgba(207,214,228,0.4)', rgb: '207,214,228' },
   trainer:   { hex: '#b5a07a', glow: 'rgba(181,160,122,0.4)', rgb: '181,160,122' },
 };
