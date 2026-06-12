@@ -65,9 +65,11 @@ import { RouterModule } from '@angular/router';
               }
               <!-- Selected Medals Showcase -->
               @if (selectedMedalsList.length > 0) {
-                <div style="display: flex; gap: 8px; align-items: center; margin-left: 4px;">
+                <div style="display: flex; gap: 8px; align-items: center; margin-left: 8px;">
                   @for (medal of selectedMedalsList; track medal) {
-                    <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" [title]="getMedalTitle(medal)" />
+                    <div style="width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" [title]="getMedalTitle(medal)">
+                      <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
+                    </div>
                   }
                 </div>
               }
@@ -709,153 +711,218 @@ import { RouterModule } from '@angular/router';
               <div class="edit-modal-eyebrow">ENTRENADOR</div>
               <h2 class="edit-modal-title">Editar Perfil</h2>
             </div>
-            <button class="edit-close-btn" (click)="closeEditModal()">&#x2715;</button>
+            <button class="edit-close-btn" (click)="closeEditModal()">✕</button>
           </div>
 
           <!-- ── BODY: two columns ── -->
           <div class="edit-modal-body">
 
-            <!-- LEFT: preview + avatar picker -->
+            <!-- LEFT COLUMN: Live preview card -->
             <div class="edit-left-panel">
-
-              <!-- Live preview card -->
+              <div class="edit-section-label" style="margin-bottom: 8px; text-align: center;">VISTA PREVIA</div>
+              
               <div class="edit-preview-card">
+                <!-- Decorative trainer card header -->
+                <div class="card-header-accent">
+                  <span class="card-logo">✦</span>
+                  <span class="card-series">SERIE AURORA</span>
+                </div>
+
                 <div class="edit-avatar-preview">
                   @if (isCustomAvatar(editAvatarIcon)) {
-                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" />
                   } @else {
                     <span style="font-size:36px;">{{ getAvatarEmoji(editAvatarIcon) }}</span>
                   }
                 </div>
+
                 <div class="edit-preview-username">{{ username }}</div>
+
                 @if (editActiveTitle && editActiveTitle !== 'Ninguno') {
-                  <div class="edit-preview-title-badge">🏅 {{ editActiveTitle }}</div>
+                  <div class="edit-preview-title-badge">{{ editActiveTitle }}</div>
+                } @else {
+                  <div class="edit-preview-title-badge placeholder-title">Sin título seleccionado</div>
                 }
+
                 <!-- Medal slots preview -->
                 <div class="edit-preview-medals">
                   @for (slot of [0,1,2]; track slot) {
                     <div class="edit-medal-slot" [class.has-medal]="!!editSelectedMedals[slot]">
                       @if (editSelectedMedals[slot]) {
                         <img [src]="'assets/achievements/medals/' + editSelectedMedals[slot] + '.png'"
-                             style="width:100%;height:100%;object-fit:contain;" />
+                             style="width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
                       } @else {
-                        <span class="slot-empty-icon">+</span>
+                        <span class="slot-empty-icon">·</span>
                       }
                     </div>
                   }
                 </div>
-              </div>
 
-              <!-- Avatar picker -->
-              <div class="edit-section-label">FOTO DE PERFIL</div>
-              <div class="edit-avatar-grid scroll">
-                @for (av of availableAvatars; track av) {
-                  <div class="edit-avatar-thumb"
-                       [class.selected]="editAvatarIcon === av"
-                       (click)="editAvatarIcon = av">
-                    @if (isCustomAvatar(av)) {
-                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
-                    } @else {
-                      <span>{{ getAvatarEmoji(av) }}</span>
-                    }
-                  </div>
-                }
+                <!-- Bio preview at the bottom of the card -->
+                <div class="card-bio-preview">
+                  {{ editDescription ? editDescription : 'Sin descripción escrita aún.' }}
+                </div>
               </div>
-
             </div>
 
-            <!-- RIGHT: form fields -->
+            <!-- RIGHT COLUMN: Tabbed selectors -->
             <div class="edit-right-panel">
-
-              <!-- Description -->
-              <div class="edit-field">
-                <div class="edit-field-header">
-                  <span class="edit-field-label">📝 Descripción</span>
-                  <span class="edit-char-count" [class.warn]="editDescription.length >= 140">{{ editDescription.length }}/150</span>
-                </div>
-                <textarea
-                  [(ngModel)]="editDescription"
-                  (ngModelChange)="validateDescription()"
-                  class="edit-textarea"
-                  [class.is-error]="!!descriptionError"
-                  rows="4" maxlength="150"
-                  placeholder="Contale al mundo tu historia como entrenador..."></textarea>
-                @if (descriptionError) {
-                  <div class="edit-error-msg">⚠️ {{ descriptionError }}</div>
-                }
+              
+              <!-- Tab Navigation -->
+              <div class="edit-tabs-nav">
+                <button class="edit-tab-btn" [class.active]="editActiveTab === 'avatar'" (click)="editActiveTab = 'avatar'">Avatar</button>
+                <button class="edit-tab-btn" [class.active]="editActiveTab === 'title'" (click)="editActiveTab = 'title'">Título</button>
+                <button class="edit-tab-btn" [class.active]="editActiveTab === 'medals'" (click)="editActiveTab = 'medals'">Medallas</button>
+                <button class="edit-tab-btn" [class.active]="editActiveTab === 'info'" (click)="editActiveTab = 'info'">Biografía</button>
               </div>
 
-              <!-- Title picker: pill grid with optional search -->
-              <div class="edit-field">
-                <div class="edit-field-header">
-                  <span class="edit-field-label">🏅 Título Activo</span>
-                  @if (editActiveTitle && editActiveTitle !== 'Ninguno') {
-                    <span class="edit-active-title-chip">{{ editActiveTitle }}</span>
-                  }
-                </div>
-                @if (unlockedTitlesList.length === 0) {
-                  <div class="edit-hint">Completá logros para desbloquear títulos.</div>
-                } @else {
-                  @if (unlockedTitlesList.length > 5) {
-                    <div class="edit-title-search-wrap">
-                      <span class="title-search-icon">🔍</span>
-                      <input
-                        type="text"
-                        [(ngModel)]="titleSearchQuery"
-                        class="edit-title-search"
-                        placeholder="Filtrar títulos..." />
-                      @if (titleSearchQuery) {
-                        <button class="title-search-clear" (click)="titleSearchQuery = ''">✕</button>
+              <!-- Tab Content -->
+              <div class="edit-tab-content">
+                
+                <!-- Tab: Avatar Selector -->
+                @if (editActiveTab === 'avatar') {
+                  <div class="edit-tab-pane">
+                    <div class="edit-pane-header">
+                      <h3 class="edit-pane-title">Avatar</h3>
+                      <p class="edit-pane-desc">Elegí el avatar que más te represente como entrenador.</p>
+                    </div>
+                    <div class="edit-avatar-grid scroll">
+                      @for (av of availableAvatars; track av) {
+                        <div class="edit-avatar-cell">
+                          <div class="edit-avatar-thumb"
+                               [class.selected]="editAvatarIcon === av"
+                               (click)="editAvatarIcon = av">
+                            @if (isCustomAvatar(av)) {
+                              <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:cover;" />
+                            } @else {
+                              <span>{{ getAvatarEmoji(av) }}</span>
+                            }
+                          </div>
+                        </div>
                       }
                     </div>
-                  }
-                  <div class="edit-title-pill-grid scroll">
-                    <!-- «Sin título» always first -->
-                    <div class="title-pill none-pill"
-                         [class.active]="editActiveTitle === 'Ninguno'"
-                         (click)="editActiveTitle = 'Ninguno'">
-                      — Sin título —
-                    </div>
-                    @for (title of filteredUnlockedTitles; track title) {
-                      <div class="title-pill"
-                           [class.active]="editActiveTitle === title"
-                           (click)="editActiveTitle = title"
-                           [title]="title">
-                        🏅 {{ title }}
-                      </div>
-                    }
-                    @if (filteredUnlockedTitles.length === 0 && titleSearchQuery) {
-                      <div class="edit-hint" style="grid-column: 1/-1; padding: 8px 4px;">Sin resultados para "{{ titleSearchQuery }}"</div>
-                    }
                   </div>
                 }
-              </div>
 
-              <!-- Medals -->
-              <div class="edit-field" style="flex:1;display:flex;flex-direction:column;min-height:0;">
-                <div class="edit-field-header">
-                  <span class="edit-field-label">🎖️ Medallas Destacadas</span>
-                  <span class="edit-char-count" [class.warn]="editSelectedMedals.length >= 3">{{ editSelectedMedals.length }}/3</span>
-                </div>
-                @if (unlockedMedals.length === 0) {
-                  <div class="edit-hint">Completá logros para desbloquear medallas.</div>
-                } @else {
-                  <div class="edit-medal-grid scroll">
-                    @for (medal of unlockedMedals; track medal.rewardValue) {
-                      @let isSel = editSelectedMedals.includes(medal.rewardValue || '');
-                      <div class="edit-medal-thumb"
-                           [class.selected]="isSel"
-                           (click)="toggleMedalSelection(medal.rewardValue)"
-                           [title]="medal.title || ''">
-                        <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'"
-                             style="width:100%;height:100%;object-fit:contain;" />
-                        @if (isSel) {
-                          <div class="edit-medal-badge">{{ editSelectedMedals.indexOf(medal.rewardValue || '') + 1 }}</div>
+                <!-- Tab: Title Selector -->
+                @if (editActiveTab === 'title') {
+                  <div class="edit-tab-pane">
+                    <div class="edit-pane-header">
+                      <h3 class="edit-pane-title">Título</h3>
+                      <p class="edit-pane-desc">Mostrá tus logros desbloqueados sobre tu nombre de entrenador.</p>
+                    </div>
+                    
+                    @if (unlockedTitlesList.length === 0) {
+                      <div class="edit-empty-state">
+                        <span class="empty-icon">—</span>
+                        <p class="edit-hint">Completá logros para desbloquear títulos.</p>
+                      </div>
+                    } @else {
+                      @if (unlockedTitlesList.length > 5) {
+                        <div class="edit-title-search-wrap">
+                          <span class="title-search-icon">◈</span>
+                          <input
+                            type="text"
+                            [(ngModel)]="titleSearchQuery"
+                            class="edit-title-search"
+                            placeholder="Filtrar títulos..." />
+                          @if (titleSearchQuery) {
+                            <button class="title-search-clear" (click)="titleSearchQuery = ''">✕</button>
+                          }
+                        </div>
+                      }
+                      
+                      <div class="edit-title-pill-grid scroll">
+                        <div class="title-pill none-pill"
+                             [class.active]="editActiveTitle === 'Ninguno'"
+                             (click)="editActiveTitle = 'Ninguno'">
+                          Sin título
+                        </div>
+                        @for (title of filteredUnlockedTitles; track title) {
+                          <div class="title-pill"
+                               [class.active]="editActiveTitle === title"
+                               (click)="editActiveTitle = title"
+                               [title]="title">
+                            {{ title }}
+                          </div>
+                        }
+                        @if (filteredUnlockedTitles.length === 0 && titleSearchQuery) {
+                          <div class="edit-hint" style="grid-column: 1/-1; padding: 8px 4px;">Sin resultados para "{{ titleSearchQuery }}"</div>
                         }
                       </div>
                     }
                   </div>
                 }
+
+                <!-- Tab: Medals Selector -->
+                @if (editActiveTab === 'medals') {
+                  <div class="edit-tab-pane">
+                    <div class="edit-pane-header">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <h3 class="edit-pane-title" style="margin-bottom: 0;">Medallas</h3>
+                        <span class="edit-badge-counter num" [class.warn]="editSelectedMedals.length >= 3">
+                          {{ editSelectedMedals.length }}/3
+                        </span>
+                      </div>
+                      <p class="edit-pane-desc">Seleccioná hasta 3 medallas obtenidas para mostrar en tu perfil.</p>
+                    </div>
+
+                    @if (unlockedMedals.length === 0) {
+                      <div class="edit-empty-state">
+                        <span class="empty-icon">—</span>
+                        <p class="edit-hint">Completá logros para desbloquear medallas.</p>
+                      </div>
+                    } @else {
+                      <div class="edit-medal-grid scroll">
+                        @for (medal of unlockedMedals; track medal.rewardValue) {
+                          @let isSel = editSelectedMedals.includes(medal.rewardValue || '');
+                          <div class="edit-medal-cell">
+                            <div class="edit-medal-thumb"
+                                 [class.selected]="isSel"
+                                 (click)="toggleMedalSelection(medal.rewardValue)"
+                                 [title]="medal.title || ''">
+                              <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'"
+                                   style="width:100%;height:100%;object-fit:contain;" />
+                              @if (isSel) {
+                                <div class="edit-medal-badge num">{{ editSelectedMedals.indexOf(medal.rewardValue || '') + 1 }}</div>
+                              }
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Tab: Biography Selector -->
+                @if (editActiveTab === 'info') {
+                  <div class="edit-tab-pane">
+                    <div class="edit-pane-header">
+                      <h3 class="edit-pane-title">Biografía</h3>
+                      <p class="edit-pane-desc">Contale a la comunidad quién sos y tu estilo de juego favorito.</p>
+                    </div>
+                    
+                    <div class="edit-field">
+                      <div class="edit-field-header">
+                        <span class="edit-field-label">Descripción</span>
+                        <span class="edit-char-count num" [class.warn]="editDescription.length >= 140">
+                          {{ editDescription.length }}/150
+                        </span>
+                      </div>
+                      <textarea
+                        [(ngModel)]="editDescription"
+                        (ngModelChange)="validateDescription()"
+                        class="edit-textarea"
+                        [class.is-error]="!!descriptionError"
+                        rows="5" maxlength="150"
+                        placeholder="Tu historia como entrenador..."></textarea>
+                      @if (descriptionError) {
+                        <div class="edit-error-msg">{{ descriptionError }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+
               </div>
 
             </div>
@@ -865,7 +932,7 @@ import { RouterModule } from '@angular/router';
           <div class="edit-modal-footer">
             <button class="ghost-btn" (click)="closeEditModal()" [disabled]="savingProfile">Cancelar</button>
             <button class="edit-save-btn" (click)="saveProfile()" [disabled]="savingProfile || !!descriptionError">
-              @if (savingProfile) { Guardando... } @else { 💾 Guardar Cambios }
+              @if (savingProfile) { Guardando... } @else { Guardar Cambios }
             </button>
           </div>
 
@@ -1005,15 +1072,15 @@ import { RouterModule } from '@angular/router';
 
       /* ═══ EDIT PROFILE MODAL ═══ */
       .edit-modal {
-        background: linear-gradient(160deg, #161628 0%, #1a1a30 60%, #14141f 100%);
-        border: 1px solid rgba(255,255,255,0.09);
+        background: linear-gradient(160deg, #10101e 0%, #151525 60%, #0c0c14 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 28px;
         width: 95%;
-        max-width: 720px;
+        max-width: 860px; /* Ancho ampliado para la interfaz de dos columnas */
         max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,46,62,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+        box-shadow: 0 32px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,46,62,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
         animation: scaleUp 0.22s cubic-bezier(0.34,1.56,0.64,1);
         overflow: hidden;
       }
@@ -1027,18 +1094,22 @@ import { RouterModule } from '@angular/router';
         flex-shrink: 0;
       }
       .edit-modal-eyebrow {
+        font-family: 'Space Grotesk', sans-serif;
         font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 0.14em;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
         color: var(--accent);
         margin-bottom: 4px;
       }
       .edit-modal-title {
         font-family: var(--display);
-        font-size: 22px;
-        font-weight: 700;
+        font-size: 24px;
+        font-weight: 400;
+        font-style: italic;
         color: var(--txt);
         margin: 0;
+        letter-spacing: 0.01em;
       }
       .edit-close-btn {
         background: rgba(255,255,255,0.05);
@@ -1047,13 +1118,14 @@ import { RouterModule } from '@angular/router';
         border-radius: 50%;
         width: 36px;
         height: 36px;
-        font-size: 18px;
+        font-size: 16px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.18s;
         flex-shrink: 0;
+        font-family: 'Manrope', sans-serif;
       }
       .edit-close-btn:hover {
         background: rgba(255,46,62,0.15);
@@ -1063,57 +1135,117 @@ import { RouterModule } from '@angular/router';
       .edit-modal-body {
         display: flex;
         flex: 1;
-        min-height: 0;
+        min-height: 480px;
+        max-height: 520px;
         overflow: hidden;
       }
-      /* LEFT PANEL */
+
+      /* LEFT PANEL: Live Preview */
       .edit-left-panel {
-        width: 210px;
+        width: 290px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
-        padding: 20px 16px;
+        padding: 24px 20px;
         border-right: 1px solid rgba(255,255,255,0.06);
-        gap: 14px;
-        overflow-y: auto;
-        background: rgba(0,0,0,0.15);
+        background: rgba(0,0,0,0.2);
+        align-items: center;
+        justify-content: flex-start;
       }
       .edit-preview-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 18px;
-        padding: 16px 12px 14px;
+        background: linear-gradient(135deg, #16162a 0%, #0f0f1b 100%);
+        border: 2px solid rgba(255, 46, 62, 0.2);
+        border-radius: 20px;
+        padding: 24px 18px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        width: 100%;
+        max-width: 240px;
+        box-shadow: 0 16px 36px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.3s, box-shadow 0.3s;
       }
+      .edit-preview-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent 45%,
+          rgba(255, 255, 255, 0.05) 50%,
+          transparent 55%
+        );
+        transform: rotate(45deg);
+        animation: shimmer 6s infinite linear;
+        pointer-events: none;
+      }
+      @keyframes shimmer {
+        0% { transform: translate(-30%, -30%) rotate(45deg); }
+        100% { transform: translate(30%, 30%) rotate(45deg); }
+      }
+      
+      .card-header-accent {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        justify-content: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 8px;
+        margin-bottom: 4px;
+      }
+      .card-logo {
+        color: var(--accent);
+        font-size: 11px;
+        text-shadow: 0 0 8px rgba(255,46,62,0.4);
+      }
+      .card-series {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.4);
+      }
+
       .edit-avatar-preview {
-        width: 78px;
-        height: 78px;
+        width: 88px;
+        height: 88px;
         border-radius: 50%;
         overflow: hidden;
-        background: var(--surface);
-        border: 3px solid rgba(255,46,62,0.4);
-        box-shadow: 0 0 0 4px rgba(255,46,62,0.1), 0 8px 20px rgba(0,0,0,0.4);
+        background: #1e1e38;
+        border: 3px solid rgba(255,46,62,0.6);
+        box-shadow: 0 0 0 4px rgba(255,46,62,0.15), 0 8px 20px rgba(0,0,0,0.5);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: border-color 0.2s;
+        transition: transform 0.2s;
+        padding: 5px;
+        box-sizing: border-box;
       }
       .edit-preview-username {
-        font-weight: 700;
-        font-size: 13.5px;
+        font-family: var(--display);
+        font-weight: 400;
+        font-style: italic;
+        font-size: 16px;
         color: var(--txt);
         text-align: center;
+        letter-spacing: 0.01em;
       }
       .edit-preview-title-badge {
-        background: linear-gradient(135deg, rgba(255,206,50,0.18), rgba(255,206,50,0.05));
-        border: 1px solid rgba(255,206,50,0.3);
+        background: linear-gradient(135deg, rgba(255,206,50,0.18), rgba(255,206,50,0.04));
+        border: 1px solid rgba(255,206,50,0.35);
         color: var(--accent2);
-        font-size: 10px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 9px;
         font-weight: 700;
-        padding: 3px 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 4px 12px;
         border-radius: 20px;
         text-align: center;
         max-width: 100%;
@@ -1121,82 +1253,243 @@ import { RouterModule } from '@angular/router';
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      .edit-preview-title-badge.placeholder-title {
+        border-color: rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02);
+        color: var(--dim);
+        box-shadow: none;
+      }
       .edit-preview-medals {
         display: flex;
-        gap: 6px;
-        margin-top: 2px;
+        gap: 10px;
+        margin-top: 4px;
+        justify-content: center;
       }
       .edit-medal-slot {
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        border: 1.5px dashed rgba(255,255,255,0.15);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1.5px dashed rgba(255,255,255,0.12);
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
         overflow: hidden;
-        position: relative;
+        background: rgba(0,0,0,0.15);
       }
       .edit-medal-slot.has-medal {
-        border-color: rgba(255,206,50,0.4);
-        background: rgba(255,206,50,0.06);
-        box-shadow: 0 0 8px rgba(255,206,50,0.15);
+        border-color: rgba(255,206,50,0.45);
+        background: rgba(255,206,50,0.08);
+        box-shadow: 0 0 10px rgba(255,206,50,0.2);
       }
       .slot-empty-icon {
         font-size: 14px;
-        color: rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.15);
         font-weight: 300;
       }
-      .edit-section-label {
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 0.12em;
+      .card-bio-preview {
+        width: 100%;
+        font-size: 11px;
         color: var(--mut);
-        padding: 0 2px;
-      }
-      .edit-avatar-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        overflow-y: auto;
-        flex: 1;
-        min-height: 0;
-        padding-right: 2px;
-      }
-      .edit-avatar-thumb {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
+        line-height: 1.4;
+        text-align: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 10px;
+        margin-top: 4px;
+        height: 38px;
         overflow: hidden;
-        border: 2.5px solid transparent;
-        cursor: pointer;
-        background: rgba(255,255,255,0.05);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.18s;
-        position: relative;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
       }
-      .edit-avatar-thumb:hover {
-        transform: scale(1.08);
-        border-color: rgba(255,255,255,0.25);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      }
-      .edit-avatar-thumb.selected {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(255,46,62,0.2), 0 4px 14px rgba(255,46,62,0.3);
-      }
-      /* RIGHT PANEL */
+
+      /* RIGHT PANEL: Tabbed Selectors */
       .edit-right-panel {
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 22px 24px;
-        gap: 18px;
-        overflow-y: auto;
+        padding: 24px 28px;
+        gap: 16px;
+        overflow: hidden; /* Evita scroll en la raíz para permitir scroll en el panel específico */
         min-width: 0;
       }
+      .edit-tabs-nav {
+        display: flex;
+        gap: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 12px;
+        flex-shrink: 0;
+      }
+      .edit-tab-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 7px 16px;
+        border-radius: 10px;
+        color: var(--dim);
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .edit-tab-btn:hover {
+        color: var(--txt);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .edit-tab-btn.active {
+        color: var(--txt);
+        background: rgba(255, 46, 62, 0.10);
+        border-color: rgba(255, 46, 62, 0.28);
+        box-shadow: 0 0 12px rgba(255, 46, 62, 0.12);
+      }
+      
+      .edit-tab-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .edit-tab-pane {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        animation: paneFadeIn 0.22s ease-out;
+      }
+      @keyframes paneFadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .edit-pane-header {
+        margin-bottom: 14px;
+        flex-shrink: 0;
+      }
+      .edit-pane-title {
+        font-family: var(--display);
+        font-size: 18px;
+        font-weight: 400;
+        font-style: italic;
+        color: var(--txt);
+        margin: 0 0 6px 0;
+        letter-spacing: 0.01em;
+      }
+      .edit-pane-desc {
+        font-family: 'Manrope', sans-serif;
+        font-size: 11.5px;
+        color: var(--mut);
+        margin: 0;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+      
+      .edit-badge-counter {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        background: rgba(255, 206, 50, 0.10);
+        border: 1px solid rgba(255, 206, 50, 0.25);
+        color: var(--accent2);
+        padding: 2px 8px;
+        border-radius: 8px;
+        letter-spacing: 0.04em;
+      }
+      .edit-badge-counter.warn {
+        background: rgba(255, 46, 62, 0.12);
+        border-color: rgba(255, 46, 62, 0.28);
+        color: var(--accent);
+      }
+      
+      .edit-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        background: rgba(0,0,0,0.15);
+        border: 1px dashed rgba(255,255,255,0.06);
+        border-radius: 16px;
+        text-align: center;
+        flex: 1;
+        margin: 10px 0;
+      }
+      .edit-empty-state .empty-icon {
+        font-family: var(--display);
+        font-size: 22px;
+        margin-bottom: 10px;
+        opacity: 0.4;
+        color: var(--mut);
+      }
+
+      .edit-section-label {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.20em;
+        color: var(--dim);
+        padding: 0 2px;
+        text-transform: uppercase;
+      }
+      
+      /* AVATAR SELECTOR GRID */
+      .edit-avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        padding: 8px;
+        align-items: start;
+      }
+      /* Celda contenedora: cuadrada, da el espacio individual a cada elemento */
+      .edit-avatar-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .edit-avatar-thumb {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid rgba(255,255,255,0.08);
+        cursor: pointer;
+        background: rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        box-sizing: border-box;
+      }
+      .edit-avatar-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .edit-avatar-thumb span {
+        font-size: 22px;
+        line-height: 1;
+      }
+      .edit-avatar-thumb:hover {
+        border-color: rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.06);
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 4px 14px rgba(0,0,0,0.45);
+      }
+      .edit-avatar-thumb.selected {
+        border-color: var(--accent);
+        background: rgba(255,46,62,0.1);
+        box-shadow: 0 0 0 3px rgba(255,46,62,0.35), 0 0 18px rgba(255,46,62,0.25);
+      }
+
+      /* FIELDS & INPUTS */
       .edit-field {
         display: flex;
         flex-direction: column;
@@ -1208,29 +1501,33 @@ import { RouterModule } from '@angular/router';
         justify-content: space-between;
       }
       .edit-field-label {
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.07em;
-        color: var(--mut);
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: var(--dim);
         text-transform: uppercase;
       }
       .edit-char-count {
+        font-family: 'Space Mono', monospace;
         font-size: 11px;
-        color: var(--mut);
-        font-weight: 600;
+        color: var(--dim);
+        font-weight: 400;
+        letter-spacing: 0.04em;
       }
       .edit-char-count.warn { color: #f87171; }
       .edit-textarea {
         width: 100%;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255,255,255,0.08);
         color: var(--txt);
-        padding: 12px 14px;
+        padding: 14px 16px;
         border-radius: 14px;
         outline: none;
         font-family: 'Manrope', sans-serif;
-        font-size: 14px;
-        line-height: 1.55;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.65;
         resize: none;
         transition: border-color 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
@@ -1240,81 +1537,80 @@ import { RouterModule } from '@angular/router';
         box-shadow: 0 0 0 3px rgba(255,46,62,0.08);
       }
       .edit-textarea.is-error { border-color: #f87171; }
-      .edit-select {
-        width: 100%;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: var(--txt);
-        padding: 11px 36px 11px 14px;
-        border-radius: 14px;
-        outline: none;
-        font-family: 'Manrope', sans-serif;
-        font-size: 14px;
-        cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 14px center;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-      }
-      .edit-select option { background: #1a1a2e; color: #e8e8f0; }
-      .edit-select:focus {
-        border-color: rgba(255,46,62,0.5);
-        box-shadow: 0 0 0 3px rgba(255,46,62,0.08);
-      }
+      
       .edit-hint {
+        font-family: 'Manrope', sans-serif;
         font-size: 12px;
         color: var(--mut);
+        font-weight: 500;
         font-style: italic;
       }
       .edit-error-msg {
-        font-size: 12px;
-        color: #f87171;
-        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-top: 6px;
+        opacity: 0.9;
       }
+
+      /* MEDALS SELECTOR GRID */
       .edit-medal-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
         overflow-y: auto;
         flex: 1;
-        min-height: 80px;
-        max-height: 160px;
-        padding: 10px;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 14px;
-        background: rgba(0,0,0,0.15);
+        min-height: 0;
+        padding: 8px;
+        align-items: start;
+      }
+      /* Celda contenedora: cuadrada, da el espacio individual a cada elemento */
+      .edit-medal-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
       }
       .edit-medal-thumb {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        border: 2px solid transparent;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(255,255,255,0.08);
         cursor: pointer;
-        background: rgba(255,255,255,0.03);
+        background: rgba(0,0,0,0.25);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-        padding: 5px;
+        padding: 10px;
         box-sizing: border-box;
-        transition: all 0.15s;
+        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+      }
+      .edit-medal-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
       .edit-medal-thumb:hover {
-        background: rgba(255,255,255,0.08);
-        transform: scale(1.08);
+        background: rgba(255,206,50,0.05);
+        border-color: rgba(255,206,50,0.25);
+        box-shadow: 0 0 0 2px rgba(255,206,50,0.12), 0 4px 14px rgba(0,0,0,0.45);
       }
       .edit-medal-thumb.selected {
         border-color: var(--accent2);
         background: rgba(255,206,50,0.1);
-        box-shadow: 0 0 10px rgba(255,206,50,0.2);
+        box-shadow: 0 0 0 3px rgba(255,206,50,0.35), 0 0 18px rgba(255,206,50,0.25);
       }
       .edit-medal-badge {
         position: absolute;
-        top: -6px;
-        right: -6px;
+        top: 2px;
+        right: 2px;
         background: var(--accent2);
         color: #000;
         border-radius: 50%;
@@ -1326,61 +1622,32 @@ import { RouterModule } from '@angular/router';
         font-size: 10px;
         font-weight: 900;
         border: 1.5px solid #161628;
-      }
-      .edit-modal-footer {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 12px;
-        padding: 16px 24px;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        flex-shrink: 0;
-        background: rgba(0,0,0,0.1);
-      }
-      .edit-save-btn {
-        background: linear-gradient(135deg, var(--accent) 0%, #c0152a 100%);
-        color: #fff;
-        border: none;
-        border-radius: 12px;
-        padding: 10px 24px;
-        font-size: 13.5px;
-        font-weight: 700;
-        font-family: 'Manrope', sans-serif;
-        cursor: pointer;
-        transition: all 0.18s;
-        box-shadow: 0 4px 14px rgba(255,46,62,0.3);
-      }
-      .edit-save-btn:hover:not(:disabled) {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(255,46,62,0.45);
-      }
-      .edit-save-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-        transform: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        z-index: 2;
       }
 
-      /* ── TITLE PILL PICKER ── */
+      /* TITLE SELECTOR PILLS */
       .edit-title-search-wrap {
         position: relative;
         display: flex;
         align-items: center;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
       }
       .title-search-icon {
         position: absolute;
-        left: 11px;
+        left: 12px;
         font-size: 13px;
         pointer-events: none;
         opacity: 0.6;
       }
       .edit-title-search {
         width: 100%;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255,255,255,0.08);
         color: var(--txt);
-        padding: 9px 36px 9px 32px;
-        border-radius: 10px;
+        padding: 10px 36px 10px 34px;
+        border-radius: 12px;
         outline: none;
         font-family: 'Manrope', sans-serif;
         font-size: 13px;
@@ -1394,7 +1661,7 @@ import { RouterModule } from '@angular/router';
       .edit-title-search::placeholder { color: var(--mut); }
       .title-search-clear {
         position: absolute;
-        right: 10px;
+        right: 12px;
         background: transparent;
         border: none;
         color: var(--mut);
@@ -1405,49 +1672,59 @@ import { RouterModule } from '@angular/router';
         transition: color 0.15s;
       }
       .title-search-clear:hover { color: var(--txt); }
+      
       .edit-title-pill-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 7px;
-        max-height: 130px;
+        gap: 8px;
         overflow-y: auto;
-        padding: 10px;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-radius: 14px;
-        background: rgba(0,0,0,0.15);
+        padding: 8px;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        background: rgba(0,0,0,0.25);
+        flex: 1;
+        min-height: 0;
+        align-content: flex-start;
       }
       .title-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
+        padding: 7px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.07);
+        background: rgba(255,255,255,0.02);
+        color: var(--mut);
+        font-family: var(--display);
+        font-size: 13px;
+        font-style: italic;
+        font-weight: 400;
         cursor: pointer;
-        border: 1.5px solid rgba(255,255,255,0.1);
-        background: rgba(255,255,255,0.04);
-        color: var(--dim);
-        transition: all 0.16s;
+        transition: all 0.15s;
         white-space: nowrap;
-        user-select: none;
-        max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 100%;
       }
       .title-pill:hover {
-        border-color: rgba(255,255,255,0.22);
-        background: rgba(255,255,255,0.08);
+        border-color: rgba(255,255,255,0.16);
         color: var(--txt);
-        transform: translateY(-1px);
+        background: rgba(255,255,255,0.05);
       }
       .title-pill.active {
-        border-color: var(--accent);
-        background: linear-gradient(135deg, rgba(255,46,62,0.2), rgba(255,46,62,0.08));
-        color: var(--txt);
-        box-shadow: 0 0 10px rgba(255,46,62,0.2), inset 0 0 0 1px rgba(255,46,62,0.15);
+        border-color: rgba(255,206,50,0.5);
+        background: rgba(255,206,50,0.07);
+        color: var(--accent2);
+        box-shadow: 0 0 10px rgba(255,206,50,0.12);
+      }
+      .title-pill.none-pill {
+        border-style: dashed;
+        font-family: 'Space Grotesk', sans-serif;
+        font-style: normal;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--dim);
       }
       .title-pill.none-pill.active {
-        border-color: rgba(255,255,255,0.3);
         background: rgba(255,255,255,0.08);
         box-shadow: none;
       }
@@ -1656,6 +1933,7 @@ export class ProfileAuroraComponent implements OnInit {
   editSelectedMedals: string[] = [];
   savingProfile = false;
   descriptionError = '';
+  editActiveTab: 'avatar' | 'title' | 'medals' | 'info' = 'avatar';
   avatars = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
 
   // Toast notification state
@@ -1848,6 +2126,7 @@ export class ProfileAuroraComponent implements OnInit {
     this.editAvatarIcon = this.profileData?.avatarIcon || 'avatar_winner_badge';
     this.editSelectedMedals = this.profileData?.selectedMedals ? this.profileData.selectedMedals.split(',').filter(m => !!m) : [];
     this.descriptionError = '';
+    this.editActiveTab = 'avatar';
     this.showEditModal = true;
   }
 
