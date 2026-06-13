@@ -3005,7 +3005,10 @@ export class ProfileAuroraComponent implements OnInit {
     this.toastMessage = message;
     this.toastType = type;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastMessage = ''; }, 3500);
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage = '';
+      this.cdr.detectChanges();
+    }, 3500);
   }
 
   saveProfile(): void {
