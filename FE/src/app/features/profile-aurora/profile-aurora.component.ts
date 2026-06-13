@@ -48,7 +48,7 @@ import { RouterModule } from '@angular/router';
         
         <!-- Header Profile -->
         <div class="fu" style="display: flex; align-items: center; gap: 30px;">
-          <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0;">
+          <div class="profile-avatar-container">
             @if (isCustomAvatar(profileData?.avatarIcon)) {
               <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
             } @else {
@@ -57,9 +57,9 @@ import { RouterModule } from '@angular/router';
           </div>
           <div>
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <h1 class="display" style="font-size: 54px; font-weight: 700; margin: 0; color: var(--txt); line-height: 1;">{{ username }}</h1>
+              <h1 class="display name-energy" style="font-size: 42px; font-weight: 700; margin: 0; line-height: 1.1; letter-spacing: -0.01em;">{{ username }}</h1>
               @if (profileData?.activeTitle) {
-                <span style="background: linear-gradient(135deg, var(--accent2) 0%, rgba(255,255,255,0.05) 100%); border: 1px solid var(--line); color: var(--txt); padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
+                <span style="background: linear-gradient(135deg, var(--accent2) 0%, rgba(255,255,255,0.05) 100%); border: 1px solid var(--line); color: var(--txt); padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Space Grotesk', sans-serif;">
                   🏅 {{ profileData?.activeTitle }}
                 </span>
               }
@@ -67,20 +67,20 @@ import { RouterModule } from '@angular/router';
               @if (selectedMedalsList.length > 0) {
                 <div style="display: flex; gap: 8px; align-items: center; margin-left: 8px;">
                   @for (medal of selectedMedalsList; track medal) {
-                    <div style="width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);" [title]="getMedalTitle(medal)">
-                      <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
+                    <div class="profile-subcard" style="width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0;" [title]="getMedalTitle(medal)">
+                       <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 26px; height: 26px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));" />
                     </div>
                   }
                 </div>
               }
             </div>
             
-            <div style="color: var(--mut); font-weight: 600; letter-spacing: 0.05em; font-size: 14.5px; margin-top: 8px; font-style: italic; max-width: 480px; line-height: 1.4;">
+            <div style="color: var(--mut); font-weight: 500; font-size: 13.5px; margin-top: 8px; font-style: italic; max-width: 480px; line-height: 1.5; font-family: 'Plus Jakarta Sans', sans-serif;">
               {{ profileData?.description || 'Sin descripción de entrenador.' }}
             </div>
           </div>
           
-          <div style="margin-left: auto; display: flex; gap: 24px; padding: 20px 30px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px);">
+          <div class="profile-card" style="margin-left: auto; display: flex; gap: 24px; padding: 20px 30px;">
             <aurora-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></aurora-stat>
             <div style="width: 1px; background: var(--line);"></div>
             <aurora-stat [v]="totalLosses.toString()" k="Derrotas"></aurora-stat>
@@ -131,16 +131,16 @@ import { RouterModule } from '@angular/router';
                 </div>
 
                 <!-- Showcase Deck Section -->
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="profile-card">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
                       <div class="eyebrow" style="color: var(--accent2);">Mazo Destacado</div>
-                      <div style="font-size: 12px; color: var(--mut); margin-top: 4px;">Elegí el mazo que querés mostrar en tu perfil público.</div>
+                      <div style="font-size: 12.5px; color: var(--mut); margin-top: 4px;">Elegí el mazo que querés mostrar en tu perfil público.</div>
                     </div>
                   </div>
 
                   @if (profileData?.showcasedDeck) {
-                    <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px;">
+                    <div class="profile-subcard" style="display: flex; align-items: center; gap: 20px; padding: 16px; margin-bottom: 20px;">
                       <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
                         <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
                       </div>
@@ -184,7 +184,7 @@ import { RouterModule } from '@angular/router';
                 </div>
 
                 <!-- Medallero -->
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+                <div class="profile-card" style="margin-bottom: 24px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <div style="font-family: var(--display); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; color: var(--txt);">
                       🛡️ Medallero de Logros 
@@ -211,12 +211,12 @@ import { RouterModule } from '@angular/router';
                   </div>
                 </div>
 
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;" class="scroll">
+                <div class="profile-card scroll" style="display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;">
                   @if (achievements.length === 0) {
                     <div style="text-align: center; color: var(--mut); padding: 40px;">No se encontraron logros.</div>
                   }
                   @for (ach of achievements; track ach.title) {
-                    <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px;" [style.opacity]="ach.unlocked ? '1' : '0.7'">
+                    <div class="profile-subcard" style="display: flex; flex-direction: column; gap: 10px; padding: 16px;" [style.opacity]="ach.unlocked ? '1' : '0.7'">
                       <div style="display: flex; align-items: flex-start; justify-content: space-between;">
                         <div>
                           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -274,7 +274,7 @@ import { RouterModule } from '@angular/router';
             @if (activeTab === 'history') {
               <div>
                 <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Historial Reciente</div>
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; backdrop-filter: blur(10px);">
+                <div class="profile-card" style="overflow: hidden; padding: 0;">
                   @if (loadingHistory) {
                     <div style="text-align: center; padding: 40px; color: var(--mut);">Cargando historial de partidas...</div>
                   } @else if (matchesHistory.length === 0) {
@@ -300,7 +300,7 @@ import { RouterModule } from '@angular/router';
 
                       @if (expandedMatches[m.matchId]) {
                         @let stats = parseMatchStats(m.playerStatsJson);
-                        <div style="background: rgba(255,255,255,0.015); border-bottom: 1px solid var(--line); padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.2s ease-out;">
+                        <div style="background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.2s ease-out; box-shadow: inset 0 4px 10px rgba(0,0,0,0.35);">
                           
                           @if (!stats) {
                             <div style="text-align: center; color: var(--mut); font-size: 13px; font-style: italic;">
@@ -310,7 +310,7 @@ import { RouterModule } from '@angular/router';
                             <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1.6fr; gap: 24px;">
                               
                               <!-- Damage comparison -->
-                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                              <div class="profile-subcard" style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
                                 <div class="eyebrow" style="color: var(--accent2); font-size: 10.5px;">Daño de la Partida</div>
                                 
                                 @let pDmg = sumValues(stats.pokemonDamageDealt);
@@ -331,7 +331,7 @@ import { RouterModule } from '@angular/router';
                               </div>
 
                               <!-- KOs and Energies -->
-                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                              <div class="profile-subcard" style="padding: 14px; display: flex; flex-direction: column; gap: 12px;">
                                 <div class="eyebrow" style="color: var(--accent2); font-size: 10.5px;">KOs y Energías</div>
                                 
                                 @let pKos = sumValues(stats.pokemonKOsMade);
@@ -364,7 +364,7 @@ import { RouterModule } from '@angular/router';
 
                               <!-- MVP Card -->
                               @let mvp = getMatchMvp(stats);
-                              <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 14px;">
+                              <div class="profile-subcard" style="padding: 14px; display: flex; align-items: center; gap: 14px;">
                                 @if (mvp) {
                                   @let mvpImgUrl = getCardImageById(mvp.cardId);
                                   <div style="width: 50px; height: 70px; flex-shrink: 0; background: rgba(255,255,255,0.02); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
@@ -409,7 +409,7 @@ import { RouterModule } from '@angular/router';
                 <!-- Global Stats Summary -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                   <!-- Daño Panel -->
-                  <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                  <div class="profile-card">
                     <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Balance de Daño</div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                       <div>
@@ -438,7 +438,7 @@ import { RouterModule } from '@angular/router';
                   </div>
 
                   <!-- KOs Panel -->
-                  <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                  <div class="profile-card">
                     <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Derribos (KOs)</div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                       <div>
@@ -468,7 +468,7 @@ import { RouterModule } from '@angular/router';
                 </div>
 
                 <!-- Top Played Pokemons (with Element Filter) -->
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="profile-card">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <div>
                       <div class="eyebrow" style="color: var(--accent2);">Pokémon más jugados</div>
@@ -498,7 +498,7 @@ import { RouterModule } from '@angular/router';
                   } @else {
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                       @for (p of topPlayed; track p.cardId; let idx = $index) {
-                        <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px;">
+                        <div class="profile-subcard" style="display: flex; align-items: center; gap: 16px; padding: 12px 16px;">
                           <!-- Card Image thumbnail -->
                           @let imgUrl = getCardImageById(p.cardId);
                           <div style="width: 45px; height: 63px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
@@ -532,7 +532,7 @@ import { RouterModule } from '@angular/router';
                 </div>
 
                 <!-- Top Attackers -->
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="profile-card">
                   <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Daño infligido por Pokémon</div>
                   @let topAttackers = getTopAttackers();
                   @if (topAttackers.length === 0) {
@@ -542,7 +542,7 @@ import { RouterModule } from '@angular/router';
                   } @else {
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                       @for (p of topAttackers; track p.cardId; let idx = $index) {
-                        <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px;">
+                        <div class="profile-subcard" style="display: flex; align-items: center; gap: 16px; padding: 12px 16px;">
                           <!-- Card Image thumbnail -->
                           @let imgUrl = getCardImageById(p.cardId);
                           <div style="width: 45px; height: 63px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
@@ -581,7 +581,7 @@ import { RouterModule } from '@angular/router';
                 </div>
 
                 <!-- Elemental Energy Usage -->
-                <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+                <div class="profile-card">
                   <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Uso de Energías Elementales</div>
                   @let energyStats = getEnergyStats();
                   @if (energyStats.length === 0) {
@@ -591,7 +591,7 @@ import { RouterModule } from '@angular/router';
                   } @else {
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
                       @for (e of energyStats; track e.energyType) {
-                        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+                        <div class="profile-subcard" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
                           <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 13.5px;">
                             <span style="display: flex; align-items: center; gap: 6px;">
                               {{ getEnergyIconEmoji(e.energyType) }} {{ getEnergyLabel(e.energyType) }}
@@ -616,7 +616,7 @@ import { RouterModule } from '@angular/router';
           <!-- Right Column (Stats / Info) -->
           <div>
             <!-- Level / Customization Block -->
-            <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+            <div class="profile-card" style="margin-bottom: 24px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                 <div>
                   <div style="font-family: var(--display); font-size: 24px; font-weight: 700;">Nivel {{ profileData?.level || 1 }}</div>
@@ -637,14 +637,14 @@ import { RouterModule } from '@angular/router';
             </div>
 
             <!-- Custom Stats Box -->
-            <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+            <div class="profile-card" style="margin-bottom: 24px;">
               <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Hitos de Combate</div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
+                <div class="profile-subcard" style="padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Victorias Perfectas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">🏆 {{ profileData?.statistics?.perfectWins || 0 }}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center;">
+                <div class="profile-subcard" style="padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Cartas Jugadas</div>
                   <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🃏 {{ totalCardsPlayed }}</div>
                 </div>
@@ -652,18 +652,18 @@ import { RouterModule } from '@angular/router';
             </div>
 
             <!-- Honors received -->
-            <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px); margin-bottom: 24px;">
+            <div class="profile-card" style="margin-bottom: 24px;">
               <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Honores Recibidos</div>
               <div style="display: flex; flex-direction: column; gap: 12px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 10px;">
+                <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
                   <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">🤝 Buen Deportista</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #46e08a;">{{ profileData?.honors?.['GOOD_SPORTSMAN'] || 0 }}</span>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 10px;">
+                <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
                   <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">😊 Amigable</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #ffce32;">{{ profileData?.honors?.['FRIENDLY'] || 0 }}</span>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 10px;">
+                <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
                   <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">🧠 Gran Estratega</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #4aa3ff;">{{ profileData?.honors?.['GREAT_STRATEGIST'] || 0 }}</span>
                 </div>
@@ -673,7 +673,7 @@ import { RouterModule } from '@angular/router';
             <!-- Archetypes (Donut) -->
             <div>
               <div class="eyebrow" style="margin-bottom: 20px; color: var(--accent2);">Mazos más usados</div>
-              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; backdrop-filter: blur(10px);">
+              <div class="profile-card">
                 <div style="display: flex; justify-content: center; margin-bottom: 30px;">
                   <div [style.background]="'conic-gradient(' + donutStops + ')'" style="width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
                     <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg2); position: absolute;"></div>
@@ -984,30 +984,139 @@ import { RouterModule } from '@angular/router';
     }
 
     <style>
-      .match-row-hover:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
-      .tab-btn { background: transparent; border: none; color: var(--mut); font-family: 'Manrope'; font-weight: 700; font-size: 13.5px; padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-      .tab-btn:hover { color: var(--txt); }
-      .tab-btn.active-tab { background: rgba(255,255,255,0.1); color: var(--txt); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+      .profile-card {
+        background: linear-gradient(135deg, rgba(19, 35, 66, 0.72) 0%, rgba(10, 23, 48, 0.88) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 4px 6px rgba(0, 0, 0, 0.25),
+                    0 16px 36px rgba(0, 0, 0, 0.5);
+        padding: 24px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .profile-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 46, 62, 0.25);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                    0 20px 48px rgba(0, 0, 0, 0.6),
+                    0 0 15px rgba(255, 46, 62, 0.08);
+      }
+
+      .profile-subcard {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 14px;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+        padding: 16px;
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+      }
+      .profile-subcard:hover {
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                    0 8px 20px rgba(0, 0, 0, 0.35);
+      }
+
+      .profile-avatar-container {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        position: relative;
+        background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+        border: 3px solid rgba(255, 206, 50, 0.55);
+        box-shadow: 0 0 0 4px rgba(10, 23, 48, 0.9),
+                    0 0 0 6px rgba(255, 206, 50, 0.15),
+                    0 12px 28px rgba(0, 0, 0, 0.55),
+                    0 0 20px rgba(255, 206, 50, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 56px;
+        overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .profile-avatar-container:hover {
+        transform: scale(1.05) rotate(3deg);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgba(10, 23, 48, 0.9),
+                    0 0 0 7px rgba(255, 46, 62, 0.25),
+                    0 16px 36px rgba(0, 0, 0, 0.65),
+                    0 0 25px rgba(255, 46, 62, 0.2);
+      }
+
+      .match-row-hover {
+        border-radius: 12px;
+        transition: all 0.2s ease;
+      }
+      .match-row-hover:hover {
+        background: rgba(255, 255, 255, 0.03);
+        cursor: pointer;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                    0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .tab-btn {
+        background: rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        color: var(--mut);
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        font-size: 12.5px;
+        padding: 10px 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0,0,0,0.15);
+      }
+      .tab-btn:hover {
+        color: var(--txt);
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 8px rgba(0,0,0,0.2);
+      }
+      .tab-btn.active-tab {
+        background: linear-gradient(180deg, rgba(255, 46, 62, 0.15) 0%, rgba(255, 46, 62, 0.05) 100%);
+        border-color: rgba(255, 46, 62, 0.35);
+        color: var(--txt);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 4px 12px rgba(255, 46, 62, 0.15),
+                    0 0 8px rgba(255, 46, 62, 0.1);
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+      }
       
       .showcase-slot {
-        background: rgba(255, 255, 255, 0.02);
-        border: 2px dashed var(--line);
-        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.22);
+        border: 2px dashed rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
         aspect-ratio: 5/7;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         position: relative;
         overflow: hidden;
+        box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.5);
       }
       .showcase-slot:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: var(--accent);
+        background: rgba(255, 46, 62, 0.04);
+        border-color: rgba(255, 46, 62, 0.45);
         transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(255, 46, 62, 0.15);
+        box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05),
+                    0 12px 28px rgba(0, 0, 0, 0.5),
+                    0 0 18px rgba(255, 46, 62, 0.15);
       }
       .showcase-slot img {
         width: 100%;
@@ -1044,24 +1153,26 @@ import { RouterModule } from '@angular/router';
       .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.75);
-        backdrop-filter: blur(8px);
+        background: rgba(5, 5, 12, 0.82);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 10000;
-        animation: fadeIn 0.2s ease-out;
+        animation: fadeIn 0.25s ease-out;
       }
       .modal-card {
-        background: var(--bg2);
-        border: 1px solid var(--line);
+        background: linear-gradient(135deg, rgba(19, 35, 66, 0.9) 0%, rgba(10, 23, 48, 0.98) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 24px;
         width: 90%;
         max-width: 500px;
         padding: 30px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.55);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                    0 24px 48px rgba(0, 0, 0, 0.65);
         position: relative;
-        animation: scaleUp 0.2s ease-out;
+        animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       }
       .modal-card-lg {
         max-width: 760px;
@@ -1069,19 +1180,21 @@ import { RouterModule } from '@angular/router';
         display: flex;
         flex-direction: column;
       }
-
+ 
       /* ═══ EDIT PROFILE MODAL ═══ */
       .edit-modal {
-        background: linear-gradient(160deg, #10101e 0%, #151525 60%, #0c0c14 100%);
+        background: linear-gradient(160deg, #0d0d19 0%, #121222 60%, #08080f 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 28px;
         width: 95%;
-        max-width: 860px; /* Ancho ampliado para la interfaz de dos columnas */
+        max-width: 860px;
         max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 32px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,46,62,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
-        animation: scaleUp 0.22s cubic-bezier(0.34,1.56,0.64,1);
+        box-shadow: 0 32px 64px rgba(0,0,0,0.85),
+                    0 0 0 1px rgba(255,46,62,0.05),
+                    inset 0 1px 0 rgba(255,255,255,0.08);
+        animation: scaleUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
         overflow: hidden;
       }
       .edit-modal-header {
@@ -1105,8 +1218,7 @@ import { RouterModule } from '@angular/router';
       .edit-modal-title {
         font-family: var(--display);
         font-size: 24px;
-        font-weight: 400;
-        font-style: italic;
+        font-weight: 700;
         color: var(--txt);
         margin: 0;
         letter-spacing: 0.01em;
@@ -1125,12 +1237,14 @@ import { RouterModule } from '@angular/router';
         justify-content: center;
         transition: all 0.18s;
         flex-shrink: 0;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Space Grotesk', sans-serif;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
       }
       .edit-close-btn:hover {
-        background: rgba(255,46,62,0.15);
+        background: rgba(255,46,62,0.18);
         border-color: var(--accent);
         color: var(--txt);
+        transform: rotate(90deg);
       }
       .edit-modal-body {
         display: flex;
@@ -1139,7 +1253,7 @@ import { RouterModule } from '@angular/router';
         max-height: 520px;
         overflow: hidden;
       }
-
+ 
       /* LEFT PANEL: Live Preview */
       .edit-left-panel {
         width: 290px;
@@ -1148,14 +1262,15 @@ import { RouterModule } from '@angular/router';
         flex-direction: column;
         padding: 24px 20px;
         border-right: 1px solid rgba(255,255,255,0.06);
-        background: rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.25);
         align-items: center;
         justify-content: flex-start;
+        box-shadow: inset -2px 0 5px rgba(0,0,0,0.3);
       }
       .edit-preview-card {
-        background: linear-gradient(135deg, #16162a 0%, #0f0f1b 100%);
-        border: 2px solid rgba(255, 46, 62, 0.2);
-        border-radius: 20px;
+        background: linear-gradient(135deg, #121224 0%, #0a0a14 100%);
+        border: 2px solid rgba(255, 46, 62, 0.25);
+        border-radius: 22px;
         padding: 24px 18px;
         display: flex;
         flex-direction: column;
@@ -1163,10 +1278,11 @@ import { RouterModule } from '@angular/router';
         gap: 12px;
         width: 100%;
         max-width: 240px;
-        box-shadow: 0 16px 36px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+                    0 16px 36px rgba(0,0,0,0.65);
         position: relative;
         overflow: hidden;
-        transition: border-color 0.3s, box-shadow 0.3s;
+        transition: all 0.3s;
       }
       .edit-preview-card::after {
         content: '';
@@ -1211,7 +1327,7 @@ import { RouterModule } from '@angular/router';
         letter-spacing: 0.15em;
         color: rgba(255, 255, 255, 0.4);
       }
-
+ 
       .edit-avatar-preview {
         width: 88px;
         height: 88px;
@@ -1229,9 +1345,8 @@ import { RouterModule } from '@angular/router';
       }
       .edit-preview-username {
         font-family: var(--display);
-        font-weight: 400;
-        font-style: italic;
-        font-size: 16px;
+        font-weight: 700;
+        font-size: 17px;
         color: var(--txt);
         text-align: center;
         letter-spacing: 0.01em;
@@ -1303,7 +1418,7 @@ import { RouterModule } from '@angular/router';
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
       }
-
+ 
       /* RIGHT PANEL: Tabbed Selectors */
       .edit-right-panel {
         flex: 1;
@@ -1311,8 +1426,9 @@ import { RouterModule } from '@angular/router';
         flex-direction: column;
         padding: 24px 28px;
         gap: 16px;
-        overflow: hidden; /* Evita scroll en la raíz para permitir scroll en el panel específico */
+        overflow: hidden;
         min-width: 0;
+        background: rgba(0, 0, 0, 0.05);
       }
       .edit-tabs-nav {
         display: flex;
@@ -1322,28 +1438,32 @@ import { RouterModule } from '@angular/router';
         flex-shrink: 0;
       }
       .edit-tab-btn {
-        background: transparent;
-        border: 1px solid transparent;
+        background: rgba(0,0,0,0.15);
+        border: 1px solid rgba(255,255,255,0.03);
         padding: 7px 16px;
         border-radius: 10px;
         color: var(--dim);
         font-family: 'Space Grotesk', sans-serif;
         font-weight: 700;
-        font-size: 11.5px;
+        font-size: 11px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.2s;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
       }
       .edit-tab-btn:hover {
         color: var(--txt);
         background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.08);
       }
       .edit-tab-btn.active {
         color: var(--txt);
-        background: rgba(255, 46, 62, 0.10);
-        border-color: rgba(255, 46, 62, 0.28);
-        box-shadow: 0 0 12px rgba(255, 46, 62, 0.12);
+        background: linear-gradient(180deg, rgba(255, 46, 62, 0.18) 0%, rgba(255, 46, 62, 0.05) 100%);
+        border-color: rgba(255, 46, 62, 0.35);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1),
+                    0 4px 12px rgba(255, 46, 62, 0.15),
+                    0 0 8px rgba(255, 46, 62, 0.08);
       }
       
       .edit-tab-content {
@@ -1371,15 +1491,14 @@ import { RouterModule } from '@angular/router';
       .edit-pane-title {
         font-family: var(--display);
         font-size: 18px;
-        font-weight: 400;
-        font-style: italic;
+        font-weight: 700;
         color: var(--txt);
         margin: 0 0 6px 0;
         letter-spacing: 0.01em;
       }
       .edit-pane-desc {
-        font-family: 'Manrope', sans-serif;
-        font-size: 11.5px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 12.5px;
         color: var(--mut);
         margin: 0;
         line-height: 1.5;
@@ -1423,7 +1542,7 @@ import { RouterModule } from '@angular/router';
         opacity: 0.4;
         color: var(--mut);
       }
-
+ 
       .edit-section-label {
         font-family: 'Space Grotesk', sans-serif;
         font-size: 10px;
@@ -1445,7 +1564,6 @@ import { RouterModule } from '@angular/router';
         padding: 8px;
         align-items: start;
       }
-      /* Celda contenedora: cuadrada, da el espacio individual a cada elemento */
       .edit-avatar-cell {
         aspect-ratio: 1;
         display: flex;
@@ -1458,15 +1576,15 @@ import { RouterModule } from '@angular/router';
         height: 100%;
         border-radius: 50%;
         overflow: hidden;
-        border: 2px solid rgba(255,255,255,0.08);
+        border: 2px solid rgba(255, 255, 255, 0.08);
         cursor: pointer;
-        background: rgba(0,0,0,0.25);
+        background: rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
         position: relative;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
       }
       .edit-avatar-thumb img {
@@ -1475,20 +1593,24 @@ import { RouterModule } from '@angular/router';
         object-fit: cover;
       }
       .edit-avatar-thumb span {
-        font-size: 22px;
+        font-size: 24px;
         line-height: 1;
       }
       .edit-avatar-thumb:hover {
-        border-color: rgba(255,255,255,0.3);
-        background: rgba(255,255,255,0.06);
-        box-shadow: 0 0 0 2px rgba(255,255,255,0.1), 0 4px 14px rgba(0,0,0,0.45);
+        border-color: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                    0 6px 16px rgba(0, 0, 0, 0.45);
       }
       .edit-avatar-thumb.selected {
         border-color: var(--accent);
-        background: rgba(255,46,62,0.1);
-        box-shadow: 0 0 0 3px rgba(255,46,62,0.35), 0 0 18px rgba(255,46,62,0.25);
+        background: rgba(255, 46, 62, 0.12);
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 0 0 3px rgba(255, 46, 62, 0.35),
+                    0 0 20px rgba(255, 46, 62, 0.3);
       }
-
+ 
       /* FIELDS & INPUTS */
       .edit-field {
         display: flex;
@@ -1518,28 +1640,31 @@ import { RouterModule } from '@angular/router';
       .edit-char-count.warn { color: #f87171; }
       .edit-textarea {
         width: 100%;
-        background: rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         color: var(--txt);
         padding: 14px 16px;
         border-radius: 14px;
         outline: none;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 13px;
         font-weight: 500;
         line-height: 1.65;
         resize: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: all 0.2s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
       }
       .edit-textarea:focus {
-        border-color: rgba(255,46,62,0.5);
-        box-shadow: 0 0 0 3px rgba(255,46,62,0.08);
+        border-color: rgba(255, 46, 62, 0.5);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3),
+                    0 0 0 3px rgba(255, 46, 62, 0.12);
+        background: rgba(0, 0, 0, 0.45);
       }
       .edit-textarea.is-error { border-color: #f87171; }
       
       .edit-hint {
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 12px;
         color: var(--mut);
         font-weight: 500;
@@ -1555,7 +1680,7 @@ import { RouterModule } from '@angular/router';
         margin-top: 6px;
         opacity: 0.9;
       }
-
+ 
       /* MEDALS SELECTOR GRID */
       .edit-medal-grid {
         display: grid;
@@ -1567,7 +1692,6 @@ import { RouterModule } from '@angular/router';
         padding: 8px;
         align-items: start;
       }
-      /* Celda contenedora: cuadrada, da el espacio individual a cada elemento */
       .edit-medal-cell {
         aspect-ratio: 1;
         display: flex;
@@ -1580,17 +1704,17 @@ import { RouterModule } from '@angular/router';
         height: 100%;
         border-radius: 12px;
         overflow: hidden;
-        border: 2px solid rgba(255,255,255,0.08);
+        border: 2px solid rgba(255, 255, 255, 0.08);
         cursor: pointer;
-        background: rgba(0,0,0,0.25);
+        background: rgba(0, 0, 0, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
         padding: 10px;
         box-sizing: border-box;
-        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.5);
       }
       .edit-medal-thumb img {
         width: 100%;
@@ -1598,14 +1722,18 @@ import { RouterModule } from '@angular/router';
         object-fit: contain;
       }
       .edit-medal-thumb:hover {
-        background: rgba(255,206,50,0.05);
-        border-color: rgba(255,206,50,0.25);
-        box-shadow: 0 0 0 2px rgba(255,206,50,0.12), 0 4px 14px rgba(0,0,0,0.45);
+        background: rgba(255, 206, 50, 0.05);
+        border-color: rgba(255, 206, 50, 0.3);
+        transform: translateY(-2px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05),
+                    0 6px 16px rgba(0, 0, 0, 0.45);
       }
       .edit-medal-thumb.selected {
         border-color: var(--accent2);
-        background: rgba(255,206,50,0.1);
-        box-shadow: 0 0 0 3px rgba(255,206,50,0.35), 0 0 18px rgba(255,206,50,0.25);
+        background: rgba(255, 206, 50, 0.12);
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 0 0 3px rgba(255, 206, 50, 0.35),
+                    0 0 20px rgba(255, 206, 50, 0.3);
       }
       .edit-medal-badge {
         position: absolute;
@@ -1625,7 +1753,7 @@ import { RouterModule } from '@angular/router';
         box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         z-index: 2;
       }
-
+ 
       /* TITLE SELECTOR PILLS */
       .edit-title-search-wrap {
         position: relative;
@@ -1649,7 +1777,7 @@ import { RouterModule } from '@angular/router';
         padding: 10px 36px 10px 34px;
         border-radius: 12px;
         outline: none;
-        font-family: 'Manrope', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 13px;
         transition: border-color 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
@@ -1687,32 +1815,36 @@ import { RouterModule } from '@angular/router';
         align-content: flex-start;
       }
       .title-pill {
-        padding: 7px 16px;
+        padding: 8px 18px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.07);
-        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.25);
         color: var(--mut);
-        font-family: var(--display);
-        font-size: 13px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 12.5px;
         font-style: italic;
-        font-weight: 400;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 0.15s;
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 100%;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
       }
       .title-pill:hover {
-        border-color: rgba(255,255,255,0.16);
+        border-color: rgba(255, 255, 255, 0.2);
         color: var(--txt);
-        background: rgba(255,255,255,0.05);
+        background: rgba(255, 255, 255, 0.04);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
       }
       .title-pill.active {
-        border-color: rgba(255,206,50,0.5);
-        background: rgba(255,206,50,0.07);
+        border-color: rgba(255, 206, 50, 0.55);
+        background: rgba(255, 206, 50, 0.12);
         color: var(--accent2);
-        box-shadow: 0 0 10px rgba(255,206,50,0.12);
+        transform: translateY(-1px) scale(1.02);
+        box-shadow: 0 0 12px rgba(255, 206, 50, 0.2);
       }
       .title-pill.none-pill {
         border-style: dashed;
@@ -1726,6 +1858,7 @@ import { RouterModule } from '@angular/router';
       }
       .title-pill.none-pill.active {
         background: rgba(255,255,255,0.08);
+        border-color: rgba(255, 255, 255, 0.2);
         box-shadow: none;
       }
       .edit-active-title-chip {
@@ -1748,31 +1881,35 @@ import { RouterModule } from '@angular/router';
       .form-label {
         display: block;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 11.5px;
         color: var(--mut);
         text-transform: uppercase;
         margin-bottom: 8px;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.08em;
+        font-family: 'Space Grotesk', sans-serif;
       }
       .form-input {
         width: 100%;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         color: var(--txt);
         padding: 12px 16px;
         border-radius: 12px;
         outline: none;
-        font-family: 'Manrope';
-        font-size: 14.5px;
-        transition: border-color 0.2s;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 14px;
+        transition: all 0.25s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
         box-sizing: border-box;
       }
       .form-input:focus {
         border-color: var(--accent);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3),
+                    0 0 0 3px rgba(255, 46, 62, 0.12);
+        background: rgba(0, 0, 0, 0.45);
       }
-      /* Fix select dropdown options - force dark background */
       .select-dark {
-        background: #1a1a2e !important;
+        background: #0d0d1a !important;
         color: var(--txt) !important;
         cursor: pointer;
         appearance: none;
@@ -1783,7 +1920,7 @@ import { RouterModule } from '@angular/router';
         padding-right: 36px !important;
       }
       .select-option {
-        background: #1a1a2e;
+        background: #0d0d1a;
         color: #e8e8f0;
         padding: 10px;
       }
@@ -1840,17 +1977,20 @@ import { RouterModule } from '@angular/router';
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
         cursor: help;
       }
       .medal-item:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: var(--accent2);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 206, 50, 0.2);
+        background: rgba(255, 206, 50, 0.05);
+        border-color: rgba(255, 206, 50, 0.4);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                    0 8px 20px rgba(0, 0, 0, 0.45),
+                    0 0 12px rgba(255, 206, 50, 0.2);
       }
       .medal-item img {
         width: 80%;
@@ -1868,11 +2008,11 @@ import { RouterModule } from '@angular/router';
         left: 50%;
         transform: translateX(-50%) translateY(5px);
         background: rgba(15, 15, 25, 0.95);
-        border: 1px solid var(--line);
-        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
         padding: 10px 14px;
         width: 200px;
-        font-size: 12px;
+        font-size: 12.5px;
         color: var(--txt);
         z-index: 100;
         opacity: 0;
@@ -1887,17 +2027,20 @@ import { RouterModule } from '@angular/router';
         transform: translateX(-50%) translateY(0);
       }
       .medal-tooltip-title {
+        font-family: 'Space Grotesk', sans-serif;
         font-weight: 700;
         color: var(--accent2);
         margin-bottom: 4px;
         font-size: 13px;
       }
       .medal-tooltip-req {
+        font-family: 'Plus Jakarta Sans', sans-serif;
         color: var(--mut);
-        font-size: 11px;
-        line-height: 1.3;
+        font-size: 11.5px;
+        line-height: 1.35;
       }
       .medal-tooltip-status {
+        font-family: 'Space Grotesk', sans-serif;
         margin-top: 6px;
         font-weight: 800;
         font-size: 10px;
