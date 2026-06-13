@@ -93,3 +93,37 @@ Este documento detalla la implementación técnica y de diseño para las tareas 
   - **Dificultad Progresiva:** Bots iniciales que juegan cartas al azar usando su energía disponible, escalando a bots avanzados que priorizan ataques fuertes. Los "Líderes de Gimnasio" tendrán mazos estructurados (temáticos por tipo, por ejemplo, agua o fuego) y rutinas heurísticas que buscan el combo de mayor daño.
 - **Persistencia:**
   - Guardado en la tabla de progresión del jugador (ej. `highest_story_node_cleared`).
+
+## 10. Torneos Suizos Automatizados (Swiss Brackets)
+**Descripción:** Eventos competitivos programados donde el servidor organiza llaves de torneo en vivo para los participantes inscritos.
+**Implementación Técnica:**
+- **Backend:**
+  - Motor de emparejamiento suizo que agrupa jugadores por puntuación/victorias dentro del mismo torneo.
+  - Gestión de estado del torneo (Inscripción, Ronda N, Finalizado).
+- **Frontend:**
+  - Vista gráfica de las llaves del torneo generada dinámicamente según avancen las rondas.
+
+## 11. "Puzzles" del Día
+**Descripción:** Retos diarios donde el jugador se enfrenta a un tablero pre-configurado y debe ganar en exactamente 1 turno utilizando la mano provista.
+**Implementación Técnica:**
+- **Backend:**
+  - Endpoint que envíe un `GameState` inicial estático y valide si en la simulación del turno el oponente llega a 0 HP o se quedan sin premios.
+- **Mecánica:**
+  - Recompensa única diaria (PokéCoins) almacenada en base de datos para prevenir reclamos duplicados.
+
+## 12. Draft Mode / Arena
+**Descripción:** Modo de juego sin colecciones previas donde se elige 1 carta entre 3 (draft) hasta completar un mazo de 20 cartas. Se juega hasta obtener 3 derrotas o llegar a 12 victorias.
+**Implementación Técnica:**
+- **Backend:**
+  - Lógica de "picks": el servidor genera opciones pseudo-aleatorias balanceadas (cartas básicas y evoluciones garantizadas) por cada ronda de elección.
+  - Tracking del estado de la arena por usuario (Victorias, Derrotas, Mazo Draft).
+- **Frontend:**
+  - Pantalla interactiva de selección tipo ruleta o "pick" de sobres para elegir cartas e ir visualizando la curva de energía del mazo en tiempo real.
+
+## 13. Logros Reactivos en Vivo (Achievements)
+**Descripción:** Logros in-game detectados por el servidor de WebSockets durante la partida y notificados en pantalla en tiempo real.
+**Implementación Técnica:**
+- **Game Engine:**
+  - Sistema de heurística en la resolución de acciones (e.g. ganar con 10 HP, infligir más de 200 de daño en 1 ataque, evolucionar 3 veces en un turno).
+- **Notificación:**
+  - Evento STOMP que envía un push asíncrono al cliente disparando una animación de trofeo in-game.
