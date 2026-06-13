@@ -6,6 +6,7 @@ export interface TutorialStep {
   pose: 1 | 2 | 3;
   targetSelector: string | null;
   reversed?: boolean;
+  extraRight?: boolean;
 }
 
 @Injectable({
@@ -74,7 +75,7 @@ export class TutorialService {
       {
         pose: 1,
         targetSelector: null,
-        text: 'Esta es tu Vitrina de Entrenador. Aquí puedes examinar toda tu carrera y tus logros. Es tu carta de presentación ante la comunidad competitiva.',
+        text: 'Este es tu apartado del perfil del entrenador. Aquí puedes examinar toda tu carrera y tus logros. Es tu carta de presentación ante la comunidad competitiva.',
       },
       {
         pose: 2,
@@ -95,12 +96,8 @@ export class TutorialService {
         pose: 2,
         targetSelector: '#perfil-vitrinas',
         text: "En la pestaña de 'Vitrina' puedes lucir tus cartas y mazos destacados. Haz clic en las ranuras de vitrinas para seleccionar aquellas cartas raras o especiales que quieras mostrar en tu perfil.",
-      },
-      {
-        pose: 3,
-        targetSelector: '#perfil-amigos',
-        text: 'Finalmente, en la barra lateral derecha puedes gestionar tu lista de amigos y ver quiénes están conectados para chatear. Desde allí también podrás revisar tus solicitudes de amistad recibidas y buscar a otros entrenadores ingresando su nombre de usuario para enviarles una solicitud.',
         reversed: true,
+        extraRight: true,
       },
     ],
   };
