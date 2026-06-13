@@ -53,5 +53,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/simulator/simulator').then((m) => m.Simulator),
   },
+  {
+    path: 'store',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/store/store.component').then((m) => m.StoreComponent),
+  },
   { path: '**', redirectTo: '' },
 ];
