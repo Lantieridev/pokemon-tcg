@@ -59,6 +59,10 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       transform: translateX(120px);
     }
 
+    .tutorial-container.layout-reversed.extra-right {
+      transform: translateX(180px);
+    }
+
     .pikachu-wrapper {
       flex: 0 0 220px;
       height: 264px;
@@ -220,7 +224,10 @@ import { TutorialService } from '../../../core/services/tutorial.service';
         }
 
         <!-- Character & Speech Bubble container -->
-        <div class="tutorial-container" [class.layout-reversed]="currentStep()?.reversed" (click)="$event.stopPropagation()">
+        <div class="tutorial-container" 
+             [class.layout-reversed]="currentStep()?.reversed" 
+             [class.extra-right]="currentStep()?.extraRight" 
+             (click)="$event.stopPropagation()">
           
           <!-- Pikachu pose display -->
           <div class="pikachu-wrapper" [class.flipped]="currentStep()?.reversed">
