@@ -94,7 +94,7 @@ public class MatchService {
                         final ProfileService profileService,
                         final UserRepository userRepository,
                         @Lazy final BotDecisionService botDecisionService,
-                        final MmrCalculationService mmrCalculationService,
+                        final MmrCalculationService pMmrCalculationService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -107,7 +107,7 @@ public class MatchService {
         this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.botDecisionService = botDecisionService;
-        this.mmrCalculationService = Objects.requireNonNull(mmrCalculationService, "mmrCalculationService must not be null");
+        this.mmrCalculationService = Objects.requireNonNull(pMmrCalculationService, "mmrCalculationService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
