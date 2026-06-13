@@ -102,6 +102,12 @@ public class UserEntity {
     @Builder.Default
     private Set<String> unlockedTitles = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_cleared_story_nodes", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "node_id")
+    @Builder.Default
+    private Set<Integer> clearedStoryNodes = new HashSet<>();
+
     @Column(name = "ranked_matches_played")
     @Builder.Default
     private Integer rankedMatchesPlayed = 0;

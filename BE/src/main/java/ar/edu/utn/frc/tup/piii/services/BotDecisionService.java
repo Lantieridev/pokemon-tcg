@@ -70,11 +70,12 @@ public class BotDecisionService {
         }
 
         String botId = session.getPlayerIds().get(botIndex);
+        final int finalBotIndex = botIndex;
 
         // 1. Mandatory Promotion (XY1 Rulebook §2)
         if (session.isAwaitingPromotion()) {
-            if (session.getPromotingPlayerIndex() == botIndex) {
-                ActionRequestDTO promotion = tryPromoteActive(session, botIndex).orElse(null);
+            if (session.getPromotingPlayerIndex() == finalBotIndex) {
+                ActionRequestDTO promotion = tryPromoteActive(session, finalBotIndex).orElse(null);
                 if (promotion != null) {
                     sendAction(matchId, botId, promotion);
                 }
@@ -84,8 +85,8 @@ public class BotDecisionService {
 
         // 2. Pending Selection Request (e.g. from Trainers like Professor's Letter)
         if (session.getPendingSelectionRequest() != null) {
-            if (session.getTurnManager().activePlayerIndex() == botIndex) {
-                ActionRequestDTO selection = trySelectCards(session, botIndex).orElse(
+            if (session.getTurnManager().activePlayerIndex() == finalBotIndex) {
+                ActionRequestDTO selection = trySelectCards(session, finalBotIndex).orElse(
                     new ActionRequestDTO(ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList())
                 );
                 sendAction(matchId, botId, selection);
@@ -93,17 +94,17 @@ public class BotDecisionService {
             return; // Wait until selection is resolved
         }
 
-        if (session.getTurnManager().activePlayerIndex() != botIndex) {
+        if (session.getTurnManager().activePlayerIndex() != finalBotIndex) {
             return; // Not bot's turn
         }
 
         // Action Priority Sequence
-        Optional<ActionRequestDTO> nextAction = tryEvolve(session, botIndex)
-                .or(() -> tryPlayTrainer(session, botIndex))
-                .or(() -> tryPlaceBench(session, botIndex))
-                .or(() -> tryAttachEnergy(session, botIndex))
-                .or(() -> tryRetreat(session, botIndex))
-                .or(() -> tryAttack(session, botIndex));
+        Optional<ActionRequestDTO> nextAction = tryEvolve(session, finalBotIndex)
+                .or(() -> tryPlayTrainer(session, finalBotIndex))
+                .or(() -> tryPlaceBench(session, finalBotIndex))
+                .or(() -> tryAttachEnergy(session, finalBotIndex))
+                .or(() -> tryRetreat(session, finalBotIndex))
+                .or(() -> tryAttack(session, finalBotIndex));
 
         if (nextAction.isPresent()) {
             sendAction(matchId, botId, nextAction.get());
