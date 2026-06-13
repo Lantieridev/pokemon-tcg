@@ -101,9 +101,21 @@ export class NavbarComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadProfile();
+
+    // Subscribe to profile changes
+    this.profileService.profileUpdated$.subscribe({
+      next: () => this.loadProfile()
+    });
+  }
+
+  loadProfile(): void {
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
-        next: (data) => this.profileData.set(data),
+        next: (data) => {
+          this.profileData.set(data);
+          this.cdr.markForCheck();
+        },
         error: (err) => console.error('Error fetching profile for navbar', err)
       });
     }
