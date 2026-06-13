@@ -59,8 +59,9 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       transform: translateX(120px);
     }
 
-    .tutorial-container.layout-reversed.extra-right {
-      transform: translateX(180px);
+    .tutorial-container.extra-right {
+      align-self: flex-end;
+      transform: none;
     }
 
     .pikachu-wrapper {
