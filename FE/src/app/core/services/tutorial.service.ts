@@ -85,7 +85,6 @@ export class TutorialService {
         pose: 3,
         targetSelector: '#perfil-nivel',
         text: 'En el panel izquierdo se muestra tu nivel de entrenador y tu barra de experiencia (XP). Ganarás puntos de experiencia al jugar partidas y cumplir misiones. ¡Sigue progresando para obtener recompensas premium!',
-        reversed: true,
       },
       {
         pose: 1,
@@ -101,6 +100,7 @@ export class TutorialService {
         pose: 3,
         targetSelector: '#perfil-amigos',
         text: 'Finalmente, en la barra lateral derecha puedes gestionar tu lista de amigos y ver quiénes están conectados para chatear. Desde allí también podrás revisar tus solicitudes de amistad recibidas y buscar a otros entrenadores ingresando su nombre de usuario para enviarles una solicitud.',
+        reversed: true,
       },
     ],
   };

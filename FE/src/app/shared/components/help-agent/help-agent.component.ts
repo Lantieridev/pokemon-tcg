@@ -56,7 +56,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
 
     .tutorial-container.layout-reversed {
       flex-direction: row-reverse;
-      transform: translateX(100px);
+      transform: translateX(120px);
     }
 
     .pikachu-wrapper {
