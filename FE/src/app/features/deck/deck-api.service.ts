@@ -39,4 +39,21 @@ export class DeckApiService {
   getDecksByUserId(userId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.API_URL}/user/${userId}`);
   }
+
+  /**
+   * POST /api/decks/assistant/autocomplete
+   * Solicita al asistente autocompletar el mazo actual hasta 60 cartas.
+   */
+  autocompleteDeck(): Observable<{ cardId: string, quantity: number }[]> {
+    const userId = this.authService.userId;
+    if (!userId) throw new Error('No hay usuario autenticado.');
+
+    const grouped = this.deckStore.deckGrouped();
+    const cards = grouped.map(({ card, count }) => ({
+      cardId: card.id,
+      quantity: count,
+    }));
+
+    return this.http.post<{ cardId: string, quantity: number }[]>(`${this.API_URL}/assistant/autocomplete`, cards);
+  }
 }
