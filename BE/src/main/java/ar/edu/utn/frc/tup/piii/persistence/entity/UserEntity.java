@@ -102,6 +102,12 @@ public class UserEntity {
     @Builder.Default
     private Set<String> unlockedTitles = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_unlocked_avatars", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "avatar_name")
+    @Builder.Default
+    private Set<String> unlockedAvatars = new HashSet<>();
+
     @Column(name = "ranked_matches_played")
     @Builder.Default
     private Integer rankedMatchesPlayed = 0;
