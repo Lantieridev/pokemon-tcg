@@ -5,7 +5,7 @@
 
 .scene{
   width:100%;height:100%;position:relative;overflow:hidden;
-  font-family:'Manrope',system-ui,sans-serif;
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
   color:var(--txt);background:var(--bg);
   -webkit-font-smoothing:antialiased;
   letter-spacing:-0.01em;
@@ -17,7 +17,7 @@
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.16);
   --txt:#eaf0ff; --mut:#93a3c4; --dim:#5e6e90;
   --accent:#ff2e3e; --accent-dk:#cc2531; --accent-soft:rgba(255,46,62,.14);
-  --display:'Instrument Serif',serif; --num:'Space Mono',monospace;
+  --display:'Space Grotesk',sans-serif; --num:'Space Mono',monospace;
   --on-accent:#ffffff;
   --m1:#1f6f8c; --m2:#3a2e8c; --m3:#7a2e6b; --m4:#1fa89a;
   --accent2:#ffce32;
