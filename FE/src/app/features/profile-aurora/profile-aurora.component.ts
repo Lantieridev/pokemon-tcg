@@ -688,7 +688,7 @@ import { TutorialService } from '../../core/services/tutorial.service';
 
                 <div class="edit-avatar-preview">
                   @if (isCustomAvatar(editAvatarIcon)) {
-                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" />
+                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
                   } @else {
                     <span style="font-size:36px;">{{ getAvatarEmoji(editAvatarIcon) }}</span>
                   }
@@ -2013,7 +2013,7 @@ import { TutorialService } from '../../core/services/tutorial.service';
         align-items: center;
         justify-content: center;
         transition: transform 0.2s;
-        padding: 5px;
+        padding: 0;
         box-sizing: border-box;
       }
       .edit-preview-username {
@@ -2819,6 +2819,9 @@ export class ProfileAuroraComponent implements OnInit {
       'avatar_neutral_balance',
       'avatar_belt_white',
       'avatar_water_kanto',
+      'avatar_bulbasaur',
+      'avatar_nature_force',
+      'avatar_colorless_kanto',
     ];
     const set = new Set<string>(defaults);
     this.allAchievements.forEach(ach => {
