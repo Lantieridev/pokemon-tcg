@@ -377,8 +377,11 @@ public class ProfileServiceImpl implements ProfileService {
         }
         user.setTotalKos((user.getTotalKos() != null ? user.getTotalKos() : 0) + kos);
 
-        // 1. Asignar XP
+        // 1. Asignar XP y Pokecoins
         final int xpGained = won ? 50 : 25;
+        final int coinsGained = won ? 50 : 10;
+        user.setPokecoins((user.getPokecoins() != null ? user.getPokecoins() : 0) + coinsGained);
+
         int currentXp = user.getXp() != null ? user.getXp() : 0;
         int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
 
