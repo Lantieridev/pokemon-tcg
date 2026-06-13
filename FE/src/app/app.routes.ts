@@ -53,5 +53,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/simulator/simulator').then((m) => m.Simulator),
   },
+  {
+    path: 'campaign',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/campaign/campaign.component').then((m) => m.CampaignComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

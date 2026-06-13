@@ -55,6 +55,14 @@ export class MatchBackendService {
   }
 
   /**
+   * GET /api/decks/templates
+   * Lista los mazos por defecto del sistema
+   */
+  getTemplates(): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(`${this.DECKS_URL}/templates`);
+  }
+
+  /**
    * GET /api/decks/{id}
    */
   getDeck(id: number): Observable<DeckResponseDTO> {

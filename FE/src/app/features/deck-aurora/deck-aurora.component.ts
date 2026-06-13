@@ -121,15 +121,25 @@ interface Filters {
             @if (saveSuccess()) {
               <div style="color: #46e08a; font-size: 12px; margin-bottom: 10px; text-align: center; font-weight: 600;">¡Mazo guardado con éxito!</div>
             }
-            <button id="boton-guardar" class="cta" style="width: 100%; height: 64px; justify-content: center; gap: 12px;" [disabled]="!isValid() || saveLoading()" (click)="saveDeck()" [style.opacity]="!isValid() ? '0.5' : '1'">
-              @if (saveLoading()) {
-                <div class="pokespin" style="width: 20px; height: 20px;"></div>
-                <span>Guardando...</span>
-              } @else {
-                <span>Guardar Mazo</span>
-                <aurora-icon n="decks" [s]="20"></aurora-icon>
-              }
-            </button>
+            <div style="display: flex; gap: 8px;">
+              <button id="boton-autocompletar" class="cta secondary" style="flex: 1; height: 64px; justify-content: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid var(--line);" [disabled]="autoCompleting()" (click)="autoComplete()">
+                @if (autoCompleting()) {
+                  <div class="pokespin" style="width: 20px; height: 20px;"></div>
+                } @else {
+                  <aurora-icon n="decks" [s]="20"></aurora-icon>
+                  <span>Asistente</span>
+                }
+              </button>
+              <button id="boton-guardar" class="cta" style="flex: 2; height: 64px; justify-content: center; gap: 12px;" [disabled]="!isValid() || saveLoading()" (click)="saveDeck()" [style.opacity]="!isValid() ? '0.5' : '1'">
+                @if (saveLoading()) {
+                  <div class="pokespin" style="width: 20px; height: 20px;"></div>
+                  <span>Guardando...</span>
+                } @else {
+                  <span>Guardar Mazo</span>
+                  <aurora-icon n="decks" [s]="20"></aurora-icon>
+                }
+              </button>
+            </div>
             @if (!isValid()) {
               <div style="text-align: center; font-size: 11px; color: var(--mut); margin-top: 10px;">{{ validation().errors[0] || 'Necesitas 60 cartas para guardar.' }}</div>
             }
@@ -289,6 +299,32 @@ export class DeckAuroraComponent implements OnInit {
         this.saveLoading.set(false);
         this.saveError.set(err.error?.message ?? 'Error al guardar el mazo. Intentá de nuevo.');
       },
+    });
+  }
+
+  readonly autoCompleting = signal(false);
+
+  autoComplete(): void {
+    this.autoCompleting.set(true);
+    this.saveError.set(null);
+
+    this.deckApi.autocompleteDeck().subscribe({
+      next: (res: { cardId: string; quantity: number }[]) => {
+        this.deckStore.clearDeck();
+        for (const cardData of res) {
+          const cardObj = this.tcgService.cards().find(c => c.id === cardData.cardId);
+          if (cardObj) {
+            for (let i = 0; i < cardData.quantity; i++) {
+              this.deckStore.addCard(cardObj);
+            }
+          }
+        }
+        this.autoCompleting.set(false);
+      },
+      error: (err: any) => {
+        this.autoCompleting.set(false);
+        this.saveError.set(err.error?.message ?? 'Error al autocompletar el mazo.');
+      }
     });
   }
 
