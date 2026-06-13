@@ -30,9 +30,12 @@ public class UserProfileResponseDTO {
     private Integer battlePoints;
 
     private Statistics statistics;
-    private Map<HonorType, Integer> honors;
-    private Set<String> unlockedTitles;
-    private List<ShowcaseSlot> showcase;
+    private Map<String, Integer> honors;
+
+    private List<String> unlockedTitles;
+    private List<String> unlockedAvatars;
+
+    private ShowcaseSlot showcase;
     private ShowcasedDeck showcasedDeck;
     private AdvancedStatsDTO advancedStats;
 

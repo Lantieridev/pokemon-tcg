@@ -13,7 +13,7 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 8px;">
         <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-        <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <div class="topcur"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
       </div>
     }
     <div>

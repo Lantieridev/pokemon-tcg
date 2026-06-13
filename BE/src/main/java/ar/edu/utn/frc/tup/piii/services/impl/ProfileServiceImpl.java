@@ -276,6 +276,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .statistics(stats)
                 .honors(honors)
                 .unlockedTitles(user.getUnlockedTitles())
+                .unlockedAvatars(user.getUnlockedAvatars() != null ? new java.util.ArrayList<>(user.getUnlockedAvatars()) : new java.util.ArrayList<>())
                 .showcase(showcaseSlots)
                 .showcasedDeck(showcasedDeckDto)
                 .advancedStats(advancedStatsDTO)

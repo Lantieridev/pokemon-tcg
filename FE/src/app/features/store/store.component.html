@@ -3,8 +3,16 @@
     <h1>Centro de Intercambio</h1>
     <p>Adquiere nuevos avatares, títulos y objetos usando tus Pokécoins.</p>
     <div class="balance-badge">
-      <span class="coin-icon">💰</span> {{ pokecoins() }} Pokécoins
+      <span class="coin-icon" style="margin-right: 6px;"><aurora-coin-icon [size]="20"></aurora-coin-icon></span> {{ pokecoins() }} Pokécoins
     </div>
+  </div>
+
+  <div class="category-tabs">
+    @for (cat of categories; track cat) {
+      <button class="category-tab" [class.active]="selectedCategory() === cat" (click)="setCategory(cat)">
+        {{ cat === 'TITLE' ? 'Títulos' : cat === 'AVATAR' ? 'Avatares' : 'Sobres' }}
+      </button>
+    }
   </div>
 
   @if (loading()) {
@@ -14,19 +22,26 @@
     </div>
   } @else {
     <div class="catalog-grid">
-      @for (item of items(); track item.id) {
+      @for (item of filteredItems(); track item.id) {
         <div class="store-card group">
           <div class="card-image-wrapper">
-            <img [src]="item.imageUrl || 'assets/placeholder.png'" [alt]="item.name" class="card-image" />
-            <div class="card-type-badge">{{ item.itemType }}</div>
+            <div class="card-bg-gradient"></div>
+            @if (item.itemType === 'TITLE') {
+              <div class="title-preview">
+                <span>{{ item.name }}</span>
+              </div>
+            } @else {
+              <img [src]="getImageSrc(item)" [alt]="item.name" class="card-image" [class.avatar-style]="item.itemType === 'AVATAR'" />
+            }
           </div>
           <div class="card-content">
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.description }}</p>
+            <div class="card-text-area">
+              <h3>{{ item.name }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
             <div class="card-actions">
-              <span class="price"><span class="coin-icon">💰</span> {{ item.price }}</span>
               <button class="buy-button" (click)="buyItem(item)" [disabled]="pokecoins() < item.price">
-                Comprar
+                <span class="price-val">{{ item.price }} Pokécoins</span>
               </button>
             </div>
           </div>

@@ -1719,6 +1719,9 @@ export class ProfileAuroraComponent implements OnInit {
         set.add(ach.rewardValue);
       }
     });
+    if (this.profileData?.unlockedAvatars) {
+      this.profileData.unlockedAvatars.forEach(av => set.add(av));
+    }
     return Array.from(set);
   }
 

@@ -124,4 +124,26 @@ public final class MatchRestController {
         final int viewerIndex = session.indexOf(playerId);
         return perspectiveMapper.toResponse(session, viewerIndex);
     }
+
+    /**
+     * Allows a player to explicitly surrender/abandon a match.
+     *
+     * @param matchId  path variable identifying the match
+     * @param playerId header identifying the requesting player
+     */
+    @PostMapping("/{matchId}/surrender")
+    @ResponseStatus(HttpStatus.OK)
+    public void surrender(@PathVariable final String matchId,
+                          @RequestHeader("X-Player-Id") final String playerId,
+                          final Principal principal) {
+        if (principal == null || !principal.getName().equals(playerId)) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot surrender for another player");
+        }
+        
+        ar.edu.utn.frc.tup.piii.services.MatchService matchService = 
+            ar.edu.utn.frc.tup.piii.context.ApplicationContextProvider.getApplicationContext()
+                .getBean(ar.edu.utn.frc.tup.piii.services.MatchService.class);
+                
+        matchService.surrenderMatch(matchId, playerId);
+    }
 }

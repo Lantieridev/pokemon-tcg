@@ -811,8 +811,16 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onLeave(): void {
-    this.wsService.disconnect();
-    this.router.navigate(['/lobby']);
+    this.matchBackend.surrenderMatch(this.matchId).subscribe({
+      next: () => {
+        this.wsService.disconnect();
+        this.router.navigate(['/lobby']);
+      },
+      error: () => {
+        this.wsService.disconnect();
+        this.router.navigate(['/lobby']);
+      }
+    });
   }
 
   getKindStyles(kind: string): { color: string; label: string } {

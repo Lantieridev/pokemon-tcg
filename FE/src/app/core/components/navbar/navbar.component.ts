@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../services/profile.service';
-import { LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
+import { LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent, CoinIconComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
 import { FriendsSidebarComponent } from '../../../shared/components/friends-sidebar/friends-sidebar.component';
 import { PublicProfileModalComponent } from '../../../shared/components/public-profile-modal/public-profile-modal.component';
 import { ChatModalComponent } from '../../../shared/components/chat-modal/chat-modal.component';
@@ -17,7 +17,7 @@ import { ToastService } from '../../services/toast.service';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent, FriendsSidebarComponent, PublicProfileModalComponent, ChatModalComponent],
+  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, IconComponent, BallIconComponent, CoinIconComponent, FriendsSidebarComponent, PublicProfileModalComponent, ChatModalComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush

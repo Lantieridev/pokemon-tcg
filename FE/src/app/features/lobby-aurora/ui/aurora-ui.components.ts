@@ -17,6 +17,7 @@ import { RouterModule } from '@angular/router';
         @case ('sword') { <path d="M14 3h7v7M21 3l-9 9M3 21l5-1 4-4-4-4-4 4-1 5Z" /> }
         @case ('arrow') { <path d="M5 12h14M13 6l6 6-6 6" /> }
         @case ('fire') { <path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-1.5.5-2.5 1.5-3.5C9.5 5.5 11 5 12 2z" /><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /> }
+        @case ('pokecoin') { <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 7v10M9 9.5a3 3 0 1 0 0 5h2.5" /> }
       }
     </svg>
   `
@@ -251,6 +252,20 @@ export class RankCrestComponent {
   `
 })
 export class BallIconComponent {
+  @Input() size: number = 16;
+}
+
+@Component({
+  selector: 'aurora-coin-icon',
+  standalone: true,
+  template: `
+    <span [style.width.px]="size" [style.height.px]="size" style="border-radius: 50%; display: inline-block; flex: 0 0 auto; position: relative; background: linear-gradient(135deg, #fff080 0%, #f1c40f 40%, #b9770e 100%); box-shadow: inset 0 0 0 1px #fcf3cf, 0 1px 4px rgba(0,0,0,.6);">
+      <span [style.width.px]="size * 0.65" [style.height.px]="size * 0.65" style="position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.6); transform: translate(-50%,-50%); box-shadow: inset 0 0 2px rgba(0,0,0,0.1);"></span>
+      <span [style.fontSize.px]="size * 0.45" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.95); font-weight: 800; font-family: var(--display, sans-serif); line-height: 1; padding-top: 1px; text-shadow: 0 1px 1px rgba(0,0,0,0.3);">P</span>
+    </span>
+  `
+})
+export class CoinIconComponent {
   @Input() size: number = 16;
 }
 

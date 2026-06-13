@@ -269,6 +269,13 @@ public class MatchService {
                 session.cancelDisconnectTimeout(playerId));
     }
 
+    /**
+     * Explicitly surrenders a match.
+     */
+    public void surrenderMatch(final String matchId, final String playerId) {
+        abandonMatch(matchId, playerId);
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -436,18 +443,25 @@ public class MatchService {
                 // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = !participantId.equals(forfeitingPlayerId);
-                    userRepository.findByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
-                    });
-
+                    
                     if (participantId.equals(forfeitingPlayerId)) {
                         // The penalized user who forfeited does NOT get a decrement
                         completedLegitimately = false;
                     } else {
-                        // The user who did not forfeit gets a decrement ONLY if both players had at least 5 turns
-                        completedLegitimately = (turnsA >= 5 && turnsB >= 5);
+                        // The user who did not forfeit gets a decrement ONLY if both players had at least 15 turns
+                        completedLegitimately = (turnsA >= 15 && turnsB >= 15);
                     }
-                    penaltyService.registerMatchFinished(participantId, completedLegitimately);
+                    
+                    final boolean finalCompletedLegitimately = completedLegitimately;
+
+                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                        // To prevent farming, the forfeiting player gets NO rewards.
+                        if (won) {
+                            profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
+                        }
+                    });
+
+                    penaltyService.registerMatchFinished(participantId, finalCompletedLegitimately);
                 }
 
                 // Apply ranked abandonment penalties
