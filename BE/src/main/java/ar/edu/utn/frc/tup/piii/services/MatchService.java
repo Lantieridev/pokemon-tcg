@@ -224,7 +224,7 @@ public class MatchService {
             int activeIndex = currentSession.getTurnManager().activePlayerIndex();
             if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
                 String activeId = currentSession.getPlayerIds().get(activeIndex);
-                if ("Bot-001".equals(activeId)) {
+                if (activeId != null && activeId.startsWith("Bot-")) {
                     botDecisionService.evaluateAndPlay(matchId);
                 }
             }
