@@ -76,4 +76,17 @@ export class MatchBackendService {
       deckBId: deckId // El backend usará deckAId internamente para el bot
     });
   }
+
+  /**
+   * POST /api/matches/{matchId}/surrender
+   * Abandona explícitamente la partida.
+   */
+  surrenderMatch(matchId: string): Observable<void> {
+    const username = this.authService.username ?? '';
+    return this.http.post<void>(
+      `${this.MATCHES_URL}/${matchId}/surrender`,
+      {},
+      { headers: new HttpHeaders({ 'X-Player-Id': username }) }
+    );
+  }
 }

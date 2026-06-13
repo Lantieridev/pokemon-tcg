@@ -54,6 +54,7 @@ export interface UserProfileResponseDTO {
   };
   honors: Record<string, number>;
   unlockedTitles: string[];
+  unlockedAvatars?: string[];
   showcase: {
     slotPosition: number;
     cardId: string;

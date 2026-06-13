@@ -1,9 +1,64 @@
 .store-container {
-  padding: 120px 40px 40px;
-  min-height: 100vh;
+  padding: 40px;
+  height: 100%;
   background: radial-gradient(circle at top right, #1a1a2e, #16213e, #0f3460);
   color: #fff;
   font-family: 'Inter', sans-serif;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.category-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a0a0b8;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.category-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.category-tab.active {
+  background: linear-gradient(135deg, #f39c12, #d35400);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+}
+
+.title-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2c3e50, #3498db);
+  padding: 20px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+.title-preview span {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .store-header {
@@ -13,7 +68,7 @@
 }
 
 .store-header h1 {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
   margin-bottom: 10px;
   background: linear-gradient(45deg, #f39c12, #f1c40f);
@@ -35,131 +90,148 @@
   border-radius: 30px;
   font-size: 1.5rem;
   font-weight: 700;
+  color: #fff;
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  animation: pulse 2s infinite;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
 .store-card {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
   overflow: hidden;
   backdrop-filter: blur(15px);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .store-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
   border-color: rgba(241, 196, 15, 0.5);
 }
 
 .card-image-wrapper {
-  height: 200px;
+  height: 220px;
   position: relative;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+}
+
+.card-bg-gradient {
+  position: absolute;
+  inset: 15px;
+  border-radius: 18px;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  z-index: 0;
 }
 
 .card-image {
-  max-width: 150px;
-  max-height: 150px;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+  position: relative;
+  z-index: 1;
   transition: transform 0.5s;
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+.card-image.avatar-style {
+  border-radius: 50%;
+  border: 4px solid rgba(255, 46, 62, 0.4);
+  box-shadow: 0 0 0 4px rgba(255, 46, 62, 0.1), 0 8px 20px rgba(0,0,0,0.4);
+  background: var(--surface);
+  object-fit: cover;
+  width: 140px;
+  height: 140px;
 }
 
 .store-card:hover .card-image {
-  transform: scale(1.15) rotate(5deg);
-}
-
-.card-type-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(243, 156, 18, 0.8);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  transform: scale(1.1) translateY(-5px);
 }
 
 .card-content {
-  padding: 25px;
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-.card-content h3 {
-  font-size: 1.4rem;
-  margin: 0 0 10px;
-  font-weight: 700;
+.card-text-area {
+  text-align: center;
+  flex: 1;
 }
 
-.card-content p {
+.card-text-area h3 {
+  font-size: 1.2rem;
+  margin: 15px 0 8px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.card-text-area p {
   color: #a0a0b8;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.4;
   margin-bottom: 20px;
-  min-height: 45px;
 }
 
 .card-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.price {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #f1c40f;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  justify-content: center;
+  margin-top: auto;
 }
 
 .buy-button {
-  background: linear-gradient(135deg, #f39c12, #d35400);
+  background: linear-gradient(135deg, #10b981, #059669); /* Green for positive action like buying */
   color: white;
   border: none;
-  padding: 10px 24px;
-  border-radius: 25px;
-  font-weight: 700;
-  font-size: 1rem;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 1.1rem;
   cursor: pointer;
+  width: 100%;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .buy-button:hover:not([disabled]) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(243, 156, 18, 0.6);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #34d399, #10b981);
 }
 
 .buy-button[disabled] {
-  background: #555;
-  color: #888;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+.price-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .loading-state {
@@ -187,10 +259,4 @@
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-30px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); }
-  70% { box-shadow: 0 0 0 15px rgba(241, 196, 15, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
 }
