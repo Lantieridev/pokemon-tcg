@@ -115,7 +115,7 @@ public final class PlayerPerspectiveMapper {
                 victoryReason,
                 mvpCardId,
                 mvpCardDamage,
-                session.getTurnManager() != null ? session.getTurnManager().getLastCoinFlips() : List.of(),
+                session.getLastCoinFlips() != null ? session.getLastCoinFlips() : List.of(),
                 viewerIndex == 0 ? session.getMmrChangeA() : session.getMmrChangeB());
     }
 

@@ -205,6 +205,8 @@ public class MatchService {
                         profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
                     });
                     penaltyService.registerMatchFinished(participantId, true);
+                }
+                
                 // Handle MMR updates if ranked
                 if (session.isRanked()) {
                     updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());

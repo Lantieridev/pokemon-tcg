@@ -72,7 +72,7 @@ public final class MatchRestController {
         final List<Card> deckA = cardResolutionService.resolveCards(request.deckAId());
         final List<Card> deckB = cardResolutionService.resolveCards(request.deckBId());
         final String matchId = matchCreationService.createMatch(
-                request.playerAId(), request.playerBId(), deckA, deckB);
+                request.playerAId(), request.playerBId(), deckA, deckB, false);
         return Map.of("matchId", matchId);
     }
 
@@ -97,7 +97,7 @@ public final class MatchRestController {
         final List<Card> deckB = cardResolutionService.resolveCards(request.deckAId());
         
         final String matchId = matchCreationService.createMatch(
-                request.playerAId(), "Bot-001", deckA, deckB);
+                request.playerAId(), "Bot-001", deckA, deckB, false);
         return Map.of("matchId", matchId);
     }
 

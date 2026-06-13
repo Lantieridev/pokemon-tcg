@@ -92,7 +92,7 @@ class MatchRestControllerTest {
 
         when(cardResolutionService.resolveCards(deckAId)).thenReturn(deckA);
         when(cardResolutionService.resolveCards(deckBId)).thenReturn(deckB);
-        when(matchCreationService.createMatch(playerAId, playerBId, deckA, deckB))
+        when(matchCreationService.createMatch(playerAId,  playerBId,  deckA,  deckB, false))
                 .thenReturn(expectedMatchId);
 
         final Map<String, String> result = controller.createMatch(request);
