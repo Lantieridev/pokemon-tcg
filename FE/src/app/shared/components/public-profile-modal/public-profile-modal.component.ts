@@ -118,21 +118,7 @@ export class PublicProfileModalComponent implements OnInit {
   }
 
   getEnergyIconEmoji(type: string): string {
-    if (!type) return '⚪';
-    switch (type.toUpperCase()) {
-      case 'FIRE': return '🔥';
-      case 'WATER': return '💧';
-      case 'GRASS': return '🌿';
-      case 'LIGHTNING': return '⚡';
-      case 'PSYCHIC': return '🔮';
-      case 'FIGHTING': return '👊';
-      case 'DARKNESS': return '🌙';
-      case 'METAL': return '🔩';
-      case 'FAIRY': return '🎀';
-      case 'DRAGON': return '🐉';
-      case 'COLORLESS': return '⚪';
-      default: return '⚪';
-    }
+    return '';
   }
 
   getEnergyLabel(type: string): string {

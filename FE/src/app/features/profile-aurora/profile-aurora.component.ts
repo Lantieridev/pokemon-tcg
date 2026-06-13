@@ -60,7 +60,7 @@ import { RouterModule } from '@angular/router';
               <h1 class="display name-energy" style="font-size: 42px; font-weight: 700; margin: 0; line-height: 1.1; letter-spacing: -0.01em;">{{ username }}</h1>
               @if (profileData?.activeTitle) {
                 <span style="background: linear-gradient(135deg, var(--accent2) 0%, rgba(255,255,255,0.05) 100%); border: 1px solid var(--line); color: var(--txt); padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Space Grotesk', sans-serif;">
-                  🏅 {{ profileData?.activeTitle }}
+                  {{ profileData?.activeTitle }}
                 </span>
               }
               <!-- Selected Medals Showcase -->
@@ -108,7 +108,7 @@ import { RouterModule } from '@angular/router';
                 <!-- Card Showcase -->
                 <div>
                   <div class="eyebrow" style="margin-bottom: 12px; color: var(--accent2);">Vitrina de Cartas Destacadas</div>
-                  <div style="font-size: 12px; color: var(--mut); margin-bottom: 16px;">💡 Puedes arrastrar y soltar cartas del buscador directamente en los slots, o hacer clic en ellos.</div>
+                  <div style="font-size: 12px; color: var(--mut); margin-bottom: 16px;">Puedes arrastrar y soltar cartas del buscador directamente en los slots, o hacer clic en ellos.</div>
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     @for (pos of [1, 2, 3]; track pos) {
                       @let slot = getShowcaseSlot(pos);
@@ -129,7 +129,7 @@ import { RouterModule } from '@angular/router';
                     }
                   </div>
                 </div>
-
+ 
                 <!-- Showcase Deck Section -->
                 <div class="profile-card">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -138,7 +138,7 @@ import { RouterModule } from '@angular/router';
                       <div style="font-size: 12.5px; color: var(--mut); margin-top: 4px;">Elegí el mazo que querés mostrar en tu perfil público.</div>
                     </div>
                   </div>
-
+ 
                   @if (profileData?.showcasedDeck) {
                     <div class="profile-subcard" style="display: flex; align-items: center; gap: 20px; padding: 16px; margin-bottom: 20px;">
                       <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
@@ -157,14 +157,14 @@ import { RouterModule } from '@angular/router';
                       No tenés ningún mazo destacado en este momento.
                     </div>
                   }
-
+ 
                   <div class="form-group" style="margin: 0;">
                     <label class="form-label">Cambiar Mazo Destacado</label>
                     <div style="display: flex; gap: 12px;">
                       <select [ngModel]="profileData?.showcasedDeck?.id" (ngModelChange)="selectShowcasedDeck($event)" class="form-input select-dark" style="flex: 1;">
                         <option [value]="null">— Seleccionar Mazo —</option>
                         @for (d of userDecks; track d.id) {
-                          <option [value]="d.id">🎴 {{ d.name }}</option>
+                          <option [value]="d.id">{{ d.name }}</option>
                         }
                       </select>
                     </div>
@@ -187,7 +187,7 @@ import { RouterModule } from '@angular/router';
                 <div class="profile-card" style="margin-bottom: 24px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                     <div style="font-family: var(--display); font-size: 16px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; color: var(--txt);">
-                      🛡️ Medallero de Logros 
+                      Medallero de Logros 
                       <span style="font-size: 12.5px; color: var(--mut); font-weight: 600;">({{ unlockedMedalsCount }} / 25)</span>
                     </div>
                   </div>
@@ -196,7 +196,7 @@ import { RouterModule } from '@angular/router';
                       <div class="medal-item" [class.locked]="!medal.unlocked">
                         <img [src]="'assets/achievements/medals/' + medal.rewardValue + '.png'" [alt]="medal.title" loading="lazy" />
                         @if (!medal.unlocked) {
-                          <div style="position: absolute; bottom: 3px; right: 3px; font-size: 8px; background: rgba(0,0,0,0.6); border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; color: #ffb8b8; border: 0.5px solid rgba(255,255,255,0.15);">🔒</div>
+                          <div style="position: absolute; bottom: 3px; right: 3px; font-size: 7px; background: rgba(0,0,0,0.7); border-radius: 4px; padding: 2px 4px; display: flex; align-items: center; justify-content: center; color: #ffb8b8; border: 0.5px solid rgba(255,255,255,0.15); font-family: 'Space Grotesk', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Bloq</div>
                         }
                         <!-- Tooltip -->
                         <div class="medal-tooltip">
@@ -210,7 +210,7 @@ import { RouterModule } from '@angular/router';
                     }
                   </div>
                 </div>
-
+ 
                 <div class="profile-card scroll" style="display: flex; flex-direction: column; gap: 16px; max-height: 520px; overflow-y: auto;">
                   @if (achievements.length === 0) {
                     <div style="text-align: center; color: var(--mut); padding: 40px;">No se encontraron logros.</div>
@@ -226,15 +226,15 @@ import { RouterModule } from '@angular/router';
                             <!-- Reward Type Badge -->
                             @if (ach.rewardType === 'MEDALLA') {
                               <span style="background: rgba(74, 163, 255, 0.1); border: 1px solid rgba(74, 163, 255, 0.3); color: #4aa3ff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
-                                🛡️ Medalla
+                                Medalla
                               </span>
                             } @else if (ach.rewardType === 'FOTO_PERFIL') {
                               <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
-                                👤 Avatar
+                                Avatar
                               </span>
                             } @else if (ach.rewardType === 'TITULO') {
                               <span style="background: rgba(255, 206, 50, 0.1); border: 1px solid rgba(255, 206, 50, 0.3); color: #ffce32; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
-                                🏅 Título
+                                Título
                               </span>
                             }
                           </div>
@@ -252,8 +252,8 @@ import { RouterModule } from '@angular/router';
                             }
                           </div>
                         </div>
-                        <div style="font-size: 18px;">
-                          {{ ach.unlocked ? '✅' : '🔒' }}
+                        <div style="font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: var(--mut);">
+                          {{ ach.unlocked ? '✓' : '✗' }}
                         </div>
                       </div>
                       
@@ -317,10 +317,9 @@ import { RouterModule } from '@angular/router';
                                 @let oDmg = sumValues(stats.pokemonDamageReceived);
                                 @let totDmg = pDmg + oDmg;
                                 @let pDmgPct = totDmg > 0 ? (pDmg / totDmg * 100) : 50;
-                                
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                                  <span style="color: #4aa3ff;">💥 {{ pDmg }} Hecho</span>
-                                  <span style="color: #ff7a3d;">🛡️ {{ oDmg }} Recibido</span>
+                                 <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
+                                  <span style="color: #4aa3ff;">Hecho: {{ pDmg }}</span>
+                                  <span style="color: #ff7a3d;">Recibido: {{ oDmg }}</span>
                                 </div>
                                 <div style="height: 8px; background: #ff7a3d; border-radius: 4px; overflow: hidden; display: flex;">
                                   <div [style.width.%]="pDmgPct" style="height: 100%; background: #4aa3ff;"></div>
@@ -329,7 +328,7 @@ import { RouterModule } from '@angular/router';
                                   Dominancia de daño: {{ pDmgPct.toFixed(0) }}%
                                 </div>
                               </div>
-
+ 
                               <!-- KOs and Energies -->
                               <div class="profile-subcard" style="padding: 14px; display: flex; flex-direction: column; gap: 12px;">
                                 <div class="eyebrow" style="color: var(--accent2); font-size: 10.5px;">KOs y Energías</div>
@@ -338,13 +337,13 @@ import { RouterModule } from '@angular/router';
                                 @let pKosSuffered = sumValues(stats.pokemonKOsSuffered);
                                 <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600;">
                                   <span style="color: var(--dim);">KOs Realizados:</span>
-                                  <span class="num" style="color: #46e08a;">⚡ {{ pKos }}</span>
+                                  <span class="num" style="color: #46e08a;">{{ pKos }}</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600;">
                                   <span style="color: var(--dim);">KOs Sufridos:</span>
-                                  <span class="num" style="color: #ff3b47;">💀 {{ pKosSuffered }}</span>
+                                  <span class="num" style="color: #ff3b47;">{{ pKosSuffered }}</span>
                                 </div>
-
+ 
                                 <div style="border-top: 1px dashed var(--line); padding-top: 8px;">
                                   <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Energías Unidas</div>
                                   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -361,7 +360,7 @@ import { RouterModule } from '@angular/router';
                                   </div>
                                 </div>
                               </div>
-
+ 
                               <!-- MVP Card -->
                               @let mvp = getMatchMvp(stats);
                               <div class="profile-subcard" style="padding: 14px; display: flex; align-items: center; gap: 14px;">
@@ -371,18 +370,18 @@ import { RouterModule } from '@angular/router';
                                     @if (mvpImgUrl) {
                                       <img [src]="mvpImgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
                                     } @else {
-                                      <span style="font-size: 24px;">🃏</span>
+                                      <span style="font-size: 10px; font-weight: 700; color: var(--mut);">CARTA</span>
                                     }
                                   </div>
                                   <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                                     <div class="eyebrow" style="color: #ffce32; font-size: 10.5px; letter-spacing: 0.1em; display: flex; align-items: center; gap: 4px;">
-                                      👑 MVP
+                                      MVP
                                     </div>
                                     <div style="font-weight: 700; font-size: 13.5px; color: var(--txt); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                       {{ mvp.name }}
                                     </div>
                                     <div style="font-size: 11px; color: var(--mut); font-weight: 600;">
-                                      🔥 {{ mvp.damage }} Daño | ⚡ {{ mvp.kos }} KOs
+                                      {{ mvp.damage }} Daño | {{ mvp.kos }} KOs
                                     </div>
                                   </div>
                                 } @else {
@@ -408,20 +407,19 @@ import { RouterModule } from '@angular/router';
                 
                 <!-- Global Stats Summary -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-                  <!-- Daño Panel -->
-                  <div class="profile-card">
+                    <div class="profile-card">
                     <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Balance de Daño</div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                       <div>
                         <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Daño Realizado</div>
                         <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #4aa3ff;">
-                          💥 {{ profileData?.advancedStats?.totalDamageDealt || 0 }}
+                          {{ profileData?.advancedStats?.totalDamageDealt || 0 }}
                         </div>
                       </div>
                       <div style="text-align: right;">
                         <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Daño Recibido</div>
                         <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #ff7a3d;">
-                          🛡️ {{ profileData?.advancedStats?.totalDamageReceived || 0 }}
+                          {{ profileData?.advancedStats?.totalDamageReceived || 0 }}
                         </div>
                       </div>
                     </div>
@@ -436,7 +434,7 @@ import { RouterModule } from '@angular/router';
                       <span>{{ (100 - dmgPct).toFixed(0) }}% Recibido</span>
                     </div>
                   </div>
-
+ 
                   <!-- KOs Panel -->
                   <div class="profile-card">
                     <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Derribos (KOs)</div>
@@ -444,13 +442,13 @@ import { RouterModule } from '@angular/router';
                       <div>
                         <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">KOs Realizados</div>
                         <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #46e08a;">
-                          ⚡ {{ profileData?.advancedStats?.totalKOsMade || 0 }}
+                          {{ profileData?.advancedStats?.totalKOsMade || 0 }}
                         </div>
                       </div>
                       <div style="text-align: right;">
                         <div style="font-size: 11px; color: var(--mut); font-weight: 700; text-transform: uppercase;">KOs Sufridos</div>
                         <div style="font-family: var(--display); font-size: 28px; font-weight: 700; color: #ff3b47;">
-                          💀 {{ profileData?.advancedStats?.totalKOsSuffered || 0 }}
+                          {{ profileData?.advancedStats?.totalKOsSuffered || 0 }}
                         </div>
                       </div>
                     </div>
@@ -466,7 +464,7 @@ import { RouterModule } from '@angular/router';
                     </div>
                   </div>
                 </div>
-
+ 
                 <!-- Top Played Pokemons (with Element Filter) -->
                 <div class="profile-card">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
@@ -475,18 +473,18 @@ import { RouterModule } from '@angular/router';
                       <div style="font-size: 12px; color: var(--mut); margin-top: 4px;">Filtra por tipo de energía para ver tus preferidos.</div>
                     </div>
                     <select [(ngModel)]="elementFilter" class="form-input select-dark" style="width: 160px; padding: 8px 12px; font-size: 13px;">
-                      <option value="ALL">🔍 Todos los tipos</option>
-                      <option value="FIRE">🔥 Fuego</option>
-                      <option value="WATER">💧 Agua</option>
-                      <option value="GRASS">🌿 Planta</option>
-                      <option value="LIGHTNING">⚡ Rayo</option>
-                      <option value="PSYCHIC">🔮 Psíquico</option>
-                      <option value="FIGHTING">👊 Lucha</option>
-                      <option value="DARKNESS">🌙 Siniestro</option>
-                      <option value="METAL">🔩 Metal</option>
-                      <option value="FAIRY">🎀 Hada</option>
-                      <option value="DRAGON">🐉 Dragón</option>
-                      <option value="COLORLESS">⚪ Normal</option>
+                      <option value="ALL">Todos los tipos</option>
+                      <option value="FIRE">Fuego</option>
+                      <option value="WATER">Agua</option>
+                      <option value="GRASS">Planta</option>
+                      <option value="LIGHTNING">Rayo</option>
+                      <option value="PSYCHIC">Psíquico</option>
+                      <option value="FIGHTING">Lucha</option>
+                      <option value="DARKNESS">Siniestro</option>
+                      <option value="METAL">Metal</option>
+                      <option value="FAIRY">Hada</option>
+                      <option value="DRAGON">Dragón</option>
+                      <option value="COLORLESS">Normal</option>
                     </select>
                   </div>
 
@@ -505,7 +503,7 @@ import { RouterModule } from '@angular/router';
                             @if (imgUrl) {
                               <img [src]="imgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
                             } @else {
-                              <span style="font-size: 20px;">🃏</span>
+                              <span style="font-size: 10px; font-weight: 700; color: var(--mut);">CARTA</span>
                             }
                           </div>
                           <!-- Info -->
@@ -549,7 +547,7 @@ import { RouterModule } from '@angular/router';
                             @if (imgUrl) {
                               <img [src]="imgUrl" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
                             } @else {
-                              <span style="font-size: 20px;">🃏</span>
+                              <span style="font-size: 10px; font-weight: 700; color: var(--mut);">CARTA</span>
                             }
                           </div>
                           <!-- Info -->
@@ -642,11 +640,11 @@ import { RouterModule } from '@angular/router';
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div class="profile-subcard" style="padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Victorias Perfectas</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">🏆 {{ profileData?.statistics?.perfectWins || 0 }}</div>
+                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ffce32; margin-top: 4px;">{{ profileData?.statistics?.perfectWins || 0 }}</div>
                 </div>
                 <div class="profile-subcard" style="padding: 12px; text-align: center;">
                   <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Cartas Jugadas</div>
-                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">🃏 {{ totalCardsPlayed }}</div>
+                  <div class="num" style="font-size: 18px; font-weight: 700; color: #ff7a3d; margin-top: 4px;">{{ totalCardsPlayed }}</div>
                 </div>
               </div>
             </div>
@@ -656,15 +654,15 @@ import { RouterModule } from '@angular/router';
               <div class="eyebrow" style="color: var(--accent2); margin-bottom: 16px;">Honores Recibidos</div>
               <div style="display: flex; flex-direction: column; gap: 12px;">
                 <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
-                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">🤝 Buen Deportista</span>
+                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">Buen Deportista</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #46e08a;">{{ profileData?.honors?.['GOOD_SPORTSMAN'] || 0 }}</span>
                 </div>
                 <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
-                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">😊 Amigable</span>
+                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">Amigable</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #ffce32;">{{ profileData?.honors?.['FRIENDLY'] || 0 }}</span>
                 </div>
                 <div class="profile-subcard" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;">
-                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">🧠 Gran Estratega</span>
+                  <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--txt);">Gran Estratega</span>
                   <span class="num" style="font-size: 16px; font-weight: 700; color: #4aa3ff;">{{ profileData?.honors?.['GREAT_STRATEGIST'] || 0 }}</span>
                 </div>
               </div>
@@ -2629,21 +2627,7 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   getEnergyIconEmoji(type: string): string {
-    if (!type) return '⚪';
-    switch (type.toUpperCase()) {
-      case 'FIRE': return '🔥';
-      case 'WATER': return '💧';
-      case 'GRASS': return '🌿';
-      case 'LIGHTNING': return '⚡';
-      case 'PSYCHIC': return '🔮';
-      case 'FIGHTING': return '👊';
-      case 'DARKNESS': return '🌙';
-      case 'METAL': return '🔩';
-      case 'FAIRY': return '🎀';
-      case 'DRAGON': return '🐉';
-      case 'COLORLESS': return '⚪';
-      default: return '⚪';
-    }
+    return '';
   }
 
   getEnergyLabel(type: string): string {
