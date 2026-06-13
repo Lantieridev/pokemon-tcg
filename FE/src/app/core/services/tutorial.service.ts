@@ -99,6 +99,21 @@ export class TutorialService {
         reversed: true,
         extraRight: true,
       },
+      {
+        pose: 1,
+        targetSelector: '#perfil-amigos',
+        text: '¡Este es el botón de tu panel de Amigos! Al hacer clic, se abrirá la barra lateral donde podrás ver quiénes están conectados en tiempo real para chatear.',
+      },
+      {
+        pose: 2,
+        targetSelector: '#perfil-amigos',
+        text: 'Cuando otros entrenadores te envíen una invitación, aparecerá una notificación aquí. Podrás abrirla y aceptarla para añadirlos inmediatamente a tu lista.',
+      },
+      {
+        pose: 3,
+        targetSelector: '#perfil-amigos',
+        text: 'Para buscar nuevos amigos, solo escribe el nombre de usuario de cualquier entrenador en el buscador y envíale una solicitud de amistad para jugar juntos.',
+      },
     ],
   };
 
