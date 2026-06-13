@@ -294,7 +294,7 @@ export class HelpAgentComponent {
   getPikachuImageUrl(): string {
     const step = this.currentStep();
     const pose = step?.pose || 1;
-    return `assets/pikachu_professor_pose${pose}.png`;
+    return `assets/pikachu_pose_${pose}.png`;
   }
 
   onOverlayClick() {
