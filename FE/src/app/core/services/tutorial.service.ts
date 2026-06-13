@@ -5,6 +5,7 @@ export interface TutorialStep {
   text: string;
   pose: 1 | 2 | 3;
   targetSelector: string | null;
+  reversed?: boolean;
 }
 
 @Injectable({
@@ -33,6 +34,7 @@ export class TutorialService {
         pose: 3,
         targetSelector: '#rango-info',
         text: 'Justo debajo del botón de batalla, se indica tu rango actual en la liga. Ganar duelos incrementará tu MMR, permitiéndote ascender en los rangos competitivos y consagrarte como un auténtico Maestro Pokémon.',
+        reversed: true,
       },
       {
         pose: 1,
@@ -50,6 +52,7 @@ export class TutorialService {
         pose: 3,
         targetSelector: '#cartas-disponibles',
         text: 'En la cuadrícula central se despliegan todas las cartas disponibles en tu colección. Cada carta detalla su tipo de energía, sus ataques y sus puntos de salud (HP) para ayudarte a planificar tu juego.',
+        reversed: true,
       },
       {
         pose: 2,
@@ -82,6 +85,7 @@ export class TutorialService {
         pose: 3,
         targetSelector: '#perfil-nivel',
         text: 'En el panel izquierdo se muestra tu nivel de entrenador y tu barra de experiencia (XP). Ganarás puntos de experiencia al jugar partidas y cumplir misiones. ¡Sigue progresando para obtener recompensas premium!',
+        reversed: true,
       },
       {
         pose: 1,
