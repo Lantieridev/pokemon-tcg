@@ -1,0 +1,37 @@
+<div class="store-container">
+  <div class="store-header">
+    <h1>Centro de Intercambio</h1>
+    <p>Adquiere nuevos avatares, títulos y objetos usando tus Pokécoins.</p>
+    <div class="balance-badge">
+      <span class="coin-icon">💰</span> {{ pokecoins() }} Pokécoins
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando catálogo...</p>
+    </div>
+  } @else {
+    <div class="catalog-grid">
+      @for (item of items(); track item.id) {
+        <div class="store-card group">
+          <div class="card-image-wrapper">
+            <img [src]="item.imageUrl || 'assets/placeholder.png'" [alt]="item.name" class="card-image" />
+            <div class="card-type-badge">{{ item.itemType }}</div>
+          </div>
+          <div class="card-content">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+            <div class="card-actions">
+              <span class="price"><span class="coin-icon">💰</span> {{ item.price }}</span>
+              <button class="buy-button" (click)="buyItem(item)" [disabled]="pokecoins() < item.price">
+                Comprar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
