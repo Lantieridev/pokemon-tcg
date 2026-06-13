@@ -47,24 +47,32 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       display: flex;
       align-items: flex-end;
       width: 100%;
-      max-width: 1060px;
-      gap: 36px;
+      max-width: 1166px;
+      gap: 40px;
       margin-bottom: 16px;
     }
 
+    .tutorial-container.layout-reversed {
+      flex-direction: row-reverse;
+    }
+
     .pikachu-wrapper {
-      flex: 0 0 200px;
-      height: 240px;
+      flex: 0 0 220px;
+      height: 264px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
       position: relative;
     }
 
+    .pikachu-wrapper.flipped {
+      transform: scaleX(-1);
+    }
+
     .pikachu-img {
       width: 100%;
       height: auto;
-      max-height: 240px;
+      max-height: 264px;
       object-fit: contain;
       filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6));
       animation: pikachuFloat 4s ease-in-out infinite;
@@ -80,14 +88,14 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       flex: 1;
       background: rgba(15, 12, 30, 0.76);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 24px;
+      border-radius: 26px;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      padding: 24px 30px;
+      padding: 26px 33px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 13px;
       position: relative;
       animation: bubbleSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -112,6 +120,15 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       -webkit-backdrop-filter: blur(20px);
     }
 
+    .speech-bubble.bubble-reversed::before {
+      left: auto;
+      right: -10px;
+      border-left: none;
+      border-bottom: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
     .bubble-header {
       display: flex;
       align-items: center;
@@ -121,7 +138,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
     .bubble-title {
       font-family: var(--display, 'Space Grotesk'), sans-serif;
       font-weight: 800;
-      font-size: 13.5px;
+      font-size: 15px;
       color: var(--accent2, #fbbf24);
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -130,7 +147,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
 
     .bubble-counter {
       font-family: 'Space Mono', monospace;
-      font-size: 11px;
+      font-size: 12px;
       color: var(--mut, #7a8090);
       font-weight: 700;
       background: rgba(255, 255, 255, 0.05);
@@ -140,7 +157,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
     }
 
     .bubble-text {
-      font-size: 14.5px;
+      font-size: 16px;
       line-height: 1.6;
       color: var(--txt, #e8eaf6);
       margin: 0;
@@ -159,7 +176,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       align-items: center;
       gap: 8px;
       font-family: var(--display, 'Space Grotesk'), sans-serif;
-      font-size: 10.5px;
+      font-size: 11.5px;
       color: var(--accent2, #fbbf24);
       font-weight: 800;
       letter-spacing: 0.08em;
@@ -200,10 +217,10 @@ import { TutorialService } from '../../../core/services/tutorial.service';
         }
 
         <!-- Character & Speech Bubble container -->
-        <div class="tutorial-container" (click)="$event.stopPropagation()">
+        <div class="tutorial-container" [class.layout-reversed]="currentStepIndex() === 1" (click)="$event.stopPropagation()">
           
           <!-- Pikachu pose display -->
-          <div class="pikachu-wrapper">
+          <div class="pikachu-wrapper" [class.flipped]="currentStepIndex() === 1">
             <img 
               [src]="getPikachuImageUrl()" 
               [alt]="'Profesor Pikachu Pose ' + currentStep()?.pose" 
@@ -212,7 +229,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
           </div>
 
           <!-- Dialog bubble -->
-          <div class="speech-bubble">
+          <div class="speech-bubble" [class.bubble-reversed]="currentStepIndex() === 1">
             <div class="bubble-header">
               <span class="bubble-title">⚡ Profesor Pikachu</span>
               <span class="bubble-counter">{{ currentStepIndex() + 1 }} / {{ totalSteps() }}</span>
