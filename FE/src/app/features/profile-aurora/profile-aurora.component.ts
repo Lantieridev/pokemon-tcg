@@ -957,21 +957,21 @@ import { RouterModule } from '@angular/router';
           </div>
 
           <!-- Cards Grid -->
-          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
+          <div style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px;">
             @if (filteredShowcaseCards.length === 0) {
-              <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--mut); text-align: center;">
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--mut); text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
                 <div style="font-weight: bold; margin-bottom: 6px;">No se encontraron cartas</div>
                 <div>Intenta buscar con otro nombre.</div>
               </div>
             } @else {
-              <div class="card-select-grid scroll" style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px;">
+              <div class="card-select-grid">
                 @for (card of filteredShowcaseCards; track card.id) {
                   <div class="card-select-item"
                        (click)="selectCardForShowcase(card.id)"
                        draggable="true"
                        (dragstart)="handleDragStart($event, card.id)">
-                    <img [src]="card.images.small || card.images.large" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
+                    <img [src]="card.images.small || card.images.large" [alt]="card.name" />
                   </div>
                 }
               </div>
@@ -1967,21 +1967,30 @@ import { RouterModule } from '@angular/router';
       
       .card-select-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(5, 1fr);
         gap: 14px;
-        padding: 4px 2px 10px;
-        align-content: start;
+        padding: 4px 2px 14px;
+        width: 100%;
       }
       .card-select-item {
         cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        aspect-ratio: 5/7;
-        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 168px;
         border-radius: 10px;
         overflow: hidden;
         border: 1px solid rgba(255,255,255,0.08);
         box-shadow: 0 4px 10px rgba(0,0,0,0.45);
         background: rgba(0,0,0,0.25);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .card-select-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+        display: block;
       }
       .card-select-item:hover {
         transform: translateY(-5px) scale(1.04);
