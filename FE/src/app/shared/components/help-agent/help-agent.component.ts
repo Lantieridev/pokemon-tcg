@@ -21,9 +21,6 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       padding: 48px;
     }
 
-    .tutorial-overlay.overlay-reversed {
-      align-items: flex-end;
-    }
 
     .tutorial-mask-dark {
       position: absolute;
@@ -58,6 +55,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
 
     .tutorial-container.layout-reversed {
       flex-direction: row-reverse;
+      transform: translateX(80px);
     }
 
     .pikachu-wrapper {
@@ -211,7 +209,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
   `],
   template: `
     @if (tutorialService.activeTutorial()) {
-      <div class="tutorial-overlay" [class.overlay-reversed]="currentStepIndex() === 2" (click)="onOverlayClick()">
+      <div class="tutorial-overlay" (click)="onOverlayClick()">
         
         <!-- Mask / Spotlight Backdrop -->
         @if (spotlightStyle()) {
