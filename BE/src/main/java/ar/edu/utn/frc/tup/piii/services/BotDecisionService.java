@@ -57,14 +57,26 @@ public class BotDecisionService {
             return; // Game over
         }
 
-        int botIndex = session.indexOf("Bot-001");
+        int botIndex = -1;
+        for (int i = 0; i < session.getPlayerIds().size(); i++) {
+            if (session.getPlayerIds().get(i).startsWith("Bot-")) {
+                botIndex = i;
+                break;
+            }
+        }
+
+        if (botIndex == -1) {
+            return; // No bot in this session
+        }
+
+        String botId = session.getPlayerIds().get(botIndex);
 
         // 1. Mandatory Promotion (XY1 Rulebook §2)
         if (session.isAwaitingPromotion()) {
             if (session.getPromotingPlayerIndex() == botIndex) {
                 ActionRequestDTO promotion = tryPromoteActive(session, botIndex).orElse(null);
                 if (promotion != null) {
-                    sendAction(matchId, promotion);
+                    sendAction(matchId, botId, promotion);
                 }
             }
             return; // Wait until promotion is resolved
@@ -76,7 +88,7 @@ public class BotDecisionService {
                 ActionRequestDTO selection = trySelectCards(session, botIndex).orElse(
                     new ActionRequestDTO(ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList())
                 );
-                sendAction(matchId, selection);
+                sendAction(matchId, botId, selection);
             }
             return; // Wait until selection is resolved
         }
@@ -94,9 +106,9 @@ public class BotDecisionService {
                 .or(() -> tryAttack(session, botIndex));
 
         if (nextAction.isPresent()) {
-            sendAction(matchId, nextAction.get());
+            sendAction(matchId, botId, nextAction.get());
         } else {
-            sendAction(matchId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
+            sendAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
         }
     }
 
@@ -281,14 +293,14 @@ public class BotDecisionService {
         return Optional.empty();
     }
 
-    private void sendAction(String matchId, ActionRequestDTO action) {
+    private void sendAction(String matchId, String botId, ActionRequestDTO action) {
         try {
-            matchService.processAction(matchId, "Bot-001", action);
+            matchService.processAction(matchId, botId, action);
         } catch (Exception e) {
             System.err.println("[Bot] Failed action " + action.type() + ": " + e.getMessage());
             if (action.type() != ActionType.END_TURN) {
                 try {
-                    matchService.processAction(matchId, "Bot-001", new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
+                    matchService.processAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
                 } catch (Exception ignored) {}
             }
         }
