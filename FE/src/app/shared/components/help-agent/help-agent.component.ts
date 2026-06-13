@@ -51,14 +51,13 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       display: flex;
       align-items: flex-end;
       width: 100%;
-      max-width: 1166px;
+      max-width: 960px;
       gap: 40px;
       margin-bottom: 16px;
     }
 
     .tutorial-container.layout-reversed {
       flex-direction: row-reverse;
-      max-width: 840px;
     }
 
     .pikachu-wrapper {
