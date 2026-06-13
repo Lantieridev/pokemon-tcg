@@ -150,12 +150,13 @@ public class ProfileServiceTest {
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
-        // Gana partida (+50 XP) -> Total 130 XP -> Nivel 2 y queda con 30 XP
+        // Gana partida (+50 XP, +50 Pokecoins) -> Total 130 XP -> Nivel 2 y queda con 30 XP
         profileService.awardXpAndCheckAchievements(1L, true, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(2, user.getLevel());
         assertEquals(30, user.getXp());
+        assertEquals(50, user.getPokecoins());
     }
 
     @Test
@@ -172,12 +173,13 @@ public class ProfileServiceTest {
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
-        // Pierde partida (+25 XP) -> Total 35 XP -> Sigue nivel 1
+        // Pierde partida (+25 XP, +10 Pokecoins) -> Total 35 XP -> Sigue nivel 1
         profileService.awardXpAndCheckAchievements(1L, false, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(1, user.getLevel());
         assertEquals(35, user.getXp());
+        assertEquals(10, user.getPokecoins());
     }
 
     @Test
