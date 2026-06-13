@@ -984,6 +984,24 @@ import { RouterModule } from '@angular/router';
     }
 
     <style>
+      .eyebrow {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent2);
+        display: block;
+      }
+      .eyebrow::before {
+        content: '◈ ';
+        color: var(--accent);
+        font-size: 11px;
+        text-shadow: 0 0 6px rgba(255, 46, 62, 0.5);
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+
       .profile-card {
         background: linear-gradient(135deg, rgba(19, 35, 66, 0.72) 0%, rgba(10, 23, 48, 0.88) 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
