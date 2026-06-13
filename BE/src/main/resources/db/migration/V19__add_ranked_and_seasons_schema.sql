@@ -9,7 +9,7 @@ CREATE INDEX idx_users_mmr ON users(mmr DESC);
 
 -- Create seasons table
 CREATE TABLE seasons (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     end_date TIMESTAMP,
@@ -18,7 +18,7 @@ CREATE TABLE seasons (
 
 -- Create season_records table to store historical MMR after soft-resets
 CREATE TABLE season_records (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     season_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     final_mmr INT NOT NULL,

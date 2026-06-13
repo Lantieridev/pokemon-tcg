@@ -56,6 +56,8 @@ class MatchServiceTest {
     private PenaltyService penaltyService;
     private ProfileService profileService;
     private UserRepository userRepository;
+    private BotDecisionService botDecisionService;
+    private MmrCalculationService mmrCalculationService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -76,6 +78,8 @@ class MatchServiceTest {
         penaltyService = mock(PenaltyService.class);
         profileService = mock(ProfileService.class);
         userRepository = mock(UserRepository.class);
+        botDecisionService = mock(BotDecisionService.class);
+        mmrCalculationService = mock(MmrCalculationService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -119,7 +123,7 @@ class MatchServiceTest {
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, null, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, TIMEOUT_SECONDS);
     }
 
     @Test

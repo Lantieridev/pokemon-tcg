@@ -93,7 +93,8 @@ public final class MatchCreationService {
     public String createMatch(final String playerAId,
                                final String playerBId,
                                final List<Card> deckACards,
-                               final List<Card> deckBCards) {
+                               final List<Card> deckBCards,
+                               final boolean isRanked) {
         Objects.requireNonNull(playerAId, "playerAId must not be null");
         Objects.requireNonNull(playerBId, "playerBId must not be null");
         Objects.requireNonNull(deckACards, "deckACards must not be null");
@@ -170,7 +171,7 @@ public final class MatchCreationService {
 
         // --- Create MatchSession (needed for VictoryHandler broadcast) ---
         final MatchSession session = new MatchSession(
-                matchId, List.of(playerAId, playerBId), board, runtimes);
+                matchId, List.of(playerAId, playerBId), board, runtimes, isRanked);
         session.setCoinFlipper(coinFlipper);
 
         // --- Wire TurnManager and all PhaseListeners ---
