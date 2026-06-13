@@ -50,6 +50,12 @@ public class AuthControllerTest {
     @Autowired
     private ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository userCardStatRepository;
 
+    @Autowired
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository userEnergyStatRepository;
+
+    @Autowired
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserUnlockedTitlesRepository userUnlockedTitlesRepository;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
@@ -58,6 +64,8 @@ public class AuthControllerTest {
         matchLogRepository.deleteAll();
         matchRepository.deleteAll();
         userCardStatRepository.deleteAll();
+        userEnergyStatRepository.deleteAll();
+        userUnlockedTitlesRepository.deleteAll();
         userRepository.deleteAll();
     }
 

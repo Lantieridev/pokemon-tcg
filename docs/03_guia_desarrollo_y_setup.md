@@ -8,6 +8,12 @@ Este documento contiene las instrucciones fundamentales para compilar, probar y 
 - **Base de datos:** PostgreSQL (usado en producción) o H2 (usado por defecto en perfiles de test).
 - **Herramientas de Build:** Maven (Backend) y Angular CLI (Frontend). El repo ya incluye el wrapper de Maven (`mvnw`).
 
+> [!CAUTION]
+> **REGLA ESTRICTA DE GIT:** Todos los commits en este repositorio DEBEN realizarse bajo la cuenta de la facultad. Antes de hacer tu primer commit, ejecuta localmente en la carpeta del proyecto:
+> `git config user.name "Lantieri-Martin"`
+> `git config user.email "421312@tecnicatura.frc.utn.edu.ar"`
+> (Reemplazar con los datos del integrante del equipo correspondiente). Nunca utilices correos personales (`@gmail.com`) porque anula la validez académica del commit.
+
 ## 2. Compilar y Ejecutar el Backend
 
 El backend es una aplicación Spring Boot.
