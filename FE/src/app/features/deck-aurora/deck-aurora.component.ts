@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
 import { LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, EnergyTypeComponent } from '../lobby-aurora/ui/aurora-ui.components';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
+import { TutorialService } from '../../core/services/tutorial.service';
 
 interface Filters {
   search: string;
@@ -41,21 +42,24 @@ interface Filters {
         <!-- Left: Collection & Filters -->
         <div style="flex: 1; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(10px); overflow: hidden;">
           <!-- Filters Header -->
-          <div style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center;">
+          <div id="filtros-busqueda" style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center;">
             <div style="position: relative; flex: 1; max-width: 300px;">
               <input type="text" [ngModel]="filters().search" (ngModelChange)="setFilter('search', $event)" placeholder="Buscar carta..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 10px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
             </div>
             
-            <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
+            <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line); align-items: center;">
               <button [class.active-tab]="filters().supertype === 'all'" (click)="setSupertype('all')" class="tab-btn">Todos</button>
               <button [class.active-tab]="filters().supertype === 'Pokémon'" (click)="setSupertype('Pokémon')" class="tab-btn">Pokémon</button>
               <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
               <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
+              <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
+                <aurora-icon n="help" [s]="13"></aurora-icon>
+              </button>
             </div>
           </div>
 
           <!-- Cards Grid -->
-          <div class="scroll" style="flex: 1; overflow-y: auto; padding: 24px;">
+          <div id="cartas-disponibles" class="scroll" style="flex: 1; overflow-y: auto; padding: 24px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px;">
               @for (card of filteredCards(); track card.id) {
                 <div class="card-item" [class.disabled]="!canAdd(card)" draggable="true" (dragstart)="handleDragStart($event, card)" (click)="addCard(card)">
@@ -92,7 +96,7 @@ interface Filters {
           </div>
 
           <!-- Deck Cards List -->
-          <div class="scroll" style="flex: 1; overflow-y: auto; padding: 20px;">
+          <div id="cartas-mazo" class="scroll" style="flex: 1; overflow-y: auto; padding: 20px;">
             <div style="display: flex; flex-direction: column; gap: 10px;">
               @for (group of deckGrouped(); track group.card.id) {
                 <div class="deck-row" (click)="removeCard(group.card.id)" (contextmenu)="$event.preventDefault(); removeAll(group.card.id)">
@@ -117,7 +121,7 @@ interface Filters {
             @if (saveSuccess()) {
               <div style="color: #46e08a; font-size: 12px; margin-bottom: 10px; text-align: center; font-weight: 600;">¡Mazo guardado con éxito!</div>
             }
-            <button class="cta" style="width: 100%; height: 64px; justify-content: center; gap: 12px;" [disabled]="!isValid() || saveLoading()" (click)="saveDeck()" [style.opacity]="!isValid() ? '0.5' : '1'">
+            <button id="boton-guardar" class="cta" style="width: 100%; height: 64px; justify-content: center; gap: 12px;" [disabled]="!isValid() || saveLoading()" (click)="saveDeck()" [style.opacity]="!isValid() ? '0.5' : '1'">
               @if (saveLoading()) {
                 <div class="pokespin" style="width: 20px; height: 20px;"></div>
                 <span>Guardando...</span>
@@ -147,12 +151,35 @@ interface Filters {
       
       .deck-row { display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 8px; padding: 4px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
       .deck-row:hover { background: rgba(255,46,62,0.1); border-color: rgba(255,46,62,0.3); }
+
+      .help-trigger-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent2, #fbbf24);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+        margin-left: 8px;
+        flex-shrink: 0;
+      }
+      .help-trigger-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--accent2, #fbbf24);
+        box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+      }
     </style>
   `
 })
 export class DeckAuroraComponent implements OnInit {
   readonly tcgService = inject(PokemonTcgService);
   readonly deckStore = inject(DeckStore);
+  private tutorialService = inject(TutorialService);
   private deckApi = inject(DeckApiService);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
@@ -204,6 +231,7 @@ export class DeckAuroraComponent implements OnInit {
 
   ngOnInit(): void {
     this.tcgService.loadCards();
+    this.tutorialService.triggerTutorial('deck');
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
         next: (data) => {
@@ -295,5 +323,9 @@ export class DeckAuroraComponent implements OnInit {
 
   getCardImage(card: PokemonTcgCard): string {
     return card.images?.small ?? card.images?.large ?? '';
+  }
+
+  triggerHelp(): void {
+    this.tutorialService.triggerTutorial('deck', true);
   }
 }
