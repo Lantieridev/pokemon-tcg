@@ -8,6 +8,7 @@ import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
 import { RouterModule } from '@angular/router';
+import { TutorialService } from '../../core/services/tutorial.service';
 
 @Component({
   selector: 'app-profile-aurora',
@@ -66,11 +67,14 @@ import { RouterModule } from '@angular/router';
             </div>
 
             <div class="prf-identity-info">
-              <div class="prf-identity-row">
-                <h1 class="display prf-username name-energy">{{ username }}</h1>
+              <div class="prf-identity-row" style="display: flex; align-items: center; gap: 10px;">
+                <h1 class="display prf-username name-energy" style="margin: 0;">{{ username }}</h1>
                 @if (profileData?.activeTitle) {
                   <span class="prf-title-badge">{{ profileData?.activeTitle }}</span>
                 }
+                <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
+                  <aurora-icon n="help" [s]="13"></aurora-icon>
+                </button>
               </div>
 
               <div class="prf-medals-row">
@@ -88,7 +92,7 @@ import { RouterModule } from '@angular/router';
           </div>
 
           <!-- Right: Stats Cluster -->
-          <div class="prf-stats-cluster">
+          <div id="perfil-stats" class="prf-stats-cluster">
             <div class="prf-stat-chip prf-stat-wins">
               <span class="prf-stat-value">{{ totalWins }}</span>
               <span class="prf-stat-label">Victorias</span>
@@ -113,7 +117,7 @@ import { RouterModule } from '@angular/router';
           <div class="prf-col-main">
 
             <!-- Tab Nav -->
-            <div class="prf-tabs-nav">
+            <div id="perfil-tabs" class="prf-tabs-nav">
               <button class="prf-tab" [class.active]="activeTab === 'showcase'" (click)="activeTab = 'showcase'">
                 <span class="prf-tab-icon">✦</span> Vitrina y Mazo
               </button>
@@ -133,7 +137,7 @@ import { RouterModule } from '@angular/router';
               <div class="prf-tab-body" style="display: flex; flex-direction: column; gap: 30px;">
 
                 <!-- Card Showcase Slots -->
-                <div class="prf-panel">
+                <div id="perfil-vitrinas" class="prf-panel">
                   <div class="prf-panel-header">
                     <div class="eyebrow">Vitrina de Cartas Destacadas</div>
                     <span class="prf-panel-hint">Clic o arrastra para colocar cartas</span>
@@ -570,7 +574,7 @@ import { RouterModule } from '@angular/router';
           <div class="prf-col-side">
 
             <!-- Level Card -->
-            <div class="prf-panel prf-level-card" style="margin-bottom: 24px;">
+            <div id="perfil-nivel" class="prf-panel prf-level-card" style="margin-bottom: 24px;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                 <div>
                   <div class="eyebrow" style="color: var(--accent); margin-bottom: 4px;">Entrenador</div>
@@ -941,6 +945,28 @@ import { RouterModule } from '@angular/router';
       /* ═══════════════════════════════════════════════════
          PROFILE AURORA — PREMIUM REDESIGN CSS
       ═══════════════════════════════════════════════════ */
+
+      .help-trigger-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent2, #fbbf24);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+        margin-left: 10px;
+        flex-shrink: 0;
+      }
+      .help-trigger-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--accent2, #fbbf24);
+        box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+      }
 
       /* ── Root container ── */
       .prf-root {
@@ -2719,6 +2745,7 @@ export class ProfileAuroraComponent implements OnInit {
   private deckApi = inject(DeckApiService);
   private tcgService = inject(PokemonTcgService);
   private cdr = inject(ChangeDetectorRef);
+  private tutorialService = inject(TutorialService);
 
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
@@ -2850,6 +2877,7 @@ export class ProfileAuroraComponent implements OnInit {
   ngOnInit(): void {
     this.tcgService.loadCards();
     this.loadProfile();
+    this.tutorialService.triggerTutorial('profile');
   }
 
   loadProfile(): void {
@@ -3313,4 +3341,8 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   Math = Math;
+
+  triggerHelp(): void {
+    this.tutorialService.triggerTutorial('profile', true);
+  }
 }

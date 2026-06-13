@@ -51,11 +51,12 @@ import { TutorialService } from '../../../core/services/tutorial.service';
       max-width: 960px;
       gap: 40px;
       margin-bottom: 16px;
+      transform: translateX(-80px);
     }
 
     .tutorial-container.layout-reversed {
       flex-direction: row-reverse;
-      transform: translateX(80px);
+      transform: translateX(100px);
     }
 
     .pikachu-wrapper {
@@ -219,10 +220,10 @@ import { TutorialService } from '../../../core/services/tutorial.service';
         }
 
         <!-- Character & Speech Bubble container -->
-        <div class="tutorial-container" [class.layout-reversed]="currentStepIndex() === 2" (click)="$event.stopPropagation()">
+        <div class="tutorial-container" [class.layout-reversed]="currentStep()?.reversed" (click)="$event.stopPropagation()">
           
           <!-- Pikachu pose display -->
-          <div class="pikachu-wrapper" [class.flipped]="currentStepIndex() === 2">
+          <div class="pikachu-wrapper" [class.flipped]="currentStep()?.reversed">
             <img 
               [src]="getPikachuImageUrl()" 
               [alt]="'Profesor Pikachu Pose ' + currentStep()?.pose" 
@@ -231,7 +232,7 @@ import { TutorialService } from '../../../core/services/tutorial.service';
           </div>
 
           <!-- Dialog bubble -->
-          <div class="speech-bubble" [class.bubble-reversed]="currentStepIndex() === 2">
+          <div class="speech-bubble" [class.bubble-reversed]="currentStep()?.reversed">
             <div class="bubble-header">
               <span class="bubble-title">⚡ Profesor Pikachu</span>
               <span class="bubble-counter">{{ currentStepIndex() + 1 }} / {{ totalSteps() }}</span>
