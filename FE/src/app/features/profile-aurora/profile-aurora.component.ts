@@ -957,7 +957,7 @@ import { RouterModule } from '@angular/router';
           </div>
 
           <!-- Cards Grid -->
-          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+          <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
             @if (filteredShowcaseCards.length === 0) {
               <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--mut); text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">🃏</div>
@@ -965,11 +965,11 @@ import { RouterModule } from '@angular/router';
                 <div>Intenta buscar con otro nombre.</div>
               </div>
             } @else {
-              <div class="card-select-grid scroll" style="flex: 1; overflow-y: auto;">
+              <div class="card-select-grid scroll" style="flex: 1; min-height: 0; overflow-y: auto; padding-right: 6px;">
                 @for (card of filteredShowcaseCards; track card.id) {
-                  <div class="card-select-item" 
+                  <div class="card-select-item"
                        (click)="selectCardForShowcase(card.id)"
-                       draggable="true" 
+                       draggable="true"
                        (dragstart)="handleDragStart($event, card.id)">
                     <img [src]="card.images.small || card.images.large" [alt]="card.name" style="width: 100%; height: 100%; object-fit: contain; pointer-events: none;" />
                   </div>
@@ -1191,10 +1191,11 @@ import { RouterModule } from '@angular/router';
         animation: scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       }
       .modal-card-lg {
-        max-width: 760px;
+        max-width: 800px;
         max-height: 85vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
       }
  
       /* ═══ EDIT PROFILE MODAL ═══ */
@@ -1966,23 +1967,26 @@ import { RouterModule } from '@angular/router';
       
       .card-select-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 16px;
-        overflow-y: auto;
-        padding-right: 8px;
-        margin-top: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 14px;
+        padding: 4px 2px 10px;
+        align-content: start;
       }
       .card-select-item {
         cursor: pointer;
-        transition: transform 0.2s;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         aspect-ratio: 5/7;
         position: relative;
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+        background: rgba(0,0,0,0.25);
       }
       .card-select-item:hover {
-        transform: translateY(-4px) scale(1.04);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+        transform: translateY(-5px) scale(1.04);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.7);
+        border-color: var(--accent2);
       }
       
       /* Medallero Styles */
