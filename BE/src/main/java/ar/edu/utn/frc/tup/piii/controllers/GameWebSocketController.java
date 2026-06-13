@@ -8,7 +8,10 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
 import java.util.Objects;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 /**
  * STOMP WebSocket controller for in-match player actions.
@@ -18,14 +21,17 @@ import java.util.Objects;
 public final class GameWebSocketController {
 
     private final MatchService matchService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * Constructs the controller with the required service collaborator.
      *
      * @param matchService handles action routing and state management (never null)
+     * @param messagingTemplate handles sending messages to clients
      */
-    public GameWebSocketController(final MatchService matchService) {
+    public GameWebSocketController(final MatchService matchService, final SimpMessagingTemplate messagingTemplate) {
         this.matchService = Objects.requireNonNull(matchService, "matchService must not be null");
+        this.messagingTemplate = Objects.requireNonNull(messagingTemplate, "messagingTemplate must not be null");
     }
 
     /**
@@ -47,5 +53,19 @@ public final class GameWebSocketController {
             throw new IllegalArgumentException("Player ID must match the authenticated user");
         }
         matchService.processAction(matchId, playerId, action);
+    }
+
+    /**
+     * Handles exceptions thrown during message processing and sends an error message
+     * back to the specific player's error topic.
+     */
+    @org.springframework.messaging.handler.annotation.MessageExceptionHandler(Exception.class)
+    public void handleException(Exception ex,
+                                @Header("playerId") String playerId,
+                                @DestinationVariable("matchId") String matchId) {
+        if (playerId != null && matchId != null) {
+            String topic = String.format("/topic/match/%s/player/%s/errors", matchId, playerId);
+            messagingTemplate.convertAndSend(topic, (Object) Map.of("error", ex.getMessage()));
+        }
     }
 }

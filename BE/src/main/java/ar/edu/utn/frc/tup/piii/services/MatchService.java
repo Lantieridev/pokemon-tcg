@@ -146,6 +146,8 @@ public class MatchService {
             } else {
                 if (playerIndex == session.getTurnManager().activePlayerIndex()) {
                     isAuthorized = true;
+                } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
+                    isAuthorized = true;
                 }
             }
 
