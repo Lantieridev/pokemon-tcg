@@ -53,6 +53,10 @@ public final class MatchSession {
     private final boolean isRanked;
     private Integer mmrChangeA;
     private Integer mmrChangeB;
+    private Integer coinsGainedA;
+    private Integer coinsGainedB;
+    private Integer xpGainedA;
+    private Integer xpGainedB;
 
     /**
      * Set when a player's Active Pokémon has been knocked out and they must promote
@@ -621,5 +625,37 @@ public final class MatchSession {
 
     public void setMmrChangeB(Integer mmrChangeB) {
         this.mmrChangeB = mmrChangeB;
+    }
+
+    public Integer getCoinsGainedA() {
+        return coinsGainedA;
+    }
+
+    public void setCoinsGainedA(Integer coinsGainedA) {
+        this.coinsGainedA = coinsGainedA;
+    }
+
+    public Integer getCoinsGainedB() {
+        return coinsGainedB;
+    }
+
+    public void setCoinsGainedB(Integer coinsGainedB) {
+        this.coinsGainedB = coinsGainedB;
+    }
+
+    public Integer getXpGainedA() {
+        return xpGainedA;
+    }
+
+    public void setXpGainedA(Integer xpGainedA) {
+        this.xpGainedA = xpGainedA;
+    }
+
+    public Integer getXpGainedB() {
+        return xpGainedB;
+    }
+
+    public void setXpGainedB(Integer xpGainedB) {
+        this.xpGainedB = xpGainedB;
     }
 }
