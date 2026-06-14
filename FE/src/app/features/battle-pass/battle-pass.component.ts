@@ -97,10 +97,10 @@ export class BattlePassComponent implements OnInit {
   getRewardImage(type: string, value: string): string {
     if (!type) return '';
     switch (type.toUpperCase()) {
-      case 'COINS': return 'assets/store/coins_stack.png';
+      case 'COINS': return 'assets/achievements/medals/medal_coins_1k.png';
       case 'PACK': return 'assets/store/pack_base.png';
-      case 'TITLE': return 'assets/achievements/avatars/avatar_winner_badge.png';
-      case 'AVATAR': return `assets/store/avatar_${value || 'ash'}.png`; // Simplified for demo
+      case 'TITLE': return 'assets/achievements/medals/medal_legend.png';
+      case 'AVATAR': return `assets/store/avatar_${value || 'ash'}.png`;
       default: return '';
     }
   }
