@@ -6,6 +6,15 @@ import {
   TurnPhase,
 } from '../models/game-state.models';
 
+export type GameStateDTO = GameStateResponseDTO;
+
+/** Evento de daño detectado por diff de estado */
+export interface DamageEvent {
+  target: string;   // 'my-active' | 'opp-active' | 'my-bench-0' … | 'opp-bench-0' …
+  amount: number;   // positivo = daño recibido, negativo = curación
+  timestamp: number;
+}
+
 /** Versión normalizada para la UI del BattleComponent */
 export interface UIPokemon {
   cardId: string;
@@ -44,6 +53,12 @@ export class MatchStore {
   private timerInterval: any;
   private readonly timeLeft = signal(60);
 
+  private updateQueue: GameStateResponseDTO[] = [];
+  private isProcessingQueue = false;
+  private queueTimeout: any = null;
+
+  // ── Damage events (detectados por diff de estado) ────────────────────────
+  readonly lastDamageEvents = signal<DamageEvent[]>([]);
 
   // ── Selectors básicos ────────────────────────────────────────────────────
 
@@ -146,11 +161,95 @@ export class MatchStore {
   // ── Mutaciones ────────────────────────────────────────────────────────────
 
   updateState(newState: GameStateResponseDTO): void {
+    this.updateQueue.push(newState);
+    if (!this.isProcessingQueue) {
+      this.processQueue();
+    }
+  }
+
+  private processQueue(): void {
+    if (this.updateQueue.length === 0) {
+      this.isProcessingQueue = false;
+      return;
+    }
+
+    this.isProcessingQueue = true;
+    const nextState = this.updateQueue[0];
+    const oldState = this.state();
+
+    const hasCoinFlips = !!(nextState.lastCoinFlips && nextState.lastCoinFlips.length > 0);
+    const coinFlipDuration = (nextState.lastCoinFlips && nextState.lastCoinFlips.length > 0)
+      ? (nextState.lastCoinFlips.length * 2050 + 1800)
+      : 0;
+
+    const events = this.computeDamageEvents(oldState, nextState);
+    const hasDamage = events.length > 0;
+
+    if (!hasCoinFlips && !hasDamage) {
+      // Sync update if no animations needed
+      this.applyFinalState(nextState);
+      this.updateQueue.shift();
+      this.queueTimeout = setTimeout(() => {
+        this.queueTimeout = null;
+        this.processQueue();
+      }, 0);
+      return;
+    }
+
+    if (hasCoinFlips) {
+      this.queueTimeout = setTimeout(() => {
+        this.queueTimeout = null;
+        this.applyGhostState(oldState, nextState, events, hasDamage, () => {
+          this.updateQueue.shift();
+          this.processQueue();
+        });
+      }, coinFlipDuration);
+    } else {
+      this.applyGhostState(oldState, nextState, events, hasDamage, () => {
+        this.updateQueue.shift();
+        this.processQueue();
+      });
+    }
+  }
+
+  private applyGhostState(
+    oldState: GameStateResponseDTO | null,
+    newState: GameStateResponseDTO,
+    events: DamageEvent[],
+    hasDamage: boolean,
+    onComplete: () => void
+  ): void {
+    if (hasDamage) {
+      this.lastDamageEvents.set(events);
+    } else {
+      this.lastDamageEvents.set([]);
+    }
+
+    const ghostState = this.createGhostState(oldState, newState);
+
+    if (newState.currentPhase === 'FINISHED' && oldState) {
+      ghostState.currentPhase = oldState.currentPhase;
+    }
+
+    this.state.set(ghostState);
+
+    const damageAnimDuration = hasDamage ? 2000 : 0;
+    this.queueTimeout = setTimeout(() => {
+      this.queueTimeout = null;
+      this.applyFinalState(newState);
+      onComplete();
+    }, damageAnimDuration);
+  }
+
+  private applyFinalState(newState: GameStateResponseDTO): void {
+    this.lastDamageEvents.set([]);
     const oldState = this.state();
     const turnChanged = !oldState || 
                         oldState.turnNumber !== newState.turnNumber || 
                         oldState.activePlayerIndex !== newState.activePlayerIndex;
+
     this.state.set(newState);
+
     if (turnChanged) {
       this.timeLeft.set(60);
       this.startTimer();
@@ -166,7 +265,132 @@ export class MatchStore {
 
   reset(): void {
     this.state.set(null);
+    this.lastDamageEvents.set([]);
     if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.queueTimeout) {
+      clearTimeout(this.queueTimeout);
+      this.queueTimeout = null;
+    }
+    this.updateQueue = [];
+    this.isProcessingQueue = false;
+  }
+
+  // ── Damage diff engine ────────────────────────────────────────────────────
+
+  private computeDamageEvents(
+    oldState: GameStateResponseDTO | null,
+    newState: GameStateResponseDTO
+  ): DamageEvent[] {
+    if (!oldState) return [];
+    const now = Date.now();
+    const events: DamageEvent[] = [];
+
+    const diffPokemon = (
+      oldPoke: BattlePokemonDTO | null | undefined,
+      newPoke: BattlePokemonDTO | null | undefined,
+      target: string
+    ) => {
+      if (!oldPoke) return;
+      const oldDmg = oldPoke.damageCounters * 10;
+
+      if (!newPoke) {
+        // Pokemon was removed / knocked out! Calculate remaining HP as lethal damage
+        const diff = oldPoke.maxHp - oldDmg;
+        if (diff > 0) {
+          events.push({ target, amount: diff, timestamp: now });
+        }
+        return;
+      }
+
+      if (oldPoke.cardId !== newPoke.cardId) return;
+      const newDmg = newPoke.damageCounters * 10;
+      const diff = newDmg - oldDmg;
+      if (diff !== 0) {
+        events.push({ target, amount: diff, timestamp: now });
+      }
+    };
+
+    // Self active
+    diffPokemon(oldState.self.active, newState.self.active, 'my-active');
+    // Self bench
+    const oldSelfBench = oldState.self.bench ?? [];
+    const newSelfBench = newState.self.bench ?? [];
+    for (let i = 0; i < Math.min(oldSelfBench.length, newSelfBench.length); i++) {
+      diffPokemon(oldSelfBench[i], newSelfBench[i], `my-bench-${i}`);
+    }
+
+    // Opponent active
+    diffPokemon(oldState.opponent.active, newState.opponent.active, 'opp-active');
+    // Opponent bench
+    const oldOppBench = oldState.opponent.bench ?? [];
+    const newOppBench = newState.opponent.bench ?? [];
+    for (let i = 0; i < Math.min(oldOppBench.length, newOppBench.length); i++) {
+      diffPokemon(oldOppBench[i], newOppBench[i], `opp-bench-${i}`);
+    }
+
+    return events;
+  }
+
+  private createGhostState(
+    oldState: GameStateResponseDTO | null,
+    newState: GameStateResponseDTO
+  ): GameStateResponseDTO {
+    if (!oldState) return newState;
+
+    const ghost = JSON.parse(JSON.stringify(newState)) as GameStateResponseDTO;
+
+    // Ghost active Pokemon
+    if (oldState.self.active) {
+      if (!newState.self.active || newState.self.active.cardId !== oldState.self.active.cardId) {
+        ghost.self.active = {
+          ...oldState.self.active,
+          damageCounters: oldState.self.active.maxHp / 10
+        };
+      }
+    }
+    if (oldState.opponent.active) {
+      if (!newState.opponent.active || newState.opponent.active.cardId !== oldState.opponent.active.cardId) {
+        ghost.opponent.active = {
+          ...oldState.opponent.active,
+          damageCounters: oldState.opponent.active.maxHp / 10
+        };
+      }
+    }
+
+    // Ghost bench Pokemon
+    ghost.self.bench = this.alignBench(oldState.self.bench ?? [], newState.self.bench ?? []);
+    ghost.opponent.bench = this.alignBench(oldState.opponent.bench ?? [], newState.opponent.bench ?? []);
+
+    return ghost;
+  }
+
+  private alignBench(
+    oldBench: BattlePokemonDTO[],
+    newBench: BattlePokemonDTO[]
+  ): BattlePokemonDTO[] {
+    const aligned: BattlePokemonDTO[] = [];
+    const usedNewIndices = new Set<number>();
+
+    for (const oldPoke of oldBench) {
+      const newIdx = newBench.findIndex((np, idx) => np.cardId === oldPoke.cardId && !usedNewIndices.has(idx));
+      if (newIdx !== -1) {
+        aligned.push(newBench[newIdx]);
+        usedNewIndices.add(newIdx);
+      } else {
+        aligned.push({
+          ...oldPoke,
+          damageCounters: oldPoke.maxHp / 10
+        });
+      }
+    }
+
+    for (let i = 0; i < newBench.length; i++) {
+      if (!usedNewIndices.has(i)) {
+        aligned.push(newBench[i]);
+      }
+    }
+
+    return aligned;
   }
 
   // ── Helpers privados ──────────────────────────────────────────────────────

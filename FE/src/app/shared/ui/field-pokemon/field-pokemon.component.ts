@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EnergyCascadeComponent } from '../energy-cascade/energy-cascade.component';
 import { DamageTokensComponent } from '../damage-tokens/damage-tokens.component';
@@ -15,12 +25,18 @@ import { CARDS } from '../../data/cards.mock';
       [style.width.px]="width"
       [style.height.px]="width * 1.4"
       [style.cursor]="'pointer'"
+      [class.hit-shake]="isShaking"
     >
       @if (glow && card) {
         <div class="glow" [ngClass]="card.type"></div>
       }
 
       @if (card) {
+        <!-- White flash overlay on hit -->
+        @if (isFlashing) {
+          <div class="hit-flash"></div>
+        }
+
         <img
           [src]="card.img"
           [alt]="card.name"
@@ -40,7 +56,17 @@ import { CARDS } from '../../data/cards.mock';
         >🔧</div>
       }
 
-      <!-- HP HUD overlay -->
+      <!-- Floating Damage Number -->
+      @if (showDamageNumber) {
+        <div
+          class="damage-float"
+          [class.damage-heal]="lastDamageAmount < 0"
+        >
+          {{ lastDamageAmount > 0 ? '-' : '+' }}{{ Math.abs(lastDamageAmount) }}
+        </div>
+      }
+
+      <!-- HP HUD overlay with animated bar -->
       @if (maxHp > 0 && card) {
         <div
           style="
@@ -62,7 +88,7 @@ import { CARDS } from '../../data/cards.mock';
             gap: 2px;
           "
         >
-          <span>{{ currentHp }}/{{ maxHp }}</span>
+          <span>{{ displayedHp }}/{{ maxHp }}</span>
           <div
             style="
               width: 36px;
@@ -73,9 +99,9 @@ import { CARDS } from '../../data/cards.mock';
             "
           >
             <div
-              [style.width.%]="hpPercent"
-              [style.background]="hpBarColor"
-              style="height: 100%; border-radius: 2px; transition: width .3s ease, background .3s ease;"
+              [style.width.%]="displayedHpPercent"
+              [style.background]="displayedHpBarColor"
+              style="height: 100%; border-radius: 2px; transition: none;"
             ></div>
           </div>
         </div>
@@ -107,11 +133,92 @@ import { CARDS } from '../../data/cards.mock';
     .tool-badge:hover {
       transform: scale(1.25);
     }
+
+    /* ── Hit Shake Animation ─────────────────────────────────── */
+    .hit-shake {
+      animation: hitShake 0.4s ease-out;
+    }
+    @keyframes hitShake {
+      0%   { transform: translateX(0); }
+      15%  { transform: translateX(-8px); }
+      30%  { transform: translateX(7px); }
+      45%  { transform: translateX(-5px); }
+      60%  { transform: translateX(4px); }
+      75%  { transform: translateX(-2px); }
+      90%  { transform: translateX(1px); }
+      100% { transform: translateX(0); }
+    }
+
+    /* ── White Flash Overlay ──────────────────────────────────── */
+    .hit-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.75);
+      animation: flashPulse 0.3s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes flashPulse {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.4; }
+      100% { opacity: 0; }
+    }
+
+    /* ── Floating Damage Number ───────────────────────────────── */
+    .damage-float {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+      font-family: 'Russo One', 'Impact', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      color: #ff3b3b;
+      text-shadow:
+        0 0 8px rgba(255, 30, 30, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(255, 30, 30, 0.4);
+      animation: damageFloat 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      pointer-events: none;
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
+    .damage-float.damage-heal {
+      color: #5ad27a;
+      text-shadow:
+        0 0 8px rgba(90, 210, 122, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(90, 210, 122, 0.4);
+    }
+    @keyframes damageFloat {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+      }
+      12% {
+        opacity: 1;
+        transform: translate(-50%, -60%) scale(1.3);
+      }
+      25% {
+        transform: translate(-50%, -65%) scale(1);
+      }
+      70% {
+        opacity: 1;
+        transform: translate(-50%, -120%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -160%) scale(0.8);
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FieldPokemonComponent {
+export class FieldPokemonComponent implements OnChanges {
   private tcgService = inject(PokemonTcgService);
+  private cdr = inject(ChangeDetectorRef);
 
   @Input({ required: true }) cardId!: string;
   @Input() energies: string[] = [];
@@ -122,14 +229,151 @@ export class FieldPokemonComponent {
   @Input() direction: 'up' | 'down' = 'down';
   @Input() maxHp: number = 0;
   @Input() attachedToolCardId: string | null = null;
+  @Input() damageEvent: number | null = null;  // Damage amount from DamageEvent
 
   @Output() toolClick = new EventEmitter<string>();
+
+  // ── Animated HP state ─────────────────────────────────────────────────────
+  displayedHp: number = 0;
+  displayedHpPercent: number = 100;
+  displayedHpBarColor: string = '#5ad27a';
+
+  // ── Visual feedback state ──────────────────────────────────────────────────
+  isShaking: boolean = false;
+  isFlashing: boolean = false;
+  showDamageNumber: boolean = false;
+  lastDamageAmount: number = 0;
+
+  Math = Math;
+
+  private hpAnimFrame: number | null = null;
+  private shakeTimer: any = null;
+  private flashTimer: any = null;
+  private damageNumberTimer: any = null;
+  private initialized = false;
 
   onToolClick(event: MouseEvent): void {
     event.stopPropagation();
     if (this.attachedToolCardId) {
       this.toolClick.emit(this.attachedToolCardId);
     }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Initialize displayed HP on first load
+    if (!this.initialized && this.maxHp > 0) {
+      this.displayedHp = this.currentHp;
+      this.displayedHpPercent = this.hpPercent;
+      this.displayedHpBarColor = this.computeBarColor(this.hpPercent);
+      this.initialized = true;
+    }
+
+    // Handle incoming damage event
+    if (changes['damageEvent'] && this.damageEvent !== null && this.damageEvent !== 0) {
+      this.triggerDamageVisuals(this.damageEvent);
+    }
+
+    // If damage/maxHp changed without a damageEvent (e.g., initial load, evolution)
+    // just snap the HP bar
+    if ((changes['damage'] || changes['maxHp']) && !changes['damageEvent']) {
+      if (this.initialized && !this.showDamageNumber) {
+        this.displayedHp = this.currentHp;
+        this.displayedHpPercent = this.hpPercent;
+        this.displayedHpBarColor = this.computeBarColor(this.hpPercent);
+      }
+    }
+  }
+
+  private triggerDamageVisuals(amount: number): void {
+    this.lastDamageAmount = amount;
+
+    // 1. Show floating damage number
+    this.showDamageNumber = true;
+    clearTimeout(this.damageNumberTimer);
+    this.damageNumberTimer = setTimeout(() => {
+      this.showDamageNumber = false;
+      this.cdr.markForCheck();
+    }, 1500);
+
+    // 2. Trigger shake + flash (only for damage, not healing)
+    if (amount > 0) {
+      this.isShaking = true;
+      this.isFlashing = true;
+      clearTimeout(this.shakeTimer);
+      clearTimeout(this.flashTimer);
+      this.shakeTimer = setTimeout(() => {
+        this.isShaking = false;
+        this.cdr.markForCheck();
+      }, 450);
+      this.flashTimer = setTimeout(() => {
+        this.isFlashing = false;
+        this.cdr.markForCheck();
+      }, 350);
+    }
+
+    // 3. Animate HP bar after a brief delay (damage number shows first)
+    const targetHp = this.currentHp;
+    const targetPercent = this.hpPercent;
+    const startHp = this.displayedHp;
+    const hpDiff = Math.abs(startHp - targetHp);
+    // Animation duration: 300ms minimum, scales with HP loss (up to 1200ms for huge hits)
+    const duration = Math.min(1200, Math.max(300, hpDiff * 8));
+    const delay = 400; // Wait for damage number pop-in
+
+    setTimeout(() => {
+      this.animateHpBar(startHp, targetHp, targetPercent, duration);
+    }, delay);
+
+    this.cdr.markForCheck();
+  }
+
+  private animateHpBar(
+    startHp: number,
+    targetHp: number,
+    _targetPercent: number,
+    duration: number
+  ): void {
+    if (this.hpAnimFrame !== null) {
+      cancelAnimationFrame(this.hpAnimFrame);
+    }
+
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      const currentHp = Math.round(startHp + (targetHp - startHp) * eased);
+      this.displayedHp = Math.max(0, currentHp);
+      this.displayedHpPercent = this.maxHp > 0
+        ? Math.max(0, Math.min(100, (this.displayedHp / this.maxHp) * 100))
+        : 0;
+      this.displayedHpBarColor = this.computeBarColor(this.displayedHpPercent);
+      this.cdr.markForCheck();
+
+      if (progress < 1) {
+        this.hpAnimFrame = requestAnimationFrame(tick);
+      } else {
+        this.hpAnimFrame = null;
+        // Snap to final values
+        this.displayedHp = Math.max(0, targetHp);
+        this.displayedHpPercent = this.maxHp > 0
+          ? Math.max(0, Math.min(100, (this.displayedHp / this.maxHp) * 100))
+          : 0;
+        this.displayedHpBarColor = this.computeBarColor(this.displayedHpPercent);
+        this.cdr.markForCheck();
+      }
+    };
+
+    this.hpAnimFrame = requestAnimationFrame(tick);
+  }
+
+  private computeBarColor(pct: number): string {
+    if (pct < 20) return '#ee1515';
+    if (pct <= 50) return '#ffcb05';
+    return '#5ad27a';
   }
 
   get card() {
@@ -191,9 +435,7 @@ export class FieldPokemonComponent {
   }
 
   get hpBarColor(): string {
-    const pct = this.hpPercent;
-    if (pct < 20) return '#ee1515';
-    if (pct <= 50) return '#ffcb05';
-    return '#5ad27a';
+    return this.computeBarColor(this.hpPercent);
   }
 }
+
