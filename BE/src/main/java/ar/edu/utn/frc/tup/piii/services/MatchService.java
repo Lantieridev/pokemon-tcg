@@ -229,15 +229,30 @@ public class MatchService {
 
         broadcastState(matchId, session);
 
-        // Check for bot turn
+        // Check for bot turn or bot promotion
         final MatchSession currentSession = registry.find(matchId).orElse(null);
-        if (currentSession != null && currentSession.getTurnManager() != null) {
-            int activeIndex = currentSession.getTurnManager().activePlayerIndex();
-            if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
-                String activeId = currentSession.getPlayerIds().get(activeIndex);
-                if (activeId != null && activeId.startsWith("Bot-")) {
-                    botDecisionService.evaluateAndPlay(matchId);
+        if (currentSession != null) {
+            boolean triggerBot = false;
+            if (currentSession.getTurnManager() != null) {
+                int activeIndex = currentSession.getTurnManager().activePlayerIndex();
+                if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
+                    String activeId = currentSession.getPlayerIds().get(activeIndex);
+                    if (activeId != null && activeId.startsWith("Bot-")) {
+                        triggerBot = true;
+                    }
                 }
+            }
+            if (currentSession.isAwaitingPromotion()) {
+                int promotingIndex = currentSession.getPromotingPlayerIndex();
+                if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
+                    String promotingId = currentSession.getPlayerIds().get(promotingIndex);
+                    if (promotingId != null && promotingId.startsWith("Bot-")) {
+                        triggerBot = true;
+                    }
+                }
+            }
+            if (triggerBot) {
+                botDecisionService.evaluateAndPlay(matchId);
             }
         }
     }
