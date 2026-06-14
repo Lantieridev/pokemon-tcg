@@ -56,6 +56,7 @@ class MatchServiceAbandonTest {
     private UserRepository userRepository;
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
+    private CampaignService campaignService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -74,6 +75,7 @@ class MatchServiceAbandonTest {
         userRepository = mock(UserRepository.class);
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
+        campaignService = mock(CampaignService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -104,7 +106,8 @@ class MatchServiceAbandonTest {
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
+                campaignService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

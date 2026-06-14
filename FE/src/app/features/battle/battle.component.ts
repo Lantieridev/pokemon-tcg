@@ -146,6 +146,29 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return winnerId === this.me()?.name ? 'VICTORIA' : 'DERROTA';
   });
 
+  readonly campaignVictoryStep = signal<number>(1);
+
+  readonly isCampaignMatch = computed(() => {
+    const oppUsername = this.opp()?.name;
+    return oppUsername ? oppUsername.startsWith('Bot-') && oppUsername !== 'Bot-001' : false;
+  });
+
+  readonly campaignNodeInfo = computed(() => {
+    if (!this.isCampaignMatch()) return null;
+    const oppUsername = this.opp()?.name;
+    const map: Record<string, { id: number, name: string, badge: string, color: string, coins: number, xp: number, nextGym: string, badgeIcon: string }> = {
+      'Bot-Brock': { id: 1, name: 'Gimnasio Plateada', badge: 'Medalla Roca', color: '#8e8e8e', coins: 50, xp: 100, nextGym: 'Celeste', badgeIcon: '⛰️' },
+      'Bot-Misty': { id: 2, name: 'Gimnasio Celeste', badge: 'Medalla Cascada', color: '#3498db', coins: 100, xp: 150, nextGym: 'Carmín', badgeIcon: '💧' },
+      'Bot-LtSurge': { id: 3, name: 'Gimnasio Carmín', badge: 'Medalla Trueno', color: '#f1c40f', coins: 150, xp: 200, nextGym: 'Azuliza', badgeIcon: '⚡' },
+      'Bot-Erika': { id: 4, name: 'Gimnasio Azuliza', badge: 'Medalla Arcoiris', color: '#2ecc71', coins: 200, xp: 250, nextGym: 'Fucsia', badgeIcon: '🌈' },
+      'Bot-Koga': { id: 5, name: 'Gimnasio Fucsia', badge: 'Medalla Alma', color: '#9b59b6', coins: 250, xp: 300, nextGym: 'Azafrán', badgeIcon: '💜' },
+      'Bot-Sabrina': { id: 6, name: 'Gimnasio Azafrán', badge: 'Medalla Pantano', color: '#e056fd', coins: 300, xp: 350, nextGym: 'Canela', badgeIcon: '👁️' },
+      'Bot-Blaine': { id: 7, name: 'Gimnasio Canela', badge: 'Medalla Volcán', color: '#e74c3c', coins: 350, xp: 400, nextGym: 'Verde', badgeIcon: '🔥' },
+      'Bot-Giovanni': { id: 8, name: 'Gimnasio Verde', badge: 'Medalla Tierra', color: '#27ae60', coins: 500, xp: 500, nextGym: 'Liga Pokémon', badgeIcon: '🌲' }
+    };
+    return map[oppUsername!] || null;
+  });
+
   readonly victoryReasonText = computed(() => {
     if (!this.isFinished()) return '';
     const reason = this.store.victoryReason();
@@ -378,6 +401,17 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (index >= hand.length || hand[index] !== selectedCard.id) {
         this.selectedHandIndex.set(null);
         this.selectedHandCard.set(null);
+      }
+    });
+
+    // Campaign Victory Screen Auto-Transition from Step 1 to Step 2
+    effect((onCleanup) => {
+      if (this.isFinished() && this.gameResult() === 'VICTORIA' && this.isCampaignMatch()) {
+        this.campaignVictoryStep.set(1);
+        const timer = setTimeout(() => {
+          this.campaignVictoryStep.set(2);
+        }, 2200);
+        onCleanup(() => clearTimeout(timer));
       }
     });
   }
