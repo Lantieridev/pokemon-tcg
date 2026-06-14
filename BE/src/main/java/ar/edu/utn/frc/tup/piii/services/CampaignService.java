@@ -112,23 +112,24 @@ public class CampaignService {
     }
 
     @Transactional
-    public void completeNode(String username, int nodeId) {
+    public void completeNode(String username, int nodeId, String matchId) {
+        final CampaignNodeInfo nodeInfo = NODES.stream()
+            .filter(n -> n.id() == nodeId)
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Nodo de campaña no encontrado: " + nodeId));
+
         userRepository.findByUsername(username).ifPresent(user -> {
             Set<Integer> clearedNodes = user.getClearedStoryNodes();
             if (!clearedNodes.contains(nodeId)) {
-                CampaignNodeInfo nodeInfo = NODES.stream()
-                    .filter(n -> n.id() == nodeId)
-                    .findFirst()
-                    .orElse(null);
-                
-                if (nodeInfo != null) {
-                    clearedNodes.add(nodeId);
-                    user.setPokecoins(user.getPokecoins() + nodeInfo.rewardCoins());
-                    user.setXp(user.getXp() + nodeInfo.rewardXp());
-                    userRepository.save(user);
-                    log.info("Usuario {} completó nodo de campaña {} y recibió {} monedas y {} XP.", 
-                        username, nodeId, nodeInfo.rewardCoins(), nodeInfo.rewardXp());
-                }
+                clearedNodes.add(nodeId);
+                user.setPokecoins(user.getPokecoins() + nodeInfo.rewardCoins());
+                user.setXp(user.getXp() + nodeInfo.rewardXp());
+                userRepository.save(user);
+                log.info("[CAMPAÑA] AUDITORÍA - Recompensas acreditadas. Usuario: {}, Gimnasio: {} (ID: {}), Partida: {}, Pokécoins: +{}, XP: +{}", 
+                    username, nodeInfo.name(), nodeId, matchId, nodeInfo.rewardCoins(), nodeInfo.rewardXp());
+            } else {
+                log.info("[CAMPAÑA] AUDITORÍA - Recompensa ignorada (ya completado anteriormente). Usuario: {}, Gimnasio: {} (ID: {}), Partida: {}", 
+                    username, nodeInfo.name(), nodeId, matchId);
             }
         });
     }

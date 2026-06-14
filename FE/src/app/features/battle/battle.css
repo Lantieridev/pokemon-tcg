@@ -302,3 +302,427 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* 🏆 Campaign Victory Overlay Effects */
+@keyframes rotateRays {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.campaign-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250%;
+  height: 250%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.04) 0deg 12deg, transparent 12deg 24deg);
+  animation: rotateRays 45s linear infinite;
+  z-index: -2;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.campaign-glow-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  z-index: -3;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.85;
+}
+
+/* Laser beams background */
+.laser-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150vw;
+  height: 2px;
+  transform-origin: center;
+  opacity: 0.6;
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.beam-1 {
+  transform: translate(-50%, -50%) rotate(25deg);
+  background: linear-gradient(90deg, transparent, #ff2d81, #ff2d81, transparent);
+  animation: laserPulse1 3.5s ease-in-out infinite;
+}
+
+.beam-2 {
+  transform: translate(-50%, -50%) rotate(65deg);
+  background: linear-gradient(90deg, transparent, #00d2ff, #00d2ff, transparent);
+  animation: laserPulse2 4.5s ease-in-out infinite;
+}
+
+.beam-3 {
+  transform: translate(-50%, -50%) rotate(115deg);
+  background: linear-gradient(90deg, transparent, #ffcb05, #ffcb05, transparent);
+  animation: laserPulse3 4s ease-in-out infinite;
+}
+
+@keyframes laserPulse1 {
+  0%, 100% { height: 2px; opacity: 0.4; }
+  50% { height: 6px; opacity: 0.85; filter: blur(2px); }
+}
+
+@keyframes laserPulse2 {
+  0%, 100% { height: 1.5px; opacity: 0.3; }
+  50% { height: 5px; opacity: 0.75; filter: blur(2.5px); }
+}
+
+@keyframes laserPulse3 {
+  0%, 100% { height: 2px; opacity: 0.5; }
+  50% { height: 8px; opacity: 0.9; filter: blur(3px); }
+}
+
+/* Container victory card */
+.campaign-victory-card {
+  position: relative;
+  width: 440px;
+  height: 320px;
+  background: rgba(13, 8, 24, 0.94);
+  backdrop-filter: blur(24px);
+  border: 4px solid rgba(255, 255, 255, 0.15);
+  border-radius: 40px;
+  padding: 35px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), inset 0 2px 10px rgba(255, 255, 255, 0.08);
+  transition: all 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  animation: cardEntrance 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Step 2 resizing */
+.campaign-victory-card.step-2-active {
+  height: 590px;
+  width: 460px;
+  background: rgba(18, 10, 32, 0.97);
+  border-color: inherit; /* will be overridden dynamically inline */
+  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.9), inset 0 2px 15px rgba(255, 255, 255, 0.12);
+}
+
+@keyframes cardEntrance {
+  from {
+    transform: scale(0.65) translateY(60px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Card Outer Glow Ring */
+.card-glow-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 38px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  transition: all 0.6s ease;
+}
+
+.step-2-active .card-glow-ring {
+  opacity: 0.75;
+}
+
+/* Step content transitions */
+.step-1-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.step-2-active .step-1-content {
+  opacity: 0;
+  transform: scale(0.7) translateY(-40px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.step-2-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+  transform: scale(0.8) translateY(60px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.step-2-active .step-2-content {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  position: relative;
+}
+
+/* Trophy animation */
+.victory-trophy-wrapper {
+  font-size: 85px;
+  line-height: 1;
+  filter: drop-shadow(0 0 25px rgba(255, 203, 5, 0.65));
+  animation: trophyPulse 2s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Victory Title */
+.victory-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 48px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  color: #ffcb05;
+  margin-top: 15px;
+  text-shadow: 0 0 30px rgba(255, 203, 5, 0.7), 0 5px 0px #855300;
+  animation: titlePulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes titlePulse {
+  from { transform: scale(1); text-shadow: 0 0 35px rgba(255, 203, 5, 0.7), 0 5px 0px #855300; }
+  to { transform: scale(1.04); text-shadow: 0 0 50px rgba(255, 203, 5, 0.95), 0 5px 0px #855300; }
+}
+
+.victory-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 10px;
+  max-width: 320px;
+  line-height: 1.5;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Premium Shield Hexagon */
+.shield-hexagon-premium {
+  width: 125px;
+  height: 145px;
+  background: rgba(20, 12, 34, 0.85);
+  border-width: 4px;
+  border-style: solid;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  position: relative;
+  z-index: 10;
+  background-clip: padding-box;
+}
+
+.badge-emoji {
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
+  animation: badgeFloating 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes badgeFloating {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+  100% { transform: translateY(0); }
+}
+
+.badge-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.3em;
+  color: #ffcb05;
+  text-shadow: 0 0 10px rgba(255, 203, 5, 0.2);
+}
+
+.gym-name-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+  margin: 2px 0;
+}
+
+.badge-name-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Reward Card / Box */
+.reward-box {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.reward-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 14px;
+  font-weight: 850;
+  font-size: 15px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.reward-coins {
+  background: rgba(241, 196, 15, 0.08);
+  border: 1px solid rgba(241, 196, 15, 0.15);
+  color: #f1c40f;
+  text-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+}
+
+.reward-xp {
+  background: rgba(52, 152, 219, 0.08);
+  border: 1px solid rgba(52, 152, 219, 0.15);
+  color: #3498db;
+  text-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* Banner */
+.unlocked-badge-banner {
+  display: inline-flex;
+  padding: 8px 22px;
+  border-radius: 9999px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  color: #2ecc71;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  animation: bannerPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes bannerPulse {
+  from { transform: scale(1); box-shadow: 0 0 12px rgba(46, 204, 113, 0.15); }
+  to { transform: scale(1.04); box-shadow: 0 0 22px rgba(46, 204, 113, 0.4); }
+}
+
+/* Button styling */
+.continue-btn {
+  width: 100%;
+  padding: 13px 26px;
+  border-radius: 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13.5px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  border: 3px solid #0f0817;
+  box-shadow: 0 5px 0 #0f0817;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #0f0817;
+  filter: brightness(1.15);
+}
+
+.continue-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #0f0817;
+}
+
+.shield-hexagon {
+  width: 140px;
+  height: 160px;
+  background: rgba(26, 21, 38, 0.8);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 70px;
+  position: relative;
+  animation: shieldEntrance 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 10;
+}
+
+@keyframes shieldEntrance {
+  0% { transform: scale(0.2) rotate(-180deg); opacity: 0; filter: blur(10px); }
+  60% { transform: scale(1.15) rotate(15deg); filter: none; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.shield-hexagon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.badge-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: skewX(-30deg) translateX(-150%);
+  animation: badgeShine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes badgeShine {
+  0% { transform: skewX(-30deg) translateX(-150%); }
+  50% { transform: skewX(-30deg) translateX(150%); }
+  100% { transform: skewX(-30deg) translateX(150%); }
+}
+
+.unlocked-banner {
+  animation: bannerEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s forwards;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+@keyframes bannerEntrance {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reward-card {
+  animation: rewardEntrance 0.5s ease-out 0.6s forwards;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+@keyframes rewardEntrance {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
