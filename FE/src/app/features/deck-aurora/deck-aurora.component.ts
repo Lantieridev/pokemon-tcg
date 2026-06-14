@@ -78,7 +78,10 @@ interface Filters {
           <div style="padding: 20px 24px; border-bottom: 1px solid var(--line);">
             <div class="eyebrow" style="color: var(--accent2);">Mazo Activo</div>
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px;">
-              <input [ngModel]="deckName()" (ngModelChange)="deckStore.deckName.set($event)" style="font-family: var(--display); font-size: 28px; background: transparent; border: none; color: var(--txt); outline: none; width: 100%; font-weight: 700;" placeholder="Nombre del mazo" />
+              <div style="flex: 1; display: flex; align-items: center; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom: 4px; margin-right: 16px; transition: border-color 0.2s;">
+                <input [ngModel]="deckName()" (ngModelChange)="deckStore.deckName.set($event)" style="font-family: var(--display); font-size: 28px; background: transparent; border: none; color: var(--txt); outline: none; width: 100%; font-weight: 700;" placeholder="Nombre del mazo" />
+                <span style="font-size: 16px; opacity: 0.5; margin-left: 8px;">✏️</span>
+              </div>
               <div class="num" [style.color]="isValid() ? '#46e08a' : 'var(--accent)'" style="font-size: 24px; font-weight: 700;">{{ totalCount() }}<span style="font-size: 14px; color: var(--mut);">/60</span></div>
             </div>
             

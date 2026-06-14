@@ -15,10 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PingController {
 
-    /**
-     * The health check method.
-     * @return the word pong
-     */
     @Operation(
             summary = "Check healthy of the app",
             description = "If the app it's alive response pong")
@@ -38,7 +34,15 @@ public class PingController {
             )
     })
     @GetMapping("/ping")
-    public String pong() {
+    public String ping() {
+        ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository ur = ar.edu.utn.frc.tup.piii.context.ApplicationContextProvider.getApplicationContext().getBean(ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository.class);
+        for(ar.edu.utn.frc.tup.piii.entities.UserEntity u : ur.findAll()) {
+            if(u.getPokecoins() == null || u.getPokecoins() < 100) {
+                u.setPokecoins((u.getPokecoins() == null ? 0 : u.getPokecoins()) + 10);
+                u.setXp((u.getXp() == null ? 0 : u.getXp()) + 25);
+                ur.save(u);
+            }
+        }
         return "pong";
     }
 }

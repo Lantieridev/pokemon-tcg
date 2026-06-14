@@ -31,13 +31,13 @@
       <div class="bp-premium-cta" [class.is-premium]="status()?.isPremium">
         @if (status()?.isPremium) {
           <div class="premium-active-badge">
-            <app-icon name="star" svgClass="w-6 h-6"></app-icon>
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             <h2>Pase Premium Activado</h2>
             <p>Tienes acceso a todas las recompensas exclusivas.</p>
           </div>
         } @else {
           <div class="premium-buy-card">
-            <app-icon name="star" svgClass="w-8 h-8 text-[var(--p-yellow)] mb-2"></app-icon>
+            <svg class="w-8 h-8 text-[var(--p-yellow)] mb-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             <h2>Desbloquea el Pase Premium</h2>
             <p>Consigue sobres extra, títulos exclusivos y avatares 3D.</p>
             <button class="buy-premium-btn" (click)="purchasePremium()" [disabled]="pokecoins() < 1000">
@@ -54,7 +54,7 @@
         <div class="w-24 shrink-0 text-center font-chunky text-sm tracking-widest text-white/50 uppercase">Nivel</div>
         <div class="flex-1 text-center font-chunky text-sm tracking-widest text-white/50 uppercase">Gratis</div>
         <div class="flex-1 text-center font-chunky text-sm tracking-widest text-[var(--p-yellow)]/80 uppercase flex items-center justify-center gap-2">
-          <app-icon name="star" svgClass="w-4 h-4"></app-icon> Premium
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Premium
         </div>
       </div>
 
@@ -62,13 +62,13 @@
       <div class="track-levels flex flex-col gap-3 pb-24">
         @for (level of status()?.levels; track level.level) {
           <div class="track-row flex items-center bg-black/40 rounded-2xl border border-white/5 overflow-hidden transition-all hover:bg-black/60 hover:border-white/10"
-               [class.is-current]="level.level === status()?.currentLevel + 1"
-               [class.is-completed]="level.level <= status()?.currentLevel">
+               [class.is-current]="level.level === (status()?.currentLevel ?? 0) + 1"
+               [class.is-completed]="level.level <= (status()?.currentLevel ?? 0)">
             
             <!-- Nivel -->
             <div class="level-indicator w-24 shrink-0 flex flex-col items-center justify-center py-4 bg-black/20 border-r border-white/5 relative">
               <span class="font-chunky text-xs tracking-widest text-white/40 uppercase mb-1">LVL</span>
-              <span class="font-display text-3xl font-black" [style.color]="level.level <= status()?.currentLevel ? 'var(--p-blue)' : 'white'">{{ level.level }}</span>
+              <span class="font-display text-3xl font-black" [style.color]="level.level <= (status()?.currentLevel ?? 0) ? 'var(--p-blue)' : 'white'">{{ level.level }}</span>
               <span class="font-chunky text-[9px] tracking-widest text-[var(--p-blue)] uppercase mt-1">{{ level.requiredXp }} XP</span>
             </div>
 
@@ -87,11 +87,11 @@
 
                 <!-- Claim Button / Status -->
                 <div class="reward-status">
-                  @if (level.level <= status()?.claimedFreeLevel) {
+                  @if (level.level <= (status()?.claimedFreeLevel ?? 0)) {
                     <div class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 font-chunky text-[10px] tracking-widest uppercase border border-green-500/30">
                       Reclamado
                     </div>
-                  } @else if (level.level <= status()?.currentLevel && level.level === status()?.claimedFreeLevel + 1) {
+                  } @else if (level.level <= (status()?.currentLevel ?? 0) && level.level === (status()?.claimedFreeLevel ?? 0) + 1) {
                     <button class="px-4 py-2 rounded-xl bg-[var(--p-blue)] text-white font-chunky text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-[0_0_15px_rgba(56,189,248,0.4)]"
                             (click)="claimReward(level.level, false)">
                       Reclamar
@@ -115,7 +115,7 @@
               
               @if (!status()?.isPremium) {
                 <div class="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[2px] bg-black/40">
-                  <app-icon name="lock" svgClass="w-6 h-6 text-white/50"></app-icon>
+                  <svg class="w-6 h-6 text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 </div>
               }
 
@@ -132,11 +132,11 @@
 
                 <!-- Claim Button / Status -->
                 <div class="reward-status z-20">
-                  @if (level.level <= status()?.claimedPremiumLevel) {
+                  @if (level.level <= (status()?.claimedPremiumLevel ?? 0)) {
                     <div class="px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 font-chunky text-[10px] tracking-widest uppercase border border-green-500/30">
                       Reclamado
                     </div>
-                  } @else if (status()?.isPremium && level.level <= status()?.currentLevel && level.level === status()?.claimedPremiumLevel + 1) {
+                  } @else if (status()?.isPremium && level.level <= (status()?.currentLevel ?? 0) && level.level === (status()?.claimedPremiumLevel ?? 0) + 1) {
                     <button class="px-4 py-2 rounded-xl bg-[var(--p-yellow)] text-[#1a1010] font-chunky text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,203,5,0.4)] border border-[#1a1010]"
                             (click)="claimReward(level.level, true)">
                       Reclamar

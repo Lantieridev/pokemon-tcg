@@ -103,6 +103,8 @@ export interface GameStateResponseDTO {
   opponent: OpponentView;
   lastCoinFlips?: boolean[] | null;
   mmrChange?: number | null;
+  coinsGained?: number | null;
+  xpGained?: number | null;
 }
 
 // ─── DTOs de acción (cliente → servidor) ─────────────────────────────────────

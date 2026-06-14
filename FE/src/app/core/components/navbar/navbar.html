@@ -13,8 +13,9 @@
         <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
       </nav>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-        <div class="topcur"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <div class="topcur" title="Experiencia"><span style="font-weight: 800; font-family: var(--display); color: #4aa3ff; font-size: 14px; letter-spacing: -0.5px;">XP</span> {{ profileData()?.xp ?? 0 }}</div>
+        <div class="topcur" title="Battle Points"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
+        <div class="topcur" title="Pokécoins"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
       </div>
     }
     <div>

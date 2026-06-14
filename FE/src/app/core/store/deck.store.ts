@@ -38,7 +38,7 @@ export class DeckStore {
   private _deckCards = signal<PokemonTcgCard[]>([]);
 
   /** Nombre del mazo actual */
-  readonly deckName = signal('Mi Mazo');
+  readonly deckName = signal('');
 
   // ── Selectors (computed) ──────────────────────────────────────────────────
 
