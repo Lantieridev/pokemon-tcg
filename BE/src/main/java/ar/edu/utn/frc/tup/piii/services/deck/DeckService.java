@@ -16,4 +16,8 @@ public interface DeckService {
     DeckResponseDTO getById(Long id);
 
     DeckResponseDTO create(DeckRequestDTO request);
+
+    DeckResponseDTO update(Long id, DeckRequestDTO request);
+
+    void delete(Long id);
 }
