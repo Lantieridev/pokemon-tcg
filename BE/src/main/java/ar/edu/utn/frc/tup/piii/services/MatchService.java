@@ -203,6 +203,15 @@ public class MatchService {
                     final int kos = won ? (6 - board.getRemainingPrizes(loserIndex)) : (6 - board.getRemainingPrizes(winnerIndex));
                     userRepository.findByUsername(participantId).ifPresent(user -> {
                         profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
+                        final int xpGained = won ? 50 : 25;
+                        final int coinsGained = won ? 50 : 10;
+                        if (participantId.equals(session.getPlayerIdA())) {
+                            session.setXpGainedA(xpGained);
+                            session.setCoinsGainedA(coinsGained);
+                        } else {
+                            session.setXpGainedB(xpGained);
+                            session.setCoinsGainedB(coinsGained);
+                        }
                     });
                     penaltyService.registerMatchFinished(participantId, true);
                 }
@@ -458,6 +467,21 @@ public class MatchService {
                         // To prevent farming, the forfeiting player gets NO rewards.
                         if (won) {
                             profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
+                            if (participantId.equals(session.getPlayerIdA())) {
+                                session.setXpGainedA(50);
+                                session.setCoinsGainedA(50);
+                            } else {
+                                session.setXpGainedB(50);
+                                session.setCoinsGainedB(50);
+                            }
+                        } else {
+                            if (participantId.equals(session.getPlayerIdA())) {
+                                session.setXpGainedA(0);
+                                session.setCoinsGainedA(0);
+                            } else {
+                                session.setXpGainedB(0);
+                                session.setCoinsGainedB(0);
+                            }
                         }
                     });
 

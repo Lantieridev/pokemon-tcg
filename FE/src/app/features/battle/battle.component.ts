@@ -134,6 +134,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly mvpCardId = this.store.mvpCardId;
   readonly mvpCardDamage = this.store.mvpCardDamage;
   readonly mmrChange = this.store.mmrChange;
+  readonly coinsGained = this.store.coinsGained;
+  readonly xpGained = this.store.xpGained;
 
   // ── Estado UI local ────────────────────────────────────────────────────────
   readonly log = signal<LogEntry[]>([]);
