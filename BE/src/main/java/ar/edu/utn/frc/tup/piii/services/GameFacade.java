@@ -583,14 +583,7 @@ public final class GameFacade {
     private BattlePokemonState resolveEvolveTarget(final MatchBoard board,
                                                     final int playerIndex,
                                                     final ActionRequestDTO dto) {
-        if (dto.targetIndex() != null) {
-            var benched = board.getBenchedPokemon(playerIndex);
-            if (dto.targetIndex() < 0 || dto.targetIndex() >= benched.size()) {
-                return null;
-            }
-            return benched.get(dto.targetIndex());
-        }
-        return board.getActivePokemon(playerIndex);
+        return resolvePokemonByIndex(board, playerIndex, dto.targetIndex());
     }
 
     private BattlePokemonState resolveTarget(final MatchBoard board,

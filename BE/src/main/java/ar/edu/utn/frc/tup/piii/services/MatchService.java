@@ -233,7 +233,17 @@ public class MatchService {
             int activeIndex = currentSession.getTurnManager().activePlayerIndex();
             if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
                 String activeId = currentSession.getPlayerIds().get(activeIndex);
-                if ("Bot-001".equals(activeId)) {
+                boolean botNeedsToAct = false;
+                if (currentSession.isAwaitingPromotion()) {
+                    int promotingIndex = currentSession.getPromotingPlayerIndex();
+                    if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
+                        botNeedsToAct = "Bot-001".equals(currentSession.getPlayerIds().get(promotingIndex));
+                    }
+                } else {
+                    botNeedsToAct = "Bot-001".equals(activeId);
+                }
+
+                if (botNeedsToAct) {
                     botDecisionService.evaluateAndPlay(matchId);
                 }
             }

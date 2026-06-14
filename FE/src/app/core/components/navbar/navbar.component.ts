@@ -40,7 +40,15 @@ export class NavbarComponent implements OnInit {
   currentPath = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((e: NavigationEnd) => e.urlAfterRedirects)
+      map((e: NavigationEnd) => {
+        if (this.username !== 'Invitado') {
+          this.profileService.getProfile(this.username).subscribe({
+            next: (data) => this.profileData.set(data),
+            error: (err) => console.error('Error fetching profile for navbar', err)
+          });
+        }
+        return e.urlAfterRedirects;
+      })
     ),
     { initialValue: this.router.url }
   );

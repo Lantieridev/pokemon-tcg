@@ -512,7 +512,7 @@ type PrivateMode = 'create' | 'join';
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
             <div class="bot-section">
-              <button class="action-btn bot" [disabled]="lobby.decks().length === 0" (click)="startBotMatch()">
+              <button class="action-btn bot" style="margin-top: 0; padding: 12px 18px;" [disabled]="lobby.decks().length === 0" (click)="openModal('bot')">
                 <span class="bot-icon">🤖</span> Jugar vs Bot
               </button>
             </div>
@@ -570,12 +570,15 @@ type PrivateMode = 'create' | 'join';
             <h3 class="modal-title">
               @if (modalMode() === 'competitive') {
                 🏆 Clasificatoria
-              } @else {
+              } @else if (modalMode() === 'casual') {
                 ⚔️ Partida Casual
+              } @else {
+                🤖 Jugar vs Bot
               }
             </h3>
 
             <!-- Tabs: Pública / Privada -->
+            @if (modalMode() !== 'bot') {
             <div class="panel-tabs">
               <button class="panel-tab" [class.active]="activeTab() === 'public'" (click)="setTab('public')" id="tab-public">
                 🌐 Partida Pública
@@ -584,6 +587,7 @@ type PrivateMode = 'create' | 'join';
                 🔒 Sala Privada
               </button>
             </div>
+            }
 
             <!-- ── Deck selector ── -->
             @if (!isAnyMatchPending()) {
@@ -610,7 +614,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PÚBLICA ══════════════ -->
-            @if (activeTab() === 'public') {
+            @if (activeTab() === 'public' && modalMode() !== 'bot') {
 
               @if (lobby.queueStatus() === 'idle') {
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -645,7 +649,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PRIVADA ══════════════ -->
-            @if (activeTab() === 'private') {
+            @if (activeTab() === 'private' && modalMode() !== 'bot') {
 
               <!-- Sub-tabs: Crear / Unirse -->
               @if (!isAnyMatchPending()) {
@@ -713,6 +717,19 @@ type PrivateMode = 'create' | 'join';
 
             }
 
+            <!-- ══════════════ MODO BOT ══════════════ -->
+            @if (modalMode() === 'bot') {
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button
+                  class="action-btn bot"
+                  style="margin-top: 0; width: 100%;"
+                  [disabled]="lobby.decks().length === 0"
+                  (click)="startBotMatch()">
+                  <span class="bot-icon">🤖</span> Iniciar Partida
+                </button>
+              </div>
+            }
+
             <!-- Error message -->
             @if (lobby.lobbyError()) {
               <div class="error-msg">⚠️ {{ lobby.lobbyError() }}</div>
@@ -742,7 +759,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   readonly privateMode = signal<PrivateMode>('create');
   readonly copied = signal(false);
   readonly modalOpen = signal(false);
-  readonly modalMode = signal<'competitive' | 'casual'>('competitive');
+  readonly modalMode = signal<'competitive' | 'casual' | 'bot'>('competitive');
   joinCode = '';
 
   profileData: UserProfileResponseDTO | null = null;
@@ -837,7 +854,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     }
   }
 
-  openModal(mode: 'competitive' | 'casual'): void {
+  openModal(mode: 'competitive' | 'casual' | 'bot'): void {
     this.modalMode.set(mode);
     this.modalOpen.set(true);
   }
