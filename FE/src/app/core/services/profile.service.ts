@@ -40,6 +40,8 @@ export interface UserProfileResponseDTO {
   mmr: number;
   pokecoins: number;
   battlePoints: number;
+  packs: number;
+  stardust: number;
   statistics: {
     matchesPlayed: number;
     matchesWon: number;

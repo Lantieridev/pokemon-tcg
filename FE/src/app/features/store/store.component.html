@@ -49,4 +49,76 @@
       }
     </div>
   }
+
+  <!-- Inventario de Sobres -->
+  @if (selectedCategory() === 'PACK') {
+    <div class="mt-8 pt-6 border-t border-[rgba(255,203,5,0.2)]">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-xl font-display font-black text-white tracking-wider">Tu Inventario</h2>
+          <p class="text-sm font-chunky text-[#5b6885]">Tienes <span class="text-[var(--p-yellow)]">{{ userPacks() }}</span> sobres sin abrir.</p>
+        </div>
+        <button class="px-6 py-3 rounded-xl font-chunky text-sm uppercase transition-all duration-200"
+                [style.background]="userPacks() > 0 ? 'var(--p-yellow)' : '#333'"
+                [style.color]="userPacks() > 0 ? '#1a1010' : '#888'"
+                [style.border]="userPacks() > 0 ? '2px solid #1a1010' : '2px solid #222'"
+                [disabled]="userPacks() <= 0"
+                (click)="openPack()">
+          Abrir Sobre
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Pack Opening Gacha Overlay -->
+  @if (openingPack() || packResult()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
+      @if (openingPack()) {
+        <div class="flex flex-col items-center justify-center">
+          <div class="w-32 h-48 relative animate-bounce">
+            <img src="assets/store/pack_base.png" class="w-full h-full object-cover rounded-xl shadow-[0_0_40px_rgba(255,203,5,0.8)]" />
+          </div>
+          <h2 class="mt-8 text-2xl font-display font-black text-[var(--p-yellow)] tracking-widest uppercase animate-pulse">Abriendo sobre...</h2>
+        </div>
+      } @else if (packResult()) {
+        <div class="flex flex-col items-center justify-center w-full max-w-4xl px-4">
+          <h2 class="text-3xl font-display font-black text-[var(--p-yellow)] tracking-widest uppercase mb-12 drop-shadow-[0_0_15px_rgba(255,203,5,0.8)]">¡Nuevas Cartas!</h2>
+          
+          <div class="flex flex-wrap justify-center gap-6 mb-12 perspective-1000">
+            @for (card of openedCards(); track $index) {
+              <div class="relative w-40 hover:-translate-y-4 transition-transform duration-300 group" style="transform-style: preserve-3d;">
+                <div class="w-full aspect-[2.5/3.5] rounded-xl overflow-hidden border-2"
+                     [style.borderColor]="card.isFoil ? '#ffcb05' : 'rgba(255,255,255,0.1)'"
+                     [style.boxShadow]="card.isFoil ? '0 0 30px rgba(255,203,5,0.6)' : '0 10px 20px rgba(0,0,0,0.5)'">
+                  <img [src]="'https://images.pokemontcg.io/' + card.cardId.split('-')[0] + '/' + card.cardId.split('-')[1] + '_hires.png'" class="w-full h-full object-cover" />
+                  
+                  @if (card.isFoil) {
+                    <div class="absolute inset-0 mix-blend-color-dodge opacity-60 bg-gradient-to-tr from-transparent via-[var(--p-yellow)] to-transparent" style="background-size: 200% 200%; animation: shine 3s infinite linear;"></div>
+                  }
+                </div>
+                
+                @if (card.isDuplicate) {
+                  <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/80 border border-white/20 rounded-full text-[9px] font-chunky text-gray-400 tracking-wider whitespace-nowrap">
+                    DUPLICADA
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          
+          @if (packResult()?.coinsRefunded > 0) {
+            <div class="mb-8 px-6 py-3 rounded-2xl bg-[var(--p-yellow)]/10 border border-[var(--p-yellow)]/30 flex items-center gap-3">
+              <span class="text-[var(--p-yellow)] font-chunky text-sm tracking-widest uppercase">Compensación por duplicadas:</span>
+              <span class="text-2xl font-display font-black text-white">+{{ packResult().coinsRefunded }} Pokécoins</span>
+            </div>
+          }
+          
+          <button class="px-8 py-3 rounded-xl bg-white text-black font-chunky text-sm uppercase tracking-widest hover:bg-gray-200 transition-colors"
+                  (click)="closePackResult()">
+            Aceptar
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>

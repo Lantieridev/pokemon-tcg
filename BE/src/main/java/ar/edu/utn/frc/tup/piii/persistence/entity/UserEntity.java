@@ -41,6 +41,13 @@ public class UserEntity {
     @JoinColumn(name = "showcased_deck_id")
     private DeckEntity showcasedDeck;
 
+    @Column(name = "stardust")
+    private Integer stardust;
+
+    @Column(name = "packs", nullable = false)
+    @Builder.Default
+    private Integer packs = 0;
+
     @Column(name = "avatar_icon")
     @Builder.Default
     private String avatarIcon = "default_trainer";
