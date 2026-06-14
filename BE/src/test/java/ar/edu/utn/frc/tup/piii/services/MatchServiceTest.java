@@ -254,7 +254,7 @@ class MatchServiceTest {
 
         org.mockito.Mockito.doAnswer(invocation -> {
             campaignSession.finish();
-            campaignSession.declareWinner("test");
+            campaignSession.setWinnerId("test");
             return null;
         }).when(facade).apply(any(), any(), any());
 
