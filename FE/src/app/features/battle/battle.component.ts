@@ -21,7 +21,7 @@ import { CardSelectionModalComponent } from '../../shared/ui/card-selection-moda
 import { SparksComponent, AmbientComponent, BallIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
 
 import { WebSocketService } from '../../core/services/websocket.service';
-import { MatchStore } from '../../core/store/match.store';
+import { MatchStore, DamageEvent } from '../../core/store/match.store';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
@@ -359,6 +359,26 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly oppActiveIsPoisoned = computed(() =>
     this.oppActiveConditions().includes('POISONED')
   );
+
+  // ── Damage Events per position ──────────────────────────────────────────
+  private readonly damageEvents = this.store.lastDamageEvents;
+
+  private getDamageAmount(target: string): number | null {
+    const events = this.damageEvents();
+    const ev = events.find(e => e.target === target);
+    return ev ? ev.amount : null;
+  }
+
+  readonly myActiveDamageEvent = computed(() => this.getDamageAmount('my-active'));
+  readonly oppActiveDamageEvent = computed(() => this.getDamageAmount('opp-active'));
+
+  myBenchDamageEvent(index: number): number | null {
+    return this.getDamageAmount(`my-bench-${index}`);
+  }
+
+  oppBenchDamageEvent(index: number): number | null {
+    return this.getDamageAmount(`opp-bench-${index}`);
+  }
 
   private matchId!: string;
   private wsSub?: Subscription;

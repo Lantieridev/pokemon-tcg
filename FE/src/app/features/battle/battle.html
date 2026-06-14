@@ -193,6 +193,7 @@
               [maxHp]="b.maxHp"
               [status]="b.status"
               [attachedToolCardId]="b.attachedToolCardId"
+              [damageEvent]="oppBenchDamageEvent($index)"
               [width]="70"
               direction="up"
               (toolClick)="zoomCard(getCardImageUrl($event))">
@@ -218,6 +219,7 @@
             [maxHp]="activeOpp.maxHp"
             [status]="activeOpp.status"
             [attachedToolCardId]="activeOpp.attachedToolCardId"
+            [damageEvent]="oppActiveDamageEvent()"
             [width]="110"
             [glow]="true"
             direction="up"
@@ -286,6 +288,7 @@
             [maxHp]="activeMe.maxHp"
             [status]="activeMe.status"
             [attachedToolCardId]="activeMe.attachedToolCardId"
+            [damageEvent]="myActiveDamageEvent()"
             [width]="120"
             [glow]="true"
             direction="up"
@@ -321,6 +324,7 @@
               [damage]="b.damage"
               [maxHp]="b.maxHp"
               [attachedToolCardId]="b.attachedToolCardId"
+              [damageEvent]="myBenchDamageEvent($index)"
               [width]="80"
               direction="up"
               (toolClick)="zoomCard(getCardImageUrl($event))">
