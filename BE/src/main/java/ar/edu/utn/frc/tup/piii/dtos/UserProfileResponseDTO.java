@@ -28,6 +28,8 @@ public class UserProfileResponseDTO {
     private Integer mmr;
     private Integer pokecoins;
     private Integer battlePoints;
+    private Integer packs;
+    private Integer stardust;
 
     private Statistics statistics;
     private Map<String, Integer> honors;

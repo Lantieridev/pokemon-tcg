@@ -67,7 +67,7 @@ public class StoreServiceImpl implements StoreService {
             case TITLE -> user.getUnlockedTitles().add(item.getName());
             case AVATAR -> user.getUnlockedAvatars().add(item.getName());
             case PACK -> {
-                // Future expansion: pack inventory
+                user.setPacks(user.getPacks() + 1);
             }
             case COSMETIC -> {
                 // Future expansion: cosmetic logic

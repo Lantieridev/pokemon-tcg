@@ -273,6 +273,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .mmr(user.getMmr() != null ? user.getMmr() : 1000)
                 .pokecoins(user.getPokecoins() != null ? user.getPokecoins() : 0)
                 .battlePoints(user.getBattlePoints() != null ? user.getBattlePoints() : 0)
+                .packs(user.getPacks() != null ? user.getPacks() : 0)
+                .stardust(user.getStardust() != null ? user.getStardust() : 0)
                 .statistics(stats)
                 .honors(honors)
                 .unlockedTitles(user.getUnlockedTitles())

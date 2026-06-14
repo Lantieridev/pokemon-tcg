@@ -5,6 +5,7 @@ import { StoreService, StoreItemDTO } from '../../core/services/store.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PackService } from '../../core/services/pack.service';
 
 @Component({
   selector: 'app-store',
@@ -15,13 +16,19 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class StoreComponent implements OnInit {
   private storeService = inject(StoreService);
+  private packService = inject(PackService);
   private profileService = inject(ProfileService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
 
   items = signal<StoreItemDTO[]>([]);
   pokecoins = signal<number>(0);
+  userPacks = signal<number>(0);
   loading = signal<boolean>(true);
+  
+  openingPack = signal<boolean>(false);
+  packResult = signal<any>(null);
+  openedCards = signal<any[]>([]);
 
   categories = ['AVATAR', 'TITLE', 'PACK'];
   selectedCategory = signal<string>('AVATAR');
@@ -79,7 +86,10 @@ export class StoreComponent implements OnInit {
   loadBalance() {
     if (this.authService.username) {
       this.profileService.getProfile(this.authService.username).subscribe({
-        next: (profile) => this.pokecoins.set(profile.pokecoins),
+        next: (profile) => {
+          this.pokecoins.set(profile.pokecoins);
+          this.userPacks.set(profile.packs || 0);
+        },
         error: () => {}
       });
     }
@@ -94,11 +104,37 @@ export class StoreComponent implements OnInit {
     this.storeService.buyItem(item.id).subscribe({
       next: () => {
         this.toastService.success(`¡Has comprado ${item.name}!`);
-        this.loadBalance(); // Refresh balance
+        this.loadBalance(); // Refresh balance and packs
       },
       error: (err) => {
         this.toastService.error(err.error?.message || 'Error al procesar la compra');
       }
     });
+  }
+
+  openPack() {
+    if (this.userPacks() <= 0) {
+      this.toastService.error('No tienes sobres para abrir');
+      return;
+    }
+    
+    this.openingPack.set(true);
+    this.packService.openPack().subscribe({
+      next: (result) => {
+        this.openedCards.set(result.cards);
+        this.packResult.set(result);
+        this.loadBalance(); // Refresh
+        setTimeout(() => this.openingPack.set(false), 1000);
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Error al abrir el sobre');
+        this.openingPack.set(false);
+      }
+    });
+  }
+
+  closePackResult() {
+    this.packResult.set(null);
+    this.openedCards.set([]);
   }
 }
