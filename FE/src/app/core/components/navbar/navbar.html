@@ -7,6 +7,7 @@
       <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
         <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
         <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
+        <a routerLink="/battle-pass" [style.color]="isActive('/battle-pass') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Pase</a>
         <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
         <a routerLink="/store" [style.color]="isActive('/store') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Tienda</a>
         <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>

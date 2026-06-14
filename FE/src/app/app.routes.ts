@@ -59,5 +59,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/store/store.component').then((m) => m.StoreComponent),
   },
+  {
+    path: 'battle-pass',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/battle-pass/battle-pass.component').then((m) => m.BattlePassComponent),
+  },
   { path: '**', redirectTo: '' },
 ];
