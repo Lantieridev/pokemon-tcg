@@ -333,6 +333,19 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return base + handRemaining + prizeRemaining;
   });
 
+  // ── Pila 3D del mazo (capas dinámicas según cantidad de cartas) ────────────
+  readonly myDeckPile = computed(() => {
+    const count = this.myDeckCountAnimated();
+    const layers = Math.max(0, Math.min(15, Math.ceil(count / 4)));
+    return Array.from({ length: layers }, (_, i) => i);
+  });
+
+  readonly oppDeckPile = computed(() => {
+    const count = this.oppDeckCountAnimated();
+    const layers = Math.max(0, Math.min(15, Math.ceil(count / 4)));
+    return Array.from({ length: layers }, (_, i) => i);
+  });
+
   // ── Condiciones especiales para CSS ───────────────────────────────────────
   readonly myActiveIsAsleep = computed(() =>
     this.myActiveConditions().includes('ASLEEP')
