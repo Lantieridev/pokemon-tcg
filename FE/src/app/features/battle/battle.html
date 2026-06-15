@@ -72,280 +72,291 @@
       }
     </div>
 
-    <!-- LEFT COLUMN — both players' prize cards stacked -->
-    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-4 items-center">
-      <!-- Opponent Prizes -->
-      <div class="flex flex-col items-center gap-2">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
-        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
-             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of oppPrizesAnimated(); track $index) {
-            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
-              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
-            </div>
-          }
-        </div>
-      </div>
+    <!-- ═══ 3D PLAYMAT ═══════════════════════════════════════════════════ -->
+    <div class="playmat-wrapper">
+      <div class="playmat-3d" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
 
-      <!-- ESTADIO -->
-      <div class="flex flex-col items-center gap-1.5">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
-        @if (activeStadiumCardId(); as stadiumId) {
-          <div class="relative w-[80px] h-[112px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-               (click)="zoomCard(getCardImageUrl(stadiumId))">
-            <img [src]="getCardImageUrl(stadiumId)" alt="Stadium" class="w-full h-full object-cover rounded-lg border-2 border-[rgba(255,203,5,.6)]" />
-          </div>
-        } @else {
-          <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
-            <div class="text-center">
-              <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- My Prizes -->
-      <div class="flex flex-col items-center gap-2">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
-        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
-             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of myPrizesAnimated(); track $index) {
-            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
-              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN — both players' deck + discard -->
-    <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
-      <!-- Opponent Deck/Discard -->
-      <div class="flex flex-col items-center gap-3">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
-             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
-          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
-          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
-          <div class="card-back relative" style="width:70px; height:98px"></div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
-        </div>
-        <div class="relative">
-          <div class="rounded-md flex items-center justify-center"
-               style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
-            <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
-          </div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.discardCount }}</div>
-          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
-               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
-        </div>
-      </div>
-      <!-- My Deck/Discard -->
-      <div class="flex flex-col items-center gap-3">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
-             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
-          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
-          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
-          <div class="card-back relative" style="width:70px; height:98px"></div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
-        </div>
-        <div class="relative">
-          @if (me()! && me()!.discard && me()!.discard.length > 0) {
-            <!-- Muestra la última carta del descarte como imagen placeholder -->
-            <div class="rounded-md" style="width:70px; height:98px; background:rgba(255,203,5,.15); border:1px solid rgba(255,203,5,.4);"></div>
-          } @else {
-            <div class="rounded-md flex items-center justify-center shadow-inner"
-                 style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
-              <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
-            </div>
-          }
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.discard?.length || 0 }}</div>
-          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
-               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
-    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
-      
-      <!-- OPPONENT BENCH -->
-      <div class="flex items-end gap-3" style="transform: rotate(180deg)">
-        @for (b of oppEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 70px; height: 98px;">
-            <div class="w-full h-full rounded-md flex items-center justify-center"
-                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
-              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
-            </div>
-          </div>
-        }
-        @for (b of opp()!.bench; track $index) {
-          <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
-            <app-field-pokemon
-              [cardId]="b.cardId"
-              [energies]="b.energies"
-              [damage]="b.damage"
-              [maxHp]="b.maxHp"
-              [status]="b.status"
-              [attachedToolCardId]="b.attachedToolCardId"
-              [damageEvent]="oppBenchDamageEvent($index)"
-              [width]="70"
-              direction="up"
-              (toolClick)="zoomCard(getCardImageUrl($event))">
-            </app-field-pokemon>
-          </div>
-        }
-      </div>
-
-      <!-- OPPONENT ACTIVE -->
-      @if (opp()!.active; as activeOpp) {
-        <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
-             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
-          @if (oppActiveIsBurned()) {
-            <div class="token-burned" title="Oponente Quemado">🔥</div>
-          }
-          @if (oppActiveIsPoisoned()) {
-            <div class="token-poisoned" title="Oponente Envenenado">☠</div>
-          }
-          <app-field-pokemon
-            [cardId]="activeOpp.cardId"
-            [energies]="activeOpp.energies"
-            [damage]="activeOpp.damage"
-            [maxHp]="activeOpp.maxHp"
-            [status]="activeOpp.status"
-            [attachedToolCardId]="activeOpp.attachedToolCardId"
-            [damageEvent]="oppActiveDamageEvent()"
-            [width]="110"
-            [glow]="true"
-            direction="up"
-            (toolClick)="zoomCard(getCardImageUrl($event))">
-          </app-field-pokemon>
-        </div>
-      } @else {
-        <!-- Empty active slot placeholder -->
-        <div class="active-pokemon-wrapper opacity-35" style="transform: rotate(180deg); border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 110px; height: 154px; display: flex; align-items: center; justify-content: center;">
-          <div class="text-center">
-            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
-            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-          </div>
-        </div>
-      }
-
-      <!-- Floating cancel retreat or targeting banner -->
-      @if (isRetreating() || targetingAbility()) {
-        <div class="absolute top-[30px] left-1/2 -translate-x-1/2 z-[45] flex items-center gap-4 px-6 py-3 rounded-2xl border transition-all duration-300"
-             style="background: rgba(13, 21, 33, 0.95); backdrop-filter: blur(12px); border-color: var(--accent2); box-shadow: 0 0 20px rgba(255, 206, 50, 0.3);">
-          <div class="flex items-center gap-2.5">
-            <span class="animate-ping w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-            <span class="text-sm font-chunky tracking-wide text-white uppercase">
-              @if (isRetreating()) {
-                Selecciona un Pokémon de la banca para retirar
-              } @else {
-                Selecciona el objetivo para {{ targetingAbility()?.name }}
+        <!-- ── LEFT COLUMN — Premios + Estadio ─────────────────────────── -->
+        <div class="playmat-col playmat-col--left">
+          <!-- Opponent Prizes -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
+            <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+                 style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+              @for (alive of oppPrizesAnimated(); track $index) {
+                <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+                  <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+                </div>
               }
-            </span>
+            </div>
           </div>
-          <button class="px-3.5 py-1.5 rounded-xl text-xs font-chunky uppercase cursor-pointer transition-all border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95"
-                  (click)="isRetreating() ? cancelRetreat() : targetingAbility.set(null)">
-            Cancelar
-          </button>
-        </div>
-      }
 
-      <!-- TURNO INDICATOR -->
-      <div class="flex flex-col items-center gap-2 my-1 relative z-30">
-        <div class="px-4 py-1 rounded-full"
-             style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
-          <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
-        </div>
-      </div>
+          <!-- ESTADIO -->
+          <div class="flex flex-col items-center gap-1.5">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
+            @if (activeStadiumCardId(); as stadiumId) {
+              <div class="relative w-[80px] h-[112px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                   (click)="zoomCard(getCardImageUrl(stadiumId))">
+                <img [src]="getCardImageUrl(stadiumId)" alt="Stadium" class="w-full h-full object-cover rounded-lg border-2 border-[rgba(255,203,5,.6)]" />
+              </div>
+            } @else {
+              <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
+                <div class="text-center">
+                  <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
+                </div>
+              </div>
+            }
+          </div>
 
-      <!-- MY ACTIVE -->
-      @if (me()!.active; as activeMe) {
-        <div class="active-pokemon-wrapper cursor-pointer" 
-             [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
-             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
-             (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
-             (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
-             (dragover)="onDragOver($event)"
-             (drop)="onDropPokemon($event, 'active', null)">
-          <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
-          @if (myActiveIsBurned()) {
-            <div class="token-burned" title="Quemado">🔥</div>
+          <!-- My Prizes -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
+            <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+                 style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+              @for (alive of myPrizesAnimated(); track $index) {
+                <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+                  <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CENTER COLUMN — Bench + Active + Pokéball ────────────────── -->
+        <div class="playmat-col playmat-col--center">
+
+          <!-- OPPONENT BENCH -->
+          <div class="flex items-end justify-center gap-3" style="transform: rotate(180deg)">
+            @for (b of oppEmptyBench(); track $index) {
+              <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 70px; height: 98px;">
+                <div class="w-full h-full rounded-md flex items-center justify-center"
+                     style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+                  <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+                </div>
+              </div>
+            }
+            @for (b of opp()!.bench; track $index) {
+              <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
+                <app-field-pokemon
+                  [cardId]="b.cardId"
+                  [energies]="b.energies"
+                  [damage]="b.damage"
+                  [maxHp]="b.maxHp"
+                  [status]="b.status"
+                  [attachedToolCardId]="b.attachedToolCardId"
+                  [damageEvent]="oppBenchDamageEvent($index)"
+                  [width]="70"
+                  direction="up"
+                  (toolClick)="zoomCard(getCardImageUrl($event))">
+                </app-field-pokemon>
+              </div>
+            }
+          </div>
+
+          <!-- OPPONENT ACTIVE -->
+          @if (opp()!.active; as activeOpp) {
+            <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
+              @if (oppActiveIsBurned()) {
+                <div class="token-burned" title="Oponente Quemado">🔥</div>
+              }
+              @if (oppActiveIsPoisoned()) {
+                <div class="token-poisoned" title="Oponente Envenenado">☠</div>
+              }
+              <app-field-pokemon
+                [cardId]="activeOpp.cardId"
+                [energies]="activeOpp.energies"
+                [damage]="activeOpp.damage"
+                [maxHp]="activeOpp.maxHp"
+                [status]="activeOpp.status"
+                [attachedToolCardId]="activeOpp.attachedToolCardId"
+                [damageEvent]="oppActiveDamageEvent()"
+                [width]="100"
+                [glow]="true"
+                direction="up"
+                (toolClick)="zoomCard(getCardImageUrl($event))">
+              </app-field-pokemon>
+            </div>
+          } @else {
+            <!-- Empty active slot placeholder -->
+            <div class="active-pokemon-wrapper opacity-35" style="transform: rotate(180deg); border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 100px; height: 140px; display: flex; align-items: center; justify-content: center;">
+              <div class="text-center">
+                <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+                <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+              </div>
+            </div>
           }
-          @if (myActiveIsPoisoned()) {
-            <div class="token-poisoned" title="Envenenado">☠</div>
+
+          <!-- Floating cancel retreat or targeting banner -->
+          @if (isRetreating() || targetingAbility()) {
+            <div class="absolute top-[30px] left-1/2 -translate-x-1/2 z-[45] flex items-center gap-4 px-6 py-3 rounded-2xl border transition-all duration-300"
+                 style="background: rgba(13, 21, 33, 0.95); backdrop-filter: blur(12px); border-color: var(--accent2); box-shadow: 0 0 20px rgba(255, 206, 50, 0.3);">
+              <div class="flex items-center gap-2.5">
+                <span class="animate-ping w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                <span class="text-sm font-chunky tracking-wide text-white uppercase">
+                  @if (isRetreating()) {
+                    Selecciona un Pokémon de la banca para retirar
+                  } @else {
+                    Selecciona el objetivo para {{ targetingAbility()?.name }}
+                  }
+                </span>
+              </div>
+              <button class="px-3.5 py-1.5 rounded-xl text-xs font-chunky uppercase cursor-pointer transition-all border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95"
+                      (click)="isRetreating() ? cancelRetreat() : targetingAbility.set(null)">
+                Cancelar
+              </button>
+            </div>
           }
-          <app-field-pokemon
-            [cardId]="activeMe.cardId"
-            [energies]="activeMe.energies"
-            [damage]="activeMe.damage"
-            [maxHp]="activeMe.maxHp"
-            [status]="activeMe.status"
-            [attachedToolCardId]="activeMe.attachedToolCardId"
-            [damageEvent]="myActiveDamageEvent()"
-            [width]="120"
-            [glow]="true"
-            direction="up"
-            (toolClick)="zoomCard(getCardImageUrl($event))">
-          </app-field-pokemon>
-        </div>
-      } @else {
-        <!-- Empty active slot placeholder -->
-        <div class="active-pokemon-wrapper opacity-35" style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 120px; height: 168px; display: flex; align-items: center; justify-content: center;">
-          <div class="text-center">
-            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
-            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-          </div>
-        </div>
-      }
 
-
-      <!-- MY BENCH -->
-      <div class="flex items-start gap-3"
-           (dragover)="onDragOver($event)"
-           (drop)="onDropField($event)">
-        @for (b of me()!.bench; track $index) {
-          <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
-               [class.pulse-promote]="!me()!.active"
-               (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
-               (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
-               (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
-               (dragover)="onDragOver($event)"
-               (drop)="onDropPokemon($event, 'bench', $index)">
-            <app-field-pokemon
-              [cardId]="b.cardId"
-              [energies]="b.energies"
-              [damage]="b.damage"
-              [maxHp]="b.maxHp"
-              [attachedToolCardId]="b.attachedToolCardId"
-              [damageEvent]="myBenchDamageEvent($index)"
-              [width]="80"
-              direction="up"
-              (toolClick)="zoomCard(getCardImageUrl($event))">
-            </app-field-pokemon>
+          <!-- POKÉBALL DIVIDER + TURNO INDICATOR -->
+          <div class="flex flex-col items-center gap-1 my-1 relative z-30">
+            <div class="playmat-pokeball">
+              <div class="playmat-pokeball-line"></div>
+              <div class="playmat-pokeball-center"></div>
+            </div>
+            <div class="px-4 py-1 rounded-full"
+                 style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
+              <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
+            </div>
           </div>
-        }
-        @for (b of myEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 80px; height: 112px;"
-               [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
-               (click)="selectTarget('bench', null)"
+
+          <!-- MY ACTIVE -->
+          @if (me()!.active; as activeMe) {
+            <div class="active-pokemon-wrapper cursor-pointer"
+                 [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
+                 (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
+                 (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
+                 (dragover)="onDragOver($event)"
+                 (drop)="onDropPokemon($event, 'active', null)">
+              <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
+              @if (myActiveIsBurned()) {
+                <div class="token-burned" title="Quemado">🔥</div>
+              }
+              @if (myActiveIsPoisoned()) {
+                <div class="token-poisoned" title="Envenenado">☠</div>
+              }
+              <app-field-pokemon
+                [cardId]="activeMe.cardId"
+                [energies]="activeMe.energies"
+                [damage]="activeMe.damage"
+                [maxHp]="activeMe.maxHp"
+                [status]="activeMe.status"
+                [attachedToolCardId]="activeMe.attachedToolCardId"
+                [damageEvent]="myActiveDamageEvent()"
+                [width]="110"
+                [glow]="true"
+                direction="up"
+                (toolClick)="zoomCard(getCardImageUrl($event))">
+              </app-field-pokemon>
+            </div>
+          } @else {
+            <!-- Empty active slot placeholder -->
+            <div class="active-pokemon-wrapper opacity-35" style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 110px; height: 154px; display: flex; align-items: center; justify-content: center;">
+              <div class="text-center">
+                <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+                <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+              </div>
+            </div>
+          }
+
+          <!-- MY BENCH -->
+          <div class="flex items-start justify-center gap-3"
                (dragover)="onDragOver($event)"
                (drop)="onDropField($event)">
-            <div class="w-full h-full rounded-md flex items-center justify-center"
-                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
-              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+            @for (b of me()!.bench; track $index) {
+              <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+                   [class.pulse-promote]="!me()!.active"
+                   (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
+                   (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
+                   (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDropPokemon($event, 'bench', $index)">
+                <app-field-pokemon
+                  [cardId]="b.cardId"
+                  [energies]="b.energies"
+                  [damage]="b.damage"
+                  [maxHp]="b.maxHp"
+                  [attachedToolCardId]="b.attachedToolCardId"
+                  [damageEvent]="myBenchDamageEvent($index)"
+                  [width]="75"
+                  direction="up"
+                  (toolClick)="zoomCard(getCardImageUrl($event))">
+                </app-field-pokemon>
+              </div>
+            }
+            @for (b of myEmptyBench(); track $index) {
+              <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 75px; height: 105px;"
+                   [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
+                   (click)="selectTarget('bench', null)"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDropField($event)">
+                <div class="w-full h-full rounded-md flex items-center justify-center"
+                     style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+                  <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- ── RIGHT COLUMN — Mazo + Descarte ──────────────────────────── -->
+        <div class="playmat-col playmat-col--right">
+          <!-- Opponent Deck/Discard -->
+          <div class="flex flex-col items-center gap-3">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
+            <div class="deck-pile"
+                 (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
+              @for (idx of oppDeckPile(); track idx) {
+                <div class="deck-card-layer card-back" [style.--layer-index]="idx"></div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum z-[100]"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
+            </div>
+            <div class="relative">
+              <div class="rounded-md flex items-center justify-center"
+                   style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+                <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.discardCount }}</div>
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+                   style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
             </div>
           </div>
-        }
+          <!-- My Deck/Discard -->
+          <div class="flex flex-col items-center gap-3">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
+            <div class="deck-pile"
+                 (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
+              @for (idx of myDeckPile(); track idx) {
+                <div class="deck-card-layer card-back" [style.--layer-index]="idx"></div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum z-[100]"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
+            </div>
+            <div class="relative">
+              @if (me()! && me()!.discard && me()!.discard.length > 0) {
+                <!-- Muestra la última carta del descarte como imagen placeholder -->
+                <div class="rounded-md" style="width:70px; height:98px; background:rgba(255,203,5,.15); border:1px solid rgba(255,203,5,.4);"></div>
+              } @else {
+                <div class="rounded-md flex items-center justify-center shadow-inner"
+                     style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+                  <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+                </div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.discard?.length || 0 }}</div>
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+                   style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
+            </div>
+          </div>
+        </div>
+
       </div>
-      
     </div>
+    <!-- ═══ END 3D PLAYMAT ══════════════════════════════════════════════ -->
 
     <!-- ── BOTTOM STRIP — player HUD + end turn + hand fan ─────────────── -->
     <div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">

@@ -112,6 +112,14 @@ import { CARDS } from '../../data/cards.mock';
     </div>
   `,
   styles: [`
+    :host {
+      display: inline-block;
+      transform-style: preserve-3d;
+      transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.05);
+    }
+    .bench-slot {
+      transform-style: preserve-3d;
+    }
     .tool-badge {
       position: absolute;
       top: -4px;
