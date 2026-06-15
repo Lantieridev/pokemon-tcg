@@ -54,11 +54,11 @@ public class BattlePassServiceImpl implements BattlePassService {
         }
 
         return BattlePassStatusDTO.builder()
-                .isPremium(userPass.getIsPremium())
+                .isPremium(Boolean.TRUE.equals(userPass.getIsPremium()))
                 .currentXp(currentXp)
                 .currentLevel(currentLevel)
-                .claimedFreeLevel(userPass.getClaimedFreeLevel())
-                .claimedPremiumLevel(userPass.getClaimedPremiumLevel())
+                .claimedFreeLevel(userPass.getClaimedFreeLevel() != null ? userPass.getClaimedFreeLevel() : 0)
+                .claimedPremiumLevel(userPass.getClaimedPremiumLevel() != null ? userPass.getClaimedPremiumLevel() : 0)
                 .levels(levels)
                 .build();
     }
@@ -88,8 +88,12 @@ public class BattlePassServiceImpl implements BattlePassService {
             if (level <= userPass.getClaimedFreeLevel()) {
                 throw new IllegalArgumentException("Ya reclamaste esta recompensa gratuita");
             }
-            if (level != userPass.getClaimedFreeLevel() + 1) {
-                throw new IllegalArgumentException("Debes reclamar las recompensas en orden");
+            // Check that skipped levels are actually empty
+            for (int i = userPass.getClaimedFreeLevel() + 1; i < level; i++) {
+                BattlePassLevelEntity intermediate = battlePassLevelRepository.findById(i).orElse(null);
+                if (intermediate != null && intermediate.getFreeRewardType() != null) {
+                    throw new IllegalArgumentException("Debes reclamar las recompensas anteriores primero");
+                }
             }
             grantReward(user, passLevel.getFreeRewardType(), passLevel.getFreeRewardAmount(), passLevel.getFreeRewardValue());
             userPass.setClaimedFreeLevel(level);
@@ -97,8 +101,12 @@ public class BattlePassServiceImpl implements BattlePassService {
             if (level <= userPass.getClaimedPremiumLevel()) {
                 throw new IllegalArgumentException("Ya reclamaste esta recompensa premium");
             }
-            if (level != userPass.getClaimedPremiumLevel() + 1) {
-                throw new IllegalArgumentException("Debes reclamar las recompensas en orden");
+            // Check that skipped levels are actually empty
+            for (int i = userPass.getClaimedPremiumLevel() + 1; i < level; i++) {
+                BattlePassLevelEntity intermediate = battlePassLevelRepository.findById(i).orElse(null);
+                if (intermediate != null && intermediate.getPremiumRewardType() != null) {
+                    throw new IllegalArgumentException("Debes reclamar las recompensas anteriores primero");
+                }
             }
             grantReward(user, passLevel.getPremiumRewardType(), passLevel.getPremiumRewardAmount(), passLevel.getPremiumRewardValue());
             userPass.setClaimedPremiumLevel(level);
@@ -150,6 +158,10 @@ public class BattlePassServiceImpl implements BattlePassService {
             case "AVATAR" -> {
                 if (value != null) user.getUnlockedAvatars().add(value);
             }
+            case "STARDUST" -> {
+                int stardust = user.getStardust() != null ? user.getStardust() : 0;
+                user.setStardust(stardust + (amount != null ? amount : 0));
+            }
         }
     }
 
@@ -158,10 +170,10 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .level(entity.getLevel())
                 .requiredXp(entity.getRequiredXp())
                 .freeRewardType(entity.getFreeRewardType())
-                .freeRewardAmount(entity.getFreeRewardAmount())
+                .freeRewardAmount(entity.getFreeRewardAmount() != null ? entity.getFreeRewardAmount() : 0)
                 .freeRewardValue(entity.getFreeRewardValue())
                 .premiumRewardType(entity.getPremiumRewardType())
-                .premiumRewardAmount(entity.getPremiumRewardAmount())
+                .premiumRewardAmount(entity.getPremiumRewardAmount() != null ? entity.getPremiumRewardAmount() : 0)
                 .premiumRewardValue(entity.getPremiumRewardValue())
                 .build();
     }

@@ -37,7 +37,7 @@ public class UserProfileResponseDTO {
     private List<String> unlockedTitles;
     private List<String> unlockedAvatars;
 
-    private ShowcaseSlot showcase;
+    private List<ShowcaseSlot> showcase;
     private ShowcasedDeck showcasedDeck;
     private AdvancedStatsDTO advancedStats;
 

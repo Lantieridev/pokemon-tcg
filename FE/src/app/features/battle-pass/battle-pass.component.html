@@ -1,123 +1,227 @@
-<div class="bp-container">
-  @if (loading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Cargando Pase de Batalla...</p>
-    </div>
-  } @else if (status()) {
-    <div class="bp-header">
-      <div class="bp-title-section">
-        <h1>Pase de Batalla <span class="season-badge">Temporada 1</span></h1>
-        <p>Juega partidas, gana experiencia y desbloquea recompensas exclusivas.</p>
-        
-        <div class="bp-stats">
-          <div class="stat-pill">
-            <span class="stat-label">Nivel Actual</span>
-            <span class="stat-value text-white">{{ status()?.currentLevel }}</span>
-          </div>
-          <div class="stat-pill">
-            <span class="stat-label">Experiencia</span>
-            <span class="stat-value text-[var(--p-blue)]">{{ status()?.currentXp }} XP</span>
-          </div>
-        </div>
-        
-        <div class="progress-bar-container mt-4">
-          <div class="progress-bar">
-            <div class="progress-fill" [style.width]="progressPercentage() + '%'"></div>
+<div class="bp-scroll-host">
+  <div class="bp-container">
+    @if (loading()) {
+      <div class="flex justify-center items-center h-64">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+      </div>
+    } @else if (status()) {
+      <div class="bp-header mb-8">
+        <div class="bp-title-section transition-all duration-1000" [ngClass]="status()?.isPremium ? 'premium-aura' : ''">
+          <h1 class="font-display text-4xl text-white tracking-wider mb-2" [ngClass]="status()?.isPremium ? 'text-yellow-300 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]' : ''">PASE DE BATALLA</h1>
+          <span class="season-badge font-chunky">TEMPORADA 1</span>
+          <p class="text-[var(--ink-dim)] mt-4">Juega partidas, gana experiencia y desbloquea recompensas exclusivas.</p>
+          
+          <div class="bp-stats mt-6">
+            <div class="stat-pill">
+              <span class="stat-label">NIVEL ACTUAL</span>
+              <span class="stat-value text-white">{{ status()?.currentLevel || 0 }}</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-label">EXPERIENCIA</span>
+              <span class="stat-value text-[var(--p-blue)]">{{ status()?.currentXp || 0 }} XP</span>
+            </div>
           </div>
         </div>
+        
+        <div class="bp-premium-cta" [class.is-premium]="status()?.isPremium">
+          @if (status()?.isPremium) {
+            <div class="premium-active-badge">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <h2>Pase Premium Activado</h2>
+              <p>Tienes acceso a todas las recompensas exclusivas.</p>
+            </div>
+          } @else {
+            <div class="premium-buy-card">
+              <svg class="w-8 h-8 text-[var(--p-yellow)] mb-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <h2>Desbloquea el Pase Premium</h2>
+              <p>Consigue sobres extra, títulos exclusivos y avatares 3D.</p>
+              <button class="buy-premium-btn" (click)="openPurchaseModal()" [disabled]="pokecoins() < 1000">
+                Desbloquear por 1000 <aurora-coin-icon [size]="16" class="inline ml-1"></aurora-coin-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Fortnite Style Grid Timeline -->
+      <div class="bp-pagination-header mt-10 mb-2 flex justify-between items-end px-2">
+        <h3 class="font-chunky text-white/50 text-sm tracking-widest">TEMPORADA 1</h3>
+        <div class="pagination-controls flex items-center gap-4">
+          <button class="nav-arrow" (click)="prevPage()" [disabled]="currentPage() === 0">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+          </button>
+          <span class="font-chunky text-white tracking-widest text-sm">PÁGINA {{ currentPage() + 1 }} / {{ totalPages() }}</span>
+          <button class="nav-arrow" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="bp-grid-container">
+        <div class="bp-grid">
+          @for (level of displayedLevels(); track level.level) {
+            <div class="grid-col" [class.is-current]="level.level === (status()?.currentLevel ?? 0) + 1">
+              
+              <!-- Level Header -->
+              <div class="grid-header">
+                <span class="header-lbl">NIVEL</span>
+                <span class="header-num">{{ level.level }}</span>
+              </div>
+
+              <!-- Free Reward (Top) -->
+              <div class="grid-cell cell-free" [class.is-empty]="!level.freeRewardType">
+                @if (level.freeRewardType) {
+                  <div class="cell-content">
+                    <img [src]="getRewardImage(level.freeRewardType, level.freeRewardValue)" 
+                         class="cell-img" 
+                         [ngClass]="'img-' + (level.freeRewardType?.toLowerCase() || 'default')"
+                         (error)="onImageError($event, level.freeRewardType)" />
+                    @if (level.freeRewardType === 'COINS' || level.freeRewardType === 'STARDUST') {
+                      <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.freeRewardAmount || level.freeRewardValue }}</span>
+                    }
+                    
+                    <!-- Tooltip en Hover -->
+                    <div class="reward-tooltip">
+                      <div class="tooltip-type">{{ getRewardTypeName(level.freeRewardType) }}</div>
+                      <div class="tooltip-name">
+                        {{ level.freeRewardType === 'COINS' ? (level.freeRewardAmount || level.freeRewardValue) + ' Monedas' : level.freeRewardValue }}
+                      </div>
+                    </div>
+                  </div>
+                }
+                  <!-- Corner Status -->
+                  <div class="corner-status">
+                    @if (level.level <= (status()?.claimedFreeLevel ?? 0)) {
+                      <div class="status-check bg-green-500">
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </div>
+                    } @else if (canClaimFree(level.level)) {
+                      <button class="claim-mini-btn claim-action-btn bg-blue-500 font-black px-4 py-1" style="font-size: 14px;" (click)="claimReward(level.level, false)">RECLAMAR</button>
+                    } @else if (level.freeRewardType) {
+                      <div class="status-lock">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                      </div>
+                    }
+                  </div>
+              </div>
+
+              <!-- Premium Reward (Bottom) -->
+              <div class="grid-cell cell-premium" [class.tier-locked]="!status()?.isPremium">
+                <div class="cell-content">
+                  <img [src]="getRewardImage(level.premiumRewardType, level.premiumRewardValue)" 
+                       class="cell-img" 
+                       [ngClass]="'img-' + (level.premiumRewardType?.toLowerCase() || 'default')"
+                       (error)="onImageError($event, level.premiumRewardType)" />
+                  @if (level.premiumRewardType === 'COINS' || level.premiumRewardType === 'STARDUST') {
+                    <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.premiumRewardAmount || level.premiumRewardValue }}</span>
+                  }
+                  
+                  <!-- Tooltip en Hover -->
+                  <div class="reward-tooltip">
+                    <div class="tooltip-type">{{ getRewardTypeName(level.premiumRewardType) }}</div>
+                    <div class="tooltip-name text-yellow-300">
+                      {{ level.premiumRewardType === 'COINS' ? (level.premiumRewardAmount || level.premiumRewardValue) + ' Monedas' : level.premiumRewardValue }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Corner Status -->
+                <div class="corner-status">
+                  @if (status()?.isPremium) {
+                    @if (level.level <= (status()?.claimedPremiumLevel ?? 0)) {
+                      <div class="status-check bg-green-500">
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </div>
+                    } @else if (canClaimPremium(level.level)) {
+                      <button class="claim-mini-btn claim-action-btn bg-blue-500 font-black px-4 py-1" style="font-size: 14px;" (click)="claimReward(level.level, true)">RECLAMAR</button>
+                    } @else if (level.premiumRewardType) {
+                      <div class="status-lock">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                      </div>
+                    }
+                  } @else {
+                    <div class="status-lock">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                    </div>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+<!-- Modal de Recompensa (Efecto Dopaminico) -->
+@if (claimedReward()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-modal-bg" (click)="closeClaimModal()">
+    <div class="bg-gradient-to-b from-[#1a2035] to-[#0f1423] p-10 rounded-2xl border-2 shadow-2xl animate-modal-content text-center flex flex-col items-center gap-6"
+         [ngClass]="claimedReward()!.isPremium ? 'border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.3)]' : 'border-blue-400 shadow-[0_0_50px_rgba(96,165,250,0.3)]'"
+         (click)="$event.stopPropagation()">
+      
+      <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r drop-shadow-md tracking-widest uppercase"
+           [ngClass]="claimedReward()!.isPremium ? 'from-yellow-300 to-yellow-600' : 'from-blue-300 to-indigo-500'">
+        �Recompensa Desbloqueada!
       </div>
       
-      <div class="bp-premium-cta" [class.is-premium]="status()?.isPremium">
-        @if (status()?.isPremium) {
-          <div class="premium-active-badge">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <h2>Pase Premium Activado</h2>
-            <p>Tienes acceso a todas las recompensas exclusivas.</p>
-          </div>
-        } @else {
-          <div class="premium-buy-card">
-            <svg class="w-8 h-8 text-[var(--p-yellow)] mb-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <h2>Desbloquea el Pase Premium</h2>
-            <p>Consigue sobres extra, títulos exclusivos y avatares 3D.</p>
-            <button class="buy-premium-btn" (click)="purchasePremium()" [disabled]="pokecoins() < 1000">
-              Desbloquear por 1000 <aurora-coin-icon [size]="16" class="inline ml-1"></aurora-coin-icon>
-            </button>
-          </div>
-        }
+      <div class="relative w-56 h-56 flex items-center justify-center mt-4 mb-2 animate-float-reward">
+        <div class="absolute inset-0 blur-3xl rounded-full animate-pulse"
+             [ngClass]="claimedReward()!.isPremium ? 'bg-yellow-400/30' : 'bg-blue-400/30'"></div>
+        <img [src]="getRewardImage(claimedReward()!.type, claimedReward()!.value)" 
+             class="w-full h-full object-contain relative z-10 drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)]"
+             [ngClass]="'img-' + (claimedReward()!.type?.toLowerCase() || 'default')"
+             (error)="onImageError($event, claimedReward()!.type)" />
+      </div>
+
+      <div class="text-center bg-[#0a0d14]/50 py-3 px-8 rounded-xl border border-white/5">
+        <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{{ getRewardTypeName(claimedReward()!.type) }}</div>
+        <div class="text-3xl font-black text-white drop-shadow-md">
+          {{ claimedReward()!.type === 'COINS' || claimedReward()!.type === 'STARDUST' ? 'x' + claimedReward()!.amount : claimedReward()!.value }}
+        </div>
+      </div>
+
+      <button (click)="closeClaimModal()" 
+              class="mt-4 px-10 py-3 rounded-full font-bold text-white uppercase tracking-wider transition-all transform hover:scale-105"
+              [ngClass]="claimedReward()!.isPremium ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.5)]' : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'">
+        Aceptar
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Modal de Compra Premium (Estilo Dorado) -->
+@if (showPurchaseModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-modal-bg" (click)="closePurchaseModal()">
+    <div class="bg-gradient-to-b from-[#2a2010] to-[#120d05] p-10 rounded-2xl border-2 border-yellow-500 shadow-[0_0_80px_rgba(250,204,21,0.4)] animate-modal-content text-center flex flex-col items-center gap-6"
+         (click)="$event.stopPropagation()">
+      
+      <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600 drop-shadow-md tracking-widest uppercase">
+        Pase de Batalla Premium
+      </div>
+      
+      <div class="relative w-48 h-48 flex items-center justify-center mt-4 mb-2 animate-float-reward">
+        <div class="absolute inset-0 blur-3xl rounded-full bg-yellow-400/40 animate-pulse"></div>
+        <svg class="w-32 h-32 text-yellow-400 drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] relative z-10" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </div>
+
+      <div class="text-center text-gray-300 mb-2 px-4 max-w-sm">
+        Desbloquea instantáneamente las recompensas premium y obtén sobres extra, títulos exclusivos y avatares 3D.
+      </div>
+
+      <div class="flex gap-4 mt-4 w-full justify-center">
+        <button (click)="closePurchaseModal()" 
+                class="px-8 py-3 rounded-full font-bold text-gray-400 border border-gray-600 hover:bg-white/5 hover:text-white uppercase tracking-wider transition-all">
+          Cancelar
+        </button>
+        <button (click)="confirmPurchasePremium()" 
+                class="px-8 py-3 rounded-full font-bold text-black uppercase tracking-wider transition-all transform hover:scale-105 bg-gradient-to-r from-yellow-400 to-yellow-600 hover:shadow-[0_0_20px_rgba(250,204,21,0.6)] flex items-center gap-2">
+          Comprar 1000 <aurora-coin-icon [size]="20"></aurora-coin-icon>
+        </button>
       </div>
     </div>
-    <div class="bp-timeline-wrapper mt-10">
-      <div class="timeline-track">
-        @for (level of status()?.levels; track level.level) {
-          <div class="timeline-column" 
-               [class.is-current]="level.level === (status()?.currentLevel ?? 0) + 1"
-               [class.is-completed]="level.level <= (status()?.currentLevel ?? 0)">
-            
-            <!-- Premium Reward (Top) -->
-            <div class="reward-box premium-box" [class.locked]="!status()?.isPremium">
-              @if (!status()?.isPremium) {
-                <div class="locked-overlay">
-                  <svg class="w-6 h-6 text-white/50" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
-                </div>
-              }
-              <div class="reward-content">
-                <div class="reward-img-container">
-                  <img [src]="getRewardImage(level.premiumRewardType, level.premiumRewardValue)" class="reward-img" />
-                </div>
-                <h4 class="font-chunky text-xs text-white text-center mt-2">{{ level.premiumRewardAmount }}x {{ level.premiumRewardType }}</h4>
-                <p class="font-chunky text-[9px] text-[var(--p-yellow)] uppercase text-center mt-1">{{ level.premiumRewardValue || 'Recompensa Premium' }}</p>
-              </div>
-
-              <!-- Premium Status -->
-              <div class="reward-action mt-3">
-                @if (status()?.isPremium) {
-                  @if (level.level <= (status()?.claimedPremiumLevel ?? 0)) {
-                    <div class="claimed-badge">Reclamado</div>
-                  } @else if (level.level <= (status()?.currentLevel ?? 0) && level.level === (status()?.claimedPremiumLevel ?? 0) + 1) {
-                    <button class="claim-btn premium-claim" (click)="claimReward(level.level, true)">Reclamar</button>
-                  } @else {
-                    <div class="locked-badge">Bloqueado</div>
-                  }
-                }
-              </div>
-            </div>
-
-            <!-- Level Node (Middle) -->
-            <div class="level-node-container">
-              <div class="level-line"></div>
-              <div class="level-node">
-                <span class="node-lvl">LVL</span>
-                <span class="node-num" [style.color]="level.level <= (status()?.currentLevel ?? 0) ? 'var(--p-blue)' : 'white'">{{ level.level }}</span>
-                <span class="node-xp">{{ level.requiredXp }} XP</span>
-              </div>
-            </div>
-
-            <!-- Free Reward (Bottom) -->
-            <div class="reward-box free-box">
-              <div class="reward-content">
-                <div class="reward-img-container">
-                  <img [src]="getRewardImage(level.freeRewardType, level.freeRewardValue)" class="reward-img" />
-                </div>
-                <h4 class="font-chunky text-xs text-white text-center mt-2">{{ level.freeRewardAmount }}x {{ level.freeRewardType }}</h4>
-                <p class="font-chunky text-[9px] text-white/50 uppercase text-center mt-1">{{ level.freeRewardValue || 'Recompensa Base' }}</p>
-              </div>
-
-              <!-- Free Status -->
-              <div class="reward-action mt-3">
-                @if (level.level <= (status()?.claimedFreeLevel ?? 0)) {
-                  <div class="claimed-badge">Reclamado</div>
-                } @else if (level.level <= (status()?.currentLevel ?? 0) && level.level === (status()?.claimedFreeLevel ?? 0) + 1) {
-                  <button class="claim-btn free-claim" (click)="claimReward(level.level, false)">Reclamar</button>
-                } @else {
-                  <div class="locked-badge">Bloqueado</div>
-                }
-              </div>
-            </div>
-
-          </div>
-        }
-      </div>
-    </div>
-  }
-</div>
+  </div>
+}
