@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { PokemonTcgCard } from '../models/game-state.models';
 
-const CACHE_KEY = 'xy1_cards_cache';
-const API_URL = 'https://api.pokemontcg.io/v2/cards?q=set.id:xy1&pageSize=250';
+const CACHE_KEY = 'xy1_xy2_cards_cache';
+const API_URL = 'https://api.pokemontcg.io/v2/cards?q=(set.id:xy1 OR set.id:xy2)&pageSize=350';
 
 @Injectable({ providedIn: 'root' })
 export class PokemonTcgService {

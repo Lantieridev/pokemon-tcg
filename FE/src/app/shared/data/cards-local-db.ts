@@ -1180,5 +1180,901 @@ export const LOCAL_CARDS_DB: Record<string, LocalCardMetadata> = {
       "Basic",
       "EX"
     ]
+  },
+
+  "xy2-1": {
+    "id": "xy2-1",
+    "name": "Caterpie",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-2": {
+    "id": "xy2-2",
+    "name": "Metapod",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-3": {
+    "id": "xy2-3",
+    "name": "Butterfree",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-4": {
+    "id": "xy2-4",
+    "name": "Pineco",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-5": {
+    "id": "xy2-5",
+    "name": "Seedot",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-6": {
+    "id": "xy2-6",
+    "name": "Nuzleaf",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-7": {
+    "id": "xy2-7",
+    "name": "Shiftry",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-8": {
+    "id": "xy2-8",
+    "name": "Roselia",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-9": {
+    "id": "xy2-9",
+    "name": "Roserade",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-10": {
+    "id": "xy2-10",
+    "name": "Maractus",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-11": {
+    "id": "xy2-11",
+    "name": "Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-12": {
+    "id": "xy2-12",
+    "name": "Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-13": {
+    "id": "xy2-13",
+    "name": "M Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
+  },
+  "xy2-14": {
+    "id": "xy2-14",
+    "name": "Ponyta",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-15": {
+    "id": "xy2-15",
+    "name": "Rapidash",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-16": {
+    "id": "xy2-16",
+    "name": "Torkoal",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-17": {
+    "id": "xy2-17",
+    "name": "Fletchinder",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-18": {
+    "id": "xy2-18",
+    "name": "Litleo",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-19": {
+    "id": "xy2-19",
+    "name": "Litleo",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-20": {
+    "id": "xy2-20",
+    "name": "Pyroar",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-21": {
+    "id": "xy2-21",
+    "name": "Qwilfish",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-22": {
+    "id": "xy2-22",
+    "name": "Feebas",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-23": {
+    "id": "xy2-23",
+    "name": "Milotic",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-24": {
+    "id": "xy2-24",
+    "name": "Spheal",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-25": {
+    "id": "xy2-25",
+    "name": "Sealeo",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-26": {
+    "id": "xy2-26",
+    "name": "Walrein",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-27": {
+    "id": "xy2-27",
+    "name": "Luvdisc",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-28": {
+    "id": "xy2-28",
+    "name": "Buizel",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-29": {
+    "id": "xy2-29",
+    "name": "Floatzel",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-30": {
+    "id": "xy2-30",
+    "name": "Bergmite",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-31": {
+    "id": "xy2-31",
+    "name": "Avalugg",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-32": {
+    "id": "xy2-32",
+    "name": "Shinx",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-33": {
+    "id": "xy2-33",
+    "name": "Luxio",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-34": {
+    "id": "xy2-34",
+    "name": "Luxray",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-35": {
+    "id": "xy2-35",
+    "name": "Magnezone-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-36": {
+    "id": "xy2-36",
+    "name": "Helioptile",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-37": {
+    "id": "xy2-37",
+    "name": "Heliolisk",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-38": {
+    "id": "xy2-38",
+    "name": "Duskull",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-39": {
+    "id": "xy2-39",
+    "name": "Dusclops",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-40": {
+    "id": "xy2-40",
+    "name": "Dusknoir",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-41": {
+    "id": "xy2-41",
+    "name": "Toxicroak-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-42": {
+    "id": "xy2-42",
+    "name": "Espurr",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-43": {
+    "id": "xy2-43",
+    "name": "Meowstic",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-44": {
+    "id": "xy2-44",
+    "name": "Skrelp",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-45": {
+    "id": "xy2-45",
+    "name": "Geodude",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-46": {
+    "id": "xy2-46",
+    "name": "Graveler",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-47": {
+    "id": "xy2-47",
+    "name": "Golem",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-48": {
+    "id": "xy2-48",
+    "name": "Binacle",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-49": {
+    "id": "xy2-49",
+    "name": "Barbaracle",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-50": {
+    "id": "xy2-50",
+    "name": "Sneasel",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-51": {
+    "id": "xy2-51",
+    "name": "Sneasel",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-52": {
+    "id": "xy2-52",
+    "name": "Weavile",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-53": {
+    "id": "xy2-53",
+    "name": "Stunky",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-54": {
+    "id": "xy2-54",
+    "name": "Stunky",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-55": {
+    "id": "xy2-55",
+    "name": "Skuntank",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-56": {
+    "id": "xy2-56",
+    "name": "Sandile",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-57": {
+    "id": "xy2-57",
+    "name": "Krokorok",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-58": {
+    "id": "xy2-58",
+    "name": "Scraggy",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-59": {
+    "id": "xy2-59",
+    "name": "Scrafty",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-60": {
+    "id": "xy2-60",
+    "name": "Forretress",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-61": {
+    "id": "xy2-61",
+    "name": "Durant",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-62": {
+    "id": "xy2-62",
+    "name": "Flabébé",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-63": {
+    "id": "xy2-63",
+    "name": "Flabébé",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-64": {
+    "id": "xy2-64",
+    "name": "Floette",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-65": {
+    "id": "xy2-65",
+    "name": "Floette",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-66": {
+    "id": "xy2-66",
+    "name": "Florges",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-67": {
+    "id": "xy2-67",
+    "name": "Spritzee",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-68": {
+    "id": "xy2-68",
+    "name": "Carbink",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-69": {
+    "id": "xy2-69",
+    "name": "M Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
+  },
+  "xy2-70": {
+    "id": "xy2-70",
+    "name": "Druddigon",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-71": {
+    "id": "xy2-71",
+    "name": "Dragalge",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-72": {
+    "id": "xy2-72",
+    "name": "Goomy",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-73": {
+    "id": "xy2-73",
+    "name": "Sliggoo",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-74": {
+    "id": "xy2-74",
+    "name": "Goodra",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-75": {
+    "id": "xy2-75",
+    "name": "Pidgey",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-76": {
+    "id": "xy2-76",
+    "name": "Pidgeotto",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-77": {
+    "id": "xy2-77",
+    "name": "Pidgeot",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 2"
+    ]
+  },
+  "xy2-78": {
+    "id": "xy2-78",
+    "name": "Kangaskhan-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-79": {
+    "id": "xy2-79",
+    "name": "M Kangaskhan-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
+  },
+  "xy2-80": {
+    "id": "xy2-80",
+    "name": "Snorlax",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-81": {
+    "id": "xy2-81",
+    "name": "Sentret",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-82": {
+    "id": "xy2-82",
+    "name": "Furret",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-83": {
+    "id": "xy2-83",
+    "name": "Miltank",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-84": {
+    "id": "xy2-84",
+    "name": "Buneary",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-85": {
+    "id": "xy2-85",
+    "name": "Lopunny",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Stage 1"
+    ]
+  },
+  "xy2-86": {
+    "id": "xy2-86",
+    "name": "Fletchling",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-87": {
+    "id": "xy2-87",
+    "name": "Furfrou",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic"
+    ]
+  },
+  "xy2-88": {
+    "id": "xy2-88",
+    "name": "Blacksmith",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-88a": {
+    "id": "xy2-88a",
+    "name": "Blacksmith",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-89": {
+    "id": "xy2-89",
+    "name": "Fiery Torch",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-90": {
+    "id": "xy2-90",
+    "name": "Lysandre",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-91": {
+    "id": "xy2-91",
+    "name": "Magnetic Storm",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Stadium"
+    ]
+  },
+  "xy2-92": {
+    "id": "xy2-92",
+    "name": "Pal Pad",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-93": {
+    "id": "xy2-93",
+    "name": "Pokémon Center Lady",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-94": {
+    "id": "xy2-94",
+    "name": "Pokémon Fan Club",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-95": {
+    "id": "xy2-95",
+    "name": "Protection Cube",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Pokémon Tool"
+    ]
+  },
+  "xy2-96": {
+    "id": "xy2-96",
+    "name": "Sacred Ash",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-97": {
+    "id": "xy2-97",
+    "name": "Startling Megaphone",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-98": {
+    "id": "xy2-98",
+    "name": "Trick Shovel",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-99": {
+    "id": "xy2-99",
+    "name": "Ultra Ball",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Item"
+    ]
+  },
+  "xy2-100": {
+    "id": "xy2-100",
+    "name": "Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-101": {
+    "id": "xy2-101",
+    "name": "Magnezone-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-102": {
+    "id": "xy2-102",
+    "name": "Toxicroak-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-103": {
+    "id": "xy2-103",
+    "name": "Kangaskhan-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "Basic",
+      "EX"
+    ]
+  },
+  "xy2-104": {
+    "id": "xy2-104",
+    "name": "Lysandre",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-105": {
+    "id": "xy2-105",
+    "name": "Pokémon Center Lady",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-106": {
+    "id": "xy2-106",
+    "name": "Pokémon Fan Club",
+    "supertype": "Trainer",
+    "subtypes": [
+      "Supporter"
+    ]
+  },
+  "xy2-107": {
+    "id": "xy2-107",
+    "name": "M Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
+  },
+  "xy2-108": {
+    "id": "xy2-108",
+    "name": "M Charizard-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
+  },
+  "xy2-109": {
+    "id": "xy2-109",
+    "name": "M Kangaskhan-EX",
+    "supertype": "Pokémon",
+    "subtypes": [
+      "MEGA",
+      "EX"
+    ]
   }
 };
