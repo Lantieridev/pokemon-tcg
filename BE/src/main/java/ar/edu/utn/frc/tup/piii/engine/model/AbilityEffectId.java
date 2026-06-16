@@ -17,5 +17,10 @@ public enum AbilityEffectId {
     DRIVE_OFF,
     FUR_COAT,
     FOREST_CURSE,
+    INTIMIDATING_MANE,
+    LEAF_DRAW,
+    ENERGY_GRACE,
+    HAND_LOCK,
+    SHADOW_VOID,
     NONE
 }

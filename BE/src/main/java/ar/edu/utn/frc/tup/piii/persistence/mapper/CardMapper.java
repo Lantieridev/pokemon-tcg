@@ -81,6 +81,11 @@ public final class CardMapper {
         ab.put("Drive Off",      AbilityEffectId.DRIVE_OFF);
         ab.put("Fur Coat",       AbilityEffectId.FUR_COAT);
         ab.put("Forest's Curse", AbilityEffectId.FOREST_CURSE);
+        ab.put("Intimidating Mane", AbilityEffectId.INTIMIDATING_MANE);
+        ab.put("Leaf Draw",      AbilityEffectId.LEAF_DRAW);
+        ab.put("Energy Grace",   AbilityEffectId.ENERGY_GRACE);
+        ab.put("Hand Lock",      AbilityEffectId.HAND_LOCK);
+        ab.put("Shadow Void",    AbilityEffectId.SHADOW_VOID);
         ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 
