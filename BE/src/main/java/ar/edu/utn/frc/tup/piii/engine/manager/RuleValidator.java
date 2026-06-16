@@ -498,6 +498,7 @@ public final class RuleValidator {
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.WATER_SHURIKEN ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
             if (source.hasUsedAbilityThisTurn(effId.name())) {
                 return new ValidationResult.Invalid("ability_already_used_this_turn");
@@ -524,6 +525,17 @@ public final class RuleValidator {
                     .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.WATER);
             if (!hasWaterEnergy) {
                 return new ValidationResult.Invalid("water_energy_required_in_hand");
+            }
+        }
+        
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW) {
+            if (runtime == null) {
+                return new ValidationResult.Invalid("player_runtime_required");
+            }
+            final boolean hasGrassEnergy = runtime.getHand().getCards().stream()
+                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.GRASS);
+            if (!hasGrassEnergy) {
+                return new ValidationResult.Invalid("grass_energy_required_in_hand");
             }
         }
         

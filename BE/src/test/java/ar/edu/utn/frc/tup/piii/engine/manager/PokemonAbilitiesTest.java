@@ -248,6 +248,38 @@ class PokemonAbilitiesTest {
         assertEquals(6, activeHand.size());
         assertEquals(5, activeDeck.getCards().size());
     }
+
+    @Test
+    void testLeafDrawActiveAbility() {
+        InPlayPokemon source = new InPlayPokemon(new PokemonCard.Builder("shiftry", "Shiftry", 140, PokemonType.GRASS)
+                .abilities(List.of(new Ability("Leaf Draw", "", AbilityEffectId.LEAF_DRAW)))
+                .build());
+
+        Hand activeHand = new Hand();
+        EnergyCard grassEnergy = new EnergyCard("grass-1", "Grass Energy", PokemonType.GRASS, true);
+        activeHand.addCard(grassEnergy);
+        when(activeRuntime.getHand()).thenReturn(activeHand);
+
+        DiscardPile activeDiscard = new DiscardPile();
+        when(activeRuntime.getDiscardPile()).thenReturn(activeDiscard);
+
+        List<Card> deckCards = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            deckCards.add(new EnergyCard("grass-" + (i + 2), "Grass Energy", PokemonType.GRASS, true));
+        }
+        Deck activeDeck = new Deck(deckCards);
+        when(activeRuntime.getDeck()).thenReturn(activeDeck);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Leaf Draw", -1, -1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.LEAF_DRAW).ifPresent(effect -> effect.apply(session, action));
+
+        assertFalse(activeHand.getCards().contains(grassEnergy));
+        assertTrue(activeDiscard.getCards().contains(grassEnergy));
+        assertEquals(3, activeHand.size());
+        assertEquals(2, activeDeck.getCards().size());
+    }
     @Test
     void testRuleValidatorDriveOff() {
         PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
@@ -512,5 +544,35 @@ class PokemonAbilitiesTest {
 
         assertNull(runtime.getActivePokemon());
         verify(sem, times(1)).clearAll();
+    }
+
+    @Test
+    void testRuleValidatorLeafDraw() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp);
+
+        InPlayPokemon shiftry = new InPlayPokemon(new PokemonCard.Builder("shiftry", "Shiftry", 140, PokemonType.GRASS)
+                .abilities(List.of(new Ability("Leaf Draw", "", AbilityEffectId.LEAF_DRAW)))
+                .build());
+
+        UseAbilityAction action = new UseAbilityAction(shiftry, "Leaf Draw", -1, -1, List.of());
+
+        // 1. No Grass Energy in hand
+        Hand handWithoutGrass = new Hand();
+        handWithoutGrass.addCard(new EnergyCard("fire", "Fire Energy", PokemonType.FIRE, true));
+        when(activeRuntime.getHand()).thenReturn(handWithoutGrass);
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("grass_energy_required_in_hand", ((ValidationResult.Invalid) result).reason());
+
+        // 2. Valid
+        Hand handWithGrass = new Hand();
+        handWithGrass.addCard(new EnergyCard("grass", "Grass Energy", PokemonType.GRASS, true));
+        when(activeRuntime.getHand()).thenReturn(handWithGrass);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
     }
 }

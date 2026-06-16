@@ -32,6 +32,7 @@ public final class AbilityEffectResolver {
         map.put(AbilityEffectId.WATER_SHURIKEN, new WaterShurikenStrategy(PokemonType.WATER, 3));
         map.put(AbilityEffectId.STANCE_CHANGE, new StanceChangeStrategy());
         map.put(AbilityEffectId.UPSIDE_DOWN_EVOLUTION, new UpsideDownEvolutionStrategy());
+        map.put(AbilityEffectId.LEAF_DRAW, new LeafDrawStrategy());
         
         this.strategies = Collections.unmodifiableMap(map);
     }
