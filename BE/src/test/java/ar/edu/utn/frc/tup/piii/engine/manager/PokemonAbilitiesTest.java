@@ -575,4 +575,84 @@ class PokemonAbilitiesTest {
         result = ruleValidator.validate(action, 0);
         assertTrue(result instanceof ValidationResult.Valid);
     }
+
+    @Test
+    void testEnergyGraceActiveAbility() {
+        InPlayPokemon milotic = new InPlayPokemon(new PokemonCard.Builder("milotic", "Milotic", 100, PokemonType.WATER)
+                .abilities(List.of(new Ability("Energy Grace", "", AbilityEffectId.ENERGY_GRACE)))
+                .build());
+
+        InPlayPokemon activeTarget = new InPlayPokemon(new PokemonCard.Builder("target", "Non-EX Target", 90, PokemonType.GRASS).build());
+
+        Bench activeBench = new Bench();
+        activeBench.place(milotic);
+        when(activeRuntime.getBench()).thenReturn(activeBench);
+        when(activeRuntime.getActivePokemon()).thenReturn(activeTarget);
+
+        DiscardPile discardPile = new DiscardPile();
+        EnergyCard energy1 = new EnergyCard("water-1", "Water Energy", PokemonType.WATER, true);
+        EnergyCard energy2 = new EnergyCard("water-2", "Water Energy", PokemonType.WATER, true);
+        EnergyCard energy3 = new EnergyCard("water-3", "Water Energy", PokemonType.WATER, true);
+        discardPile.add(energy1);
+        discardPile.add(energy2);
+        discardPile.add(energy3);
+        when(activeRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        KnockoutHandler knockoutHandler = mock(KnockoutHandler.class);
+        when(session.getKnockoutHandler()).thenReturn(knockoutHandler);
+
+        UseAbilityAction action = new UseAbilityAction(milotic, "Energy Grace", 0, -1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.ENERGY_GRACE).ifPresent(effect -> effect.apply(session, action));
+
+        verify(knockoutHandler, times(1)).onKnockout(milotic, 1);
+        assertEquals(3, activeTarget.getAttachedEnergyCards().size());
+        assertTrue(activeTarget.getAttachedEnergyCards().contains(energy1));
+        assertTrue(activeTarget.getAttachedEnergyCards().contains(energy2));
+        assertTrue(activeTarget.getAttachedEnergyCards().contains(energy3));
+        assertTrue(discardPile.getCards().isEmpty());
+    }
+
+    @Test
+    void testRuleValidatorEnergyGrace() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp);
+
+        InPlayPokemon milotic = new InPlayPokemon(new PokemonCard.Builder("milotic", "Milotic", 100, PokemonType.WATER)
+                .abilities(List.of(new Ability("Energy Grace", "", AbilityEffectId.ENERGY_GRACE)))
+                .build());
+
+        InPlayPokemon exTarget = new InPlayPokemon(new PokemonCard.Builder("target-ex", "EX Target", 180, PokemonType.FIRE)
+                .ex(true)
+                .build());
+
+        Bench activeBench = new Bench();
+        activeBench.place(milotic);
+        when(activeRuntime.getBench()).thenReturn(activeBench);
+        when(activeRuntime.getActivePokemon()).thenReturn(exTarget);
+
+        DiscardPile discardPile = new DiscardPile();
+        when(activeRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        UseAbilityAction action = new UseAbilityAction(milotic, "Energy Grace", 0, -1, List.of());
+
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("basic_energy_required_in_discard", ((ValidationResult.Invalid) result).reason());
+
+        discardPile.add(new EnergyCard("grass", "Grass Energy", PokemonType.GRASS, true));
+
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("no_valid_non_ex_target_in_play", ((ValidationResult.Invalid) result).reason());
+
+        InPlayPokemon nonExTarget = new InPlayPokemon(new PokemonCard.Builder("target-non-ex", "Non-EX Target", 90, PokemonType.FIRE).build());
+        when(activeRuntime.getActivePokemon()).thenReturn(nonExTarget);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
+    }
 }
