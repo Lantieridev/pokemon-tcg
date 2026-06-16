@@ -443,6 +443,10 @@ public final class RuleValidator {
         if (disabledAttack != null && disabledAttack.equalsIgnoreCase(action.attack().name())) {
             return new ValidationResult.Invalid(ATTACK_DISABLED_BY_EFFECT);
         }
+        final String selfDisabledAttack = getActiveStatusEffectManager(playerIndex).getSelfDisabledAttackName();
+        if (selfDisabledAttack != null && selfDisabledAttack.equalsIgnoreCase(action.attack().name())) {
+            return new ValidationResult.Invalid(ATTACK_DISABLED_BY_EFFECT);
+        }
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_ATTACK);
         }

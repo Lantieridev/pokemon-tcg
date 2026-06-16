@@ -42,6 +42,8 @@ public class StatusEffectManager {
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;
     private boolean damagePreventedNextTurn;
+    private String selfDisabledAttackName;
+    private boolean selfDisabledAttackSetThisTurn;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -123,6 +125,8 @@ public class StatusEffectManager {
         activeEffects.clear();
         this.disabledAttackName = null;
         this.damagePreventedNextTurn = false;
+        this.selfDisabledAttackName = null;
+        this.selfDisabledAttackSetThisTurn = false;
     }
 
     /**
@@ -236,5 +240,21 @@ public class StatusEffectManager {
 
     public void setDamagePreventedNextTurn(final boolean damagePreventedNextTurn) {
         this.damagePreventedNextTurn = damagePreventedNextTurn;
+    }
+
+    public String getSelfDisabledAttackName() {
+        return selfDisabledAttackName;
+    }
+
+    public void setSelfDisabledAttackName(final String selfDisabledAttackName) {
+        this.selfDisabledAttackName = selfDisabledAttackName;
+    }
+
+    public boolean isSelfDisabledAttackSetThisTurn() {
+        return selfDisabledAttackSetThisTurn;
+    }
+
+    public void setSelfDisabledAttackSetThisTurn(final boolean selfDisabledAttackSetThisTurn) {
+        this.selfDisabledAttackSetThisTurn = selfDisabledAttackSetThisTurn;
     }
 }

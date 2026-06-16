@@ -2,7 +2,10 @@ package ar.edu.utn.frc.tup.piii.engine.pipeline;
 
 import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
+import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
+import java.util.List;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -63,6 +66,11 @@ public final class AttackEffectResolver {
         m.put("heal_all",                 AttackEffectType.HEAL_ALL);
         m.put("discard_opponent_energy",            AttackEffectType.DISCARD_OPPONENT_ENERGY);
         m.put("coin_flip_discard_opponent_energy",  AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY);
+        m.put("stoke",                               AttackEffectType.STOKE);
+        m.put("combustion_blast",                    AttackEffectType.COMBUSTION_BLAST);
+        m.put("scorching_fang",                      AttackEffectType.SCORCHING_FANG);
+        m.put("bright_garden",                       AttackEffectType.BRIGHT_GARDEN);
+        m.put("ear_we_go",                           AttackEffectType.EAR_WE_GO);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -229,6 +237,27 @@ public final class AttackEffectResolver {
                             defender.removeEnergies(amount);
                         }
                     }
+                });
+        m.put(AttackEffectType.STOKE,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                        if (runtime != null) {
+                            final List<Card> basicEnergies = runtime.getDeck().searchAndRemove(
+                                    c -> c instanceof EnergyCard ec && ec.isBasic(),
+                                    3
+                            );
+                            for (Card card : basicEnergies) {
+                                ctx.getAttacker().attachEnergy((EnergyCard) card);
+                            }
+                            runtime.getDeck().shuffle();
+                        }
+                    }
+                });
+        m.put(AttackEffectType.COMBUSTION_BLAST,
+                (amount, ctx) -> {
+                    ctx.getAttackerStatusManager().setSelfDisabledAttackName("Combustion Blast");
+                    ctx.getAttackerStatusManager().setSelfDisabledAttackSetThisTurn(true);
                 });
         this.handlers = Collections.unmodifiableMap(m);
     }
