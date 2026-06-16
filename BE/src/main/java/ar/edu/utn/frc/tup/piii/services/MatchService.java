@@ -370,6 +370,11 @@ public class MatchService {
                 sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon());
                 if (i == turnManager.activePlayerIndex()) {
                     sem.setDisabledAttackName(null);
+                    if (sem.isSelfDisabledAttackSetThisTurn()) {
+                        sem.setSelfDisabledAttackSetThisTurn(false);
+                    } else {
+                        sem.setSelfDisabledAttackName(null);
+                    }
                 } else {
                     sem.setDamagePreventedNextTurn(false);
                 }

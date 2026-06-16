@@ -585,4 +585,63 @@ class AttackEffectResolverTest {
         org.mockito.Mockito.verify(benched1).heal(10);
         org.mockito.Mockito.verify(benched2).heal(10);
     }
+
+    @Test
+    void shouldResolveStokeOnHeadsAndAttachUpTo3BasicEnergies() {
+        assertEquals(AttackEffectType.STOKE, resolver.resolveType("stoke"));
+
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+
+        final ar.edu.utn.frc.tup.piii.engine.model.EnergyCard fire1 = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("fire-1", "Fire Energy", PokemonType.FIRE, true);
+        final ar.edu.utn.frc.tup.piii.engine.model.EnergyCard fire2 = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("fire-2", "Fire Energy", PokemonType.FIRE, true);
+
+        org.mockito.Mockito.when(deck.searchAndRemove(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(3)))
+                .thenReturn(List.of(fire1, fire2));
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true) // Heads
+                .effectText("stoke")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals(2, attacker.getAttachedEnergies().size());
+        org.mockito.Mockito.verify(deck).shuffle();
+    }
+
+    @Test
+    void shouldNotResolveStokeOnTails() {
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> false) // Tails
+                .effectText("stoke")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        resolver.apply(ctx);
+
+        assertTrue(attacker.getAttachedEnergies().isEmpty());
+        org.mockito.Mockito.verifyNoInteractions(attackerRuntime);
+    }
+
+    @Test
+    void shouldResolveCombustionBlastAndDisableIt() {
+        assertEquals(AttackEffectType.COMBUSTION_BLAST, resolver.resolveType("combustion_blast"));
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("combustion_blast")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals("Combustion Blast", attackerSM.getSelfDisabledAttackName());
+        assertTrue(attackerSM.isSelfDisabledAttackSetThisTurn());
+    }
 }
