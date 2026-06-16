@@ -228,6 +228,22 @@ public final class CardMapper {
         if (text == null || text.isBlank() || "null".equals(text)) {
             return "";
         }
+        final String lowerName = attackName != null ? attackName.toLowerCase() : "";
+        if ("stoke".equals(lowerName)) {
+            return "stoke";
+        }
+        if ("combustion blast".equals(lowerName)) {
+            return "combustion_blast";
+        }
+        if ("scorching fang".equals(lowerName)) {
+            return "scorching_fang";
+        }
+        if ("bright garden".equals(lowerName)) {
+            return "bright_garden";
+        }
+        if ("ear we go".equals(lowerName)) {
+            return "ear_we_go";
+        }
         final String lower = text.toLowerCase();
 
         // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
