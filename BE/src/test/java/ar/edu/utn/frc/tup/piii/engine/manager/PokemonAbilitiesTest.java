@@ -222,6 +222,32 @@ class PokemonAbilitiesTest {
         assertEquals(inkayCard, source.getUnderlyingCards().get(0));
         assertTrue(activeDeck.getCards().isEmpty());
     }
+
+    @Test
+    void testMysticalFireActiveAbility() {
+        InPlayPokemon source = new InPlayPokemon(new PokemonCard.Builder("delphox", "Delphox", 140, PokemonType.FIRE)
+                .abilities(List.of(new Ability("Mystical Fire", "", AbilityEffectId.MYSTICAL_FIRE)))
+                .build());
+
+        Hand activeHand = new Hand();
+        activeHand.addCard(new EnergyCard("fire-1", "Fire Energy", PokemonType.FIRE, true));
+        when(activeRuntime.getHand()).thenReturn(activeHand);
+
+        List<Card> deckCards = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            deckCards.add(new EnergyCard("fire-" + (i + 2), "Fire Energy", PokemonType.FIRE, true));
+        }
+        Deck activeDeck = new Deck(deckCards);
+        when(activeRuntime.getDeck()).thenReturn(activeDeck);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Mystical Fire", -1, -1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.MYSTICAL_FIRE).ifPresent(effect -> effect.apply(session, action));
+
+        assertEquals(6, activeHand.size());
+        assertEquals(5, activeDeck.getCards().size());
+    }
     @Test
     void testRuleValidatorDriveOff() {
         PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
