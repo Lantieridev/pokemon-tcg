@@ -32,7 +32,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
             
             // Check if decks already exist to avoid duplicates on multiple restarts
             List<DeckEntity> existing = deckRepository.findByUserId(user.getId());
-            if (existing.size() >= 2) {
+            if (existing.size() >= 4) {
                 return;
             }
 
@@ -86,10 +86,73 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                     )
             );
 
+            // Create Charizard EX Flashfire Deck
+            ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO charizardDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
+                    user.getId(),
+                    "Mazo Charizard EX Flashfire",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+                    List.of(
+                            // Pokemons
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-11", 2), // Charizard-EX (Stoke)
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-12", 2), // Charizard-EX (Combustion Blast)
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-18", 4), // Litleo
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-20", 4), // Pyroar
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-24", 4), // Fennekin
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-25", 2), // Braixen
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-26", 2), // Delphox
+                            
+                            // Trainers
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-88", 3), // Blacksmith
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-89", 3), // Fiery Torch
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-90", 2), // Lysandre
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-92", 2), // Pal Pad
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-95", 2), // Protection Cube
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-96", 2), // Sacred Ash
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-99", 4), // Ultra Ball
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-127", 4), // Shauna
+                            
+                            // Energies
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 18) // Fire Energy
+                    )
+            );
+            
+            // Create Fire & Grass Flashfire Deck
+            ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO fireGrassDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
+                    user.getId(),
+                    "Mazo Fuego & Planta Flashfire",
+                    ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+                    List.of(
+                            // Pokemons
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-5", 4), // Seedot
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-6", 4), // Nuzleaf
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-7", 3), // Shiftry
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-22", 3), // Feebas
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-23", 3), // Milotic
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-18", 3), // Litleo
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-20", 2), // Pyroar
+                            
+                            // Trainers
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-91", 2), // Magnetic Storm
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-94", 3), // Pokémon Fan Club
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-90", 2), // Lysandre
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-99", 3), // Ultra Ball
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-96", 2), // Sacred Ash
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 6), // Roller Skates
+                            
+                            // Energies
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-132", 10), // Grass Energy
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 10) // Fire Energy
+                    )
+            );
+
             try {
-                deckService.create(waterDeck);
-                deckService.create(fireDeck);
-                System.out.println(">>> SEEDED 2 DECKS FOR USER USUARIO <<<");
+                if (existing.size() < 2) {
+                    deckService.create(waterDeck);
+                    deckService.create(fireDeck);
+                }
+                deckService.create(charizardDeck);
+                deckService.create(fireGrassDeck);
+                System.out.println(">>> SEEDED 4 DECKS FOR USER USUARIO <<<");
             } catch (Exception e) {
                 System.err.println("Failed to seed decks: " + e.getMessage());
             }
