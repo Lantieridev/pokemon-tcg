@@ -612,6 +612,27 @@ public final class RuleValidator {
                 return new ValidationResult.Invalid("pokemon_must_be_confused");
             }
         }
+
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SHADOW_VOID) {
+            if (action.targetIndex() == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            BattlePokemonState targetPokemon = action.targetIndex() < 0
+                    ? battlefieldProvider.getActivePokemon(playerIndex)
+                    : (benchStateProvider != null && action.targetIndex() < benchStateProvider.getBenchedPokemon(playerIndex).size()
+                        ? benchStateProvider.getBenchedPokemon(playerIndex).get(action.targetIndex())
+                        : null);
+
+            if (targetPokemon == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            if (targetPokemon.getDamageCounters() * 10 < 10) {
+                return new ValidationResult.Invalid("target_has_no_damage");
+            }
+            if (source.getDamageCounters() * 10 + 10 >= source.getMaxHp()) {
+                return new ValidationResult.Invalid("dusknoir_max_hp_reached");
+            }
+        }
         
         return new ValidationResult.Valid();
     }
