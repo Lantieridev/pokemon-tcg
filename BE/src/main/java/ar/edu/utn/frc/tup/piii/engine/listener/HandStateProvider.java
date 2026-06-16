@@ -29,4 +29,8 @@ public interface HandStateProvider {
     }
 
     Optional<Card> getCardInHand(int playerIndex, String cardId);
+
+    default java.util.List<Card> getHandCards(int playerIndex) {
+        return java.util.List.of();
+    }
 }

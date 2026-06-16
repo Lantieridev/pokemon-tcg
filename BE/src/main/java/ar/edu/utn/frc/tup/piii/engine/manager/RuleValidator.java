@@ -12,6 +12,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.AttachEnergyAction;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
+import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolveAction;
@@ -429,6 +430,33 @@ public final class RuleValidator {
         if (mainPhase.getEnergyAttached() >= MAX_ENERGY_PER_TURN) {
             return new ValidationResult.Invalid(ENERGY_ALREADY_ATTACHED);
         }
+
+        final int opponentIndex = 1 - playerIndex;
+        boolean opponentHasHandLock = false;
+        final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(opponentIndex);
+        if (opponentActive != null && hasAbility(opponentActive, AbilityEffectId.HAND_LOCK)) {
+            opponentHasHandLock = true;
+        }
+        if (!opponentHasHandLock && benchStateProvider != null) {
+            for (final BattlePokemonState benched : benchStateProvider.getBenchedPokemon(opponentIndex)) {
+                if (hasAbility(benched, AbilityEffectId.HAND_LOCK)) {
+                    opponentHasHandLock = true;
+                    break;
+                }
+            }
+        }
+
+        if (opponentHasHandLock) {
+            final java.util.List<Card> handCards = handStateProvider.getHandCards(playerIndex);
+            final java.util.Optional<EnergyCard> maybeEnergy = handCards.stream()
+                    .filter(c -> c instanceof EnergyCard e && e.getEnergyType() == action.energyType())
+                    .map(c -> (EnergyCard) c)
+                    .findFirst();
+            if (maybeEnergy.isPresent() && maybeEnergy.get().isSpecial()) {
+                return new ValidationResult.Invalid("opponent_hand_lock_active");
+            }
+        }
+
         return new ValidationResult.Valid();
     }
 
