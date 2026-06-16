@@ -46,7 +46,9 @@ public final class TrainerEffectResolver {
             case SHAUNA            -> TrainerEffect.shauna();
             case SUPER_POTION      -> TrainerEffect.superPotion();
             // Resolved directly in GameFacade (interactive selection, bench mutation, or opponent access).
-            case RED_CARD, TEAM_FLARE_GRUNT, CASSIUS, EVOSODA, GREAT_BALL, MAX_REVIVE, PROFESSORS_LETTER -> null;
+            case RED_CARD, TEAM_FLARE_GRUNT, CASSIUS, EVOSODA, GREAT_BALL, MAX_REVIVE, PROFESSORS_LETTER,
+                 LYSANDRE, SACRED_ASH, POKEMON_FAN_CLUB, MAGNETIC_STORM, FIERY_TORCH, TRICK_SHOVEL,
+                 STARTLING_MEGAPHONE, PAL_PAD, BLACKSMITH, POKEMON_CENTER_LADY, ULTRA_BALL -> null;
             case NONE              -> null;
         };
         return Optional.ofNullable(effect);
@@ -75,6 +77,7 @@ public final class TrainerEffectResolver {
                     ctx.addDefenderModifier(dmg -> Math.max(0, dmg - 20));
                 }
             };
+            case PROTECTION_CUBE -> null; // Handled directly in AttackEffectResolver
             case NONE -> null;
         };
         return Optional.ofNullable(effect);

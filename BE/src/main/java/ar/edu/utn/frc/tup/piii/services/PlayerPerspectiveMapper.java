@@ -52,16 +52,36 @@ public final class PlayerPerspectiveMapper {
                                 pc.getEvolvesFrom() != null &&
                                 req.target() != null &&
                                 pc.getEvolvesFrom().equalsIgnoreCase(req.target().getName()));
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_FAN_CLUB) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
                     var stream = runtime.getDiscardPile().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tc && tc.getTrainerType() == ar.edu.utn.frc.tup.piii.engine.model.TrainerType.SUPPORTER);
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK) {
-                    var stream = runtime.getDeck().getCards().stream().limit(7);
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime deckOwnerRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL
+                            && req.target() != null && !runtime.hasPokemonInPlay(req.target()))
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL ? 1 : 7);
+                    options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
+                    var stream = runtime.getHand().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
+                    }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 }
             }

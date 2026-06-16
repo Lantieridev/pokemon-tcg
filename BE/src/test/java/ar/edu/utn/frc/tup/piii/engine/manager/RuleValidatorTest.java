@@ -899,6 +899,151 @@ class RuleValidatorTest {
         assertInvalidReason(result, "opponent_hand_is_empty");
     }
 
+    @Test
+    void shouldReturnInvalidWhenLysandreOpponentBenchIsEmpty() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(0);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "opponent_bench_empty");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenLysandreTargetIsNull() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(2);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenLysandreTargetNotOnOpponentBench() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(1);
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        when(mockBench.getBenchedPokemon(1)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_must_be_on_opponent_bench");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenSacredAshNoPokemonInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider) mockBench).getDiscardPile(0)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "sacred-ash-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_pokemon_in_discard_pile");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenFieryTorchNoFireEnergyInHand() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider) mockBench).getDeckSize(0)).thenReturn(10);
+        final HandStateProvider mockHand = Mockito.mock(HandStateProvider.class);
+        when(mockHand.getHandCards(0)).thenReturn(List.of(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard(
+                "water-energy-id", "Water Energy", ar.edu.utn.frc.tup.piii.engine.model.PokemonType.WATER, false)));
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, mockHand);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "fiery-torch-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "fire_energy_required_in_hand");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPalPadNoSupporterInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider) mockBench).getDiscardPile(0)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "pal-pad-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_supporter_in_discard_pile");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenBlacksmithNoTarget() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "blacksmith-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenBlacksmithTargetNotFire() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.WATER, null, null, false);
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "blacksmith-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_must_be_fire_pokemon");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPokemonCenterLadyNoTarget() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "pcl-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPokemonCenterLadyNoDamageOrStatus() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(0, PokemonType.FIRE, null, null, false);
+        final BattlefieldStateProvider bfp = Mockito.mock(BattlefieldStateProvider.class);
+        when(bfp.getActivePokemon(0)).thenReturn(target);
+        when(statusEffectManager.activeEffects()).thenReturn(java.util.Set.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider, null, bfp);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "pcl-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_has_no_damage_or_status");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenUltraBallHandLessThan3() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final HandStateProvider mockHand = Mockito.mock(HandStateProvider.class);
+        when(mockHand.getHandSize(0)).thenReturn(2);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, mockHand);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "ultra-ball-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "insufficient_cards_in_hand");
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     private void assertInvalidReason(final ValidationResult result, final String expectedReason) {
