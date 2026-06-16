@@ -693,4 +693,65 @@ class PokemonAbilitiesTest {
         assertTrue(resultSpecial instanceof ValidationResult.Invalid);
         assertEquals("opponent_hand_lock_active", ((ValidationResult.Invalid) resultSpecial).reason());
     }
+
+    @Test
+    void testShadowVoidEffect() {
+        InPlayPokemon dusknoir = new InPlayPokemon(new PokemonCard.Builder("dusknoir", "Dusknoir", 130, PokemonType.PSYCHIC)
+                .abilities(List.of(new Ability("Shadow Void", "", AbilityEffectId.SHADOW_VOID)))
+                .build());
+        InPlayPokemon activeTarget = new InPlayPokemon(new PokemonCard.Builder("target", "Target", 100, PokemonType.FIRE).build());
+
+        activeTarget.addDamageCounters(3);
+        assertEquals(3, activeTarget.getDamageCounters());
+        assertEquals(0, dusknoir.getDamageCounters());
+
+        MatchSession session = mock(MatchSession.class);
+        MatchBoard board = mock(MatchBoard.class);
+        when(session.getBoard()).thenReturn(board);
+        when(session.getActivePlayerIndex()).thenReturn(0);
+        when(board.getActivePokemon(0)).thenReturn(activeTarget);
+
+        UseAbilityAction action = new UseAbilityAction(dusknoir, "Shadow Void", 0, -1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.SHADOW_VOID).ifPresent(effect -> effect.apply(session, action));
+
+        assertEquals(2, activeTarget.getDamageCounters());
+        assertEquals(1, dusknoir.getDamageCounters());
+    }
+
+    @Test
+    void testRuleValidatorShadowVoid() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider bfp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider ssp = mock(ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp, ssp, bfp);
+
+        InPlayPokemon dusknoir = new InPlayPokemon(new PokemonCard.Builder("dusknoir", "Dusknoir", 130, PokemonType.PSYCHIC)
+                .abilities(List.of(new Ability("Shadow Void", "", AbilityEffectId.SHADOW_VOID)))
+                .build());
+        InPlayPokemon activeTarget = new InPlayPokemon(new PokemonCard.Builder("target", "Target", 100, PokemonType.FIRE).build());
+
+        when(bfp.getActivePokemon(0)).thenReturn(activeTarget);
+        MainPhase mainPhase = mock(MainPhase.class);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+
+        UseAbilityAction action = new UseAbilityAction(dusknoir, "Shadow Void", 0, -1, List.of());
+
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("target_has_no_damage", ((ValidationResult.Invalid) result).reason());
+
+        activeTarget.addDamageCounters(1);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
+
+        dusknoir.addDamageCounters(12);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("dusknoir_max_hp_reached", ((ValidationResult.Invalid) result).reason());
+    }
 }

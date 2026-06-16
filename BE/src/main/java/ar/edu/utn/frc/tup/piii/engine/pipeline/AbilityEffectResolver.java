@@ -34,6 +34,7 @@ public final class AbilityEffectResolver {
         map.put(AbilityEffectId.UPSIDE_DOWN_EVOLUTION, new UpsideDownEvolutionStrategy());
         map.put(AbilityEffectId.LEAF_DRAW, new LeafDrawStrategy());
         map.put(AbilityEffectId.ENERGY_GRACE, new EnergyGraceStrategy());
+        map.put(AbilityEffectId.SHADOW_VOID, new ShadowVoidStrategy());
         
         this.strategies = Collections.unmodifiableMap(map);
     }
