@@ -167,6 +167,14 @@ public final class MatchBoard
         return java.util.Optional.empty();
     }
 
+    @Override
+    public List<Card> getHandCards(final int playerIndex) {
+        if (boundRuntimes != null) {
+            return boundRuntimes.get(playerIndex).getHand().getCards();
+        }
+        return List.of();
+    }
+
     /**
      * Returns the PlayerState for the specified player.
      *

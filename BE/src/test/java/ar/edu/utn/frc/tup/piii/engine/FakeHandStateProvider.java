@@ -23,4 +23,13 @@ public class FakeHandStateProvider implements HandStateProvider {
         }
         return Optional.ofNullable(playerHand.get(cardId));
     }
+
+    @Override
+    public java.util.List<Card> getHandCards(int playerIndex) {
+        final Map<String, Card> playerHand = hands.get(playerIndex);
+        if (playerHand == null) {
+            return java.util.List.of();
+        }
+        return new java.util.ArrayList<>(playerHand.values());
+    }
 }

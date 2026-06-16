@@ -655,4 +655,42 @@ class PokemonAbilitiesTest {
         result = ruleValidator.validate(action, 0);
         assertTrue(result instanceof ValidationResult.Valid);
     }
+
+    @Test
+    void testHandLockEffect() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider bfp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider ssp = mock(ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp, ssp, bfp);
+
+        InPlayPokemon myPokemon = new InPlayPokemon(new PokemonCard.Builder("my-pokemon", "Active", 100, PokemonType.FIRE).build());
+        InPlayPokemon barbaracle = new InPlayPokemon(new PokemonCard.Builder("barbaracle", "Barbaracle", 100, PokemonType.WATER)
+                .abilities(List.of(new Ability("Hand Lock", "", AbilityEffectId.HAND_LOCK)))
+                .build());
+
+        when(bfp.getActivePokemon(1)).thenReturn(barbaracle);
+        when(bfp.getActivePokemon(0)).thenReturn(myPokemon);
+        when(bsp.getBenchedPokemon(1)).thenReturn(List.of());
+
+        MainPhase mainPhase = mock(MainPhase.class);
+        when(mainPhase.getEnergyAttached()).thenReturn(0);
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+
+        AttachEnergyAction attachSpecial = new AttachEnergyAction(myPokemon, PokemonType.COLORLESS);
+        AttachEnergyAction attachBasic = new AttachEnergyAction(myPokemon, PokemonType.FIRE);
+
+        EnergyCard specialEnergy = new EnergyCard("double-colorless", "Double Colorless", PokemonType.COLORLESS, false, 2, false);
+        EnergyCard basicEnergy = new EnergyCard("fire-energy", "Fire Energy", PokemonType.FIRE, true);
+        when(hsp.getHandCards(0)).thenReturn(List.of(specialEnergy, basicEnergy));
+
+        ValidationResult resultBasic = ruleValidator.validate(attachBasic, 0);
+        assertTrue(resultBasic instanceof ValidationResult.Valid);
+
+        ValidationResult resultSpecial = ruleValidator.validate(attachSpecial, 0);
+        assertTrue(resultSpecial instanceof ValidationResult.Invalid);
+        assertEquals("opponent_hand_lock_active", ((ValidationResult.Invalid) resultSpecial).reason());
+    }
 }
