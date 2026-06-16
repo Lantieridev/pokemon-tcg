@@ -615,6 +615,46 @@ class PokemonAbilitiesTest {
     }
 
     @Test
+    void testEnergyGraceBenchedTargetAndShifting() {
+        InPlayPokemon milotic = new InPlayPokemon(new PokemonCard.Builder("milotic", "Milotic", 100, PokemonType.WATER)
+                .abilities(List.of(new Ability("Energy Grace", "", AbilityEffectId.ENERGY_GRACE)))
+                .build());
+
+        InPlayPokemon benchTarget = new InPlayPokemon(new PokemonCard.Builder("target-bench", "Non-EX Target", 90, PokemonType.GRASS).build());
+
+        Bench activeBench = new Bench();
+        activeBench.place(milotic); // Milotic at index 0
+        activeBench.place(benchTarget); // target-bench at index 1
+        when(activeRuntime.getBench()).thenReturn(activeBench);
+
+        DiscardPile discardPile = new DiscardPile();
+        EnergyCard energy1 = new EnergyCard("water-1", "Water Energy", PokemonType.WATER, true);
+        discardPile.add(energy1);
+        when(activeRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        KnockoutHandler knockoutHandler = mock(KnockoutHandler.class);
+        // Simulate real knockout behavior (removing Milotic from bench)
+        doAnswer(invocation -> {
+            activeBench.remove(0); // Removes Milotic, benchTarget shifts to index 0
+            return null;
+        }).when(knockoutHandler).onKnockout(milotic, 1);
+        
+        when(session.getKnockoutHandler()).thenReturn(knockoutHandler);
+
+        // Target index 1 (benchTarget initially at index 1)
+        UseAbilityAction action = new UseAbilityAction(milotic, "Energy Grace", 0, 1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.ENERGY_GRACE).ifPresent(effect -> effect.apply(session, action));
+
+        verify(knockoutHandler, times(1)).onKnockout(milotic, 1);
+        // Energy should be attached even though Milotic was removed and target index shifted
+        assertEquals(1, benchTarget.getAttachedEnergyCards().size());
+        assertTrue(benchTarget.getAttachedEnergyCards().contains(energy1));
+        assertTrue(discardPile.getCards().isEmpty());
+    }
+
+    @Test
     void testRuleValidatorEnergyGrace() {
         PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
         ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);

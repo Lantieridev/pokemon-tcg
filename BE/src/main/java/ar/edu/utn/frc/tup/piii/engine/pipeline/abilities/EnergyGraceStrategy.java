@@ -23,20 +23,20 @@ public final class EnergyGraceStrategy implements AbilityEffect {
         
         final boolean wasActive = action.source().equals(runtime.getActivePokemon());
         
+        // Find target Pokémon (must be non-EX) BEFORE knockout to avoid bench index shifts
+        BattlePokemonState targetPokemon = null;
+        if (action.targetIndex() == null || action.targetIndex() == -1) {
+            targetPokemon = runtime.getActivePokemon();
+        } else if (action.targetIndex() >= 0 && action.targetIndex() < runtime.getBench().getAll().size()) {
+            targetPokemon = runtime.getBench().getAll().get(action.targetIndex());
+        }
+        
         // Knock out Milotic (1 prize card)
         session.getKnockoutHandler().onKnockout(action.source(), 1);
         
         if (wasActive && !runtime.getBench().isEmpty()) {
             session.setAwaitingPromotion(playerIndex);
             session.getTurnManager().interruptMainPhase();
-        }
-        
-        // Find target Pokémon (must be non-EX)
-        BattlePokemonState targetPokemon = null;
-        if (action.targetIndex() == null || action.targetIndex() == -1) {
-            targetPokemon = runtime.getActivePokemon();
-        } else if (action.targetIndex() >= 0 && action.targetIndex() < runtime.getBench().getAll().size()) {
-            targetPokemon = runtime.getBench().getAll().get(action.targetIndex());
         }
         
         if (targetPokemon != null && !targetPokemon.isEx()) {
