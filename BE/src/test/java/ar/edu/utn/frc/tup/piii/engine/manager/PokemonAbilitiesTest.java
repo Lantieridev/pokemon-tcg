@@ -67,6 +67,35 @@ class PokemonAbilitiesTest {
     }
 
     @Test
+    void testIntimidatingManePassiveDamageBlock() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Slash", 50, List.of(), "");
+
+        when(defender.getAbilities()).thenReturn(List.of(new Ability("Intimidating Mane", "", AbilityEffectId.INTIMIDATING_MANE)));
+
+        // Test Case 1: Attacker is a Basic Pokémon -> Damage should be blocked (0)
+        when(attacker.getEvolutionStage()).thenReturn(EvolutionStage.BASIC);
+        AttackContext ctx1 = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .build();
+
+        int result1 = PassiveAbilityRegistry.modifyIncomingDamage(50, ctx1);
+        assertEquals(0, result1);
+
+        // Test Case 2: Attacker is a Stage 1 Pokémon -> Damage should NOT be blocked (50)
+        when(attacker.getEvolutionStage()).thenReturn(EvolutionStage.STAGE_1);
+        AttackContext ctx2 = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .build();
+
+        int result2 = PassiveAbilityRegistry.modifyIncomingDamage(50, ctx2);
+        assertEquals(50, result2);
+    }
+
+    @Test
     void testSpikyShieldReactiveCounterDamage() {
         BattlePokemonState attacker = mock(BattlePokemonState.class);
         BattlePokemonState defender = mock(BattlePokemonState.class);
