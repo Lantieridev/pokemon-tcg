@@ -322,6 +322,45 @@ public final class GameFacade {
                     } else if (effectId == TrainerEffectId.MAX_REVIVE) {
                         session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
                         session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.LYSANDRE) {
+                        applyLysandre(session, action.target());
+                    } else if (effectId == TrainerEffectId.SACRED_ASH) {
+                        final long pokemonCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof PokemonCard)
+                                .count();
+                        final int selectCount = (int) Math.min(5, pokemonCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.POKEMON_FAN_CLUB) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 2, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.FIERY_TORCH) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.TRICK_SHOVEL) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, action.target(), 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.STARTLING_MEGAPHONE) {
+                        applyStartlingMegaphone(session);
+                    } else if (effectId == TrainerEffectId.PAL_PAD) {
+                        final long supporterCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)
+                                .count();
+                        final int selectCount = (int) Math.min(2, supporterCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.BLACKSMITH) {
+                        final long fireEnergyCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)
+                                .count();
+                        final int selectCount = (int) Math.min(2, fireEnergyCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, action.target(), selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.POKEMON_CENTER_LADY) {
+                        applyPokemonCenterLady(runtime, action.target());
+                    } else if (effectId == TrainerEffectId.ULTRA_BALL) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 2, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND));
+                        session.getTurnManager().interruptMainPhase();
                     } else {
                         TrainerEffect effect = trainerCard.getEffect();
                         if (effect == null && effectId != null) {
@@ -389,6 +428,54 @@ public final class GameFacade {
         runtime.getDeck().addCards(toShuffle);
         runtime.getDeck().shuffle();
         runtime.removePokemonFromPlay(target);
+    }
+
+    private void applyLysandre(final MatchSession session, final BattlePokemonState target) {
+        if (target == null) {
+            return;
+        }
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        final BattlePokemonState oldActive = opponent.getActivePokemon();
+        final int targetIndex = opponent.getBench().getAll().indexOf(target);
+        if (targetIndex >= 0) {
+            final BattlePokemonState newActive = opponent.getBench().promote(targetIndex);
+            opponent.setActivePokemon(newActive);
+            if (oldActive != null) {
+                opponent.getBench().place(oldActive);
+                opponent.recordPokemonEntered(oldActive);
+            }
+            opponent.getStatusEffectManager().clearAll();
+        }
+    }
+
+    private void applyStartlingMegaphone(final MatchSession session) {
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        final BattlePokemonState opponentActive = opponent.getActivePokemon();
+        if (opponentActive != null && opponentActive.hasToolAttached()) {
+            opponentActive.getAttachedTool().ifPresent(tool -> {
+                opponent.getDiscardPile().add(tool);
+                opponentActive.detachTool();
+            });
+        }
+        for (final BattlePokemonState benched : opponent.getBench().getAll()) {
+            if (benched.hasToolAttached()) {
+                benched.getAttachedTool().ifPresent(tool -> {
+                    opponent.getDiscardPile().add(tool);
+                    benched.detachTool();
+                });
+            }
+        }
+    }
+
+    private void applyPokemonCenterLady(final PlayerRuntime runtime, final BattlePokemonState target) {
+        if (target != null) {
+            target.heal(60);
+            if (target.equals(runtime.getActivePokemon())) {
+                runtime.getStatusEffectManager().clearAll();
+            }
+        }
     }
 
     /**
@@ -466,6 +553,133 @@ public final class GameFacade {
                     runtime.getDiscardPile().remove(found);
                     runtime.getDeck().addToTop(found);
                 }
+            }
+        } else if (effectId == TrainerEffectId.SACRED_ASH) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> toReturn = new ArrayList<>();
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard)) {
+                            throw new IllegalArgumentException("Sacred Ash can only select Pokemon cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        toReturn.add(card);
+                    }
+                }
+                if (!toReturn.isEmpty()) {
+                    runtime.getDeck().addCards(toReturn);
+                    runtime.getDeck().shuffle();
+                }
+            }
+        } else if (effectId == TrainerEffectId.POKEMON_FAN_CLUB) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC)) {
+                            throw new IllegalArgumentException("Pokemon Fan Club can only select Basic Pokemon cards");
+                        }
+                        runtime.getHand().addCard(card);
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.FIERY_TORCH) {
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                final Card card = runtime.getHand().removeCard(cardId);
+                if (card == null || !(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
+                    throw new IllegalArgumentException("Fiery Torch requires discarding a Fire Energy card from hand");
+                }
+                runtime.getDiscardPile().add(card);
+                final int drawCount = Math.min(2, runtime.getDeck().size());
+                if (drawCount > 0) {
+                    runtime.getHand().addCards(runtime.getDeck().drawMultiple(drawCount));
+                }
+            }
+        } else if (effectId == TrainerEffectId.TRICK_SHOVEL) {
+            final BattlePokemonState target = request.target();
+            final int targetPlayerIndex = (target != null && target.equals(runtime.getActivePokemon()))
+                    ? session.getActivePlayerIndex() : (1 - session.getActivePlayerIndex());
+            final PlayerRuntime targetRuntime = session.getPlayerRuntime(targetPlayerIndex);
+            if (!selectedIds.isEmpty()) {
+                final List<Card> topCardList = targetRuntime.getDeck().drawMultiple(1);
+                if (!topCardList.isEmpty()) {
+                    targetRuntime.getDiscardPile().add(topCardList.get(0));
+                }
+            }
+        } else if (effectId == TrainerEffectId.PAL_PAD) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> toReturn = new ArrayList<>();
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)) {
+                            throw new IllegalArgumentException("Pal Pad can only select Supporter cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        toReturn.add(card);
+                    }
+                }
+                if (!toReturn.isEmpty()) {
+                    runtime.getDeck().addCards(toReturn);
+                    runtime.getDeck().shuffle();
+                }
+            }
+        } else if (effectId == TrainerEffectId.BLACKSMITH) {
+            if (!selectedIds.isEmpty()) {
+                final BattlePokemonState target = request.target();
+                if (target == null) {
+                    throw new IllegalStateException("Blacksmith requires a target Pokemon");
+                }
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
+                            throw new IllegalArgumentException("Blacksmith can only select Fire Energy cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        target.attachEnergy((EnergyCard) card);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.ULTRA_BALL) {
+            if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
+                if (selectedIds.size() != 2) {
+                    throw new IllegalArgumentException("Ultra Ball requires discarding exactly 2 cards");
+                }
+                for (String id : selectedIds) {
+                    final Card discarded = runtime.getHand().removeCard(id);
+                    if (discarded != null) {
+                        runtime.getDiscardPile().add(discarded);
+                    }
+                }
+                // Transition to deck search
+                session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                return; // Do NOT resume the main phase yet
+            } else if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
+                if (!selectedIds.isEmpty()) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard)) {
+                            throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
+                        }
+                        runtime.getHand().addCard(card);
+                    }
+                }
+                runtime.getDeck().shuffle();
             }
         }
         

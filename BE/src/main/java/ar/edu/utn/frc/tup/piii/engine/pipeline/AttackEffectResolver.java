@@ -99,7 +99,14 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.HEAL_SELF,
                 (amount, ctx) -> ctx.getAttacker().heal(amount));
         m.put(AttackEffectType.SELF_DAMAGE,
-                (amount, ctx) -> ctx.getAttacker().addDamageCounters(amount / DAMAGE_PER_COUNTER));
+                (amount, ctx) -> {
+                    boolean hasProtectionCube = ctx.getAttacker().getAttachedTool()
+                            .map(t -> t.getToolEffectId() == ar.edu.utn.frc.tup.piii.engine.model.PokemonToolEffectId.PROTECTION_CUBE)
+                            .orElse(false);
+                    if (!hasProtectionCube) {
+                        ctx.getAttacker().addDamageCounters(amount / DAMAGE_PER_COUNTER);
+                    }
+                });
         m.put(AttackEffectType.DISCARD_ENERGY,
                 (amount, ctx) -> ctx.getAttacker().removeEnergies(amount));
         m.put(AttackEffectType.BENCH_DAMAGE,

@@ -19,6 +19,11 @@ public enum PokemonToolEffectId {
      */
     HARD_CHARM,
 
+    /**
+     * Protection Cube (xy2-95) — prevents the attached Pokémon from taking self-damage from attacks.
+     */
+    PROTECTION_CUBE,
+
     /** No effect — default for tools whose runtime logic is not yet implemented. */
     NONE
 }

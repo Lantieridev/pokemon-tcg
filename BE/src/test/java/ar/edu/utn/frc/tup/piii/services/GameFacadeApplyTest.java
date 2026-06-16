@@ -101,6 +101,7 @@ class GameFacadeApplyTest {
         final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
 
         session = new MatchSession(MATCH_ID, List.of("alice", "bob"), board, List.of(runtime0, runtime1));
+        session.setTurnManager(org.mockito.Mockito.mock(TurnManager.class));
         session.setCoinFlipper(() -> true);
         session.setActivePlayerIndex(PLAYER_0);
     }
@@ -358,6 +359,226 @@ class GameFacadeApplyTest {
         org.junit.jupiter.api.Assertions.assertNull(runtime0.getActivePokemon());
         assertEquals(3, runtime0.getDeck().size());
         org.junit.jupiter.api.Assertions.assertFalse(runtime0.hasPokemonInPlay(active0));
+    }
+
+    @Test
+    void shouldApplyLysandreAndSwapOpponentActiveAndBench() {
+        final InPlayPokemon benchPokemon1 = new InPlayPokemon(buildPokemon("xy1-046", "Charmander", 50, 1, EvolutionStage.BASIC));
+        bench1.place(benchPokemon1);
+        final TrainerCard lysandre = new TrainerCard.Builder("xy2-90", "Lysandre", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.LYSANDRE)
+                .build();
+        hand0.addCard(lysandre);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, benchPokemon1, "xy2-90"));
+        
+        assertSame(benchPokemon1, runtime1.getActivePokemon());
+        assertSame(active1, runtime1.getBench().getAll().get(0));
+    }
+
+    @Test
+    void shouldApplySacredAshAndShufflePokemonToDeck() {
+        final TrainerCard ash = new TrainerCard.Builder("xy2-96", "Sacred Ash", TrainerType.ITEM)
+                .effectId(TrainerEffectId.SACRED_ASH)
+                .build();
+        hand0.addCard(ash);
+        
+        final PokemonCard discardPkmn = buildPokemon("xy1-001", "Bulbasaur", 60, 1, EvolutionStage.BASIC);
+        discard0.add(discardPkmn);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-96"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.SACRED_ASH, session.getPendingSelectionRequest().sourceEffect());
+        assertEquals(1, session.getPendingSelectionRequest().maxSelections());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("xy1-001"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        org.junit.jupiter.api.Assertions.assertFalse(discard0.getCards().contains(discardPkmn));
+        assertEquals(2, runtime0.getDeck().size());
+    }
+
+    @Test
+    void shouldApplyPokemonFanClubAndPromptDeckSearch() {
+        final TrainerCard fanClub = new TrainerCard.Builder("xy2-94", "Pokemon Fan Club", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.POKEMON_FAN_CLUB)
+                .build();
+        hand0.addCard(fanClub);
+        
+        final PokemonCard bulbasaur = buildPokemon("xy1-001", "Bulbasaur", 60, 1, EvolutionStage.BASIC);
+        deck0.addCards(List.of(bulbasaur));
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, null, "xy2-94"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.POKEMON_FAN_CLUB, session.getPendingSelectionRequest().sourceEffect());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("xy1-001"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        assertEquals(1, hand0.getCards().size());
+        assertEquals("xy1-001", hand0.getCards().get(0).getCardId());
+    }
+
+    @Test
+    void shouldApplyFieryTorchDiscardFireEnergyAndDraw() {
+        final TrainerCard torch = new TrainerCard.Builder("xy2-89", "Fiery Torch", TrainerType.ITEM)
+                .effectId(TrainerEffectId.FIERY_TORCH)
+                .build();
+        hand0.addCard(torch);
+        
+        final EnergyCard fire = new EnergyCard("e-torch-fire", "Fire Energy", PokemonType.FIRE, true);
+        hand0.addCard(fire);
+        
+        final EnergyCard extra1 = new EnergyCard("e-ex1", "Fire Energy", PokemonType.FIRE, true);
+        final EnergyCard extra2 = new EnergyCard("e-ex2", "Fire Energy", PokemonType.FIRE, true);
+        deck0.addCards(List.of(extra1, extra2));
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-89"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.FIERY_TORCH, session.getPendingSelectionRequest().sourceEffect());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("e-torch-fire"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        assertTrue(hand0.getCards().stream().noneMatch(c -> c.getCardId().equals("e-torch-fire")));
+        assertEquals(2, discard0.getCards().size());
+        assertEquals("e-torch-fire", discard0.getCards().get(1).getCardId());
+        assertEquals(2, hand0.getCards().size());
+    }
+
+    @Test
+    void shouldApplyTrickShovelAndDiscardOrKeepTopCard() {
+        final TrainerCard shovel = new TrainerCard.Builder("xy2-98", "Trick Shovel", TrainerType.ITEM)
+                .effectId(TrainerEffectId.TRICK_SHOVEL)
+                .build();
+        hand0.addCard(shovel);
+        
+        final EnergyCard topCard = new EnergyCard("e-top", "Water Energy", PokemonType.WATER, true);
+        runtime1.getDeck().addToTop(topCard);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-98"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.TRICK_SHOVEL, session.getPendingSelectionRequest().sourceEffect());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("e-top"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        assertEquals("e-top", runtime1.getDiscardPile().getCards().get(0).getCardId());
+    }
+
+    @Test
+    void shouldApplyStartlingMegaphoneAndDiscardOpponentTools() {
+        final TrainerCard megaphone = new TrainerCard.Builder("xy2-97", "Startling Megaphone", TrainerType.ITEM)
+                .effectId(TrainerEffectId.STARTLING_MEGAPHONE)
+                .build();
+        hand0.addCard(megaphone);
+        
+        final TrainerCard tool = new TrainerCard.Builder("xy1-119", "Hard Charm", TrainerType.POKEMON_TOOL).build();
+        active1.attachTool(tool);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-97"));
+        
+        org.junit.jupiter.api.Assertions.assertFalse(active1.hasToolAttached());
+        assertEquals("xy1-119", runtime1.getDiscardPile().getCards().get(0).getCardId());
+    }
+
+    @Test
+    void shouldApplyPalPadAndShuffleSupportersToDeck() {
+        final TrainerCard palPad = new TrainerCard.Builder("xy2-92", "Pal Pad", TrainerType.ITEM)
+                .effectId(TrainerEffectId.PAL_PAD)
+                .build();
+        hand0.addCard(palPad);
+        
+        final TrainerCard sycamore = new TrainerCard.Builder("xy1-122", "Professor Sycamore", TrainerType.SUPPORTER).build();
+        discard0.add(sycamore);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-92"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.PAL_PAD, session.getPendingSelectionRequest().sourceEffect());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("xy1-122"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        org.junit.jupiter.api.Assertions.assertFalse(discard0.getCards().contains(sycamore));
+        assertEquals(2, deck0.size());
+    }
+
+    @Test
+    void shouldApplyBlacksmithAndAttachDiscardedFireEnergy() {
+        final TrainerCard blacksmith = new TrainerCard.Builder("xy2-88", "Blacksmith", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.BLACKSMITH)
+                .build();
+        hand0.addCard(blacksmith);
+        
+        final EnergyCard fire1 = new EnergyCard("fire-1", "Fire Energy", PokemonType.FIRE, true);
+        final EnergyCard fire2 = new EnergyCard("fire-2", "Fire Energy", PokemonType.FIRE, true);
+        discard0.add(fire1);
+        discard0.add(fire2);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, active0, "xy2-88"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(TrainerEffectId.BLACKSMITH, session.getPendingSelectionRequest().sourceEffect());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("fire-1", "fire-2"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        assertEquals(2, active0.getAttachedEnergies().size());
+        org.junit.jupiter.api.Assertions.assertFalse(discard0.getCards().contains(fire1));
+        org.junit.jupiter.api.Assertions.assertFalse(discard0.getCards().contains(fire2));
+    }
+
+    @Test
+    void shouldApplyPokemonCenterLadyAndHealAndClearStatus() {
+        final TrainerCard centerLady = new TrainerCard.Builder("xy2-93", "Pokemon Center Lady", TrainerType.SUPPORTER)
+                .effectId(TrainerEffectId.POKEMON_CENTER_LADY)
+                .build();
+        hand0.addCard(centerLady);
+        
+        active0.addDamageCounters(5);
+        sem0.apply(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.ENVENENADO);
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.SUPPORTER, active0, "xy2-93"));
+        
+        assertEquals(0, active0.getDamageCounters());
+        assertTrue(sem0.activeEffects().isEmpty());
+    }
+
+    @Test
+    void shouldApplyUltraBallDiscardAndTransitionToDeckSearch() {
+        final TrainerCard ultraBall = new TrainerCard.Builder("xy2-99", "Ultra Ball", TrainerType.ITEM)
+                .effectId(TrainerEffectId.ULTRA_BALL)
+                .build();
+        hand0.addCard(ultraBall);
+        
+        final Card dummy1 = buildPokemon("d1", "Dummy 1", 10, 1, EvolutionStage.BASIC);
+        final Card dummy2 = buildPokemon("d2", "Dummy 2", 10, 1, EvolutionStage.BASIC);
+        hand0.addCard(dummy1);
+        hand0.addCard(dummy2);
+        
+        final PokemonCard targetPkmn = buildPokemon("target-id", "Target Pokemon", 80, 1, EvolutionStage.BASIC);
+        deck0.addCards(List.of(targetPkmn));
+        
+        facade.apply(session, new PlayTrainerAction(TrainerType.ITEM, null, "xy2-99"));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND, session.getPendingSelectionRequest().source());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("d1", "d2"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNotNull(session.getPendingSelectionRequest());
+        assertEquals(ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK, session.getPendingSelectionRequest().source());
+        assertEquals(3, discard0.getCards().size());
+        
+        facade.apply(session, new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("target-id"), session.getPendingSelectionRequest()));
+        
+        org.junit.jupiter.api.Assertions.assertNull(session.getPendingSelectionRequest());
+        assertTrue(hand0.getCards().stream().anyMatch(c -> c.getCardId().equals("target-id")));
     }
 
     // --- helpers ---

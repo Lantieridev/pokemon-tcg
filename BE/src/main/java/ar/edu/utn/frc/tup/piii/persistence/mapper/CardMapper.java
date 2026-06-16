@@ -433,6 +433,19 @@ public final class CardMapper {
         if ("xy1-118".equals(cardId)) { return TrainerEffectId.GREAT_BALL; }
         if ("xy1-120".equals(cardId)) { return TrainerEffectId.MAX_REVIVE; }
         if ("xy1-123".equals(cardId)) { return TrainerEffectId.PROFESSORS_LETTER; }
+        
+        // Flashfire Trainer Mappings
+        if ("xy2-88".equals(cardId) || "xy2-88a".equals(cardId)) { return TrainerEffectId.BLACKSMITH; }
+        if ("xy2-89".equals(cardId)) { return TrainerEffectId.FIERY_TORCH; }
+        if ("xy2-90".equals(cardId) || "xy2-104".equals(cardId)) { return TrainerEffectId.LYSANDRE; }
+        if ("xy2-91".equals(cardId)) { return TrainerEffectId.MAGNETIC_STORM; }
+        if ("xy2-92".equals(cardId)) { return TrainerEffectId.PAL_PAD; }
+        if ("xy2-93".equals(cardId) || "xy2-105".equals(cardId)) { return TrainerEffectId.POKEMON_CENTER_LADY; }
+        if ("xy2-94".equals(cardId) || "xy2-106".equals(cardId)) { return TrainerEffectId.POKEMON_FAN_CLUB; }
+        if ("xy2-96".equals(cardId)) { return TrainerEffectId.SACRED_ASH; }
+        if ("xy2-97".equals(cardId)) { return TrainerEffectId.STARTLING_MEGAPHONE; }
+        if ("xy2-98".equals(cardId)) { return TrainerEffectId.TRICK_SHOVEL; }
+        if ("xy2-99".equals(cardId)) { return TrainerEffectId.ULTRA_BALL; }
 
         if (text == null || text.isBlank()) {
             return TrainerEffectId.NONE;
@@ -484,6 +497,9 @@ public final class CardMapper {
         }
         if (cid.contains("xy1-119") || (text != null && text.toLowerCase().contains("hard charm"))) {
             return PokemonToolEffectId.HARD_CHARM; // xy1-119
+        }
+        if (cid.contains("xy2-95") || (text != null && text.toLowerCase().contains("protection cube"))) {
+            return PokemonToolEffectId.PROTECTION_CUBE; // xy2-95
         }
         
         return PokemonToolEffectId.NONE;
