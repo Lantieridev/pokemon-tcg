@@ -263,6 +263,7 @@ public final class GameFacade {
         .stadiumProvider(session.getBoard())
         .attackerStats(attacker.getStatisticsTracker())
         .defenderStats(defender.getStatisticsTracker())
+        .matchSession(session)
         .build();
 
         attackPipeline.execute(ctx);
@@ -680,6 +681,28 @@ public final class GameFacade {
                     }
                 }
                 runtime.getDeck().shuffle();
+            }
+        } else if (effectId == TrainerEffectId.CLAIRVOYANT_EYE) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> topCards = runtime.getDeck().drawMultiple(selectedIds.size());
+                final List<Card> reordered = new ArrayList<>();
+                for (String id : selectedIds) {
+                    Card foundCard = null;
+                    for (Card c : topCards) {
+                        if (c.getCardId().equals(id)) {
+                            foundCard = c;
+                            break;
+                        }
+                    }
+                    if (foundCard != null) {
+                        topCards.remove(foundCard);
+                        reordered.add(foundCard);
+                    }
+                }
+                reordered.addAll(topCards);
+                for (int i = reordered.size() - 1; i >= 0; i--) {
+                    runtime.getDeck().addToTop(reordered.get(i));
+                }
             }
         }
         

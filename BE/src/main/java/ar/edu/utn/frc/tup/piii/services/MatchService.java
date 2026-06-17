@@ -13,6 +13,8 @@ import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
+import ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
@@ -299,6 +301,9 @@ public class MatchService {
             case DeclareAttackAction ignored -> {
                 turnManager.declareAttack();
                 facade.apply(session, action, turnManager);
+                if (session.getPendingSelectionRequest() != null) {
+                    return; // pause turn advancement for Clairvoyant Eye / Stoke
+                }
                 // PhaseExited(AttackPhase) fires here → KnockoutManager checks for KOs
                 turnManager.endAttack();
                 // If defender's active was just KO'd and bench has Pokémon, pause
@@ -307,6 +312,28 @@ public class MatchService {
                 }
                 processBetweenTurns(session, turnManager);
                 turnManager.endBetweenTurns();
+            }
+            case SelectCardsAction selectCards -> {
+                final boolean isClairvoyantEye = session.getPendingSelectionRequest() != null
+                        && session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE;
+
+                facade.apply(session, action, turnManager);
+
+                if (isClairvoyantEye) {
+                    turnManager.endAttack();
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                    processBetweenTurns(session, turnManager);
+                    turnManager.endBetweenTurns();
+                } else {
+                    if (session.getVictoryConditionChecker() != null) {
+                        session.getVictoryConditionChecker().checkFieldVictory();
+                    }
+                    if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                        checkForPendingPromotion(session);
+                    }
+                }
             }
             case EndTurnAction ignored -> {
                 turnManager.passTurn();

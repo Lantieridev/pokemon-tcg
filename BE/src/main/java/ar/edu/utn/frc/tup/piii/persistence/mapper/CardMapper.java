@@ -244,6 +244,9 @@ public final class CardMapper {
         if ("ear we go".equals(lowerName)) {
             return "ear_we_go";
         }
+        if ("clairvoyant eye".equals(lowerName)) {
+            return "clairvoyant_eye";
+        }
         final String lower = text.toLowerCase();
 
         // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
