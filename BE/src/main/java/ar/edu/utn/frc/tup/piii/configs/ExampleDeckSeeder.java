@@ -120,12 +120,12 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-23", 3), // Milotic
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-18", 3), // Litleo
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-20", 2), // Pyroar
-                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-91", 2), // Magnetic Storm
+                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-91", 3), // Magnetic Storm
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-94", 3), // Pokémon Fan Club
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-90", 2), // Lysandre
-                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-99", 3), // Ultra Ball
+                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-99", 4), // Ultra Ball
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy2-96", 2), // Sacred Ash
-                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 6), // Roller Skates
+                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-125", 4), // Roller Skates
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-132", 10), // Grass Energy
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 10) // Fire Energy
                             )
