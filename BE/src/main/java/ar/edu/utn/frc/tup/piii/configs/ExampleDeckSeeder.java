@@ -28,7 +28,20 @@ public class ExampleDeckSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         List<UserEntity> users = userRepository.findAll();
         for (UserEntity user : users) {
-            List<DeckEntity> existing = deckRepository.findByUserId(user.getId());
+            List<DeckEntity> existing = new java.util.ArrayList<>(deckRepository.findByUserId(user.getId()));
+
+            // Clean up any duplicate decks with the same name for this user
+            java.util.Map<String, List<DeckEntity>> groupedDecks = existing.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(DeckEntity::getName));
+            for (java.util.Map.Entry<String, List<DeckEntity>> entry : groupedDecks.entrySet()) {
+                List<DeckEntity> decksWithName = entry.getValue();
+                if (decksWithName.size() > 1) {
+                    for (int i = 1; i < decksWithName.size(); i++) {
+                        deckRepository.delete(decksWithName.get(i));
+                    }
+                    existing.removeAll(decksWithName.subList(1, decksWithName.size()));
+                }
+            }
 
             boolean hasWater = existing.stream().anyMatch(d -> d.getName().equals("Mazo Agua Dev"));
             boolean hasFire = existing.stream().anyMatch(d -> d.getName().equals("Mazo Fuego Dev"));
