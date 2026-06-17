@@ -707,6 +707,26 @@ public final class RuleValidator {
             if (!hasNonExTarget) {
                 return new ValidationResult.Invalid("no_valid_non_ex_target_in_play");
             }
+
+            // Validate specific target
+            BattlePokemonState specificTarget = null;
+            if (action.targetIndex() == null || action.targetIndex() == -1) {
+                specificTarget = runtime.getActivePokemon();
+            } else if (action.targetIndex() >= 0 && action.targetIndex() < runtime.getBench().getAll().size()) {
+                specificTarget = runtime.getBench().getAll().get(action.targetIndex());
+            } else {
+                return new ValidationResult.Invalid("invalid_target_index");
+            }
+
+            if (specificTarget == null) {
+                return new ValidationResult.Invalid("target_pokemon_required");
+            }
+            if (specificTarget == source) {
+                return new ValidationResult.Invalid("cannot_target_self");
+            }
+            if (specificTarget.isEx()) {
+                return new ValidationResult.Invalid("cannot_target_ex_pokemon");
+            }
         }
         
         if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE) {

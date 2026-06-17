@@ -697,6 +697,52 @@ class PokemonAbilitiesTest {
     }
 
     @Test
+    void testRuleValidatorEnergyGraceTargetSelfAndEx() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp);
+
+        InPlayPokemon milotic = new InPlayPokemon(new PokemonCard.Builder("milotic", "Milotic", 100, PokemonType.WATER)
+                .abilities(List.of(new Ability("Energy Grace", "", AbilityEffectId.ENERGY_GRACE)))
+                .build());
+
+        InPlayPokemon exTarget = new InPlayPokemon(new PokemonCard.Builder("target-ex", "EX Target", 180, PokemonType.FIRE)
+                .ex(true)
+                .build());
+
+        InPlayPokemon squirtle = new InPlayPokemon(new PokemonCard.Builder("squirtle", "Squirtle", 60, PokemonType.WATER).build());
+
+        Bench activeBench = new Bench();
+        activeBench.place(milotic); // index 0
+        activeBench.place(squirtle); // index 1
+        when(activeRuntime.getBench()).thenReturn(activeBench);
+        when(activeRuntime.getActivePokemon()).thenReturn(exTarget);
+
+        DiscardPile discardPile = new DiscardPile();
+        discardPile.add(new EnergyCard("grass", "Grass Energy", PokemonType.GRASS, true));
+        when(activeRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        // Target EX target (Active)
+        UseAbilityAction targetExAction = new UseAbilityAction(milotic, "Energy Grace", 0, -1, List.of());
+        ValidationResult result = ruleValidator.validate(targetExAction, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("cannot_target_ex_pokemon", ((ValidationResult.Invalid) result).reason());
+
+        // Target Self (Bench index 0)
+        UseAbilityAction targetSelfAction = new UseAbilityAction(milotic, "Energy Grace", 0, 0, List.of());
+        result = ruleValidator.validate(targetSelfAction, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("cannot_target_self", ((ValidationResult.Invalid) result).reason());
+
+        // Target Squirtle (Bench index 1) -> Valid
+        UseAbilityAction targetValidAction = new UseAbilityAction(milotic, "Energy Grace", 0, 1, List.of());
+        result = ruleValidator.validate(targetValidAction, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
+    }
+
+    @Test
     void testHandLockEffect() {
         PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
         ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
