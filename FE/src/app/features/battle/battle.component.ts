@@ -562,6 +562,33 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (name.includes('evosoda')) return true;
     if (name.includes('potion')) return true;
     if (name.includes('cassius')) return true;
+    if (name.includes('lysandre')) return true;
+    if (name.includes('blacksmith')) return true;
+    return false;
+  }
+
+  isValidTarget(side: 'me' | 'opponent', targetType: 'active' | 'bench', targetIndex: number | null): boolean {
+    const card = this.selectedHandCard() || this.draggedCard();
+    if (!card) return false;
+
+    // Lysandre targets opponent's bench only
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('lysandre')) {
+      return side === 'opponent' && targetType === 'bench';
+    }
+
+    // Blacksmith targets my own Fire Pokémon (active or benched)
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('blacksmith')) {
+      if (side !== 'me') return false;
+      const targetPk = targetType === 'active' ? this.me()?.active : this.me()?.bench[targetIndex!];
+      if (!targetPk) return false;
+      return targetPk.pokemonType === 'FIRE';
+    }
+
+    // For other trainers/tools/energy/evolution: they target my own board
+    if (card.supertype === 'Energy' || card.supertype === 'Pokémon' || (card.supertype === 'Trainer' && this.isTargetingTrainer(card))) {
+      return side === 'me';
+    }
+
     return false;
   }
 

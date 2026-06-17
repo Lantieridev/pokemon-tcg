@@ -744,8 +744,11 @@ public final class GameFacade {
                         effectId = tc.getEffectId();
                     }
                 }
+                final BattlePokemonState target = (effectId == TrainerEffectId.LYSANDRE)
+                        ? resolveTarget(board, 1 - playerIndex, dto)
+                        : resolveTarget(board, playerIndex, dto);
                 yield new PlayTrainerAction(dto.trainerType(),
-                                            resolveTarget(board, playerIndex, dto),
+                                            target,
                                             dto.cardId(),
                                             effectId);
             }
