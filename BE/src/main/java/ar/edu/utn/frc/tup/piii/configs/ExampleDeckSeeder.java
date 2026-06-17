@@ -74,7 +74,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-128", 4), // Super Potion
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-121", 4), // Muscle Band
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-124", 4), // Red Card
-                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-131", 22)
+                                    new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 22)
                             )
                     );
                     deckService.create(fireDeck);
