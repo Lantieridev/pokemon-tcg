@@ -247,7 +247,11 @@ public final class GameFacade {
         final PlayerRuntime attacker = session.getPlayerRuntime(attackerIndex);
         final PlayerRuntime defender = session.getPlayerRuntime(defenderIndex);
 
-        boolean scorchingFangDiscarded = action.selectedCardIds() != null && action.selectedCardIds().contains("discard_fire_energy");
+        final boolean hasFireEnergy = attacker.getActivePokemon() != null && attacker.getActivePokemon().getAttachedEnergyCards().stream()
+                .anyMatch(ec -> ec.getEnergyType() == PokemonType.FIRE || ec.isProvidesAllTypes());
+        boolean scorchingFangDiscarded = action.selectedCardIds() != null 
+                && action.selectedCardIds().contains("discard_fire_energy")
+                && hasFireEnergy;
 
         final AttackContext ctx = new AttackContext.Builder(
                 action.attacker(),
