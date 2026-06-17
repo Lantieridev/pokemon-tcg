@@ -185,7 +185,9 @@
           </div>
         }
         @for (b of opp()!.bench; track $index) {
-          <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
+          <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isValidTarget('opponent', 'bench', $index) ? selectTarget('bench', $index) : zoomCard(getCardImageUrl(b.cardId)))" 
+               class="cursor-pointer"
+               [class.target-highlight]="isValidTarget('opponent', 'bench', $index)">
             <app-field-pokemon
               [cardId]="b.cardId"
               [energies]="b.energies"
@@ -204,7 +206,8 @@
       <!-- OPPONENT ACTIVE -->
       @if (opp()!.active; as activeOpp) {
         <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
-             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
+             [class.target-highlight]="isValidTarget('opponent', 'active', null)"
+             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (isValidTarget('opponent', 'active', null) ? selectTarget('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId)))">
           @if (oppActiveIsBurned()) {
             <div class="token-burned" title="Oponente Quemado">🔥</div>
           }
@@ -266,7 +269,7 @@
       <!-- MY ACTIVE -->
       @if (me()!.active; as activeMe) {
         <div class="active-pokemon-wrapper cursor-pointer" 
-             [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+             [class.target-highlight]="isValidTarget('me', 'active', null)"
              (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
              (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
              (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
@@ -308,7 +311,7 @@
            (dragover)="onDragOver($event)"
            (drop)="onDropField($event)">
         @for (b of me()!.bench; track $index) {
-          <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+          <div class="cursor-pointer" [class.target-highlight]="isValidTarget('me', 'bench', $index)"
                [class.pulse-promote]="!me()!.active"
                (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
                (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
@@ -329,7 +332,7 @@
         }
         @for (b of myEmptyBench(); track $index) {
           <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 80px; height: 112px;"
-               [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
+               [class.target-highlight]="isValidTarget('me', 'bench', null)"
                (click)="selectTarget('bench', null)"
                (dragover)="onDragOver($event)"
                (drop)="onDropField($event)">
