@@ -864,6 +864,20 @@ public final class RuleValidator {
             if (action.cardIds().size() > req.maxSelections()) {
                 return new ValidationResult.Invalid("too_many_cards_selected");
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE) {
+                if (action.cardIds().size() != req.maxSelections()) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL 
+                    && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
+                if (action.cardIds().size() != 2) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.
