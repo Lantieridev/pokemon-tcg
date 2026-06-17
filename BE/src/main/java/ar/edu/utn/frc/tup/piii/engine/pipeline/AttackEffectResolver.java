@@ -67,6 +67,7 @@ public final class AttackEffectResolver {
         m.put("discard_opponent_energy",            AttackEffectType.DISCARD_OPPONENT_ENERGY);
         m.put("coin_flip_discard_opponent_energy",  AttackEffectType.COIN_FLIP_DISCARD_OPPONENT_ENERGY);
         m.put("stoke",                               AttackEffectType.STOKE);
+        m.put("deranged_dance",                      AttackEffectType.DERANGED_DANCE);
         m.put("combustion_blast",                    AttackEffectType.COMBUSTION_BLAST);
         m.put("scorching_fang",                      AttackEffectType.SCORCHING_FANG);
         m.put("bright_garden",                       AttackEffectType.BRIGHT_GARDEN);
@@ -86,6 +87,8 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.NONE,
                 (amount, ctx) -> { });
         m.put(AttackEffectType.COIN_FLIP_EXTRA_DAMAGE,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DERANGED_DANCE,
                 (amount, ctx) -> { }); // handled in PreDamageEffectsStep
         m.put(AttackEffectType.APPLY_POISON,
                 (amount, ctx) -> ctx.getDefenderStatusManager().apply(StatusEffectType.ENVENENADO));
@@ -266,6 +269,33 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     ctx.getAttackerStatusManager().setSelfDisabledAttackName("Combustion Blast");
                     ctx.getAttackerStatusManager().setSelfDisabledAttackSetThisTurn(true);
+                });
+        m.put(AttackEffectType.SCORCHING_FANG,
+                (amount, ctx) -> {
+                    if (ctx.isScorchingFangDiscarded()) {
+                        EnergyCard fireEnergy = ctx.getAttacker().getAttachedEnergyCards().stream()
+                                .filter(ec -> ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE || ec.isProvidesAllTypes())
+                                .findFirst()
+                                .orElse(null);
+                        if (fireEnergy != null) {
+                            int energyIdx = -1;
+                            int currentEnergyCount = 0;
+                            for (int i = 0; i < ctx.getAttacker().getAttachedEnergyCards().size(); i++) {
+                                final EnergyCard ec = ctx.getAttacker().getAttachedEnergyCards().get(i);
+                                if (ec == fireEnergy) {
+                                    energyIdx = currentEnergyCount;
+                                    break;
+                                }
+                                currentEnergyCount += ec.getEnergyCount();
+                            }
+                            if (energyIdx != -1) {
+                                ctx.getAttacker().removeEnergies(java.util.List.of(energyIdx));
+                                if (ctx.getAttackerRuntime() != null) {
+                                    ctx.getAttackerRuntime().getDiscardPile().add(fireEnergy);
+                                }
+                            }
+                        }
+                    }
                 });
         m.put(AttackEffectType.CLAIRVOYANT_EYE,
                 (amount, ctx) -> {

@@ -22,5 +22,6 @@ public enum AbilityEffectId {
     ENERGY_GRACE,
     HAND_LOCK,
     SHADOW_VOID,
+    ADAPTIVE_EVOLUTION,
     NONE
 }

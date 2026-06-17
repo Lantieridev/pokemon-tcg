@@ -180,12 +180,19 @@ public final class RuleValidator {
         if (action.target() == null) {
             return new ValidationResult.Invalid("target_pokemon_required");
         }
-        if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
-            return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
+        
+        boolean hasAdaptiveEvolution = action.target().getAbilities().stream()
+                .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION);
+
+        if (!hasAdaptiveEvolution) {
+            if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
+                return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
+            }
+            if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
+                return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
+            }
         }
-        if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
-            return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
-        }
+        
         if (action.evolution() != null) {
             final ValidationResult stageResult = validateEvolutionStage(action);
             if (stageResult instanceof ValidationResult.Invalid) {
