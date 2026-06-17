@@ -1090,6 +1090,51 @@ class RuleValidatorTest {
         assertInvalidReason(result, "insufficient_cards_in_hand");
     }
 
+    @Test
+    void shouldValidateSelectCardsExactCountEnforcement() {
+        when(turnManager.currentPhase()).thenReturn(Mockito.mock(ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase.class));
+
+        // Sacred Ash: requires exactly maxSelections (e.g. 5)
+        ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest sacredAshRequest =
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH, null, 5,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE);
+        
+        // Under-selection
+        ValidationResult result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "must_select_exact_amount");
+
+        // Exact selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3", "c4", "c5"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Valid.class, result);
+
+        // Over-selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3", "c4", "c5", "c6"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "too_many_cards_selected");
+
+        // Ultra Ball (Hand): requires exactly 2 cards
+        ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest ultraBallRequest =
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL, null, 2,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND);
+
+        // Under-selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1"), ultraBallRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "must_select_exact_amount");
+
+        // Exact selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2"), ultraBallRequest), 0);
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     private void assertInvalidReason(final ValidationResult result, final String expectedReason) {
