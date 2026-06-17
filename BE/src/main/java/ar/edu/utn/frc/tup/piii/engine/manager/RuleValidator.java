@@ -347,11 +347,15 @@ public final class RuleValidator {
             if (!inPlay) {
                 return new ValidationResult.Invalid("target_pokemon_not_in_play");
             }
-            if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
-                return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
-            }
-            if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
-                return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
+            boolean hasAdaptiveEvolution = action.target().getAbilities().stream()
+                    .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION);
+            if (!hasAdaptiveEvolution) {
+                if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
+                    return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
+                }
+                if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
+                    return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
+                }
             }
             if (action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2
                     || action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
