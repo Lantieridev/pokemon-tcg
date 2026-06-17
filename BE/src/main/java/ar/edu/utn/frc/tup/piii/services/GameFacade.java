@@ -247,6 +247,8 @@ public final class GameFacade {
         final PlayerRuntime attacker = session.getPlayerRuntime(attackerIndex);
         final PlayerRuntime defender = session.getPlayerRuntime(defenderIndex);
 
+        boolean scorchingFangDiscarded = action.selectedCardIds() != null && action.selectedCardIds().contains("discard_fire_energy");
+
         final AttackContext ctx = new AttackContext.Builder(
                 action.attacker(),
                 defender.getActivePokemon(),
@@ -265,6 +267,10 @@ public final class GameFacade {
         .defenderStats(defender.getStatisticsTracker())
         .matchSession(session)
         .build();
+
+        if (scorchingFangDiscarded) {
+            ctx.setScorchingFangDiscarded(true);
+        }
 
         attackPipeline.execute(ctx);
     }
@@ -817,7 +823,11 @@ public final class GameFacade {
         if (attackIndex < 0 || attackIndex >= attacks.size()) {
             throw new IllegalArgumentException("Invalid attack index");
         }
-        return new DeclareAttackAction(active, attacks.get(attackIndex));
+        return new DeclareAttackAction(
+                active,
+                attacks.get(attackIndex),
+                dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList()
+        );
     }
 
     private BattlePokemonState resolveEvolveTarget(final MatchBoard board,

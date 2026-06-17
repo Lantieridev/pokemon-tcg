@@ -46,6 +46,7 @@ public final class AttackContext {
 
     // --- Mutable pipeline state ---
     private boolean attackBlocked;
+    private boolean scorchingFangDiscarded;
     private boolean weaknessSuppressed;
     private final List<DamageModifier> attackerModifiers = new ArrayList<>();
     private final List<DamageModifier> defenderModifiers = new ArrayList<>();
@@ -136,6 +137,14 @@ public final class AttackContext {
     }
 
     // --- Mutable state ---
+
+    public boolean isScorchingFangDiscarded() {
+        return scorchingFangDiscarded;
+    }
+
+    public void setScorchingFangDiscarded(final boolean scorchingFangDiscarded) {
+        this.scorchingFangDiscarded = scorchingFangDiscarded;
+    }
 
     public boolean isAttackBlocked() {
         return attackBlocked;
