@@ -97,7 +97,7 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
 
         if ("deranged_dance".equals(effectText)) {
             final int playerBench = ctx.getAttackerRuntime() != null ? ctx.getAttackerRuntime().getBench().getAll().size() : 0;
-            final int opponentBench = ctx.getDefenderRuntime() != null ? ctx.getDefenderRuntime().getBench().getAll().size() : 0;
+            final int opponentBench = ctx.getDefenderBench().size();
             final int totalBenched = playerBench + opponentBench;
             ctx.addAttackerModifier(dmg -> 20 * totalBenched);
         }

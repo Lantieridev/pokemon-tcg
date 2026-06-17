@@ -203,6 +203,27 @@ class GameFacadeApplyTest {
     }
 
     @Test
+    void shouldNotApplyScorchingFangBonusIfNoFireEnergyAttached() {
+        final Attack scorchingFang = new Attack("Scorching Fang", 60, List.of(PokemonType.COLORLESS), "scorching_fang");
+        final ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pyroarCard =
+                new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("xy2-20", "Pyroar", 110, PokemonType.FIRE)
+                        .attacks(List.of(scorchingFang))
+                        .build();
+        final InPlayPokemon pyroar = new InPlayPokemon(pyroarCard);
+        pyroar.attachEnergy(new EnergyCard("e2", "Energy", PokemonType.COLORLESS, true));
+        pyroar.attachEnergy(new EnergyCard("e3", "Energy", PokemonType.COLORLESS, true));
+        pyroar.attachEnergy(new EnergyCard("e4", "Energy", PokemonType.COLORLESS, true));
+        
+        runtime0.setActivePokemon(pyroar);
+        session.setActivePlayerIndex(PLAYER_0);
+        
+        facade.apply(session, new DeclareAttackAction(pyroar, scorchingFang, List.of("discard_fire_energy")));
+
+        assertEquals(3, pyroar.getAttachedEnergyCards().size());
+        assertEquals(6, active1.getDamageCounters());
+    }
+
+    @Test
     void shouldCalculateDerangedDanceDamageBasedOnBenchedPokemon() {
         final Attack derangedDance = new Attack("Deranged Dance", 20, List.of(PokemonType.COLORLESS), "deranged_dance");
         final PokemonCard shiftryCard = buildPokemon("xy2-7", "Shiftry", 140, 2, EvolutionStage.STAGE_2);
