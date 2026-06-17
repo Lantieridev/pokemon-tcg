@@ -196,6 +196,15 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node.has("aceSpec")) {
                 builder.aceSpec(node.get("aceSpec").asBoolean());
             }
+            if (node.has("effectText")) {
+                builder.effectText(node.get("effectText").asText());
+            }
+            if (node.has("effectId") && !node.get("effectId").isNull()) {
+                builder.effectId(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.valueOf(node.get("effectId").asText()));
+            }
+            if (node.has("toolEffectId") && !node.get("toolEffectId").isNull()) {
+                builder.toolEffectId(ar.edu.utn.frc.tup.piii.engine.model.PokemonToolEffectId.valueOf(node.get("toolEffectId").asText()));
+            }
             return builder.build();
         }
     }
