@@ -40,6 +40,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Tests for GameFacade.apply() — one test per ActionType.
@@ -176,6 +177,51 @@ class GameFacadeApplyTest {
         facade.apply(session, new DeclareAttackAction(active0, flamethrower));
 
         assertTrue(active1.getDamageCounters() > 0, "defender should have taken damage");
+    }
+
+    @Test
+    void shouldApplyScorchingFangDamageAndDiscardEnergy() {
+        final Attack scorchingFang = new Attack("Scorching Fang", 60, List.of(PokemonType.FIRE, PokemonType.COLORLESS, PokemonType.COLORLESS), "scorching_fang");
+        final ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pyroarCard =
+                new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("xy2-20", "Pyroar", 110, PokemonType.FIRE)
+                        .attacks(List.of(scorchingFang))
+                        .build();
+        final InPlayPokemon pyroar = new InPlayPokemon(pyroarCard);
+        pyroar.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.FIRE, true));
+        pyroar.attachEnergy(new EnergyCard("e2", "Energy", PokemonType.COLORLESS, true));
+        pyroar.attachEnergy(new EnergyCard("e3", "Energy", PokemonType.COLORLESS, true));
+        
+        runtime0.setActivePokemon(pyroar);
+
+        session.setActivePlayerIndex(PLAYER_0);
+        
+        facade.apply(session, new DeclareAttackAction(pyroar, scorchingFang, List.of("discard_fire_energy")));
+
+        assertEquals(2, pyroar.getAttachedEnergyCards().size());
+        assertFalse(pyroar.getAttachedEnergyCards().stream().anyMatch(e -> e.getCardId().equals("e1")));
+        assertEquals(9, active1.getDamageCounters());
+    }
+
+    @Test
+    void shouldCalculateDerangedDanceDamageBasedOnBenchedPokemon() {
+        final Attack derangedDance = new Attack("Deranged Dance", 20, List.of(PokemonType.COLORLESS), "deranged_dance");
+        final PokemonCard shiftryCard = buildPokemon("xy2-7", "Shiftry", 140, 2, EvolutionStage.STAGE_2);
+        final InPlayPokemon shiftry = new InPlayPokemon(shiftryCard);
+        shiftry.attachEnergy(new EnergyCard("e1", "Energy", PokemonType.COLORLESS, true));
+        runtime0.setActivePokemon(shiftry);
+
+        bench0.place(new InPlayPokemon(buildPokemon("p1", "Charmander", 50, 1, EvolutionStage.BASIC)));
+        bench0.place(new InPlayPokemon(buildPokemon("p2", "Charmander", 50, 1, EvolutionStage.BASIC)));
+        
+        bench1.place(new InPlayPokemon(buildPokemon("o1", "Squirtle", 50, 1, EvolutionStage.BASIC)));
+        bench1.place(new InPlayPokemon(buildPokemon("o2", "Squirtle", 50, 1, EvolutionStage.BASIC)));
+        bench1.place(new InPlayPokemon(buildPokemon("o3", "Squirtle", 50, 1, EvolutionStage.BASIC)));
+
+        session.setActivePlayerIndex(PLAYER_0);
+
+        facade.apply(session, new DeclareAttackAction(shiftry, derangedDance));
+
+        assertEquals(10, active1.getDamageCounters());
     }
 
     // --- PlayTrainerAction: STADIUM ---

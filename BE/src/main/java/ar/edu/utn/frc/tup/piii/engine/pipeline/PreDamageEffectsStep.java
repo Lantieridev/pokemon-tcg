@@ -91,6 +91,17 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
             ctx.addDefenderModifier(dmg -> 0);
         }
 
+        if (ctx.isScorchingFangDiscarded()) {
+            ctx.addAttackerModifier(dmg -> dmg + 30);
+        }
+
+        if ("deranged_dance".equals(effectText)) {
+            final int playerBench = ctx.getAttackerRuntime() != null ? ctx.getAttackerRuntime().getBench().getAll().size() : 0;
+            final int opponentBench = ctx.getDefenderRuntime() != null ? ctx.getDefenderRuntime().getBench().getAll().size() : 0;
+            final int totalBenched = playerBench + opponentBench;
+            ctx.addAttackerModifier(dmg -> 20 * totalBenched);
+        }
+
         next.run();
     }
 

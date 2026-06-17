@@ -86,6 +86,7 @@ public final class CardMapper {
         ab.put("Energy Grace",   AbilityEffectId.ENERGY_GRACE);
         ab.put("Hand Lock",      AbilityEffectId.HAND_LOCK);
         ab.put("Shadow Void",    AbilityEffectId.SHADOW_VOID);
+        ab.put("Adaptive Evolution", AbilityEffectId.ADAPTIVE_EVOLUTION);
         ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 
@@ -229,6 +230,9 @@ public final class CardMapper {
             return "";
         }
         final String lowerName = attackName != null ? attackName.toLowerCase() : "";
+        if ("deranged dance".equals(lowerName)) {
+            return "deranged_dance";
+        }
         if ("stoke".equals(lowerName)) {
             return "stoke";
         }
