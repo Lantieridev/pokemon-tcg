@@ -581,6 +581,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (name.includes('cassius')) return true;
     if (name.includes('lysandre')) return true;
     if (name.includes('blacksmith')) return true;
+    if (name.includes('trick shovel')) return true;
     return false;
   }
 
@@ -599,6 +600,11 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       const targetPk = targetType === 'active' ? this.me()?.active : this.me()?.bench[targetIndex!];
       if (!targetPk) return false;
       return targetPk.pokemonType === 'FIRE';
+    }
+
+    // Trick Shovel can target either Active Pokémon to choose the deck to look at
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('trick shovel')) {
+      return targetType === 'active';
     }
 
     // For other trainers/tools/energy/evolution: they target my own board
