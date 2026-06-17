@@ -71,6 +71,7 @@ public final class AttackEffectResolver {
         m.put("scorching_fang",                      AttackEffectType.SCORCHING_FANG);
         m.put("bright_garden",                       AttackEffectType.BRIGHT_GARDEN);
         m.put("ear_we_go",                           AttackEffectType.EAR_WE_GO);
+        m.put("clairvoyant_eye",                     AttackEffectType.CLAIRVOYANT_EYE);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -265,6 +266,24 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     ctx.getAttackerStatusManager().setSelfDisabledAttackName("Combustion Blast");
                     ctx.getAttackerStatusManager().setSelfDisabledAttackSetThisTurn(true);
+                });
+        m.put(AttackEffectType.CLAIRVOYANT_EYE,
+                (amount, ctx) -> {
+                    final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    if (runtime != null) {
+                        final int count = Math.min(3, runtime.getDeck().size());
+                        if (count > 0) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE,
+                                            null,
+                                            count,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK
+                                    )
+                            );
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                    }
                 });
         this.handlers = Collections.unmodifiableMap(m);
     }

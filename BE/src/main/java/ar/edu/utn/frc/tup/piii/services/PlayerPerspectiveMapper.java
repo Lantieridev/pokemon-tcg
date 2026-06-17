@@ -75,7 +75,9 @@ public final class PlayerPerspectiveMapper {
                             && req.target() != null && !runtime.hasPokemonInPlay(req.target()))
                             ? session.getPlayerRuntime(1 - viewerIndex)
                             : runtime;
-                    var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL ? 1 : 7);
+                    final int limitAmount = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL) ? 1
+                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE) ? 3 : 7;
+                    var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(limitAmount);
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
                     var stream = runtime.getHand().getCards().stream();

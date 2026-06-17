@@ -50,5 +50,6 @@ public enum TrainerEffectId {
     BLACKSMITH,
     POKEMON_CENTER_LADY,
     ULTRA_BALL,
+    CLAIRVOYANT_EYE,
     NONE
 }

@@ -51,5 +51,6 @@ public enum AttackEffectType {
     COMBUSTION_BLAST,
     SCORCHING_FANG,
     BRIGHT_GARDEN,
-    EAR_WE_GO
+    EAR_WE_GO,
+    CLAIRVOYANT_EYE
 }
