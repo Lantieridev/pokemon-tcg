@@ -854,6 +854,29 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldAllowEvosodaOnFirstTurnIfTargetHasAdaptiveEvolution() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.GRASS, null, null, false);
+        target.setName("Caterpie");
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        target.setAbilities(List.of(new ar.edu.utn.frc.tup.piii.engine.model.Ability(
+                "Adaptive Evolution", "", ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION)));
+        turnInPlayProvider.set(target, 0);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(true);
+        
+        final BattlefieldStateProvider bfp = Mockito.mock(BattlefieldStateProvider.class);
+        when(bfp.getActivePokemon(0)).thenReturn(target);
+        
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider, null, bfp);
+        
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, target, "evosoda-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA));
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
     void shouldReturnInvalidWhenMaxReviveHasNoBasicPokemonInDiscard() {
         when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
         
