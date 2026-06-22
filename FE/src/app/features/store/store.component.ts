@@ -43,7 +43,34 @@ export class StoreComponent implements OnInit {
 
   filteredItems = computed(() => {
     if (this.selectedCategory() === 'MY_PACKS') {
-      return this.items().filter(item => item.itemType === 'PACK' && (this.packsInventory()[item.imageUrl || 'pack_base'] || 0) > 0);
+      const inventoryPacks: StoreItemDTO[] = [];
+      const storePackIds = new Set(this.items().map(i => i.imageUrl));
+      
+      // Agregar sobres comprables que el usuario tiene
+      this.items().forEach(item => {
+        if (item.itemType === 'PACK' && (this.packsInventory()[item.imageUrl || 'pack_base'] || 0) > 0) {
+          inventoryPacks.push(item);
+        }
+      });
+      
+      // Agregar sobres del inventario que no están en la tienda (ej: recompensas exclusivas del pase)
+      Object.keys(this.packsInventory()).forEach(key => {
+        if (this.packsInventory()[key] > 0 && !storePackIds.has(key)) {
+          // Generar nombre legible: "pack_kanto_base" -> "Kanto Base"
+          let readableName = key.replace('pack_', '').replace(/_/g, ' ');
+          readableName = readableName.charAt(0).toUpperCase() + readableName.slice(1);
+          
+          inventoryPacks.push({
+            id: -1, // ID dummy
+            name: `Sobre ${readableName}`,
+            description: 'Sobre obtenido como recompensa.',
+            price: 0,
+            itemType: 'PACK',
+            imageUrl: key
+          });
+        }
+      });
+      return inventoryPacks;
     }
     return this.items()
       .filter(item => item.itemType === this.selectedCategory())
@@ -55,6 +82,7 @@ export class StoreComponent implements OnInit {
   }
 
   getImageSrc(item: StoreItemDTO): string {
+    if (item.imageUrl === 'pack_base' || item.imageUrl === 'pack_xy_base') return 'assets/images/rewards/pack_comun.png';
     if (item.itemType === 'AVATAR') {
       if (item.imageUrl === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
       if (item.imageUrl === 'charmander_fire') return 'assets/store/avatar_charmander.png';
@@ -70,12 +98,15 @@ export class StoreComponent implements OnInit {
       return item.imageUrl ? `assets/achievements/avatars/${item.imageUrl}.png` : 'assets/achievements/avatars/avatar_belt_white.png';
     }
     if (item.itemType === 'PACK') {
-        if (item.imageUrl === 'pack_jungle') return 'assets/store/pack_jungle.png';
-        if (item.imageUrl === 'pack_fossil') return 'assets/store/pack_fossil.png';
-        if (item.imageUrl === 'pack_rocket') return 'assets/store/pack_rocket.png';
-        return 'assets/store/pack_base.png';
+        return `assets/images/rewards/${item.imageUrl || 'pack_kanto_base'}.png`;
     }
     return item.imageUrl || 'assets/achievements/avatars/avatar_winner_badge.png';
+  }
+
+  getOpeningPackImage(): string {
+    const type = this.openingPackType();
+    if (type === 'pack_base' || type === 'pack_xy_base') return 'assets/images/rewards/pack_comun.png';
+    return 'assets/images/rewards/' + type + '.png';
   }
 
   isOwned(item: StoreItemDTO): boolean {
@@ -161,7 +192,7 @@ export class StoreComponent implements OnInit {
         this.openedCards.set(result.cards);
         this.packResult.set(result);
         this.loadBalance(); // Refresh
-        setTimeout(() => this.openingPack.set(false), 1000);
+        setTimeout(() => this.openingPack.set(false), 2000);
       },
       error: (err) => {
         this.toastService.error(err.error?.message || 'Error al abrir el sobre');

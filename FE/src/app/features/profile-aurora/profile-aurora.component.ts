@@ -32,7 +32,7 @@ import { RouterModule } from '@angular/router';
           [style.border]="toastType === 'success' ? '1px solid #4caf5088' : '1px solid #f4433688'"
           [style.color]="toastType === 'success' ? '#81c784' : '#ef9a9a'"
           style="
-            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
             z-index: 99999; padding: 14px 28px; border-radius: 12px; font-size: 14px;
             font-weight: 600; letter-spacing: 0.01em; white-space: nowrap;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: toastIn 0.25s ease;">
@@ -1746,14 +1746,24 @@ export class ProfileAuroraComponent implements OnInit {
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
     
-    // Normalizamos el nombre para que coincida con los archivos guardados (minúsculas, sin tildes, guiones bajos)
-    // Pero si el avatar ya está normalizado (ej: "avatar_winner_badge"), se mantendrá igual.
+    // Nombres guardados en BD (por item.getName()) y por imageUrl
+    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
+    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
+    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
+    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
+    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
+    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
+    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
+    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
+    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
+    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
+
+    // Normalizamos el nombre para que coincida con los archivos guardados
     const normalizedValue = av.toLowerCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Eliminar tildes
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_]/g, '');
       
-    // Si el nombre no empieza con 'avatar_', se lo agregamos
     const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
     
     return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
@@ -1909,7 +1919,10 @@ export class ProfileAuroraComponent implements OnInit {
     this.toastMessage = message;
     this.toastType = type;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastMessage = ''; }, 3500);
+    this.toastTimeout = setTimeout(() => { 
+      this.toastMessage = ''; 
+      this.cdr.detectChanges();
+    }, 3000);
   }
 
   saveProfile(): void {
