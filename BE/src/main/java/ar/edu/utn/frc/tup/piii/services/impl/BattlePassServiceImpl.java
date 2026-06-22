@@ -152,7 +152,16 @@ public class BattlePassServiceImpl implements BattlePassService {
                 int addAmount = amount != null ? amount : 0;
                 int packs = user.getPacks() != null ? user.getPacks() : 0;
                 user.setPacks(packs + addAmount);
-                user.getPacksInventory().put("pack_base", user.getPacksInventory().getOrDefault("pack_base", 0) + addAmount);
+                
+                String packKey = "pack_comun";
+                if (value != null && !value.trim().isEmpty()) {
+                    String norm = java.text.Normalizer.normalize(value.toLowerCase(), java.text.Normalizer.Form.NFD);
+                    norm = norm.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+                    norm = norm.replaceAll("\\s+", "_");
+                    norm = norm.replaceAll("[^a-z0-9_]", "");
+                    packKey = "pack_" + norm;
+                }
+                user.getPacksInventory().put(packKey, user.getPacksInventory().getOrDefault(packKey, 0) + addAmount);
             }
             case "TITLE" -> {
                 if (value != null) user.getUnlockedTitles().add(value);

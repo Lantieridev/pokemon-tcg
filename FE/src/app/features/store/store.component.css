@@ -317,14 +317,11 @@
 .pack-img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Crops the AI square image into a tall pack shape! */
+  object-fit: contain;
   z-index: 2;
   position: relative;
   transition: transform 0.3s;
-}
-
-.fifa-pack-card:hover .pack-img {
-  transform: scale(1.1); /* Slight zoom on hover */
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4));
 }
 
 .pack-glare {
@@ -346,14 +343,14 @@
 
 .pack-inventory-badge {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 6px 10px;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, var(--p-yellow) 0%, #ff8c00 100%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 10;
@@ -362,25 +359,28 @@
 }
 
 .pack-inventory-badge:hover {
-  background: rgba(255, 203, 5, 0.2);
-  border-color: rgba(255, 203, 5, 0.8);
-  transform: scale(1.1);
-}
-
-.badge-eye-icon {
-  color: #fff;
-  margin-bottom: 2px;
-}
-
-.pack-inventory-badge:hover .badge-eye-icon {
-  color: #ffcb05;
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 15px rgba(255, 203, 5, 0.6);
 }
 
 .badge-count {
   color: #fff;
-  font-family: var(--chunky);
+  font-family: var(--display);
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.pack-name-label {
+  margin-top: 15px;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.8);
 }
 
 .pack-price-container {
@@ -394,4 +394,41 @@
   padding: 8px 16px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Pack Tearing Animation */
+.pack-tear-container {
+  animation: packShake 1.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.pack-top-half {
+  position: absolute;
+  top: 0; left: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 25%, 80% 30%, 60% 20%, 40% 30%, 20% 20%, 0 25%);
+  animation: tearTop 0.5s ease-in 1.4s forwards;
+}
+
+.pack-bottom-half {
+  position: absolute;
+  top: 0; left: 0;
+  clip-path: polygon(0 25%, 20% 20%, 40% 30%, 60% 20%, 80% 30%, 100% 25%, 100% 100%, 0 100%);
+  animation: tearBottom 0.5s ease-in 1.4s forwards;
+}
+
+@keyframes packShake {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.1); }
+  10%, 90% { transform: translate3d(-2px, 0, 0) scale(1.1) rotate(-1deg); }
+  20%, 80% { transform: translate3d(4px, 0, 0) scale(1.1) rotate(2deg); filter: brightness(1.2); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0) scale(1.1) rotate(-3deg); }
+  40%, 60% { transform: translate3d(6px, 0, 0) scale(1.1) rotate(3deg); filter: brightness(1.5); }
+}
+
+@keyframes tearTop {
+  0% { transform: translateY(0) rotate(0deg) scale(1.1); opacity: 1; filter: brightness(2); }
+  100% { transform: translateY(-150px) rotate(-15deg) scale(1.2); opacity: 0; filter: brightness(3); }
+}
+
+@keyframes tearBottom {
+  0% { transform: translateY(0) rotate(0deg) scale(1.1); opacity: 1; filter: brightness(2); }
+  100% { transform: translateY(150px) rotate(15deg) scale(1.2); opacity: 0; filter: brightness(3); }
 }

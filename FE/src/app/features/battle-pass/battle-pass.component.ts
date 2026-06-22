@@ -82,7 +82,8 @@ export class BattlePassComponent implements OnInit {
         // Auto-navigate to current level page solo si no se pide preservar
         if (!preservePage) {
           const levelIdx = res.currentLevel;
-          this.currentPage.set(Math.floor(levelIdx / this.pageSize));
+          const maxPage = Math.max(0, Math.ceil(res.levels.length / this.pageSize) - 1);
+          this.currentPage.set(Math.min(Math.floor(levelIdx / this.pageSize), maxPage));
         }
         this.loading.set(false);
       },
@@ -105,6 +106,10 @@ export class BattlePassComponent implements OnInit {
   closeClaimModal() {
     this.claimedReward.set(null);
     this.loadData(true);
+    // Actualizamos el perfil global al CERRAR el modal para que las monedas se sumen visualmente después de darle a aceptar
+    if (this.authService.username) {
+      this.profileService.getProfile(this.authService.username).subscribe();
+    }
   }
 
   claimReward(level: number, isPremium: boolean) {
@@ -117,11 +122,6 @@ export class BattlePassComponent implements OnInit {
           const value = isPremium ? levelData.premiumRewardValue : levelData.freeRewardValue;
           const amount = isPremium ? levelData.premiumRewardAmount : levelData.freeRewardAmount;
           this.claimedReward.set({ type, value, amount, isPremium });
-        }
-        
-        // Actualizamos el perfil global para que impacte en la tienda (sobres, monedas, títulos)
-        if (this.authService.username) {
-          this.profileService.loadUserProfile(this.authService.username).subscribe();
         }
       },
       error: (err) => {

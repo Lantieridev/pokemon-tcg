@@ -107,27 +107,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
   animateCoins = signal(false);
 
   ngOnInit(): void {
+    // Siempre nos suscribimos al perfil global (para que actualice si otro componente lo fetchea)
+    this.profileService.profile$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(profile => {
+        if (profile) {
+          const currentCoins = this.profileData()?.pokecoins;
+          if (currentCoins !== undefined && profile.pokecoins > currentCoins) {
+            this.animateCoins.set(true);
+            setTimeout(() => {
+              this.animateCoins.set(false);
+              this.cdr.markForCheck();
+            }, 1500);
+          }
+          this.profileData.set(profile);
+          this.cdr.markForCheck();
+        }
+      });
+
+    // Si ya estamos logueados al iniciar, lo fetcheamos por las dudas
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
         error: (err) => console.error('Error fetching profile for navbar', err)
       });
-      
-      this.profileService.profile$
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(profile => {
-          if (profile) {
-            const currentCoins = this.profileData()?.pokecoins;
-            if (currentCoins !== undefined && profile.pokecoins > currentCoins) {
-              this.animateCoins.set(true);
-              setTimeout(() => {
-                this.animateCoins.set(false);
-                this.cdr.markForCheck();
-              }, 1500);
-            }
-            this.profileData.set(profile);
-            this.cdr.markForCheck();
-          }
-        });
     }
   }
 

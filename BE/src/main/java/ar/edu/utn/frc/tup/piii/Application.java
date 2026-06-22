@@ -40,11 +40,11 @@ public class Application {
             ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository userRepository) {
         return args -> {
             userRepository.findByUsername("prueba1").ifPresent(user -> {
-                user.setXp(20000);
-                user.setLevel(25);
+                user.setXp(55000);
+                user.setLevel(50);
                 user.setPokecoins(5000);
                 userRepository.save(user);
-                System.out.println("====== HACK: INYECTADOS 20,000 XP A 'prueba1' LOCALMENTE ======");
+                System.out.println("====== HACK: INYECTADOS 55,000 XP A 'prueba1' LOCALMENTE ======");
             });
         };
     }
