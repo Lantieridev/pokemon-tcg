@@ -1,7 +1,7 @@
 <div class="store-container">
   <div class="store-header">
-    <h1>Centro de Intercambio</h1>
-    <p>Adquiere nuevos avatares, títulos y objetos usando tus Pokécoins.</p>
+    <h1>Tienda Pokémon</h1>
+    <p>Adquiere nuevos avatares exclusivos y sobres de expansión.</p>
     <div class="balance-badge">
       <span class="coin-icon" style="margin-right: 6px;"><aurora-coin-icon [size]="20"></aurora-coin-icon></span> {{ pokecoins() }} Pokécoins
     </div>
@@ -10,7 +10,7 @@
   <div class="category-tabs">
     @for (cat of categories; track cat) {
       <button class="category-tab" [class.active]="selectedCategory() === cat" (click)="setCategory(cat)">
-        {{ cat === 'TITLE' ? 'Títulos' : cat === 'AVATAR' ? 'Avatares' : 'Sobres' }}
+        {{ cat === 'AVATAR' ? 'Avatares' : cat === 'PACK' ? 'Comprar Sobres' : 'Mis Sobres' }}
       </button>
     }
   </div>
@@ -20,19 +20,13 @@
       <div class="spinner"></div>
       <p>Cargando catálogo...</p>
     </div>
-  } @else {
+  } @else if (selectedCategory() === 'AVATAR') {
     <div class="catalog-grid">
       @for (item of filteredItems(); track item.id) {
         <div class="store-card group">
           <div class="card-image-wrapper">
             <div class="card-bg-gradient"></div>
-            @if (item.itemType === 'TITLE') {
-              <div class="title-preview">
-                <span>{{ item.name }}</span>
-              </div>
-            } @else {
-              <img [src]="getImageSrc(item)" [alt]="item.name" class="card-image" [class.avatar-style]="item.itemType === 'AVATAR'" />
-            }
+            <img [src]="getImageSrc(item)" [alt]="item.name" class="card-image avatar-style" />
           </div>
           <div class="card-content">
             <div class="card-text-area">
@@ -40,32 +34,80 @@
               <p>{{ item.description }}</p>
             </div>
             <div class="card-actions">
-              <button class="buy-button" (click)="buyItem(item)" [disabled]="pokecoins() < item.price">
-                <span class="price-val">{{ item.price }} Pokécoins</span>
-              </button>
+              @if (isOwned(item)) {
+                <button class="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-2xl bg-black/60 border border-white/5 opacity-50 cursor-not-allowed" disabled>
+                  <span class="text-gray-400 font-chunky text-sm uppercase tracking-wider">Ya adquirido</span>
+                </button>
+              } @else {
+                <button class="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-2xl bg-black/40 border border-[var(--p-yellow)]/30 hover:bg-black/60 hover:border-[var(--p-yellow)]/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        (click)="selectedItemToBuy.set(item)" [disabled]="pokecoins() < item.price">
+                  <span class="text-gray-400 font-chunky text-sm uppercase tracking-wider">Costo:</span>
+                  <span class="text-[var(--p-yellow)] font-black text-xl flex items-center gap-1">
+                    <aurora-coin-icon [size]="20"></aurora-coin-icon> {{ item.price }}
+                  </span>
+                </button>
+              }
             </div>
           </div>
         </div>
       }
     </div>
-  }
-
-  <!-- Inventario de Sobres -->
-  @if (selectedCategory() === 'PACK') {
-    <div class="mt-8 pt-6 border-t border-[rgba(255,203,5,0.2)]">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-xl font-display font-black text-white tracking-wider">Tu Inventario</h2>
-          <p class="text-sm font-chunky text-[#5b6885]">Tienes <span class="text-[var(--p-yellow)]">{{ userPacks() }}</span> sobres sin abrir.</p>
-        </div>
-        <button class="px-6 py-3 rounded-xl font-chunky text-sm uppercase transition-all duration-200"
-                [style.background]="userPacks() > 0 ? 'var(--p-yellow)' : '#333'"
-                [style.color]="userPacks() > 0 ? '#1a1010' : '#888'"
-                [style.border]="userPacks() > 0 ? '2px solid #1a1010' : '2px solid #222'"
-                [disabled]="userPacks() <= 0"
-                (click)="openPack()">
-          Abrir Sobre
-        </button>
+  } @else if (selectedCategory() === 'PACK') {
+    <div class="fifa-pack-container">
+      <div class="fifa-pack-carousel">
+        @for (item of filteredItems(); track item.id) {
+          <div class="fifa-pack-wrapper">
+            <!-- The Pack Card -->
+            <div class="fifa-pack-card" (click)="selectedItemToBuy.set(item)">
+              <div class="pack-glare"></div>
+              <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
+              
+              <!-- Inventory / Open Badge -->
+              @if ((packsInventory()[item.imageUrl || 'pack_base'] || 0) > 0) {
+                <div class="pack-inventory-badge" (click)="openPack(item.imageUrl || 'pack_base'); $event.stopPropagation()" title="Abrir Sobre">
+                  <div class="badge-eye-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </div>
+                  <div class="badge-count">{{ packsInventory()[item.imageUrl || 'pack_base'] }}</div>
+                </div>
+              }
+            </div>
+            
+            <!-- Price Below -->
+            <div class="pack-price-container">
+              <aurora-coin-icon [size]="18"></aurora-coin-icon>
+              <span>{{ item.price }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (selectedCategory() === 'MY_PACKS') {
+    <div class="fifa-pack-container">
+      <div class="fifa-pack-carousel">
+        @for (item of filteredItems(); track item.id) {
+          <div class="fifa-pack-wrapper">
+            <!-- The Pack Card -->
+            <div class="fifa-pack-card" (click)="openPack(item.imageUrl || 'pack_base')">
+              <div class="pack-glare"></div>
+              <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
+              
+              <!-- Open Badge (Always visible here) -->
+              <div class="pack-inventory-badge" title="Abrir Sobre">
+                <div class="badge-eye-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div class="badge-count">{{ packsInventory()[item.imageUrl || 'pack_base'] }}</div>
+              </div>
+            </div>
+          </div>
+        }
+        @if (filteredItems().length === 0) {
+          <div class="text-center text-gray-400 mt-10">
+            <p class="font-chunky text-xl mb-4">No tienes ningún sobre en tu inventario.</p>
+            <p>¡Compra sobres en la tienda o sube de nivel en el Pase de Batalla para conseguir más!</p>
+          </div>
+        }
       </div>
     </div>
   }
@@ -75,10 +117,10 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
       @if (openingPack()) {
         <div class="flex flex-col items-center justify-center">
-          <div class="w-32 h-48 relative animate-bounce">
-            <img src="assets/store/pack_base.png" class="w-full h-full object-cover rounded-xl shadow-[0_0_40px_rgba(255,203,5,0.8)]" />
+          <div class="w-64 h-96 relative animate-bounce" style="animation-duration: 2s;">
+            <img [src]="'assets/store/' + openingPackType() + '.png'" class="w-full h-full object-contain drop-shadow-[0_0_50px_rgba(255,203,5,0.8)] scale-110" />
           </div>
-          <h2 class="mt-8 text-2xl font-display font-black text-[var(--p-yellow)] tracking-widest uppercase animate-pulse">Abriendo sobre...</h2>
+          <h2 class="mt-12 text-3xl font-display font-black text-[var(--p-yellow)] tracking-widest uppercase animate-pulse">Abriendo sobre...</h2>
         </div>
       } @else if (packResult()) {
         <div class="flex flex-col items-center justify-center w-full max-w-4xl px-4">
@@ -119,6 +161,48 @@
           </button>
         </div>
       }
+    </div>
+  }
+
+  <!-- Confirm Purchase Modal -->
+  @if (selectedItemToBuy()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
+      <div class="flex flex-col items-center justify-center w-full max-w-md px-6 py-8 bg-[#1a1a2e] border border-[rgba(255,255,255,0.1)] rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] relative overflow-hidden">
+        
+        <div class="absolute inset-0 bg-gradient-to-b from-[var(--p-yellow)]/10 to-transparent pointer-events-none"></div>
+
+        <h2 class="text-3xl font-display font-black text-white tracking-widest uppercase mb-6 z-10 text-center drop-shadow-md">Confirmar Compra</h2>
+        
+        <div class="w-40 h-40 mb-6 z-10 relative flex justify-center items-center">
+          <div class="absolute inset-0 bg-gradient-to-tr from-[var(--p-yellow)]/20 to-transparent blur-2xl rounded-full"></div>
+          <img [src]="getImageSrc(selectedItemToBuy()!)" class="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,203,5,0.6)] relative z-10" style="border-radius: 50%;" />
+        </div>
+
+        <h3 class="text-2xl font-black text-white mb-3 z-10 text-center tracking-wide">{{ selectedItemToBuy()!.name }}</h3>
+        <p class="text-[#a0a0b8] text-center mb-8 z-10 px-4 leading-relaxed">{{ selectedItemToBuy()!.description }}</p>
+
+        <div class="flex items-center gap-3 mb-8 z-10 px-8 py-4 rounded-2xl bg-black/50 border border-[var(--p-yellow)]/20 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+          <span class="text-gray-400 font-chunky text-sm uppercase tracking-widest">A pagar:</span>
+          <span class="text-[var(--p-yellow)] font-black text-2xl flex items-center gap-2">
+            <aurora-coin-icon [size]="24"></aurora-coin-icon> {{ selectedItemToBuy()!.price }}
+          </span>
+        </div>
+
+        <div class="flex w-full gap-4 z-10">
+          <button class="flex-1 py-3 rounded-xl border border-white/20 text-white font-chunky text-sm uppercase tracking-widest hover:bg-white/5 transition-colors disabled:opacity-50"
+                  (click)="selectedItemToBuy.set(null)" [disabled]="isPurchasing()">
+            Cancelar
+          </button>
+          <button class="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#10b981] to-[#059669] text-white font-chunky text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] disabled:opacity-50 flex items-center justify-center"
+                  (click)="confirmPurchase()" [disabled]="isPurchasing()">
+            @if (isPurchasing()) {
+              <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            } @else {
+              Comprar
+            }
+          </button>
+        </div>
+      </div>
     </div>
   }
 </div>

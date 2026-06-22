@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 
 export interface CardStatDTO {
   cardId: string;
@@ -41,6 +41,7 @@ export interface UserProfileResponseDTO {
   pokecoins: number;
   battlePoints: number;
   packs: number;
+  packsInventory?: { [key: string]: number };
   stardust: number;
   statistics: {
     matchesPlayed: number;
@@ -103,8 +104,12 @@ export class ProfileService {
   private http = inject(HttpClient);
   private readonly API_URL = 'http://localhost:8081/api/users';
 
+  public profile$ = new BehaviorSubject<UserProfileResponseDTO | null>(null);
+
   getProfile(username: string): Observable<UserProfileResponseDTO> {
-    return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`);
+    return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`).pipe(
+      tap(profile => this.profile$.next(profile))
+    );
   }
 
   getAchievements(username: string): Observable<UserAchievementProgressDTO[]> {

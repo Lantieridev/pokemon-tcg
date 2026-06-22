@@ -35,7 +35,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         UserBattlePassEntity userPass = userBattlePassRepository.findByUserId(user.getId())
-                .orElse(UserBattlePassEntity.builder().user(user).build());
+                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).build());
 
         List<BattlePassLevelDTO> levels = battlePassLevelRepository.findAll(Sort.by(Sort.Direction.ASC, "level"))
                 .stream()
@@ -70,7 +70,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         UserBattlePassEntity userPass = userBattlePassRepository.findByUserId(user.getId())
-                .orElse(UserBattlePassEntity.builder().user(user).build());
+                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).build());
 
         if (isPremium && !userPass.getIsPremium()) {
             throw new IllegalArgumentException("No tienes el pase de batalla premium");
@@ -113,7 +113,7 @@ public class BattlePassServiceImpl implements BattlePassService {
         }
 
         userRepository.save(user);
-        userBattlePassRepository.save(userPass);
+        userBattlePassRepository.saveAndFlush(userPass);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         UserBattlePassEntity userPass = userBattlePassRepository.findByUserId(user.getId())
-                .orElse(UserBattlePassEntity.builder().user(user).build());
+                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).build());
 
         if (userPass.getIsPremium()) {
             throw new IllegalArgumentException("Ya tienes el pase de batalla premium");
@@ -138,7 +138,7 @@ public class BattlePassServiceImpl implements BattlePassService {
         userPass.setIsPremium(true);
 
         userRepository.save(user);
-        userBattlePassRepository.save(userPass);
+        userBattlePassRepository.saveAndFlush(userPass);
     }
 
     private void grantReward(UserEntity user, String type, Integer amount, String value) {
@@ -149,8 +149,10 @@ public class BattlePassServiceImpl implements BattlePassService {
                 user.setPokecoins(coins + (amount != null ? amount : 0));
             }
             case "PACK" -> {
+                int addAmount = amount != null ? amount : 0;
                 int packs = user.getPacks() != null ? user.getPacks() : 0;
-                user.setPacks(packs + (amount != null ? amount : 0));
+                user.setPacks(packs + addAmount);
+                user.getPacksInventory().put("pack_base", user.getPacksInventory().getOrDefault("pack_base", 0) + addAmount);
             }
             case "TITLE" -> {
                 if (value != null) user.getUnlockedTitles().add(value);

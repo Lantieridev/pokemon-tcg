@@ -20,6 +20,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import jakarta.persistence.MapKeyColumn;
 
 @Entity
 @Table(name = "users")
@@ -47,6 +50,13 @@ public class UserEntity {
     @Column(name = "packs", nullable = false)
     @Builder.Default
     private Integer packs = 0;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_packs", joinColumns = @JoinColumn(name = "user_id"))
+    @MapKeyColumn(name = "pack_type")
+    @Column(name = "quantity")
+    @Builder.Default
+    private Map<String, Integer> packsInventory = new HashMap<>();
 
     @Column(name = "avatar_icon")
     @Builder.Default

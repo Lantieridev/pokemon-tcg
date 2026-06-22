@@ -260,6 +260,13 @@ public class ProfileServiceImpl implements ProfileService {
                 .totalKOsSuffered(totalKOsSuffered)
                 .build();
 
+        Map<String, Integer> pInv = user.getPacksInventory() != null ? new java.util.HashMap<>(user.getPacksInventory()) : new java.util.HashMap<>();
+        int totalPacks = user.getPacks() != null ? user.getPacks() : 0;
+        int currentBasePacks = pInv.getOrDefault("pack_base", 0);
+        if (totalPacks > currentBasePacks) {
+            pInv.put("pack_base", totalPacks);
+        }
+
         return UserProfileResponseDTO.builder()
                 .username(user.getUsername())
                 .createdAt(user.getCreatedAt())
@@ -273,7 +280,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .mmr(user.getMmr() != null ? user.getMmr() : 1000)
                 .pokecoins(user.getPokecoins() != null ? user.getPokecoins() : 0)
                 .battlePoints(user.getBattlePoints() != null ? user.getBattlePoints() : 0)
-                .packs(user.getPacks() != null ? user.getPacks() : 0)
+                .packs(totalPacks)
+                .packsInventory(pInv)
                 .stardust(user.getStardust() != null ? user.getStardust() : 0)
                 .statistics(stats)
                 .honors(honors.entrySet().stream()

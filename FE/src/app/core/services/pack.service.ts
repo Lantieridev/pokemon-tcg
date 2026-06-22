@@ -18,7 +18,7 @@ export class PackService {
   private http = inject(HttpClient);
   private readonly API_URL = 'http://localhost:8081/api/packs';
 
-  openPack(): Observable<PackOpeningResultDTO> {
-    return this.http.post<PackOpeningResultDTO>(`${this.API_URL}/open`, {});
+  openPack(packType: string = 'pack_base'): Observable<PackOpeningResultDTO> {
+    return this.http.post<PackOpeningResultDTO>(`${this.API_URL}/open?packType=${packType}`, {});
   }
 }

@@ -68,17 +68,29 @@
 }
 
 .store-header h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 10px;
-  background: linear-gradient(45deg, #f39c12, #f1c40f);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--display);
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 15px;
+  color: #ffcb05;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  -webkit-text-stroke: 2px #2a75bb;
+  text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
 }
 
 .store-header p {
+  color: #ffffff;
   font-size: 1.2rem;
-  color: #a0a0b8;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: var(--chunky);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .balance-badge {
@@ -259,4 +271,127 @@
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-30px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* FIFA PACK STORE STYLES */
+.fifa-pack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 40px 0;
+}
+
+.fifa-pack-carousel {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1400px;
+}
+
+.fifa-pack-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 280px;
+}
+
+.fifa-pack-card {
+  width: 220px;
+  height: 320px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden; /* Clips the image to make it look like a physical card */
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6);
+}
+
+.fifa-pack-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 20px 30px rgba(255,203,5,0.4);
+}
+
+.pack-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Crops the AI square image into a tall pack shape! */
+  z-index: 2;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.fifa-pack-card:hover .pack-img {
+  transform: scale(1.1); /* Slight zoom on hover */
+}
+
+.pack-glare {
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  z-index: 3;
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.fifa-pack-card:hover .pack-glare {
+  left: 200%;
+}
+
+.pack-inventory-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+
+.pack-inventory-badge:hover {
+  background: rgba(255, 203, 5, 0.2);
+  border-color: rgba(255, 203, 5, 0.8);
+  transform: scale(1.1);
+}
+
+.badge-eye-icon {
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.pack-inventory-badge:hover .badge-eye-icon {
+  color: #ffcb05;
+}
+
+.badge-count {
+  color: #fff;
+  font-family: var(--chunky);
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.pack-price-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--chunky);
+  font-size: 1.2rem;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
 }

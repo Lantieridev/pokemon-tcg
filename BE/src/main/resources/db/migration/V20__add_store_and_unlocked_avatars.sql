@@ -20,6 +20,4 @@ INSERT INTO store_items (name, description, price, item_type, image_url) VALUES
 ('Ash Ketchum', 'Avatar clásico del entrenador de Pueblo Paleta.', 100, 'AVATAR', 'ash_avatar'),
 ('Misty', 'Avatar de la líder de gimnasio de Ciudad Celeste.', 100, 'AVATAR', 'misty_avatar'),
 ('Brock', 'Avatar del líder de gimnasio de Ciudad Plateada.', 100, 'AVATAR', 'brock_avatar'),
-('Maestro Pokémon', 'Título prestigioso para lucir en tu perfil.', 500, 'TITLE', 'null'),
-('Rico', 'Título que demuestra tu poder adquisitivo.', 300, 'TITLE', 'null'),
 ('Sobre Base XY', 'Sobre con 5 cartas aleatorias de la primera expansión.', 250, 'PACK', 'pack_xy_base');

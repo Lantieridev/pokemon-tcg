@@ -24,21 +24,19 @@
 .premium-aura::before {
   content: '';
   position: absolute;
-  top: -50px;
-  left: -50px;
-  width: calc(100% + 100px);
-  height: calc(100% + 100px);
-  background: radial-gradient(circle at center, rgba(250, 204, 21, 0.15) 0%, rgba(250, 204, 21, 0) 70%);
+  inset: -2px;
   z-index: -1;
-  border-radius: 50%;
+  border-radius: inherit;
+  border: 2px solid rgba(255, 203, 5, 0.5);
+  box-shadow: 0 0 20px 5px rgba(255, 203, 5, 0.3), inset 0 0 20px rgba(255, 203, 5, 0.2);
   pointer-events: none;
-  animation: pulse-aura 4s infinite ease-in-out;
+  animation: pulse-aura-border 3s infinite ease-in-out;
 }
 
-@keyframes pulse-aura {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.8; }
+@keyframes pulse-aura-border {
+  0% { box-shadow: 0 0 15px 2px rgba(255, 203, 5, 0.3), inset 0 0 10px rgba(255, 203, 5, 0.2); border-color: rgba(255, 203, 5, 0.4); }
+  50% { box-shadow: 0 0 35px 8px rgba(255, 203, 5, 0.6), inset 0 0 25px rgba(255, 203, 5, 0.4); border-color: rgba(255, 203, 5, 0.8); }
+  100% { box-shadow: 0 0 15px 2px rgba(255, 203, 5, 0.3), inset 0 0 10px rgba(255, 203, 5, 0.2); border-color: rgba(255, 203, 5, 0.4); }
 }
 
 .bp-title-section h1 {
@@ -193,7 +191,12 @@
   background: linear-gradient(135deg, rgba(255, 203, 5, 0.2), rgba(255, 203, 5, 0.05));
   border: 1px solid rgba(255, 203, 5, 0.5);
   border-radius: 1.2rem;
-  padding: 1.5rem;
+  padding: 2rem;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   box-shadow: 0 0 30px rgba(255, 203, 5, 0.15), inset 0 0 20px rgba(255, 203, 5, 0.1);
   color: var(--p-yellow);
@@ -201,18 +204,19 @@
 
 .premium-active-badge h2 {
   font-family: var(--display);
-  font-size: 1rem;
+  font-size: 1.4rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 900;
-  margin-top: 0.5rem;
+  margin-top: 0.8rem;
   margin-bottom: 0.5rem;
+  line-height: 1.2;
 }
 
 .premium-active-badge p {
   font-family: var(--chunky);
-  font-size: 0.7rem;
-  color: rgba(255, 203, 5, 0.7);
+  font-size: 0.85rem;
+  color: rgba(255, 203, 5, 0.8);
 }
 
 /* Fortnite Style Grid CSS */
