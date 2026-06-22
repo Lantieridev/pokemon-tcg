@@ -5,8 +5,8 @@
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     } @else if (status()) {
-      <div class="bp-header mb-8">
-        <div class="bp-title-section transition-all duration-1000" [ngClass]="status()?.isPremium ? 'premium-aura' : ''">
+      <div class="bp-header mb-8 relative" [ngClass]="status()?.isPremium ? 'premium-aura' : ''">
+        <div class="bp-title-section transition-all duration-1000">
           <h1 class="font-display text-4xl text-white tracking-wider mb-2" [ngClass]="status()?.isPremium ? 'text-yellow-300 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]' : ''">PASE DE BATALLA</h1>
           <span class="season-badge font-chunky">TEMPORADA 1</span>
           <p class="text-[var(--ink-dim)] mt-4">Juega partidas, gana experiencia y desbloquea recompensas exclusivas.</p>
@@ -26,7 +26,7 @@
         <div class="bp-premium-cta" [class.is-premium]="status()?.isPremium">
           @if (status()?.isPremium) {
             <div class="premium-active-badge">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg class="w-12 h-12 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] mb-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               <h2>Pase Premium Activado</h2>
               <p>Tienes acceso a todas las recompensas exclusivas.</p>
             </div>
@@ -95,14 +95,22 @@
                       <div class="status-check bg-green-500">
                         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </div>
-                    } @else if (canClaimFree(level.level)) {
-                      <button class="claim-mini-btn claim-action-btn bg-blue-500 font-black px-4 py-1" style="font-size: 14px;" (click)="claimReward(level.level, false)">RECLAMAR</button>
-                    } @else if (level.freeRewardType) {
+                    } @else if (level.freeRewardType && !canClaimFree(level.level)) {
                       <div class="status-lock">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
                       </div>
                     }
                   </div>
+
+                  <!-- Centered Claim Button Overlay -->
+                  @if (canClaimFree(level.level)) {
+                    <div class="absolute inset-0 z-20 flex items-center justify-center bg-blue-900/30 backdrop-blur-[2px] pointer-events-none rounded-b-lg sm:rounded-none">
+                      <button class="pointer-events-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full font-black text-white uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:scale-110 hover:shadow-[0_0_25px_rgba(59,130,246,0.9)] transition-all animate-pulse border border-blue-400" 
+                              (click)="claimReward(level.level, false)">
+                        Reclamar
+                      </button>
+                    </div>
+                  }
               </div>
 
               <!-- Premium Reward (Bottom) -->
@@ -132,9 +140,7 @@
                       <div class="status-check bg-green-500">
                         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </div>
-                    } @else if (canClaimPremium(level.level)) {
-                      <button class="claim-mini-btn claim-action-btn bg-blue-500 font-black px-4 py-1" style="font-size: 14px;" (click)="claimReward(level.level, true)">RECLAMAR</button>
-                    } @else if (level.premiumRewardType) {
+                    } @else if (level.premiumRewardType && !canClaimPremium(level.level)) {
                       <div class="status-lock">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
                       </div>
@@ -145,6 +151,16 @@
                     </div>
                   }
                 </div>
+
+                <!-- Centered Claim Button Overlay -->
+                @if (status()?.isPremium && canClaimPremium(level.level)) {
+                  <div class="absolute inset-0 z-20 flex items-center justify-center bg-yellow-900/30 backdrop-blur-[2px] pointer-events-none rounded-b-lg sm:rounded-none">
+                    <button class="pointer-events-auto px-6 py-2 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full font-black text-black uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(250,204,21,0.6)] hover:scale-110 hover:shadow-[0_0_25px_rgba(250,204,21,0.9)] transition-all animate-pulse border border-yellow-300" 
+                            (click)="claimReward(level.level, true)">
+                      Reclamar
+                    </button>
+                  </div>
+                }
               </div>
 
             </div>
@@ -156,14 +172,14 @@
 </div>
 <!-- Modal de Recompensa (Efecto Dopaminico) -->
 @if (claimedReward()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-modal-bg" (click)="closeClaimModal()">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-modal-bg">
     <div class="bg-gradient-to-b from-[#1a2035] to-[#0f1423] p-10 rounded-2xl border-2 shadow-2xl animate-modal-content text-center flex flex-col items-center gap-6"
          [ngClass]="claimedReward()!.isPremium ? 'border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.3)]' : 'border-blue-400 shadow-[0_0_50px_rgba(96,165,250,0.3)]'"
          (click)="$event.stopPropagation()">
       
       <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r drop-shadow-md tracking-widest uppercase"
            [ngClass]="claimedReward()!.isPremium ? 'from-yellow-300 to-yellow-600' : 'from-blue-300 to-indigo-500'">
-        �Recompensa Desbloqueada!
+        ¡Recompensa Desbloqueada!
       </div>
       
       <div class="relative w-56 h-56 flex items-center justify-center mt-4 mb-2 animate-float-reward">

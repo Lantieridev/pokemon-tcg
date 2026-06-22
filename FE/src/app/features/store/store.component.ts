@@ -24,17 +24,30 @@ export class StoreComponent implements OnInit {
   items = signal<StoreItemDTO[]>([]);
   pokecoins = signal<number>(0);
   userPacks = signal<number>(0);
+  packsInventory = signal<{ [key: string]: number }>({});
   loading = signal<boolean>(true);
   
   openingPack = signal<boolean>(false);
+  openingPackType = signal<string>('pack_base');
   packResult = signal<any>(null);
   openedCards = signal<any[]>([]);
 
-  categories = ['AVATAR', 'TITLE', 'PACK'];
+  ownedAvatars = signal<string[]>([]);
+  ownedTitles = signal<string[]>([]);
+
+  selectedItemToBuy = signal<StoreItemDTO | null>(null);
+  isPurchasing = signal<boolean>(false);
+
+  categories = ['AVATAR', 'PACK', 'MY_PACKS'];
   selectedCategory = signal<string>('AVATAR');
 
   filteredItems = computed(() => {
-    return this.items().filter(item => item.itemType === this.selectedCategory());
+    if (this.selectedCategory() === 'MY_PACKS') {
+      return this.items().filter(item => item.itemType === 'PACK' && (this.packsInventory()[item.imageUrl || 'pack_base'] || 0) > 0);
+    }
+    return this.items()
+      .filter(item => item.itemType === this.selectedCategory())
+      .filter(item => item.name !== 'Coleccionista Estrella');
   });
 
   setCategory(cat: string) {
@@ -65,6 +78,17 @@ export class StoreComponent implements OnInit {
     return item.imageUrl || 'assets/achievements/avatars/avatar_winner_badge.png';
   }
 
+  isOwned(item: StoreItemDTO): boolean {
+    if (item.itemType === 'PACK') return false; // Se pueden comprar infinitos sobres
+    if (item.itemType === 'AVATAR') {
+      return this.ownedAvatars().includes(item.name) || this.ownedAvatars().includes(item.imageUrl);
+    }
+    if (item.itemType === 'TITLE') {
+      return this.ownedTitles().includes(item.name) || this.ownedTitles().includes(item.imageUrl);
+    }
+    return false;
+  }
+
   ngOnInit() {
     this.loadStore();
     this.loadBalance();
@@ -87,39 +111,52 @@ export class StoreComponent implements OnInit {
     if (this.authService.username) {
       this.profileService.getProfile(this.authService.username).subscribe({
         next: (profile) => {
-          this.pokecoins.set(profile.pokecoins);
-          this.userPacks.set(profile.packs || 0);
+        this.pokecoins.set(profile.pokecoins);
+        this.userPacks.set(profile.packs || 0);
+        this.packsInventory.set(profile.packsInventory || {});
+        this.ownedAvatars.set(profile.unlockedAvatars || []);
+          this.ownedTitles.set(profile.unlockedTitles || []);
         },
         error: () => {}
       });
     }
   }
 
-  buyItem(item: StoreItemDTO) {
+  confirmPurchase() {
+    const item = this.selectedItemToBuy();
+    if (!item) return;
+
     if (this.pokecoins() < item.price) {
       this.toastService.error('Pokecoins insuficientes');
       return;
     }
 
+    this.isPurchasing.set(true);
     this.storeService.buyItem(item.id).subscribe({
       next: () => {
         this.toastService.success(`¡Has comprado ${item.name}!`);
-        this.loadBalance(); // Refresh balance and packs
+        this.loadBalance(); // Refresh balance, packs, and unlocked items
+        this.selectedItemToBuy.set(null);
+        this.isPurchasing.set(false);
       },
       error: (err) => {
         this.toastService.error(err.error?.message || 'Error al procesar la compra');
+        this.isPurchasing.set(false);
       }
     });
   }
 
-  openPack() {
-    if (this.userPacks() <= 0) {
-      this.toastService.error('No tienes sobres para abrir');
+  openPack(packType: string = 'pack_base') {
+    const amount = this.packsInventory()[packType] || 0;
+    // Fallback if not in map but they have generic packs
+    if (amount <= 0 && !(packType === 'pack_base' && this.userPacks() > 0)) {
+      this.toastService.error('No tienes sobres de este tipo para abrir');
       return;
     }
     
+    this.openingPackType.set(packType);
     this.openingPack.set(true);
-    this.packService.openPack().subscribe({
+    this.packService.openPack(packType).subscribe({
       next: (result) => {
         this.openedCards.set(result.cards);
         this.packResult.set(result);

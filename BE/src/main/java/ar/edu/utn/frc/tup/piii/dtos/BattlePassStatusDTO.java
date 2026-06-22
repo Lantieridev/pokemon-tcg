@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @Data
@@ -12,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class BattlePassStatusDTO {
+    @JsonProperty("isPremium")
     private boolean isPremium;
     private int currentXp;
     private int currentLevel;

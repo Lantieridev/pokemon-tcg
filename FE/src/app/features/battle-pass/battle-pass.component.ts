@@ -72,7 +72,10 @@ export class BattlePassComponent implements OnInit {
   }
 
   loadData(preservePage: boolean = false) {
-    this.loading.set(true);
+    if (!this.status()) {
+      this.loading.set(true);
+    }
+    
     this.battlePassService.getStatus().subscribe({
       next: (res) => {
         this.status.set(res);
@@ -101,6 +104,7 @@ export class BattlePassComponent implements OnInit {
 
   closeClaimModal() {
     this.claimedReward.set(null);
+    this.loadData(true);
   }
 
   claimReward(level: number, isPremium: boolean) {
@@ -115,9 +119,10 @@ export class BattlePassComponent implements OnInit {
           this.claimedReward.set({ type, value, amount, isPremium });
         }
         
-        // El toast original ya no es necesario porque tenemos el modal
-        // this.toastService.success('¡Recompensa reclamada con éxito!');
-        this.loadData(true);
+        // Actualizamos el perfil global para que impacte en la tienda (sobres, monedas, títulos)
+        if (this.authService.username) {
+          this.profileService.loadUserProfile(this.authService.username).subscribe();
+        }
       },
       error: (err) => {
         this.toastService.error(err.error?.message || 'Error al reclamar la recompensa');

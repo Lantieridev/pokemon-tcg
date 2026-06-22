@@ -50,7 +50,7 @@ import { RouterModule } from '@angular/router';
         <div class="fu" style="display: flex; align-items: center; gap: 30px;">
           <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0;">
             @if (isCustomAvatar(profileData?.avatarIcon)) {
-              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: contain; transform: scale(1.15);" />
             } @else {
               {{ getAvatarEmoji(profileData?.avatarIcon) }}
             }
@@ -625,11 +625,11 @@ import { RouterModule } from '@angular/router';
               <!-- XP Progress Bar -->
               <div style="margin-bottom: 0;">
                 <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                  <div [style.width]="((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
+                  <div [style.width]="Math.min(100, ((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); font-weight: 700;">
                   <span>XP: {{ profileData?.xp || 0 }} / {{ profileData?.xpToNextLevel || 100 }}</span>
-                  <span>{{ Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) }}%</span>
+                  <span>{{ Math.min(100, Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100))) }}%</span>
                 </div>
               </div>
             </div>
@@ -722,7 +722,7 @@ import { RouterModule } from '@angular/router';
               <div class="edit-preview-card">
                 <div class="edit-avatar-preview">
                   @if (isCustomAvatar(editAvatarIcon)) {
-                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;transform:scale(1.15);" />
                   } @else {
                     <span style="font-size:36px;">{{ getAvatarEmoji(editAvatarIcon) }}</span>
                   }
@@ -754,7 +754,7 @@ import { RouterModule } from '@angular/router';
                        [class.selected]="editAvatarIcon === av"
                        (click)="editAvatarIcon = av">
                     @if (isCustomAvatar(av)) {
-                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;transform:scale(1.15);" />
                     } @else {
                       <span>{{ getAvatarEmoji(av) }}</span>
                     }
@@ -1689,12 +1689,11 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   get unlockedTitlesList(): string[] {
-    if (!this.profileData?.unlockedTitles) return [];
-    return this.profileData.unlockedTitles.filter(title => {
-      if (title === 'Novato' || title === 'Entrenador') return true;
-      const ach = this.allAchievements.find(a => a.title === title);
-      return ach ? ach.rewardType === 'TITULO' : false;
-    });
+    if (!this.profileData?.unlockedTitles) return ['Novato', 'Entrenador'];
+    const titles = [...this.profileData.unlockedTitles];
+    if (!titles.includes('Novato')) titles.push('Novato');
+    if (!titles.includes('Entrenador')) titles.push('Entrenador');
+    return titles;
   }
 
   get filteredUnlockedTitles(): string[] {
@@ -1706,6 +1705,7 @@ export class ProfileAuroraComponent implements OnInit {
   get availableAvatars(): string[] {
     // Default avatars always available (no achievement required)
     const defaults = [
+      'ash', 'misty', 'brock', 'gary', 'serena', 'red',
       'avatar_winner_badge',
       'avatar_rules_student',
       'avatar_resilience_mid',
@@ -1738,12 +1738,25 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    return !!av && av.startsWith('avatar_');
+    if (!av) return false;
+    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
+    return !emojis.includes(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    return `assets/achievements/avatars/${av}.png`;
+    
+    // Normalizamos el nombre para que coincida con los archivos guardados (minúsculas, sin tildes, guiones bajos)
+    // Pero si el avatar ya está normalizado (ej: "avatar_winner_badge"), se mantendrá igual.
+    const normalizedValue = av.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Eliminar tildes
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+      
+    // Si el nombre no empieza con 'avatar_', se lo agregamos
+    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
+    
+    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
   }
 
   get selectedMedalsList(): string[] {
@@ -1933,6 +1946,7 @@ export class ProfileAuroraComponent implements OnInit {
             avatarIcon: payload.avatarIcon,
             selectedMedals: payload.selectedMedals
           };
+          this.profileService.profile$.next(this.profileData);
         }
 
         // 2. Cerrar el modal y liberar el botón
@@ -2250,3 +2264,4 @@ export class ProfileAuroraComponent implements OnInit {
 
   Math = Math;
 }
+

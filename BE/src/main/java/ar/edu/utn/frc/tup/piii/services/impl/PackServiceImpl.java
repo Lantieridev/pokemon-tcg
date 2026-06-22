@@ -31,16 +31,25 @@ public class PackServiceImpl implements PackService {
 
     @Override
     @Transactional
-    public PackOpeningResultDTO openPack(String username) {
+    public PackOpeningResultDTO openPack(String username, String packType) {
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        if (user.getPacks() == null || user.getPacks() <= 0) {
-            throw new IllegalArgumentException("No tienes sobres disponibles para abrir");
+        int currentAmount = user.getPacksInventory().getOrDefault(packType, 0);
+        if (currentAmount <= 0) {
+            // Fallback for backwards compatibility if they have generic packs but not in map
+            if (packType.equals("pack_base") && user.getPacks() != null && user.getPacks() > 0) {
+                currentAmount = user.getPacks();
+            } else {
+                throw new IllegalArgumentException("No tienes sobres de este tipo disponibles para abrir");
+            }
         }
 
         // Deduct pack
-        user.setPacks(user.getPacks() - 1);
+        user.getPacksInventory().put(packType, currentAmount - 1);
+        if (user.getPacks() != null && user.getPacks() > 0) {
+            user.setPacks(user.getPacks() - 1);
+        }
 
         // Get all possible cards
         List<CardEntity> allCards = cardRepository.findAll();

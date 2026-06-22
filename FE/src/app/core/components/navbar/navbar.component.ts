@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, OnDestroy, signal, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, takeUntil } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -13,6 +13,7 @@ import { ChatModalComponent } from '../../../shared/components/chat-modal/chat-m
 import { PublicProfileDTO, FriendshipDTO } from '../../models/friends.models';
 import { FriendsApiService } from '../../services/friends-api.service';
 import { ToastService } from '../../services/toast.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -22,13 +23,14 @@ import { ToastService } from '../../services/toast.service';
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   private friendsApi = inject(FriendsApiService);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private destroy$ = new Subject<void>();
 
   profileData = signal<UserProfileResponseDTO | null>(null);
 
@@ -41,12 +43,6 @@ export class NavbarComponent implements OnInit {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((e: NavigationEnd) => {
-        if (this.username !== 'Invitado') {
-          this.profileService.getProfile(this.username).subscribe({
-            next: (data) => this.profileData.set(data),
-            error: (err) => console.error('Error fetching profile for navbar', err)
-          });
-        }
         return e.urlAfterRedirects;
       })
     ),
@@ -108,13 +104,36 @@ export class NavbarComponent implements OnInit {
     return this.username.charAt(0).toUpperCase();
   }
 
+  animateCoins = signal(false);
+
   ngOnInit(): void {
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
-        next: (data) => this.profileData.set(data),
         error: (err) => console.error('Error fetching profile for navbar', err)
       });
+      
+      this.profileService.profile$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(profile => {
+          if (profile) {
+            const currentCoins = this.profileData()?.pokecoins;
+            if (currentCoins !== undefined && profile.pokecoins > currentCoins) {
+              this.animateCoins.set(true);
+              setTimeout(() => {
+                this.animateCoins.set(false);
+                this.cdr.markForCheck();
+              }, 1500);
+            }
+            this.profileData.set(profile);
+            this.cdr.markForCheck();
+          }
+        });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
 

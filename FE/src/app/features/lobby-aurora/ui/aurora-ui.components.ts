@@ -171,12 +171,22 @@ export class TrainerChipComponent {
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    return !!av && av.startsWith('avatar_');
+    if (!av) return false;
+    const defaultEmojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
+    return !defaultEmojis.includes(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    return `assets/achievements/avatars/${av}.png`;
+    
+    const normalizedValue = av.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+      
+    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
+    
+    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
   }
 
   logout() {

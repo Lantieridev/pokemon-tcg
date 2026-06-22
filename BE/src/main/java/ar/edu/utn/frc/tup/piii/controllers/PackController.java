@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RestController
 @RequestMapping("/api/packs")
 public class PackController {
@@ -20,8 +22,10 @@ public class PackController {
     }
 
     @PostMapping("/open")
-    public ResponseEntity<PackOpeningResultDTO> openPack(@AuthenticationPrincipal UserDetails userDetails) {
-        PackOpeningResultDTO result = packService.openPack(userDetails.getUsername());
+    public ResponseEntity<PackOpeningResultDTO> openPack(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false, defaultValue = "pack_base") String packType) {
+        PackOpeningResultDTO result = packService.openPack(userDetails.getUsername(), packType);
         return ResponseEntity.ok(result);
     }
 }

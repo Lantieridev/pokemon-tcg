@@ -24,3 +24,18 @@
   border-color: rgba(255,203,5,0.4);
   box-shadow: inset 0 2px 0 rgba(255,255,255,0.1);
 }
+
+.coin-pop {
+  animation: coinPop 1.5s ease-out;
+  color: #fbbf24 !important;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+
+@keyframes coinPop {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.5) translateY(-5px); color: #fde047; text-shadow: 0 0 20px rgba(253, 224, 71, 1); }
+  40% { transform: scale(1.1) translateY(2px); }
+  60% { transform: scale(1.3) translateY(-2px); color: #fde047; }
+  80% { transform: scale(0.9) translateY(1px); }
+  100% { transform: scale(1); }
+}
