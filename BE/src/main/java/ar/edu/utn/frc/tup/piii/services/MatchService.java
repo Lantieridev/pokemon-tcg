@@ -68,6 +68,7 @@ public class MatchService {
     private final UserRepository userRepository;
     private final BotDecisionService botDecisionService;
     private final MmrCalculationService mmrCalculationService;
+    private final CampaignService campaignService;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -95,6 +96,7 @@ public class MatchService {
                         final UserRepository userRepository,
                         @Lazy final BotDecisionService botDecisionService,
                         final MmrCalculationService pMmrCalculationService,
+                        @Lazy final CampaignService campaignService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -108,6 +110,7 @@ public class MatchService {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.botDecisionService = botDecisionService;
         this.mmrCalculationService = Objects.requireNonNull(pMmrCalculationService, "mmrCalculationService must not be null");
+        this.campaignService = Objects.requireNonNull(campaignService, "campaignService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -128,6 +131,9 @@ public class MatchService {
         final ReentrantLock lock = session.getLock();
         lock.lock();
         try {
+            if (session.getState() == MatchSessionState.FINISHED) {
+                throw new InvalidActionException("match_already_finished");
+            }
             session.clearLastCoinFlips();
             final int playerIndex = session.indexOf(playerId);
 
@@ -145,6 +151,8 @@ public class MatchService {
                 isAuthorized = true;
             } else {
                 if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                    isAuthorized = true;
+                } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
                     isAuthorized = true;
                 }
             }
@@ -220,6 +228,9 @@ public class MatchService {
                 if (session.isRanked()) {
                     updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
                 }
+
+                // Handle campaign progress
+                handleCampaignCompletion(session);
             }
         } finally {
             lock.unlock();
@@ -227,25 +238,30 @@ public class MatchService {
 
         broadcastState(matchId, session);
 
-        // Check for bot turn
+        // Check for bot turn or bot promotion
         final MatchSession currentSession = registry.find(matchId).orElse(null);
-        if (currentSession != null && currentSession.getTurnManager() != null) {
-            int activeIndex = currentSession.getTurnManager().activePlayerIndex();
-            if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
-                String activeId = currentSession.getPlayerIds().get(activeIndex);
-                boolean botNeedsToAct = false;
-                if (currentSession.isAwaitingPromotion()) {
-                    int promotingIndex = currentSession.getPromotingPlayerIndex();
-                    if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
-                        botNeedsToAct = "Bot-001".equals(currentSession.getPlayerIds().get(promotingIndex));
+        if (currentSession != null) {
+            boolean triggerBot = false;
+            if (currentSession.getTurnManager() != null) {
+                int activeIndex = currentSession.getTurnManager().activePlayerIndex();
+                if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
+                    String activeId = currentSession.getPlayerIds().get(activeIndex);
+                    if (activeId != null && activeId.startsWith("Bot-")) {
+                        triggerBot = true;
                     }
-                } else {
-                    botNeedsToAct = "Bot-001".equals(activeId);
                 }
-
-                if (botNeedsToAct) {
-                    botDecisionService.evaluateAndPlay(matchId);
+            }
+            if (currentSession.isAwaitingPromotion()) {
+                int promotingIndex = currentSession.getPromotingPlayerIndex();
+                if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
+                    String promotingId = currentSession.getPlayerIds().get(promotingIndex);
+                    if (promotingId != null && promotingId.startsWith("Bot-")) {
+                        triggerBot = true;
+                    }
                 }
+            }
+            if (triggerBot) {
+                botDecisionService.evaluateAndPlay(matchId);
             }
         }
     }
@@ -428,6 +444,9 @@ public class MatchService {
             final ReentrantLock lock = session.getLock();
             lock.lock();
             try {
+                if (session.getState() == MatchSessionState.FINISHED) {
+                    return;
+                }
                 session.finish();
                 session.incrementVersion();
                 // Determine the winner (the other player)
@@ -507,6 +526,9 @@ public class MatchService {
                     // Apply 15 minute ranked ban for abandoning
                     penaltyService.applyRankedBan(forfeitingPlayerId, 15);
                 }
+
+                // Handle campaign progress
+                handleCampaignCompletion(session);
             } finally {
                 lock.unlock();
             }
@@ -599,5 +621,28 @@ public class MatchService {
 
         // Fallback
         return playerA;
+    }
+
+    private void handleCampaignCompletion(final MatchSession session) {
+        if (session.getState() != MatchSessionState.FINISHED) {
+            return;
+        }
+        final String winnerId = session.getWinnerId();
+        if (winnerId == null) {
+            return;
+        }
+
+        final String playerA = session.getPlayerIdA();
+        final String playerB = session.getPlayerIdB();
+
+        for (final CampaignService.CampaignNodeInfo node : CampaignService.NODES) {
+            if (node.botId().equals(playerA) || node.botId().equals(playerB)) {
+                final String humanPlayer = node.botId().equals(playerA) ? playerB : playerA;
+                if (winnerId.equals(humanPlayer)) {
+                    campaignService.completeNode(humanPlayer, node.id(), session.getMatchId());
+                }
+                break;
+            }
+        }
     }
 }

@@ -19,11 +19,13 @@
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <h1 class="display" style="font-size: 40px; font-weight: 700; margin: 0; color: var(--txt); line-height: 1;">{{ profile.username }}</h1>
             <span *ngIf="profile.activeTitle" style="background: linear-gradient(135deg, var(--accent2) 0%, rgba(255,255,255,0.05) 100%); border: 1px solid var(--line); color: var(--txt); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
-              🏅 {{ profile.activeTitle }}
+              {{ profile.activeTitle }}
             </span>
             <!-- Selected Medals Showcase -->
-            <div *ngIf="selectedMedalsList.length > 0" style="display: flex; gap: 8px; align-items: center; margin-left: 4px;">
-              <img *ngFor="let medal of selectedMedalsList" [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));" />
+            <div *ngIf="selectedMedalsList.length > 0" style="display: flex; gap: 8px; align-items: center; margin-left: 8px;">
+              <div *ngFor="let medal of selectedMedalsList" style="width: 34px; height: 34px; border-radius: 9px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                <img [src]="'assets/achievements/medals/' + medal + '.png'" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
+              </div>
             </div>
           </div>
           
@@ -111,13 +113,13 @@
                     <div>
                       <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Realizado</div>
                       <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #4aa3ff;">
-                        💥 {{ profile.advancedStats?.totalDamageDealt || 0 }}
+                        {{ profile.advancedStats?.totalDamageDealt || 0 }}
                       </div>
                     </div>
                     <div style="text-align: right;">
                       <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">Recibido</div>
                       <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #ff7a3d;">
-                        🛡️ {{ profile.advancedStats?.totalDamageReceived || 0 }}
+                        {{ profile.advancedStats?.totalDamageReceived || 0 }}
                       </div>
                     </div>
                   </div>
@@ -136,13 +138,13 @@
                     <div>
                       <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">A favor</div>
                       <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #46e08a;">
-                        ⚡ {{ profile.advancedStats?.totalKOsMade || 0 }}
+                        {{ profile.advancedStats?.totalKOsMade || 0 }}
                       </div>
                     </div>
                     <div style="text-align: right;">
                       <div style="font-size: 10px; color: var(--mut); font-weight: 700; text-transform: uppercase;">En contra</div>
                       <div style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #ff3b47;">
-                        💀 {{ profile.advancedStats?.totalKOsSuffered || 0 }}
+                        {{ profile.advancedStats?.totalKOsSuffered || 0 }}
                       </div>
                     </div>
                   </div>
@@ -163,17 +165,17 @@
                   </div>
                   <select [(ngModel)]="elementFilter" class="form-input select-dark" style="width: 140px; padding: 6px 10px; font-size: 12px;">
                     <option value="ALL">Todos los tipos</option>
-                    <option value="FIRE">🔥 Fuego</option>
-                    <option value="WATER">💧 Agua</option>
-                    <option value="GRASS">🌿 Planta</option>
-                    <option value="LIGHTNING">⚡ Rayo</option>
-                    <option value="PSYCHIC">🔮 Psíquico</option>
-                    <option value="FIGHTING">👊 Lucha</option>
-                    <option value="DARKNESS">🌙 Siniestro</option>
-                    <option value="METAL">🔩 Metal</option>
-                    <option value="FAIRY">🎀 Hada</option>
-                    <option value="DRAGON">🐉 Dragón</option>
-                    <option value="COLORLESS">⚪ Normal</option>
+                    <option value="FIRE">Fuego</option>
+                    <option value="WATER">Agua</option>
+                    <option value="GRASS">Planta</option>
+                    <option value="LIGHTNING">Rayo</option>
+                    <option value="PSYCHIC">Psíquico</option>
+                    <option value="FIGHTING">Lucha</option>
+                    <option value="DARKNESS">Siniestro</option>
+                    <option value="METAL">Metal</option>
+                    <option value="FAIRY">Hada</option>
+                    <option value="DRAGON">Dragón</option>
+                    <option value="COLORLESS">Normal</option>
                   </select>
                 </div>
 
@@ -186,7 +188,7 @@
                     <div style="display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px;">
                       <div style="width: 35px; height: 50px; flex-shrink: 0; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);">
                         <img *ngIf="getCardImageById(p.cardId)" [src]="getCardImageById(p.cardId)" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-                        <span *ngIf="!getCardImageById(p.cardId)">🃏</span>
+                        <span *ngIf="!getCardImageById(p.cardId)" style="font-size: 10px; font-weight: 700; color: var(--mut);">CARTA</span>
                       </div>
                       <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -252,11 +254,11 @@
             <div style="display: flex; flex-direction: column; gap: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 12px;">
                 <span style="font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase;">Victorias Perfectas</span>
-                <span style="font-weight: 800; font-size: 15px; color: #ffce32;">🏆 {{ profile.statistics?.flawlessVictories || 0 }}</span>
+                <span style="font-weight: 800; font-size: 15px; color: #ffce32;">{{ profile.statistics?.flawlessVictories || 0 }}</span>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 12px; font-weight: 700; color: var(--mut); text-transform: uppercase;">Cartas Jugadas</span>
-                <span style="font-weight: 800; font-size: 15px; color: #ff7a3d;">🃏 {{ (profile.statistics?.pokemonCardsPlayed || 0) + (profile.statistics?.trainerCardsPlayed || 0) }}</span>
+                <span style="font-weight: 800; font-size: 15px; color: #ff7a3d;">{{ (profile.statistics?.pokemonCardsPlayed || 0) + (profile.statistics?.trainerCardsPlayed || 0) }}</span>
               </div>
             </div>
           </div>

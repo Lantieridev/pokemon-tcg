@@ -7,12 +7,13 @@
       <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
         <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
         <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
+        <a routerLink="/campaign" [style.color]="isActive('/campaign') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Campaña</a>
         <a routerLink="/battle-pass" [style.color]="isActive('/battle-pass') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Pase de Batalla</a>
-        <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
         <a routerLink="/store" [style.color]="isActive('/store') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Tienda</a>
-        <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
+        <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
+        <a id="perfil-amigos" (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
       </nav>
-      <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="hud-resources" style="display: flex; align-items: center; gap: 8px;">
         <div class="topcur" title="Experiencia"><span style="font-weight: 800; font-family: var(--display); color: #4aa3ff; font-size: 14px; letter-spacing: -0.5px;">XP</span> {{ profileData()?.xp ?? 0 }}</div>
         <div class="topcur" title="Battle Points"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
         <div class="topcur" title="Pokécoins" [class.coin-pop]="animateCoins()"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>

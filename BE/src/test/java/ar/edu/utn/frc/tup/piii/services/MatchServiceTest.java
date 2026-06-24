@@ -58,6 +58,7 @@ class MatchServiceTest {
     private UserRepository userRepository;
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
+    private CampaignService campaignService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -80,6 +81,7 @@ class MatchServiceTest {
         userRepository = mock(UserRepository.class);
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
+        campaignService = mock(CampaignService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -123,7 +125,8 @@ class MatchServiceTest {
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
+                campaignService, TIMEOUT_SECONDS);
     }
 
     @Test
@@ -219,5 +222,49 @@ class MatchServiceTest {
                 session.getPlayerRuntime(0).getStatusEffectManager().isDamagePreventedNextTurn());
         org.junit.jupiter.api.Assertions.assertFalse(
                 session.getPlayerRuntime(1).getStatusEffectManager().isDamagePreventedNextTurn());
+    }
+
+    @Test
+    void shouldCompleteCampaignNodeWhenHumanWinsAgainstBot() {
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(
+                100, PokemonType.FIRE, null, null, false);
+        final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final MatchBoard campaignBoard = new MatchBoard(List.of(player0, player1));
+        
+        ar.edu.utn.frc.tup.piii.engine.model.Card dummyCard = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 10, PokemonType.FIRE).build();
+        ar.edu.utn.frc.tup.piii.engine.model.Deck dummyDeck = new ar.edu.utn.frc.tup.piii.engine.model.Deck(List.of(dummyCard));
+        ar.edu.utn.frc.tup.piii.engine.model.Hand dummyHand = new ar.edu.utn.frc.tup.piii.engine.model.Hand();
+        ar.edu.utn.frc.tup.piii.engine.model.Bench dummyBench = new ar.edu.utn.frc.tup.piii.engine.model.Bench();
+        ar.edu.utn.frc.tup.piii.engine.model.DiscardPile dummyDiscard = new ar.edu.utn.frc.tup.piii.engine.model.DiscardPile();
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem0 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem1 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime0 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem0, active);
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime1 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem1, active);
+
+        final MatchSession campaignSession = new MatchSession(MATCH_ID, List.of("test", "Bot-Brock"), campaignBoard, List.of(runtime0, runtime1));
+        campaignSession.setup();
+        campaignSession.start();
+        campaignSession.setRuleValidator(ruleValidator);
+        campaignSession.setTurnManager(turnManager);
+
+        when(registry.find(MATCH_ID)).thenReturn(Optional.of(campaignSession));
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        org.mockito.Mockito.doAnswer(invocation -> {
+            campaignSession.finish();
+            campaignSession.setWinnerId("test");
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(campaignBoard.getActivePokemon(0)));
+
+        matchService.processAction(MATCH_ID, "test", dto);
+
+        verify(campaignService).completeNode("test", 1, MATCH_ID);
     }
 }
