@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Observable, BehaviorSubject, Subject, tap } from 'rxjs';
 
 export interface CardStatDTO {
   cardId: string;
@@ -105,6 +105,7 @@ export class ProfileService {
   private readonly API_URL = 'http://localhost:8081/api/users';
 
   public profile$ = new BehaviorSubject<UserProfileResponseDTO | null>(null);
+  public readonly profileUpdated$ = new Subject<void>();
 
   getProfile(username: string): Observable<UserProfileResponseDTO> {
     return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`).pipe(
@@ -117,7 +118,9 @@ export class ProfileService {
   }
 
   updateProfile(request: { avatarIcon: string; description: string; activeTitle: string; selectedMedals?: string; }): Observable<void> {
-    return this.http.put<void>(`${this.API_URL}/profile`, request);
+    return this.http.put<void>(`${this.API_URL}/profile`, request).pipe(
+      tap(() => this.profileUpdated$.next())
+    );
   }
 
   updateShowcase(request: { slots: { slotPosition: number; cardId: string; }[] }): Observable<void> {

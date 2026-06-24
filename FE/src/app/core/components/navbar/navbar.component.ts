@@ -125,7 +125,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Si ya estamos logueados al iniciar, lo fetcheamos por las dudas
+    // Subscribe to profile updates to trigger reload
+    this.profileService.profileUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.loadProfile()
+      });
+
+    this.loadProfile();
+  }
+
+  loadProfile(): void {
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
         error: (err) => console.error('Error fetching profile for navbar', err)
@@ -138,4 +148,3 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 }
-
