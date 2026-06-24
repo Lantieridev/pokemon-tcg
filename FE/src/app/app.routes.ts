@@ -65,5 +65,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/battle-pass/battle-pass.component').then((m) => m.BattlePassComponent),
   },
+  {
+    path: 'campaign',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/campaign/campaign.component').then((m) => m.CampaignComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

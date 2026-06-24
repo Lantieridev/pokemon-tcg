@@ -24,11 +24,13 @@ export class WebSocketService {
   private stompClient: Client | null = null;
   private messageSubject = new Subject<GameStateResponseDTO>();
   private chatSubject = new Subject<any>();
+  private errorSubject = new Subject<string>();
   private currentMatchId: string | null = null;
 
   /** Observable de actualizaciones del GameState */
   readonly gameState$ = this.messageSubject.asObservable();
   readonly chatMessage$ = this.chatSubject.asObservable();
+  readonly error$ = this.errorSubject.asObservable();
 
   /**
    * Conecta al WebSocket y se suscribe al canal del jugador.
@@ -93,6 +95,19 @@ export class WebSocketService {
             });
           } catch (err) {
             console.error('[WS] Error parseando ChatMessage:', err);
+          }
+        }
+      });
+      
+      this.stompClient!.subscribe(`/topic/match/${matchId}/player/${username}/errors`, (message) => {
+        if (message.body) {
+          try {
+            const body = JSON.parse(message.body);
+            this.ngZone.run(() => {
+              this.errorSubject.next(body.error);
+            });
+          } catch (err) {
+            console.error('[WS] Error parseando ErrorMessage:', err);
           }
         }
       });

@@ -64,6 +64,7 @@ public class AuthControllerTest {
         matchRepository.deleteAll();
         userCardStatRepository.deleteAll();
         userEnergyStatRepository.deleteAll();
+
         userRepository.deleteAll();
     }
 

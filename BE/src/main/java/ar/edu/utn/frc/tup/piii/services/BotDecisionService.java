@@ -57,14 +57,27 @@ public class BotDecisionService {
             return; // Game over
         }
 
-        int botIndex = session.indexOf("Bot-001");
+        int botIndex = -1;
+        for (int i = 0; i < session.getPlayerIds().size(); i++) {
+            if (session.getPlayerIds().get(i).startsWith("Bot-")) {
+                botIndex = i;
+                break;
+            }
+        }
+
+        if (botIndex == -1) {
+            return; // No bot in this session
+        }
+
+        String botId = session.getPlayerIds().get(botIndex);
+        final int finalBotIndex = botIndex;
 
         // 1. Mandatory Promotion (XY1 Rulebook §2)
         if (session.isAwaitingPromotion()) {
-            if (session.getPromotingPlayerIndex() == botIndex) {
-                ActionRequestDTO promotion = tryPromoteActive(session, botIndex).orElse(null);
+            if (session.getPromotingPlayerIndex() == finalBotIndex) {
+                ActionRequestDTO promotion = tryPromoteActive(session, finalBotIndex).orElse(null);
                 if (promotion != null) {
-                    sendAction(matchId, promotion);
+                    sendAction(matchId, botId, promotion);
                 }
             }
             return; // Wait until promotion is resolved
@@ -72,31 +85,31 @@ public class BotDecisionService {
 
         // 2. Pending Selection Request (e.g. from Trainers like Professor's Letter)
         if (session.getPendingSelectionRequest() != null) {
-            if (session.getTurnManager().activePlayerIndex() == botIndex) {
-                ActionRequestDTO selection = trySelectCards(session, botIndex).orElse(
+            if (session.getTurnManager().activePlayerIndex() == finalBotIndex) {
+                ActionRequestDTO selection = trySelectCards(session, finalBotIndex).orElse(
                     new ActionRequestDTO(ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList())
                 );
-                sendAction(matchId, selection);
+                sendAction(matchId, botId, selection);
             }
             return; // Wait until selection is resolved
         }
 
-        if (session.getTurnManager().activePlayerIndex() != botIndex) {
+        if (session.getTurnManager().activePlayerIndex() != finalBotIndex) {
             return; // Not bot's turn
         }
 
         // Action Priority Sequence
-        Optional<ActionRequestDTO> nextAction = tryEvolve(session, botIndex)
-                .or(() -> tryPlayTrainer(session, botIndex))
-                .or(() -> tryPlaceBench(session, botIndex))
-                .or(() -> tryAttachEnergy(session, botIndex))
-                .or(() -> tryRetreat(session, botIndex))
-                .or(() -> tryAttack(session, botIndex));
+        Optional<ActionRequestDTO> nextAction = tryEvolve(session, finalBotIndex)
+                .or(() -> tryPlayTrainer(session, finalBotIndex))
+                .or(() -> tryPlaceBench(session, finalBotIndex))
+                .or(() -> tryAttachEnergy(session, finalBotIndex))
+                .or(() -> tryRetreat(session, finalBotIndex))
+                .or(() -> tryAttack(session, finalBotIndex));
 
         if (nextAction.isPresent()) {
-            sendAction(matchId, nextAction.get());
+            sendAction(matchId, botId, nextAction.get());
         } else {
-            sendAction(matchId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
+            sendAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
         }
     }
 
@@ -281,14 +294,14 @@ public class BotDecisionService {
         return Optional.empty();
     }
 
-    private void sendAction(String matchId, ActionRequestDTO action) {
+    private void sendAction(String matchId, String botId, ActionRequestDTO action) {
         try {
-            matchService.processAction(matchId, "Bot-001", action);
+            matchService.processAction(matchId, botId, action);
         } catch (Exception e) {
             System.err.println("[Bot] Failed action " + action.type() + ": " + e.getMessage());
             if (action.type() != ActionType.END_TURN) {
                 try {
-                    matchService.processAction(matchId, "Bot-001", new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
+                    matchService.processAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
                 } catch (Exception ignored) {}
             }
         }
