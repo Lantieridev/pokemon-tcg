@@ -60,6 +60,7 @@ public final class AttackEffectResolver {
         m.put("disable_attack",      AttackEffectType.DISABLE_ATTACK);
         m.put("prevent_damage",           AttackEffectType.PREVENT_DAMAGE);
         m.put("coin_flip_prevent_damage",  AttackEffectType.COIN_FLIP_PREVENT_DAMAGE);
+        m.put("coin_flip_prevent_damage_60_or_less", AttackEffectType.COIN_FLIP_PREVENT_DAMAGE_60_OR_LESS);
         m.put("coin_flip_switch_self",     AttackEffectType.COIN_FLIP_SWITCH_SELF);
         m.put("heal_any",                 AttackEffectType.HEAL_ANY);
         m.put("heal_bench",               AttackEffectType.HEAL_BENCH);
@@ -73,6 +74,8 @@ public final class AttackEffectResolver {
         m.put("bright_garden",                       AttackEffectType.BRIGHT_GARDEN);
         m.put("ear_we_go",                           AttackEffectType.EAR_WE_GO);
         m.put("clairvoyant_eye",                     AttackEffectType.CLAIRVOYANT_EYE);
+        m.put("call_for_family",                     AttackEffectType.CALL_FOR_FAMILY);
+        m.put("quiver_dance",                        AttackEffectType.QUIVER_DANCE);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -136,6 +139,27 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     if (ctx.getCoinFlipper().flip()) {
                         ctx.getAttackerStatusManager().setDamagePreventedNextTurn(true);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIP_PREVENT_DAMAGE_60_OR_LESS,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        ctx.getAttackerStatusManager().setDamagePreventedIf60OrLessNextTurn(true);
+                    }
+                });
+        m.put(AttackEffectType.QUIVER_DANCE,
+                (amount, ctx) -> {
+                    final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    if (runtime != null && runtime.getDeck().size() > 0) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.QUIVER_DANCE,
+                                        null,
+                                        1,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+                                )
+                        );
+                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
                     }
                 });
         m.put(AttackEffectType.DISABLE_ATTACK,
@@ -309,6 +333,25 @@ public final class AttackEffectResolver {
                                             null,
                                             count,
                                             ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK
+                                    )
+                            );
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                    }
+                });
+        m.put(AttackEffectType.CALL_FOR_FAMILY,
+                (amount, ctx) -> {
+                    final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    if (runtime != null) {
+                        int freeBenchSpace = 5 - runtime.getBench().getAll().size();
+                        int maxSelect = Math.min(amount, freeBenchSpace);
+                        if (maxSelect > 0 && runtime.getDeck().size() > 0) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CALL_FOR_FAMILY,
+                                            null,
+                                            maxSelect,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
                                     )
                             );
                             ctx.getMatchSession().getTurnManager().interruptMainPhase();

@@ -644,4 +644,97 @@ class AttackEffectResolverTest {
         assertEquals("Combustion Blast", attackerSM.getSelfDisabledAttackName());
         assertTrue(attackerSM.isSelfDisabledAttackSetThisTurn());
     }
+
+    @Test
+    void shouldResolveCoinFlipPreventDamage60OrLessOnHeads() {
+        assertEquals(AttackEffectType.COIN_FLIP_PREVENT_DAMAGE_60_OR_LESS, resolver.resolveType("coin_flip_prevent_damage_60_or_less"));
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true) // Heads
+                .effectText("coin_flip_prevent_damage_60_or_less")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertTrue(attackerSM.isDamagePreventedIf60OrLessNextTurn());
+    }
+
+    @Test
+    void shouldNotResolveCoinFlipPreventDamage60OrLessOnTails() {
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> false) // Tails
+                .effectText("coin_flip_prevent_damage_60_or_less")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertFalse(attackerSM.isDamagePreventedIf60OrLessNextTurn());
+    }
+
+    @Test
+    void shouldResolveCallForFamilyCorrectly() {
+        assertEquals(AttackEffectType.CALL_FOR_FAMILY, resolver.resolveType("call_for_family:1"));
+
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final Bench bench = mock(Bench.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(bench);
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(bench.getAll()).thenReturn(List.of()); // 0 pokemon on bench
+        org.mockito.Mockito.when(deck.size()).thenReturn(10);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("call_for_family:1")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+
+        resolver.apply(ctx);
+
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CALL_FOR_FAMILY
+                && req.maxSelections() == 1
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+        ));
+        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+    }
+
+    @Test
+    void shouldResolveQuiverDanceCorrectly() {
+        assertEquals(AttackEffectType.QUIVER_DANCE, resolver.resolveType("quiver_dance"));
+
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(deck.size()).thenReturn(10);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("quiver_dance")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+
+        resolver.apply(ctx);
+
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.QUIVER_DANCE
+                && req.maxSelections() == 1
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+        ));
+        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+    }
 }
