@@ -91,6 +91,10 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
             ctx.addDefenderModifier(dmg -> 0);
         }
 
+        if (ctx.getDefenderStatusManager() != null && ctx.getDefenderStatusManager().isDamagePreventedIf60OrLessNextTurn()) {
+            ctx.addDefenderModifier(dmg -> dmg <= 60 ? 0 : dmg);
+        }
+
         if (ctx.isScorchingFangDiscarded()) {
             ctx.addAttackerModifier(dmg -> dmg + 30);
         }
