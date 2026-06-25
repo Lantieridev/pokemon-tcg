@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { DeckStore } from '../../core/store/deck.store';
-import { DeckRequestDTO, DeckResponseDTO } from '../../core/models/game-state.models';
+import { DeckRequestDTO, DeckResponseDTO, DeckSummaryDTO } from '../../core/models/game-state.models';
 
 @Injectable({ providedIn: 'root' })
 export class DeckApiService {
@@ -36,7 +36,32 @@ export class DeckApiService {
    * GET /api/decks/user/{userId}
    * Devuelve los mazos armados por el usuario.
    */
-  getDecksByUserId(userId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/user/${userId}`);
+  getDecksByUserId(userId: number): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/user/${userId}`);
+  }
+
+  /**
+   * GET /api/decks/{id}
+   * Devuelve un mazo completo por su ID.
+   */
+  getDeckById(id: number): Observable<DeckResponseDTO> {
+    return this.http.get<DeckResponseDTO>(`${this.API_URL}/${id}`);
+  }
+
+  /**
+   * GET /api/decks/templates
+   * Devuelve las plantillas de mazos predefinidos.
+   */
+  getTemplates(): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/templates`);
+  }
+
+  /**
+   * POST /api/decks/users/{userId}/clone/{templateId}
+   * Clona una plantilla para un usuario.
+   */
+  cloneTemplate(userId: number, templateId: number): Observable<DeckResponseDTO> {
+    return this.http.post<DeckResponseDTO>(`${this.API_URL}/users/${userId}/clone/${templateId}`, {});
   }
 }
+
