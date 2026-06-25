@@ -7,6 +7,7 @@ import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgCard, DeckSummaryDTO } from '../../core/models/game-state.models';
 import { RouterModule } from '@angular/router';
 import { LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, EnergyTypeComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
 import { TutorialService } from '../../core/services/tutorial.service';
@@ -20,7 +21,7 @@ interface Filters {
 @Component({
   selector: 'app-deck-aurora',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, NgOptimizedImage],
+  imports: [CommonModule, FormsModule, RouterModule, LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, NgOptimizedImage, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
@@ -148,7 +149,7 @@ interface Filters {
             <div class="scroll" style="flex: 1; overflow-y: auto; padding: 24px;">
               <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px;">
                 @for (card of filteredCards(); track card.id) {
-                  <div class="card-item" [class.disabled]="!canAdd(card)" draggable="true" (dragstart)="handleDragStart($event, card)" (click)="addCard(card)">
+                  <div class="card-item" [class.disabled]="!canAdd(card)" draggable="true" (dragstart)="handleDragStart($event, card)" (click)="addCard(card)" (contextmenu)="$event.preventDefault(); zoomedCard.set(card)">
                     <div style="position: relative; aspect-ratio: 5/7; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);">
                       <img [ngSrc]="getCardImage(card)" [alt]="card.name" fill style="object-fit: contain;" />
                       @if (getCardCount(card.id) > 0) {
@@ -189,7 +190,7 @@ interface Filters {
               <div style="display: flex; flex-direction: column; gap: 10px;">
                 @for (group of deckGrouped(); track group.card.id) {
                   <div class="deck-row" (click)="removeCard(group.card.id)" (contextmenu)="$event.preventDefault(); removeAll(group.card.id)">
-                    <div style="width: 40px; height: 56px; border-radius: 4px; overflow: hidden; position: relative;">
+                    <div style="width: 40px; height: 56px; border-radius: 4px; overflow: hidden; position: relative;" (click)="$event.stopPropagation(); zoomedCard.set(group.card)">
                       <img [ngSrc]="getCardImage(group.card)" [alt]="group.card.name" fill style="object-fit: cover;" />
                     </div>
                     <div style="flex: 1; padding: 0 10px;">
@@ -236,6 +237,17 @@ interface Filters {
         }
       </div>
     </div>
+
+    <!-- Fullscreen Card Zoom Modal Overlay -->
+    @if (zoomedCard(); as card) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+           (click)="zoomedCard.set(null)" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
+        <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+             (click)="$event.stopPropagation()">
+          <aurora-holo-card [card]="{ img: getCardImage(card, true), name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+        </div>
+      </div>
+    }
     <style>
       .tab-btn { background: transparent; border: none; color: var(--mut); font-family: 'Manrope'; font-weight: 700; font-size: 13px; padding: 8px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
       .tab-btn:hover { color: var(--txt); }
@@ -298,6 +310,8 @@ interface Filters {
   `
 })
 export class DeckAuroraComponent implements OnInit {
+  zoomedCard = signal<any | null>(null);
+
   readonly tcgService = inject(PokemonTcgService);
   readonly deckStore = inject(DeckStore);
   private tutorialService = inject(TutorialService);
@@ -570,7 +584,10 @@ export class DeckAuroraComponent implements OnInit {
     e.preventDefault();
   }
 
-  getCardImage(card: PokemonTcgCard): string {
+  getCardImage(card: PokemonTcgCard, large: boolean = false): string {
+    if (large) {
+      return card.images?.large ?? card.images?.small ?? '';
+    }
     return card.images?.small ?? card.images?.large ?? '';
   }
 
