@@ -455,7 +455,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const active = this.me()?.active;
     const atk = active?.attacks?.[attackIndex];
     if (active?.cardId === 'xy2-20' && atk?.name === 'Scorching Fang') {
-      const hasFireEnergy = active.attachedEnergies?.some(e => e.toUpperCase() === 'FIRE');
+      const hasFireEnergy = active.energies?.some((e: string) => e.toUpperCase() === 'FIRE');
       if (hasFireEnergy) {
         const confirmDiscard = confirm('¿Deseas descartar una Energía Fuego para infligir 30 puntos de daño más?');
         if (confirmDiscard) {
