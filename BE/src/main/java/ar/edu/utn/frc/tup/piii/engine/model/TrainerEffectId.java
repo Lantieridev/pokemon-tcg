@@ -51,5 +51,7 @@ public enum TrainerEffectId {
     POKEMON_CENTER_LADY,
     ULTRA_BALL,
     CLAIRVOYANT_EYE,
+    CALL_FOR_FAMILY,
+    QUIVER_DANCE,
     NONE
 }
