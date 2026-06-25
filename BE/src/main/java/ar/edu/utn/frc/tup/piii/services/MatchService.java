@@ -314,12 +314,14 @@ public class MatchService {
                 turnManager.endBetweenTurns();
             }
             case SelectCardsAction selectCards -> {
-                final boolean isClairvoyantEye = session.getPendingSelectionRequest() != null
-                        && session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE;
+                final boolean isAttackSelection = session.getPendingSelectionRequest() != null
+                        && (session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CALL_FOR_FAMILY
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE);
 
                 facade.apply(session, action, turnManager);
 
-                if (isClairvoyantEye) {
+                if (isAttackSelection) {
                     turnManager.endAttack();
                     if (checkForPendingPromotion(session)) {
                         return;
@@ -404,6 +406,7 @@ public class MatchService {
                     }
                 } else {
                     sem.setDamagePreventedNextTurn(false);
+                    sem.setDamagePreventedIf60OrLessNextTurn(false);
                 }
             }
         }
