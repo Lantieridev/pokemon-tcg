@@ -681,13 +681,18 @@ class AttackEffectResolverTest {
         final Bench bench = mock(Bench.class);
         final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
         final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
-        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+
+        // Build a basic Pokemon to be found and placed on bench
+        final ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basicCard = mock(ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.class);
+        org.mockito.Mockito.when(basicCard.getEvolutionStage()).thenReturn(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
 
         org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(bench);
         org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
-        org.mockito.Mockito.when(bench.getAll()).thenReturn(List.of()); // 0 pokemon on bench
-        org.mockito.Mockito.when(deck.size()).thenReturn(10);
-        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+        org.mockito.Mockito.when(bench.getAll()).thenReturn(List.of()); // 0 pokemon on bench, 1 free space
+        // First call finds the basic card, second call finds nothing (loop termination)
+        org.mockito.Mockito.when(deck.searchAndRemove(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(1)))
+                .thenReturn(List.of(basicCard))
+                .thenReturn(List.of());
 
         final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
                 attackerSM, defenderSM,
@@ -699,12 +704,12 @@ class AttackEffectResolverTest {
 
         resolver.apply(ctx);
 
-        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
-                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CALL_FOR_FAMILY
-                && req.maxSelections() == 1
-                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
-        ));
-        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+        // Should NOT create a pending selection request - placement is automatic
+        org.mockito.Mockito.verify(session, org.mockito.Mockito.never()).setPendingSelectionRequest(org.mockito.ArgumentMatchers.any());
+        // Should place the basic pokemon on the bench
+        org.mockito.Mockito.verify(bench).place(org.mockito.ArgumentMatchers.any());
+        // Should shuffle the deck afterwards
+        org.mockito.Mockito.verify(deck).shuffle();
     }
 
     @Test
@@ -716,8 +721,12 @@ class AttackEffectResolverTest {
         final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
         final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
 
+        // Create a basic energy card to be found in the deck
+        final ar.edu.utn.frc.tup.piii.engine.model.EnergyCard basicEnergy = mock(ar.edu.utn.frc.tup.piii.engine.model.EnergyCard.class);
+        org.mockito.Mockito.when(basicEnergy.isBasic()).thenReturn(true);
+
         org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
-        org.mockito.Mockito.when(deck.size()).thenReturn(10);
+        org.mockito.Mockito.when(deck.getCards()).thenReturn(List.of(basicEnergy));
         org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
 
         final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,

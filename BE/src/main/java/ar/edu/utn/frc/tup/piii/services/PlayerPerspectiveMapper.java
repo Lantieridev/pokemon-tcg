@@ -47,6 +47,8 @@ public final class PlayerPerspectiveMapper {
                     var stream = runtime.getDeck().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.QUIVER_DANCE) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
                     } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc &&
                                 pc.getEvolvesFrom() != null &&
@@ -191,6 +193,11 @@ public final class PlayerPerspectiveMapper {
         final String toolCardId = pokemon.getAttachedTool()
                 .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
                 .orElse(null);
+        final List<ar.edu.utn.frc.tup.piii.dtos.AbilityDTO> abilityDtos = pokemon.getAbilities() == null ? List.of() :
+                pokemon.getAbilities().stream()
+                        .filter(ab -> ab.name() != null)
+                        .map(ab -> new ar.edu.utn.frc.tup.piii.dtos.AbilityDTO(ab.name(), ab.text()))
+                        .toList();
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -205,6 +212,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.hasToolAttached(),
                 toolCardId,
                 attackDtos,
+                abilityDtos,
                 statusConditions);
     }
 }
