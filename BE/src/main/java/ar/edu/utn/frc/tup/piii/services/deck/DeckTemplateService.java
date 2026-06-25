@@ -68,10 +68,19 @@ public class DeckTemplateService {
                 new DeckCardResponseDTO("xy1-132", "Grass Energy", "Energy", "Basic Energy", 20)
         );
 
+        // Mazo Especial (con copias ilimitadas/especiales)
+        final List<DeckCardResponseDTO> specialCards = List.of(
+                new DeckCardResponseDTO("xy1-14", "Charmander", "Pokémon", "Basic", 20),
+                new DeckCardResponseDTO("xy1-15", "Charmeleon", "Pokémon", "Stage 1", 10),
+                new DeckCardResponseDTO("xy1-16", "Charizard", "Pokémon", "Stage 2", 10),
+                new DeckCardResponseDTO("xy1-133", "Fire Energy", "Energy", "Basic Energy", 20)
+        );
+
         templates = Map.of(
                 -1L, new DeckResponseDTO(-1L, "Mazo Fuego XY1", DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), fireCards),
                 -2L, new DeckResponseDTO(-2L, "Mazo Agua XY1", DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), waterCards),
-                -3L, new DeckResponseDTO(-3L, "Mazo Planta XY1", DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), grassCards)
+                -3L, new DeckResponseDTO(-3L, "Mazo Planta XY1", DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), grassCards),
+                -4L, new DeckResponseDTO(-4L, "Mazo Especial", DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), specialCards)
         );
     }
 

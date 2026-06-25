@@ -255,7 +255,11 @@ export class DeckAuroraComponent implements OnInit {
     if (this.totalCount() >= 60) return false;
     const count = this.cardCountById().get(card.id) ?? 0;
     const isBasicEnergy = card.supertype === 'Energy' && (card.subtypes.includes('Basic Energy') || card.subtypes.includes('Basic'));
-    return isBasicEnergy || count < 4;
+    const isSpecialDeck = this.deckName().toLowerCase().includes('especial') ||
+                          this.deckName().toLowerCase().includes('special') ||
+                          this.deckName().toLowerCase().includes('sin limite') ||
+                          this.deckName().toLowerCase().includes('ilimitado');
+    return isBasicEnergy || isSpecialDeck || count < 4;
   }
 
   saveDeck(): void {
