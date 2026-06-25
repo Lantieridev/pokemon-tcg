@@ -600,23 +600,6 @@ public final class GameFacade {
                 }
             }
             runtime.getDeck().shuffle();
-        } else if (effectId == TrainerEffectId.CALL_FOR_FAMILY) {
-            if (!selectedIds.isEmpty()) {
-                for (String id : selectedIds) {
-                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
-                    if (!found.isEmpty()) {
-                        final Card card = found.get(0);
-                        if (!(card instanceof PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC)) {
-                            throw new IllegalArgumentException("Call for Family can only select Basic Pokemon cards");
-                        }
-                        final ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon placed = 
-                                new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon((PokemonCard) card);
-                        runtime.getBench().place(placed);
-                        runtime.recordPokemonEntered(placed);
-                    }
-                }
-            }
-            runtime.getDeck().shuffle();
         } else if (effectId == TrainerEffectId.QUIVER_DANCE) {
             boolean attached = false;
             if (!selectedIds.isEmpty()) {

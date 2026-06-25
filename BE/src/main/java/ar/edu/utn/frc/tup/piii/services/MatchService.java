@@ -316,7 +316,6 @@ public class MatchService {
             case SelectCardsAction selectCards -> {
                 final boolean isAttackSelection = session.getPendingSelectionRequest() != null
                         && (session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE
-                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CALL_FOR_FAMILY
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE);
 
                 facade.apply(session, action, turnManager);

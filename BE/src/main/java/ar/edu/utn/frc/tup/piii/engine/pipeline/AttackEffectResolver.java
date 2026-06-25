@@ -59,6 +59,7 @@ public final class AttackEffectResolver {
         m.put("coin_flip_confusion", AttackEffectType.COIN_FLIP_CONFUSION);
         m.put("disable_attack",      AttackEffectType.DISABLE_ATTACK);
         m.put("prevent_damage",           AttackEffectType.PREVENT_DAMAGE);
+        m.put("prevent_damage_60_or_less", AttackEffectType.PREVENT_DAMAGE_60_OR_LESS);
         m.put("coin_flip_prevent_damage",  AttackEffectType.COIN_FLIP_PREVENT_DAMAGE);
         m.put("coin_flip_prevent_damage_60_or_less", AttackEffectType.COIN_FLIP_PREVENT_DAMAGE_60_OR_LESS);
         m.put("coin_flip_switch_self",     AttackEffectType.COIN_FLIP_SWITCH_SELF);
@@ -135,6 +136,8 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> { if (ctx.getCoinFlipper().flip()) ctx.getDefenderStatusManager().apply(StatusEffectType.CONFUNDIDO); });
         m.put(AttackEffectType.PREVENT_DAMAGE,
                 (amount, ctx) -> ctx.getAttackerStatusManager().setDamagePreventedNextTurn(true));
+        m.put(AttackEffectType.PREVENT_DAMAGE_60_OR_LESS,
+                (amount, ctx) -> ctx.getAttackerStatusManager().setDamagePreventedIf60OrLessNextTurn(true));
         m.put(AttackEffectType.COIN_FLIP_PREVENT_DAMAGE,
                 (amount, ctx) -> {
                     if (ctx.getCoinFlipper().flip()) {
@@ -150,7 +153,10 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.QUIVER_DANCE,
                 (amount, ctx) -> {
                     final PlayerRuntime runtime = ctx.getAttackerRuntime();
-                    if (runtime != null && runtime.getDeck().size() > 0) {
+                    if (runtime == null) return;
+                    final boolean hasBasicEnergy = runtime.getDeck().getCards().stream()
+                            .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
+                    if (hasBasicEnergy) {
                         ctx.getMatchSession().setPendingSelectionRequest(
                                 new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
                                         ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.QUIVER_DANCE,
@@ -161,6 +167,7 @@ public final class AttackEffectResolver {
                         );
                         ctx.getMatchSession().getTurnManager().interruptMainPhase();
                     }
+                    // If no basic energy, the attack still consumes the turn (no selection needed)
                 });
         m.put(AttackEffectType.DISABLE_ATTACK,
                 (amount, ctx) -> {
@@ -342,21 +349,27 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.CALL_FOR_FAMILY,
                 (amount, ctx) -> {
                     final PlayerRuntime runtime = ctx.getAttackerRuntime();
-                    if (runtime != null) {
-                        int freeBenchSpace = 5 - runtime.getBench().getAll().size();
-                        int maxSelect = Math.min(amount, freeBenchSpace);
-                        if (maxSelect > 0 && runtime.getDeck().size() > 0) {
-                            ctx.getMatchSession().setPendingSelectionRequest(
-                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CALL_FOR_FAMILY,
-                                            null,
-                                            maxSelect,
-                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
-                                    )
-                            );
-                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                        }
+                    if (runtime == null) return;
+                    int freeBenchSpace = 5 - runtime.getBench().getAll().size();
+                    int toPlace = Math.min(amount, freeBenchSpace);
+                    // Search deck in order for basic Pokémon and place automatically
+                    int placed = 0;
+                    while (placed < toPlace) {
+                        final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.Card> found =
+                                runtime.getDeck().searchAndRemove(
+                                        c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc
+                                                && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC,
+                                        1
+                                );
+                        if (found.isEmpty()) break;
+                        final ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon inPlay =
+                                new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(
+                                        (ar.edu.utn.frc.tup.piii.engine.model.PokemonCard) found.get(0));
+                        runtime.getBench().place(inPlay);
+                        runtime.recordPokemonEntered(inPlay);
+                        placed++;
                     }
+                    runtime.getDeck().shuffle();
                 });
         this.handlers = Collections.unmodifiableMap(m);
     }
