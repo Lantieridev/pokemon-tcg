@@ -127,7 +127,7 @@ public final class PlayerPerspectiveMapper {
                 session.getMatchId(),
                 session.getVersion(),
                 turnNumber,
-                session.getActivePlayerIndex() == -1 ? -1 : (session.getActivePlayerIndex() == viewerIndex ? 0 : 1),
+                (session.isAwaitingPromotion() ? session.getPromotingPlayerIndex() : session.getActivePlayerIndex()) == -1 ? -1 : ((session.isAwaitingPromotion() ? session.getPromotingPlayerIndex() : session.getActivePlayerIndex()) == viewerIndex ? 0 : 1),
                 session.getState() == MatchSessionState.FINISHED ? "FINISHED" : (session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name()),
                 requestDto,
                 self,
