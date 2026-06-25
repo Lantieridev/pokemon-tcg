@@ -117,4 +117,21 @@ class PreDamageEffectsStepTest {
         int finalDamage = ctx.getDefenderModifiers().get(0).apply(50);
         org.junit.jupiter.api.Assertions.assertEquals(0, finalDamage);
     }
+
+    @Test
+    void testProcess_withDamagePreventedIf60OrLessNextTurn_blocksDamageLessThan60() {
+        StatusEffectManager defenderSem = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(defenderSem.isDamagePreventedIf60OrLessNextTurn()).thenReturn(true);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Tackle", 20, List.of()), mock(StatusEffectManager.class), defenderSem, mock(KnockoutHandler.class), () -> true).build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getDefenderModifiers().isEmpty());
+        // Under or equal to 60 damage should be reduced to 0
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getDefenderModifiers().get(0).apply(50));
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getDefenderModifiers().get(0).apply(60));
+        // Over 60 damage should NOT be reduced
+        org.junit.jupiter.api.Assertions.assertEquals(70, ctx.getDefenderModifiers().get(0).apply(70));
+    }
 }

@@ -42,6 +42,7 @@ public class StatusEffectManager {
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;
     private boolean damagePreventedNextTurn;
+    private boolean damagePreventedIf60OrLessNextTurn;
     private String selfDisabledAttackName;
     private boolean selfDisabledAttackSetThisTurn;
 
@@ -125,6 +126,7 @@ public class StatusEffectManager {
         activeEffects.clear();
         this.disabledAttackName = null;
         this.damagePreventedNextTurn = false;
+        this.damagePreventedIf60OrLessNextTurn = false;
         this.selfDisabledAttackName = null;
         this.selfDisabledAttackSetThisTurn = false;
     }
@@ -240,6 +242,14 @@ public class StatusEffectManager {
 
     public void setDamagePreventedNextTurn(final boolean damagePreventedNextTurn) {
         this.damagePreventedNextTurn = damagePreventedNextTurn;
+    }
+
+    public boolean isDamagePreventedIf60OrLessNextTurn() {
+        return damagePreventedIf60OrLessNextTurn;
+    }
+
+    public void setDamagePreventedIf60OrLessNextTurn(final boolean damagePreventedIf60OrLessNextTurn) {
+        this.damagePreventedIf60OrLessNextTurn = damagePreventedIf60OrLessNextTurn;
     }
 
     public String getSelfDisabledAttackName() {
