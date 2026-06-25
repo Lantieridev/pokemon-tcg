@@ -232,8 +232,8 @@ public final class TurnManager {
         if (currentPhase == null) {
             throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
         }
-        if (!(currentPhase instanceof MainPhase)) {
-            throw new InvalidPhaseTransitionException("Can only interrupt during MainPhase");
+        if (!(currentPhase instanceof MainPhase || currentPhase instanceof AttackPhase)) {
+            throw new InvalidPhaseTransitionException("Can only interrupt during MainPhase or AttackPhase");
         }
         fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
         previousPhase = currentPhase;
