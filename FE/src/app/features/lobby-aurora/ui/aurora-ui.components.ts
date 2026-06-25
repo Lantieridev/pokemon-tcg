@@ -437,34 +437,3 @@ export class SparksComponent {
 })
 export class AmbientComponent {}
 
-@Component({
-  selector: 'aurora-sig-card',
-  standalone: true,
-  template: `
-    <div [style]="'width: ' + w + 'px; aspect-ratio: 5/7; border-radius: ' + (w * 0.06) + 'px; position: relative; flex: 0 0 auto; transform: rotate(' + rot + 'deg); background: linear-gradient(160deg, ' + tones()[0] + ', ' + tones()[1] + ' 55%, ' + tones()[2] + '); box-shadow: 0 30px 60px -22px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.18);'">
-      <div [style]="'position: absolute; inset: ' + (w * 0.045) + 'px; border-radius: ' + (w * 0.04) + 'px; border: 1px solid rgba(255,255,255,.22); overflow: hidden;'">
-        <div style="position: absolute; inset: 0; background: linear-gradient(125deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 62%); background-size: 250% 250%; animation: holo 6s ease-in-out infinite;"></div>
-        <div [style]="'position: absolute; left: 8%; right: 8%; top: 14%; height: 52%; border-radius: ' + (w * 0.03) + 'px; border: 1px solid rgba(255,255,255,.25); background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.4), transparent 70%), repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 8px, transparent 8px 16px);'"></div>
-        <div [style]="'position: absolute; left: 8%; right: 8%; top: 7%; font-family: Space Grotesk,sans-serif; font-weight: 700; font-size: ' + (w * 0.072) + 'px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); display: flex; justify-content: space-between;'">
-          <span>{{ name }}</span><span class="num" [style]="'font-size: ' + (w * 0.05) + 'px; opacity: .9;'">HP 180</span>
-        </div>
-        <div [style]="'position: absolute; left: 8%; right: 8%; bottom: 7%; height: ' + (w * 0.14) + 'px; border-radius: ' + (w * 0.02) + 'px; background: rgba(0,0,0,.28); display: flex; align-items: center; padding: 0 8%; font-family: Space Mono,monospace; font-size: ' + (w * 0.042) + 'px; color: rgba(255,255,255,.8); letter-spacing: .06em;'">XY · 011/146</div>
-      </div>
-    </div>
-  `
-})
-export class SigCardComponent {
-  @Input() w: number = 230;
-  @Input() type: string = 'fire';
-  @Input() name: string = 'CHARIZARD';
-  @Input() rot: number = 0;
-
-  tones() {
-    const t: Record<string, string[]> = {
-      fire: ['#ff8a4c', '#c0392b', '#3a1410'],
-      water: ['#5aa9e6', '#2a5a9e', '#0c1f38'],
-      lightning: ['#f5d34c', '#d6a31f', '#423207']
-    };
-    return t[this.type] || t['fire'];
-  }
-}

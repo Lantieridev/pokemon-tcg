@@ -100,10 +100,12 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
   'not_your_promotion': 'No es tu turno de promover un Pokémon activo.'
 };
 
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+
 @Component({
   selector: 'app-battle',
   standalone: true,
-  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, CardSelectionModalComponent, SparksComponent, AmbientComponent, BallIconComponent],
+  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, CardSelectionModalComponent, SparksComponent, AmbientComponent, BallIconComponent, HoloCardComponent],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -215,7 +217,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly menu = signal<any>(null);
   readonly isConnecting = signal(true);
   readonly connectionError = signal<string | null>(null);
-  readonly zoomedCardUrl = signal<string | null>(null);
+  readonly zoomedCard = signal<any | null>(null);
   readonly selectedHandCard = signal<PokemonTcgCard | null>(null);
   readonly selectedHandIndex = signal<number | null>(null);
   readonly draggedCard = signal<PokemonTcgCard | null>(null);
@@ -857,13 +859,29 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return this.getCardImageUrl(card.id);
   }
 
-  zoomCard(url: string): void {
-    if (!url) return;
-    this.zoomedCardUrl.set(url);
+  zoomCard(cardIdOrObj: string | any): void {
+    if (!cardIdOrObj) return;
+    if (typeof cardIdOrObj === 'string') {
+       if (cardIdOrObj.startsWith('http')) {
+           // It's a raw URL
+           this.zoomedCard.set({ img: cardIdOrObj, name: 'Card' });
+           return;
+       }
+       const allCards = this.tcgService.cards();
+       let found = allCards.find(c => c.id === cardIdOrObj);
+       if (found) {
+         this.zoomedCard.set(found);
+         return;
+       }
+       // Fallbacks if not found by id but it might be a mock or URL
+       this.zoomedCard.set({ img: this.getCardImageUrl(cardIdOrObj), name: 'Card' });
+    } else {
+       this.zoomedCard.set(cardIdOrObj);
+    }
   }
 
   closeZoom(): void {
-    this.zoomedCardUrl.set(null);
+    this.zoomedCard.set(null);
   }
 
   isSelected(index: number): boolean {

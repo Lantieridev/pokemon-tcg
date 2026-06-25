@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.services.CardResolutionService;
 import ar.edu.utn.frc.tup.piii.services.MatchCreationService;
 import ar.edu.utn.frc.tup.piii.services.MatchSessionRegistry;
+import ar.edu.utn.frc.tup.piii.services.MatchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,12 +41,15 @@ class MatchRestControllerTest {
     @Mock
     private CardResolutionService cardResolutionService;
 
+    @Mock
+    private MatchService matchService;
+
     private MatchRestController controller;
 
     @BeforeEach
     void setUp() {
         controller = new MatchRestController(
-                registry, perspectiveMapper, matchCreationService, cardResolutionService);
+                registry, perspectiveMapper, matchCreationService, cardResolutionService, matchService);
     }
 
     @Test
@@ -104,13 +108,13 @@ class MatchRestControllerTest {
     void shouldThrowWhenNullRegistryIsPassedToConstructor() {
         assertThrows(NullPointerException.class,
                 () -> new MatchRestController(
-                        null, perspectiveMapper, matchCreationService, cardResolutionService));
+                        null, perspectiveMapper, matchCreationService, cardResolutionService, matchService));
     }
 
     @Test
     void shouldThrowWhenNullMatchCreationServiceIsPassedToConstructor() {
         assertThrows(NullPointerException.class,
                 () -> new MatchRestController(
-                        registry, perspectiveMapper, null, cardResolutionService));
+                        registry, perspectiveMapper, null, cardResolutionService, matchService));
     }
 }

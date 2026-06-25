@@ -96,7 +96,7 @@
             <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
             @if (activeStadiumCardId(); as stadiumId) {
               <div class="relative w-[80px] h-[112px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-                   (click)="zoomCard(getCardImageUrl(stadiumId))">
+                   (click)="zoomCard(stadiumId)">
                 <img [src]="getCardImageUrl(stadiumId)" alt="Stadium" class="w-full h-full object-cover rounded-lg border-2 border-[rgba(255,203,5,.6)]" />
               </div>
             } @else {
@@ -136,7 +136,7 @@
               </div>
             }
             @for (b of opp()!.bench; track $index) {
-              <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
+              <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(b.cardId)" class="cursor-pointer">
                 <app-field-pokemon
                   [cardId]="b.cardId"
                   [energies]="b.energies"
@@ -147,7 +147,7 @@
                   [damageEvent]="oppBenchDamageEvent($index)"
                   [width]="70"
                   direction="up"
-                  (toolClick)="zoomCard(getCardImageUrl($event))">
+                  (toolClick)="zoomCard($event)">
                 </app-field-pokemon>
               </div>
             }
@@ -156,7 +156,7 @@
           <!-- OPPONENT ACTIVE -->
           @if (opp()!.active; as activeOpp) {
             <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
-                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(activeOpp.cardId)">
               @if (oppActiveIsBurned()) {
                 <div class="token-burned" title="Oponente Quemado">🔥</div>
               }
@@ -174,7 +174,7 @@
                 [width]="100"
                 [glow]="true"
                 direction="up"
-                (toolClick)="zoomCard(getCardImageUrl($event))">
+                (toolClick)="zoomCard($event)">
               </app-field-pokemon>
             </div>
           } @else {
@@ -225,8 +225,8 @@
             <div class="active-pokemon-wrapper cursor-pointer"
                  [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
                  (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
-                 (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
-                 (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
+                 (dblclick)="zoomCard(activeMe.cardId)"
+                 (contextmenu)="zoomCard(activeMe.cardId); $event.preventDefault()"
                  (dragover)="onDragOver($event)"
                  (drop)="onDropPokemon($event, 'active', null)">
               <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
@@ -247,7 +247,7 @@
                 [width]="110"
                 [glow]="true"
                 direction="up"
-                (toolClick)="zoomCard(getCardImageUrl($event))">
+                (toolClick)="zoomCard($event)">
               </app-field-pokemon>
             </div>
           } @else {
@@ -268,8 +268,8 @@
               <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
                    [class.pulse-promote]="!me()!.active"
                    (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
-                   (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
-                   (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
+                   (dblclick)="zoomCard(b.cardId)"
+                   (contextmenu)="zoomCard(b.cardId); $event.preventDefault()"
                    (dragover)="onDragOver($event)"
                    (drop)="onDropPokemon($event, 'bench', $index)">
                 <app-field-pokemon
@@ -281,7 +281,7 @@
                   [damageEvent]="myBenchDamageEvent($index)"
                   [width]="75"
                   direction="up"
-                  (toolClick)="zoomCard(getCardImageUrl($event))">
+                  (toolClick)="zoomCard($event)">
                 </app-field-pokemon>
               </div>
             }
@@ -410,8 +410,8 @@
                [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
                (click)="playCard(c, $index)"
-               (dblclick)="zoomCard(getCardImage(c))"
-               (contextmenu)="zoomCard(getCardImage(c)); $event.preventDefault()"
+               (dblclick)="zoomCard(c.id)"
+               (contextmenu)="zoomCard(c.id); $event.preventDefault()"
                draggable="true"
                (dragstart)="onDragStart($event, c, $index)">
             <div class="card-deal-wrapper w-full h-full">
@@ -631,17 +631,16 @@
   </aside>
 
   <!-- Fullscreen Card Zoom Modal Overlay -->
-  @if (zoomedCardUrl(); as url) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
-         (click)="closeZoom()">
-      <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
-           (click)="closeZoom()">
-        <img [src]="url" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10"
-             style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6)); pointer-events: none;" />
+    @if (zoomedCard(); as card) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+           (click)="closeZoom()"
+           style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
+        <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+             (click)="$event.stopPropagation()">
+          <aurora-holo-card [card]="{ img: card.images?.large || card.images?.small || card.img, name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+        </div>
       </div>
-    </div>
-  }
-
+    }
   <!-- Card Selection Modal (PendingSelectionRequest) -->
   @if (pendingSelection(); as sel) {
     <app-card-selection-modal

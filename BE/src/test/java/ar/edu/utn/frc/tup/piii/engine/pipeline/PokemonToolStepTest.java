@@ -111,18 +111,18 @@ class PokemonToolStepTest {
 
     @Test
     void shouldReduceTwentyDamageWhenDefenderHasHardCharm() {
-        // base 30 - 20 = 10 → 1 counter
+        // base 30 → reduced to 20 → 2 counters
         defender.attachTool(hardCharm());
         final Attack attack = new Attack("Ember", 30, List.of(PokemonType.FIRE));
 
         buildPipelineWithToolStep().execute(buildCtx(attack));
 
-        assertEquals(1, defender.getDamageCounters()); // (30 - 20) / 10
+        assertEquals(2, defender.getDamageCounters());
     }
 
     @Test
     void shouldApplyHardCharmAfterWeaknessMultiplier() {
-        // Defender weak to FIRE: base 30 × 2 = 60; 60 - 20 = 40 → 4 counters
+        // Defender weak to FIRE: base 30 × 2 = 60; reduced to 20 → 2 counters
         final FakeBattlePokemonState weakDefender =
                 new FakeBattlePokemonState(DEFENDER_HP, PokemonType.WATER, PokemonType.FIRE, null, false);
         weakDefender.attachTool(hardCharm());
@@ -130,19 +130,19 @@ class PokemonToolStepTest {
 
         buildPipelineWithToolStep().execute(buildCtxWith(attack, attacker, weakDefender));
 
-        assertEquals(4, weakDefender.getDamageCounters()); // (30 * 2 - 20) / 10
+        assertEquals(2, weakDefender.getDamageCounters());
     }
 
     @Test
-    void shouldClampHardCharmReductionToZeroMinimum() {
-        // base 10 - 20 = -10 → clamped to 0
+    void shouldLimitHardCharmDamageToExactlyTwentyForLowDamage() {
+        // base 10 → set to 20 → 2 counters
         defender.attachTool(hardCharm());
         final Attack attack = new Attack("Tackle", 10, List.of(PokemonType.COLORLESS));
         attacker.addAttachedEnergy(PokemonType.COLORLESS);
 
         buildPipelineWithToolStep().execute(buildCtx(attack));
 
-        assertEquals(0, defender.getDamageCounters());
+        assertEquals(2, defender.getDamageCounters());
     }
 
     @Test
@@ -163,14 +163,14 @@ class PokemonToolStepTest {
     @Test
     void shouldApplyBothMuscleBandAndHardCharmTogether() {
         // Attacker has Muscle Band, defender has Hard Charm (no weakness):
-        // base 40 + 20 (band) = 60; 60 - 20 (charm) = 40 → 4 counters
+        // base 40 + 20 (band) = 60; set to 20 (charm) → 2 counters
         attacker.attachTool(muscleBand());
         defender.attachTool(hardCharm());
         final Attack attack = new Attack("Fire Blast", 40, List.of(PokemonType.FIRE));
 
         buildPipelineWithToolStep().execute(buildCtx(attack));
 
-        assertEquals(4, defender.getDamageCounters()); // (40 + 20 - 20) / 10
+        assertEquals(2, defender.getDamageCounters());
     }
 
     // -----------------------------------------------------------------------
