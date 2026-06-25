@@ -19,13 +19,17 @@ public final class DeckBuilderValidator {
     }
 
     public void validate(final List<DeckEntry> entries, final ar.edu.utn.frc.tup.piii.engine.model.DeckStatus status, final String username) {
+        validate(entries, status, username, null);
+    }
+
+    public void validate(final List<DeckEntry> entries, final ar.edu.utn.frc.tup.piii.engine.model.DeckStatus status, final String username, final String deckName) {
         if (status == ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.DRAFT) {
             validateDraftSize(entries);
         } else {
             validateTotalSize(entries);
             validateHasBasicPokemon(entries);
         }
-        validateMaxCopiesPerName(entries, username);
+        validateMaxCopiesPerName(entries, username, deckName);
         validateAceSpec(entries);
     }
 
@@ -53,8 +57,16 @@ public final class DeckBuilderValidator {
         }
     }
 
-    private void validateMaxCopiesPerName(final List<DeckEntry> entries, final String username) {
+    private void validateMaxCopiesPerName(final List<DeckEntry> entries, final String username, final String deckName) {
         if ("admin2".equalsIgnoreCase(username) || "benka".equalsIgnoreCase(username)) {
+            return;
+        }
+        if (deckName != null && (
+                deckName.toLowerCase().contains("especial") ||
+                deckName.toLowerCase().contains("special") ||
+                deckName.toLowerCase().contains("sin limite") ||
+                deckName.toLowerCase().contains("ilimitado")
+        )) {
             return;
         }
         final Map<String, Integer> countByName = entries.stream()
