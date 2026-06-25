@@ -251,6 +251,15 @@ public final class CardMapper {
         if ("clairvoyant eye".equals(lowerName)) {
             return "clairvoyant_eye";
         }
+        if ("call for family".equals(lowerName)) {
+            if (text != null && text.toLowerCase().contains("up to 2")) {
+                return "call_for_family:2";
+            }
+            return "call_for_family:1";
+        }
+        if ("quiver dance".equals(lowerName)) {
+            return "quiver_dance";
+        }
         final String lower = text.toLowerCase();
 
         // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
@@ -334,6 +343,12 @@ public final class CardMapper {
 
         // --- Damage prevention ---
         if (lower.contains("prevent all damage done to this pok")) {
+            if (lower.contains("60 or less")) {
+                if (lower.contains("flip a coin")) {
+                    return "coin_flip_prevent_damage_60_or_less";
+                }
+                return "prevent_damage_60_or_less";
+            }
             if (lower.contains("flip a coin")) {
                 return "coin_flip_prevent_damage";
             }
