@@ -1,21 +1,24 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
 
 @Component({
   selector: 'aurora-deck-rail',
   standalone: true,
-  imports: [CommonModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
+  imports: [CommonModule, RouterModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
   template: `
     <div class="deck-dock fu" style="animation-delay: .3s;">
       <div style="flex: 0 0 auto;">
         <div class="eyebrow" style="font-size: 10.5px;">Mazo activo</div>
         <div style="display: flex; align-items: center; gap: 12px; margin-top: 7px;">
-          <div [style.font-family]="display" style="font-style: italic; font-size: 24px; line-height: 1; white-space: nowrap; flex: 0 0 auto;">Furia Carmesí</div>
+          <div [style.font-family]="display" style="font-style: italic; font-size: 24px; line-height: 1; white-space: nowrap; flex: 0 0 auto;">
+            {{ deckData?.name || 'Seleccioná un mazo' }}
+          </div>
           <span style="display: flex; gap: 5px; flex: 0 0 auto;">
-            <aurora-energy-type type="fire" [size]="20"></aurora-energy-type>
-            <aurora-energy-type type="lightning" [size]="20"></aurora-energy-type>
-            <aurora-energy-type type="colorless" [size]="20"></aurora-energy-type>
+            @for (type of deckData?.energyTypes || []; track type) {
+              <aurora-energy-type [type]="type" [size]="20"></aurora-energy-type>
+            }
           </span>
         </div>
       </div>
@@ -25,7 +28,7 @@ import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
           @for (c of slots; track $index) {
             <div class="dock-card" [style.--r]="getR($index) + 'deg'" [style.--ty]="getTy($index) + 'px'" [style.z-index]="$index" [title]="c?.name || ''">
               @if (c?.img) {
-                <img [ngSrc]="c.img" [alt]="c.name" width="62" height="86" crossorigin="anonymous" />
+                <img [ngSrc]="c.img" [alt]="c.name" width="62" height="86" />
               } @else {
                 <div class="dock-ph"></div>
               }
@@ -35,18 +38,19 @@ import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
       </div>
 
       <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 14px;">
-        <span class="dock-count">60 / 60 cartas</span>
-        <button class="ghost-btn sm"><aurora-icon n="decks" [s]="16"></aurora-icon> Editar mazo</button>
+        <span class="dock-count">{{ deckData?.totalCount || 0 }} / 60 cartas</span>
+        <button class="ghost-btn sm" routerLink="/deck"><aurora-icon n="decks" [s]="16"></aurora-icon> Editar mazo</button>
       </div>
     </div>
   `
 })
 export class DeckRailComponent {
-  @Input() deck: any[] = [];
+  @Input() deckData: any = null;
   @Input() display: string = "'Instrument Serif',serif";
 
   get slots() {
-    return this.deck.length ? this.deck.slice(0, 6) : Array.from({ length: 6 });
+    const cards = this.deckData?.cards || [];
+    return cards.length ? cards.slice(0, 6) : Array.from({ length: 6 });
   }
 
   getR(i: number) {
