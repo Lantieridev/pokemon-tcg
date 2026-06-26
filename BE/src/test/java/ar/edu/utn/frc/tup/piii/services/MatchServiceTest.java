@@ -329,7 +329,101 @@ class MatchServiceTest {
         verify(turnManager).endBetweenTurns();
     }
 
+    @Test
+    void shouldHandleDoubleKnockoutBetweenTurnsAndForceBothPlayersToPromote() {
+        // 1. Setup real KnockoutResolutionHandler
+        final ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler downstream = mock(ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler koResolution =
+                new ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler(
+                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), turnManager, downstream);
+        session.setKnockoutHandler(koResolution);
 
+        // 2. Set active Pokémon of Player 0 and Player 1 to 90/100 HP, and poison them
+        final ar.edu.utn.frc.tup.piii.engine.model.PokemonCard dummyCard =
+                new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 100, PokemonType.FIRE).build();
+        final FakeBattlePokemonState active0 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false) {
+            @Override
+            public ar.edu.utn.frc.tup.piii.engine.model.Card getBaseCard() {
+                return dummyCard;
+            }
+        };
+        active0.addDamageCounters(9); // 90 damage
+        session.getPlayerRuntime(0).setActivePokemon(active0);
+        session.getPlayerRuntime(0).getStatusEffectManager().apply(
+                ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.ENVENENADO);
 
+        final FakeBattlePokemonState active1 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false) {
+            @Override
+            public ar.edu.utn.frc.tup.piii.engine.model.Card getBaseCard() {
+                return dummyCard;
+            }
+        };
+        active1.addDamageCounters(9); // 90 damage
+        session.getPlayerRuntime(1).setActivePokemon(active1);
+        session.getPlayerRuntime(1).getStatusEffectManager().apply(
+                ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.ENVENENADO);
 
+        // 3. Add benched Pokémon to both players so promotion is possible
+        final var benched0 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        session.getPlayerRuntime(0).getBench().place(benched0);
+
+        final var benched1 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        session.getPlayerRuntime(1).getBench().place(benched1);
+
+        // 4. Process EndTurnAction to trigger faints
+        final ActionRequestDTO dtoEnd = new ActionRequestDTO(
+                ActionType.END_TURN, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction());
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dtoEnd);
+
+        // Assertions after EndTurnAction:
+        // Player 0 should be awaiting promotion (since Player 0 is checked first)
+        org.junit.jupiter.api.Assertions.assertTrue(session.isAwaitingPromotion());
+        org.junit.jupiter.api.Assertions.assertEquals(0, session.getPromotingPlayerIndex());
+        verify(turnManager, never()).endBetweenTurns();
+
+        // 5. Player 0 promotes
+        final ActionRequestDTO dtoPromote0 = new ActionRequestDTO(
+                ActionType.PROMOTE_ACTIVE, null, null, 0, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction(0));
+
+        // Stub facade.apply to perform Player 0 promotion
+        org.mockito.Mockito.doAnswer(invocation -> {
+            session.getPlayerRuntime(0).setActivePokemon(benched0);
+            session.getPlayerRuntime(0).getBench().remove(0);
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dtoPromote0);
+
+        // Assertions after Player 0 promotion:
+        // Now Player 1 should be awaiting promotion
+        org.junit.jupiter.api.Assertions.assertTrue(session.isAwaitingPromotion());
+        org.junit.jupiter.api.Assertions.assertEquals(1, session.getPromotingPlayerIndex());
+        verify(turnManager, never()).endBetweenTurns();
+
+        // 6. Player 1 promotes
+        final ActionRequestDTO dtoPromote1 = new ActionRequestDTO(
+                ActionType.PROMOTE_ACTIVE, null, null, 0, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction(0));
+
+        // Stub facade.apply to perform Player 1 promotion
+        org.mockito.Mockito.doAnswer(invocation -> {
+            session.getPlayerRuntime(1).setActivePokemon(benched1);
+            session.getPlayerRuntime(1).getBench().remove(0);
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_B_ID, dtoPromote1);
+
+        // Assertions after both promotions:
+        org.junit.jupiter.api.Assertions.assertFalse(session.isAwaitingPromotion());
+        org.junit.jupiter.api.Assertions.assertFalse(session.isBetweenTurnsProcessed());
+        verify(turnManager).endBetweenTurns();
+    }
 }

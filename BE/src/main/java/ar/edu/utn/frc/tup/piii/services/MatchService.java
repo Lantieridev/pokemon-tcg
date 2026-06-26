@@ -394,6 +394,9 @@ public class MatchService {
                 facade.apply(session, action, turnManager);
                 if (wasAwaiting) {
                     session.clearAwaitingPromotion();
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
                     if (!session.isBetweenTurnsProcessed()) {
                         // Resume the deferred between-turns phase that was paused for this promotion
                         processBetweenTurns(session, turnManager);
