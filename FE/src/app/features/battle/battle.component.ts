@@ -494,6 +494,27 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   startRetreat(): void {
     if (!this.canRetreat()) return;
+    
+    const active = this.me()?.active;
+    if (active && active.statusConditions) {
+      const conds = active.statusConditions.map(c => String(c).toUpperCase());
+      if (conds.includes('ASLEEP') || conds.includes('DORMIDO')) {
+        this.toastService.error('No puedes retirar a un Pokémon Dormido.');
+        this.closeMenu();
+        return;
+      }
+      if (conds.includes('PARALYZED') || conds.includes('PARALIZADO')) {
+        this.toastService.error('No puedes retirar a un Pokémon Paralizado.');
+        this.closeMenu();
+        return;
+      }
+      if (conds.includes('RETREAT_BLOCKED') || conds.includes('BLOQUEO_RETIRADA')) {
+        this.toastService.error('No puedes retirar a este Pokémon porque su retirada está bloqueada por el ataque del oponente.');
+        this.closeMenu();
+        return;
+      }
+    }
+
     this.isRetreating.set(true);
     this.closeMenu();
   }

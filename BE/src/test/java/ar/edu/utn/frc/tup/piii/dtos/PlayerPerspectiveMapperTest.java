@@ -334,4 +334,27 @@ class PlayerPerspectiveMapperTest {
         assertThat(response.pendingSelectionRequest()).isNotNull();
         assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-1");
     }
+
+    @Test
+    void shouldMapRetreatBlockedConditionToActiveConditions() {
+        PokemonCard pikachu = new PokemonCard.Builder("xy1-1", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+        DiscardPile discard = new DiscardPile();
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(new ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper());
+        sem.setRetreatBlockedNextTurn(true);
+
+        PlayerRuntime pr = new PlayerRuntime(
+                new Deck(List.of(pikachu)),
+                new Hand(), new Bench(), discard,
+                sem,
+                null, List.of()
+        );
+
+        MatchSession customSession = new MatchSession(
+                "custom-retreat-blocked", List.of("playerA", "playerB"), session.getBoard(), List.of(pr, pr));
+
+        GameStateResponseDTO response = mapper.toResponse(customSession, 0);
+        assertThat(response.self().active().statusConditions()).contains("RETREAT_BLOCKED");
+    }
 }
