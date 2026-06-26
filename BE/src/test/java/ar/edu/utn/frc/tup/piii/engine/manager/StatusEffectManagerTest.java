@@ -318,11 +318,33 @@ class StatusEffectManagerTest {
     }
 
     @Test
-    void shouldRemoveParalysisAfterBetweenTurnsProcessing() {
+    void shouldRemoveParalysisAfterBetweenTurnsProcessingWhenOwnerTurnEnding() {
         manager.apply(StatusEffectType.PARALIZADO);
-        manager.processBetweenTurns(fakeState);
+        manager.processBetweenTurns(fakeState, true);
         assertFalse(manager.has(StatusEffectType.PARALIZADO));
     }
+
+    @Test
+    void shouldRetainParalysisAfterBetweenTurnsProcessingWhenNotOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        manager.processBetweenTurns(fakeState, false);
+        assertTrue(manager.has(StatusEffectType.PARALIZADO));
+    }
+
+    @Test
+    void shouldRemovePrecisionBajaAfterBetweenTurnsProcessingWhenOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        manager.processBetweenTurns(fakeState, true);
+        assertFalse(manager.has(StatusEffectType.PRECISION_BAJA));
+    }
+
+    @Test
+    void shouldRetainPrecisionBajaAfterBetweenTurnsProcessingWhenNotOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        manager.processBetweenTurns(fakeState, false);
+        assertTrue(manager.has(StatusEffectType.PRECISION_BAJA));
+    }
+
 
     @Test
     void shouldRetainPoisonAfterBetweenTurnsProcessing() {
