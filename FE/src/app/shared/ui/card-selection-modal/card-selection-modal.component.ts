@@ -136,20 +136,41 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
     /* ── Card grid ─────────────────────────────────────── */
     .card-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 16px;
       overflow-y: auto;
+      max-height: 50vh;
       flex: 1;
       min-height: 0;
-      padding: 4px;
+      padding: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 203, 5, 0.4) transparent;
+    }
+
+    .card-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .card-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .card-grid::-webkit-scrollbar-thumb {
+      background: rgba(255, 203, 5, 0.3);
+      border-radius: 4px;
+    }
+
+    .card-grid::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 203, 5, 0.6);
     }
 
     .card-slot {
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
-      border: 2px solid transparent;
+      border: 3px solid transparent;
       transition: border .2s, box-shadow .2s, opacity .2s, transform .15s;
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .card-slot:hover {
@@ -157,8 +178,9 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
     }
 
     .card-slot.selected {
-      border: 2px solid #ffcb05;
-      box-shadow: 0 0 12px rgba(255, 203, 5, .5);
+      border: 3px solid #ffcb05;
+      box-shadow: 0 0 16px rgba(255, 203, 5, 0.6);
+      transform: scale(1.02);
     }
 
     .card-slot.disabled {
