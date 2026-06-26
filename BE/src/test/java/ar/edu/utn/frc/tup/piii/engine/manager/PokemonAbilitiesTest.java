@@ -11,6 +11,8 @@ import ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import ar.edu.utn.frc.tup.piii.engine.statuseffect.AsleepEffect;
+import ar.edu.utn.frc.tup.piii.services.GameFacade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -839,5 +841,284 @@ class PokemonAbilitiesTest {
         result = ruleValidator.validate(action, 0);
         assertTrue(result instanceof ValidationResult.Invalid);
         assertEquals("dusknoir_max_hp_reached", ((ValidationResult.Invalid) result).reason());
+    }
+
+    @Test
+    void testCounterattackQuillsReactiveCounterDamage() {
+        BattlePokemonState attacker = mock(BattlePokemonState.class);
+        BattlePokemonState defender = mock(BattlePokemonState.class);
+        Attack attack = new Attack("Slash", 50, List.of(), "");
+
+        when(defender.getAbilities()).thenReturn(List.of(new Ability("Counterattack Quills", "", AbilityEffectId.COUNTERATTACK_QUILLS)));
+
+        AttackContext ctx = new AttackContext.Builder(
+                attacker, defender, attack, activeSem, opponentSem,
+                mock(KnockoutHandler.class), coinFlipper)
+                .build();
+
+        ReactiveAbilityHandler.onDamageDealt(ctx, 30);
+        verify(attacker, times(1)).addDamageCounters(2);
+    }
+
+    @Test
+    void testFlowerVeilPassiveHpBonus() {
+        // Prepare a grass pokemon
+        PokemonCard caterpie = new PokemonCard.Builder("caterpie", "Caterpie", 40, PokemonType.GRASS).build();
+        InPlayPokemon grassPk = new InPlayPokemon(caterpie);
+
+        // Without Flower Veil
+        assertEquals(40, grassPk.getMaxHp());
+
+        // With Floette having Flower Veil in play
+        PlayerRuntime runtime = mock(PlayerRuntime.class);
+        when(runtime.hasAbility(AbilityEffectId.FLOWER_VEIL)).thenReturn(true);
+        grassPk.setOwner(runtime);
+
+        assertEquals(60, grassPk.getMaxHp());
+
+        // Test non-grass pokemon gets no bonus
+        PokemonCard pikachu = new PokemonCard.Builder("pikachu", "Pikachu", 60, PokemonType.LIGHTNING).build();
+        InPlayPokemon lightningPk = new InPlayPokemon(pikachu);
+        lightningPk.setOwner(runtime);
+
+        assertEquals(60, lightningPk.getMaxHp()); // No extra +20
+    }
+
+    @Test
+    void testPoisonBarrierRetreatBlocking() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider bfp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BattlefieldStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider ssp = mock(ar.edu.utn.frc.tup.piii.engine.listener.StadiumStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp, ssp, bfp);
+
+        InPlayPokemon activePk = new InPlayPokemon(new PokemonCard.Builder("active", "Active", 70, PokemonType.FIRE).build());
+        InPlayPokemon dragalge = new InPlayPokemon(new PokemonCard.Builder("dragalge", "Dragalge", 110, PokemonType.PSYCHIC)
+                .abilities(List.of(new Ability("Poison Barrier", "", AbilityEffectId.POISON_BARRIER)))
+                .build());
+
+        when(bfp.getActivePokemon(0)).thenReturn(activePk);
+        when(bfp.getActivePokemon(1)).thenReturn(dragalge);
+        when(bsp.getBenchedPokemon(1)).thenReturn(List.of());
+        when(bsp.getBenchSize(0)).thenReturn(1);
+        when(turnManager.requireMainPhase()).thenReturn(mock(MainPhase.class));
+
+        // 1. Not poisoned -> Retreat valid
+        when(activeSem.canRetreat()).thenReturn(true);
+        when(activeSem.has(StatusEffectType.ENVENENADO)).thenReturn(false);
+
+        RetreatAction action = new RetreatAction(activePk);
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
+
+        // 2. Poisoned -> Retreat blocked
+        when(activeSem.has(StatusEffectType.ENVENENADO)).thenReturn(true);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("retreat_blocked_by_poison_barrier", ((ValidationResult.Invalid) result).reason());
+    }
+
+    @Test
+    void testStirAndSnoozeAsleepEffect() {
+        BattlePokemonState snorlax = mock(BattlePokemonState.class);
+        when(snorlax.getAbilities()).thenReturn(List.of(new Ability("Stir and Snooze", "", AbilityEffectId.STIR_AND_SNOOZE)));
+        
+        AsleepEffect effect = new AsleepEffect();
+        
+        // Scenario 1: Both heads -> wakes up (returns true)
+        CoinFlipper flipperHeads = mock(CoinFlipper.class);
+        when(flipperHeads.flip()).thenReturn(true, true);
+        assertTrue(effect.processBetweenTurns(snorlax, flipperHeads));
+        
+        // Scenario 2: One heads, one tails -> stays asleep (returns false)
+        CoinFlipper flipperHeadsTails = mock(CoinFlipper.class);
+        when(flipperHeadsTails.flip()).thenReturn(true, false);
+        assertFalse(effect.processBetweenTurns(snorlax, flipperHeadsTails));
+
+        // Scenario 3: Regular Pokemon without ability -> wakes up with 1 heads
+        BattlePokemonState regular = mock(BattlePokemonState.class);
+        when(regular.getAbilities()).thenReturn(List.of());
+        CoinFlipper flipperOneHeads = mock(CoinFlipper.class);
+        when(flipperOneHeads.flip()).thenReturn(true);
+        assertTrue(effect.processBetweenTurns(regular, flipperOneHeads));
+    }
+
+    @Test
+    void testThornTempestEvolveAbility() {
+        GameFacade facade = new GameFacade();
+
+        // Target Pokemon in play
+        InPlayPokemon target = new InPlayPokemon(new PokemonCard.Builder("pineco", "Pineco", 60, PokemonType.GRASS).build());
+
+        // Evolution card in hand (Forretress with Thorn Tempest)
+        PokemonCard forretress = new PokemonCard.Builder("forretress", "Forretress", 100, PokemonType.METAL)
+                .abilities(List.of(new Ability("Thorn Tempest", "", AbilityEffectId.THORN_TEMPEST)))
+                .build();
+
+        Hand activeHand = new Hand();
+        activeHand.addCard(forretress);
+        when(activeRuntime.getHand()).thenReturn(activeHand);
+        when(activeRuntime.getStatusEffectManager()).thenReturn(activeSem);
+        when(opponentRuntime.getStatusEffectManager()).thenReturn(opponentSem);
+
+        // Opponent with active and bench pokemon
+        BattlePokemonState opponentActive = mock(BattlePokemonState.class);
+        BattlePokemonState opponentBenched1 = mock(BattlePokemonState.class);
+        BattlePokemonState opponentBenched2 = mock(BattlePokemonState.class);
+
+        when(opponentRuntime.getActivePokemon()).thenReturn(opponentActive);
+        
+        Bench opponentBench = new Bench();
+        opponentBench.place(opponentBenched1);
+        opponentBench.place(opponentBenched2);
+        when(opponentRuntime.getBench()).thenReturn(opponentBench);
+
+        // TurnManager / Session
+        when(session.getPlayerRuntime(0)).thenReturn(activeRuntime);
+        when(session.getPlayerRuntime(1)).thenReturn(opponentRuntime);
+        when(session.getActivePlayerIndex()).thenReturn(0);
+
+        EvolveAction evolveAction = new EvolveAction(target, forretress);
+        
+        facade.apply(session, evolveAction);
+
+        // Verify Forretress was removed from hand and target evolved
+        assertFalse(activeHand.getCards().contains(forretress));
+        assertEquals("forretress", target.getCardId());
+
+        // Verify Thorn Tempest triggered: 1 damage counter to all opponent's pokemon
+        verify(opponentActive, times(1)).addDamageCounters(1);
+        verify(opponentBenched1, times(1)).addDamageCounters(1);
+        verify(opponentBenched2, times(1)).addDamageCounters(1);
+    }
+
+    @Test
+    void testBigJumpActiveAbility() {
+        PokemonCard buneary = new PokemonCard.Builder("buneary", "Buneary", 60, PokemonType.COLORLESS).build();
+        PokemonCard lopunny = new PokemonCard.Builder("lopunny", "Lopunny", 90, PokemonType.COLORLESS)
+                .abilities(List.of(new Ability("Big Jump", "", AbilityEffectId.BIG_JUMP)))
+                .build();
+
+        InPlayPokemon source = new InPlayPokemon(buneary);
+        source.evolveInto(lopunny);
+
+        EnergyCard energy = new EnergyCard("energy-1", "Double Colorless Energy", PokemonType.COLORLESS, false);
+        source.attachEnergy(energy);
+
+        TrainerCard tool = new TrainerCard.Builder("tool-1", "Muscle Band", TrainerType.POKEMON_TOOL).build();
+        source.attachTool(tool);
+
+        Hand activeHand = new Hand();
+        when(activeRuntime.getHand()).thenReturn(activeHand);
+        when(activeRuntime.getActivePokemon()).thenReturn(source);
+        
+        Bench activeBench = new Bench();
+        InPlayPokemon benched = new InPlayPokemon(new PokemonCard.Builder("benched", "Benched", 60, PokemonType.COLORLESS).build());
+        activeBench.place(benched);
+        when(activeRuntime.getBench()).thenReturn(activeBench);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Big Jump", -1, -1, List.of());
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.BIG_JUMP).ifPresent(effect -> effect.apply(session, action));
+
+        // Everything should be returned to hand
+        assertTrue(activeHand.getCards().contains(lopunny));
+        assertTrue(activeHand.getCards().contains(buneary));
+        assertTrue(activeHand.getCards().contains(energy));
+        assertTrue(activeHand.getCards().contains(tool));
+
+        // Active slot should be cleared
+        verify(activeRuntime, times(1)).clearActivePokemon();
+        verify(session, times(1)).setAwaitingPromotion(0);
+        verify(activeRuntime, times(1)).removePokemonFromPlay(source);
+    }
+
+    @Test
+    void testGooeyRegenerationActiveAbility() {
+        PokemonCard goodraCard = new PokemonCard.Builder("goodra", "Goodra", 150, PokemonType.DRAGON)
+                .abilities(List.of(new Ability("Gooey Regeneration", "", AbilityEffectId.GOOEY_REGENERATION)))
+                .build();
+        InPlayPokemon source = new InPlayPokemon(goodraCard);
+        source.addDamageCounters(8);
+
+        EnergyCard energy1 = new EnergyCard("energy-1", "Water Energy", PokemonType.WATER, true);
+        EnergyCard energy2 = new EnergyCard("energy-2", "Fairy Energy", PokemonType.FAIRY, true);
+        source.attachEnergy(energy1);
+        source.attachEnergy(energy2);
+
+        DiscardPile activeDiscard = new DiscardPile();
+        when(activeRuntime.getDiscardPile()).thenReturn(activeDiscard);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Gooey Regeneration", -1, -1, List.of(0));
+
+        AbilityEffectResolver resolver = new AbilityEffectResolver();
+        resolver.resolve(AbilityEffectId.GOOEY_REGENERATION).ifPresent(effect -> effect.apply(session, action));
+
+        // Verify energy1 was discarded, energy2 remains
+        assertEquals(1, source.getAttachedEnergyCards().size());
+        assertTrue(source.getAttachedEnergyCards().contains(energy2));
+        assertTrue(activeDiscard.getCards().contains(energy1));
+
+        // Verify healed 60 damage (8 counters -> 2 counters)
+        assertEquals(2, source.getDamageCounters());
+    }
+
+    @Test
+    void testRuleValidatorBigJumpOncePerTurn() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp);
+
+        InPlayPokemon lopunny = new InPlayPokemon(new PokemonCard.Builder("lopunny", "Lopunny", 90, PokemonType.COLORLESS)
+                .abilities(List.of(new Ability("Big Jump", "", AbilityEffectId.BIG_JUMP)))
+                .build());
+
+        UseAbilityAction action = new UseAbilityAction(lopunny, "Big Jump", -1, -1, List.of());
+
+        // 1. Valid first use
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
+
+        // 2. Used once -> Invalid
+        lopunny.markAbilityUsed(AbilityEffectId.BIG_JUMP.name());
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("ability_already_used_this_turn", ((ValidationResult.Invalid) result).reason());
+    }
+
+    @Test
+    void testRuleValidatorGooeyRegeneration() {
+        PokemonTurnInPlayProvider tip = mock(PokemonTurnInPlayProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider bsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.BenchStateProvider.class);
+        ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider hsp = mock(ar.edu.utn.frc.tup.piii.engine.listener.HandStateProvider.class);
+
+        ruleValidator = new RuleValidator(turnManager, List.of(activeSem, opponentSem), tip, bsp, hsp);
+
+        InPlayPokemon goodra = new InPlayPokemon(new PokemonCard.Builder("goodra", "Goodra", 150, PokemonType.DRAGON)
+                .abilities(List.of(new Ability("Gooey Regeneration", "", AbilityEffectId.GOOEY_REGENERATION)))
+                .build());
+
+        UseAbilityAction action = new UseAbilityAction(goodra, "Gooey Regeneration", -1, -1, List.of(0));
+
+        // Scenario 1: No energy attached, no damage -> no_energy_attached
+        ValidationResult result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("no_energy_attached", ((ValidationResult.Invalid) result).reason());
+
+        // Scenario 2: Energy attached, but no damage -> no_damage_to_heal
+        goodra.attachEnergy(new EnergyCard("energy-1", "Water Energy", PokemonType.WATER, true));
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Invalid);
+        assertEquals("no_damage_to_heal", ((ValidationResult.Invalid) result).reason());
+
+        // Scenario 3: Energy attached and has damage -> Valid
+        goodra.addDamageCounters(3);
+        result = ruleValidator.validate(action, 0);
+        assertTrue(result instanceof ValidationResult.Valid);
     }
 }
