@@ -250,10 +250,17 @@ public class StatusEffectManager {
      * @param pokemon the mutable state of the active Pokémon
      */
     public void processBetweenTurns(final ActivePokemonState pokemon) {
+        processBetweenTurns(pokemon, true);
+    }
+
+    public void processBetweenTurns(final ActivePokemonState pokemon, final boolean isOwnerTurnEnding) {
         List<StatusEffectType> toRemove = new ArrayList<>();
         for (StatusEffectType type : BETWEEN_TURNS_ORDER) {
             StatusEffect effect = activeEffects.get(type);
             if (effect != null) {
+                if ((type == StatusEffectType.PARALIZADO || type == StatusEffectType.PRECISION_BAJA) && !isOwnerTurnEnding) {
+                    continue;
+                }
                 boolean shouldRemove = effect.processBetweenTurns(pokemon, coinFlipper);
                 if (shouldRemove) {
                     toRemove.add(type);
@@ -262,6 +269,7 @@ public class StatusEffectManager {
         }
         toRemove.forEach(activeEffects::remove);
     }
+
 
     private StatusEffect buildEffect(final StatusEffectType type) {
         return switch (type) {
