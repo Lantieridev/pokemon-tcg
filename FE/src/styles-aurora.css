@@ -232,3 +232,40 @@
 .streak-fire.hot{color:var(--accent2);filter:drop-shadow(0 2px 10px color-mix(in srgb,var(--accent2) 60%,transparent));animation:flicker-hot 1.5s infinite alternate;}
 @keyframes flicker{0%{opacity:.8;transform:scale(.95) rotate(-2deg)}100%{opacity:1;transform:scale(1.05) rotate(2deg)}}
 @keyframes flicker-hot{0%{opacity:.9;transform:scale(1.15) rotate(-4deg)}100%{opacity:1;transform:scale(1.3) rotate(4deg)}}
+
+/* ---------- Collection Tab Cards ---------- */
+.collection-card {
+  position: relative;
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.2s, filter 0.2s;
+  cursor: pointer;
+}
+.collection-card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
+  z-index: 10;
+}
+.collection-card-inner {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  background: #000;
+}
+.collection-card[data-rarity="LEGENDARIA"] { border-color: rgba(255, 206, 50, 0.5); box-shadow: 0 0 10px rgba(255, 206, 50, 0.15); }
+.collection-card[data-rarity="EPICA"] { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 10px rgba(168, 85, 247, 0.15); }
+.collection-card[data-rarity="RARA"] { border-color: rgba(74, 163, 255, 0.5); box-shadow: 0 0 10px rgba(74, 163, 255, 0.15); }
+.collection-card[data-rarity="COMUN"] { border-color: rgba(161, 161, 170, 0.5); box-shadow: 0 0 10px rgba(161, 161, 170, 0.15); }
+
+.collection-card:hover[data-rarity="LEGENDARIA"] { box-shadow: 0 0 20px rgba(255, 206, 50, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #ffce32; }
+.collection-card:hover[data-rarity="EPICA"] { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #a855f7; }
+.collection-card:hover[data-rarity="RARA"] { box-shadow: 0 0 20px rgba(74, 163, 255, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #4aa3ff; }
+
+@keyframes foilShine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
