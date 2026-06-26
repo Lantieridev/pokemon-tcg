@@ -925,6 +925,18 @@ public final class RuleValidator {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EAR_INFLUENCE) {
+                if (action.cardIds().size() % 2 != 0 || action.cardIds().size() > req.maxSelections()) {
+                    return new ValidationResult.Invalid("must_select_pairs");
+                }
+            }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CURSED_DROP
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE) {
+                if (action.cardIds().size() != req.maxSelections()) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.
