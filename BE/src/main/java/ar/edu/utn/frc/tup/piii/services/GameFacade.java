@@ -897,6 +897,101 @@ public final class GameFacade {
                     }
                 }
             }
+        } else if (effectId == TrainerEffectId.CURSED_DROP) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            for (String id : selectedIds) {
+                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(id)) {
+                    opponent.getActivePokemon().addDamageCounters(1);
+                    if (opponent.getActivePokemon().getDamageCounters() * 10 >= opponent.getActivePokemon().getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(opponent.getActivePokemon(), opponent.getActivePokemon().isEx() ? 2 : 1);
+                    }
+                } else {
+                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                        if (benched.getCardId().equals(id)) {
+                            benched.addDamageCounters(1);
+                            if (benched.getDamageCounters() * 10 >= benched.getMaxHp()) {
+                                session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.EAR_INFLUENCE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            for (int i = 0; i < selectedIds.size(); i += 2) {
+                if (i + 1 >= selectedIds.size()) break;
+                String srcId = selectedIds.get(i);
+                String destId = selectedIds.get(i + 1);
+
+                BattlePokemonState source = null;
+                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(srcId)) {
+                    source = opponent.getActivePokemon();
+                } else {
+                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                        if (benched.getCardId().equals(srcId)) {
+                            source = benched;
+                            break;
+                        }
+                    }
+                }
+
+                BattlePokemonState dest = null;
+                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(destId)) {
+                    dest = opponent.getActivePokemon();
+                } else {
+                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                        if (benched.getCardId().equals(destId)) {
+                            dest = benched;
+                            break;
+                        }
+                    }
+                }
+
+                if (source != null && dest != null && source != dest && source.getDamageCounters() > 0) {
+                    source.addDamageCounters(-1);
+                    dest.addDamageCounters(1);
+                    if (dest.getDamageCounters() * 10 >= dest.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(dest, dest.isEx() ? 2 : 1);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.FANG_SNIPE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                Card found = null;
+                for (Card c : opponent.getHand().getCards()) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        found = c;
+                        break;
+                    }
+                }
+                if (found instanceof TrainerCard) {
+                    opponent.getHand().removeCard(found.getCardId());
+                    opponent.getDiscardPile().add(found);
+                } else if (found != null) {
+                    throw new IllegalArgumentException("Can only discard a Trainer card");
+                }
+            }
+        } else if (effectId == TrainerEffectId.RESCUE) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    Card found = null;
+                    for (Card c : runtime.getDiscardPile().getCards()) {
+                        if (c.getCardId().equals(id)) {
+                            found = c;
+                            break;
+                        }
+                    }
+                    if (found instanceof PokemonCard pc) {
+                        runtime.getDiscardPile().remove(pc);
+                        runtime.getDeck().addCards(java.util.List.of(pc));
+                    } else if (found != null) {
+                        throw new IllegalArgumentException("Rescue can only select Pokemon cards from discard pile");
+                    }
+                }
+                runtime.getDeck().shuffle();
+            }
         }
         
         session.setPendingSelectionRequest(null);

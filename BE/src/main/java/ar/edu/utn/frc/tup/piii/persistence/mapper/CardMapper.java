@@ -577,6 +577,55 @@ public final class CardMapper {
             }
         }
 
+        // --- Put damage counters on opponent active (Sneaky Placement) ---
+        if (lower.contains("put") && lower.contains("damage counter") && lower.contains("opponent's active")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counter").matcher(lower);
+            if (m.find()) {
+                return "place_counters_opponent:" + m.group(1);
+            }
+        }
+
+        // --- Put damage counters distributed (Cursed Drop) ---
+        if (lower.contains("put") && lower.contains("damage counters") && lower.contains("in any way")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counters").matcher(lower);
+            if (m.find()) {
+                return "place_counters_distributed:" + m.group(1);
+            }
+        }
+
+        // --- Move opponent counters (Ear Influence) ---
+        if (lower.contains("move") && lower.contains("damage counters") && lower.contains("opponent")) {
+            return "move_opponent_counters";
+        }
+
+        // --- Discard opponent hand to limit (Chip Off) ---
+        if (lower.contains("discard") && lower.contains("opponent's hand") && lower.contains("until") && lower.contains("card")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("until.*\\s+(\\d+)\\s+card").matcher(lower);
+            if (m.find()) {
+                return "discard_opponent_hand_to_limit:" + m.group(1);
+            }
+            return "discard_opponent_hand_to_limit:4";
+        }
+
+        // --- Place opponent basic from discard (Revival) ---
+        if (lower.contains("basic pok") && lower.contains("opponent's discard") && lower.contains("bench")) {
+            return "place_opponent_basic_from_discard";
+        }
+
+        // --- Discard trainer from opponent hand (Fang Snipe) ---
+        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("choose a trainer") && lower.contains("discard")) {
+            return "discard_trainer_from_opponent_hand";
+        }
+
+        // --- Shuffle pokemon from discard (Rescue) ---
+        if (lower.contains("shuffle") && lower.contains("pok") && lower.contains("discard pile into your deck")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("shuffle\\s+(\\d+)\\s+pok").matcher(lower);
+            if (m.find()) {
+                return "shuffle_pokemon_from_discard:" + m.group(1);
+            }
+            return "shuffle_pokemon_from_discard:3";
+        }
+
         // --- Bench damage ---
         if (lower.contains("each of your opponent's benched pok")) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);

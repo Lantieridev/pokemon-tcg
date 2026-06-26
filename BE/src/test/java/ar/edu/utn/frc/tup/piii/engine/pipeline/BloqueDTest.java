@@ -1,0 +1,138 @@
+package ar.edu.utn.frc.tup.piii.engine.pipeline;
+
+import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
+import ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler;
+import ar.edu.utn.frc.tup.piii.engine.manager.DamageCalculator;
+import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
+import ar.edu.utn.frc.tup.piii.engine.model.*;
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
+import ar.edu.utn.frc.tup.piii.services.GameFacade;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class BloqueDTest {
+
+    private AttackEffectResolver resolver;
+    private FakeBattlePokemonState attacker;
+    private FakeBattlePokemonState defender;
+    private StatusEffectManager attackerSM;
+    private StatusEffectManager defenderSM;
+    private KnockoutHandler knockoutHandler;
+    private AttackPipeline pipeline;
+
+    @BeforeEach
+    void setUp() {
+        resolver = new AttackEffectResolver();
+        attacker = new FakeBattlePokemonState(100, PokemonType.COLORLESS, null, null, false);
+        defender = new FakeBattlePokemonState(100, PokemonType.COLORLESS, null, null, false);
+        attackerSM = new StatusEffectManager(() -> true);
+        defenderSM = new StatusEffectManager(() -> true);
+        knockoutHandler = mock(KnockoutHandler.class);
+        pipeline = new AttackPipeline(List.of(
+                new ValidationStep(),
+                new PreDamageEffectsStep(),
+                new DamageCalculationStep(new DamageCalculator()),
+                new DamageApplicationStep(),
+                new PostDamageEffectsStep(resolver)
+        ));
+    }
+
+    @Test
+    void shouldResolveBloqueDTypes() {
+        assertEquals(AttackEffectType.PLACE_COUNTERS_OPPONENT, resolver.resolveType("place_counters_opponent:1"));
+        assertEquals(AttackEffectType.PLACE_COUNTERS_DISTRIBUTED, resolver.resolveType("place_counters_distributed:4"));
+        assertEquals(AttackEffectType.MOVE_OPPONENT_COUNTERS, resolver.resolveType("move_opponent_counters"));
+        assertEquals(AttackEffectType.DISCARD_OPPONENT_HAND_TO_LIMIT, resolver.resolveType("discard_opponent_hand_to_limit:4"));
+        assertEquals(AttackEffectType.PLACE_OPPONENT_BASIC_FROM_DISCARD, resolver.resolveType("place_opponent_basic_from_discard"));
+        assertEquals(AttackEffectType.DISCARD_TRAINER_FROM_OPPONENT_HAND, resolver.resolveType("discard_trainer_from_opponent_hand"));
+        assertEquals(AttackEffectType.SHUFFLE_POKEMON_FROM_DISCARD, resolver.resolveType("shuffle_pokemon_from_discard:3"));
+    }
+
+    @Test
+    void shouldPlaceCountersOpponentDirectly() {
+        final Attack attack = new Attack("Sneaky Placement", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("place_counters_opponent:2")
+                .build();
+
+        pipeline.execute(ctx);
+
+        // Places 2 damage counters directly
+        assertEquals(2, defender.getDamageCounters());
+    }
+
+    @Test
+    void shouldDiscardOpponentHandToLimit() {
+        final PlayerRuntime defenderRuntime = mock(PlayerRuntime.class);
+        final Hand hand = new Hand();
+        final DiscardPile discard = new DiscardPile();
+
+        Card c1 = mock(Card.class); when(c1.getCardId()).thenReturn("c1");
+        Card c2 = mock(Card.class); when(c2.getCardId()).thenReturn("c2");
+        Card c3 = mock(Card.class); when(c3.getCardId()).thenReturn("c3");
+        Card c4 = mock(Card.class); when(c4.getCardId()).thenReturn("c4");
+        Card c5 = mock(Card.class); when(c5.getCardId()).thenReturn("c5");
+        Card c6 = mock(Card.class); when(c6.getCardId()).thenReturn("c6");
+
+        hand.addCard(c1);
+        hand.addCard(c2);
+        hand.addCard(c3);
+        hand.addCard(c4);
+        hand.addCard(c5);
+        hand.addCard(c6);
+
+        when(defenderRuntime.getHand()).thenReturn(hand);
+        when(defenderRuntime.getDiscardPile()).thenReturn(discard);
+
+        final Attack attack = new Attack("Chip Off", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(defenderRuntime)
+                .effectText("discard_opponent_hand_to_limit:4")
+                .build();
+
+        pipeline.execute(ctx);
+
+        // 6 cards initially, limit 4 -> should discard 2 cards
+        assertEquals(4, hand.size());
+        assertEquals(2, discard.getCards().size());
+    }
+
+    @Test
+    void shouldPlaceOpponentBasicFromDiscard() {
+        final PlayerRuntime defenderRuntime = mock(PlayerRuntime.class);
+        final DiscardPile discard = new DiscardPile();
+        final Bench bench = new Bench();
+
+        PokemonCard basic = mock(PokemonCard.class);
+        when(basic.getCardId()).thenReturn("basic-1");
+        when(basic.getEvolutionStage()).thenReturn(EvolutionStage.BASIC);
+        discard.add(basic);
+
+        when(defenderRuntime.getDiscardPile()).thenReturn(discard);
+        when(defenderRuntime.getBench()).thenReturn(bench);
+
+        final Attack attack = new Attack("Revival", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(defenderRuntime)
+                .effectText("place_opponent_basic_from_discard")
+                .build();
+
+        pipeline.execute(ctx);
+
+        // Bench should have 1 pokemon, discard should be empty
+        assertEquals(1, bench.getAll().size());
+        assertEquals(0, discard.getCards().size());
+        assertEquals("basic-1", bench.getAll().get(0).getBaseCard().getCardId());
+    }
+}

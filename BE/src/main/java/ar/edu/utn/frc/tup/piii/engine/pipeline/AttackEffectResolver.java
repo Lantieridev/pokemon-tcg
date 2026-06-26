@@ -115,6 +115,13 @@ public final class AttackEffectResolver {
         m.put("draw_cards",                          AttackEffectType.DRAW_CARDS);
         m.put("damage_times_self_counters",          AttackEffectType.DAMAGE_TIMES_SELF_COUNTERS);
         m.put("damage_per_retreat_cost",              AttackEffectType.DAMAGE_PER_RETREAT_COST);
+        m.put("place_counters_opponent",              AttackEffectType.PLACE_COUNTERS_OPPONENT);
+        m.put("place_counters_distributed",          AttackEffectType.PLACE_COUNTERS_DISTRIBUTED);
+        m.put("move_opponent_counters",              AttackEffectType.MOVE_OPPONENT_COUNTERS);
+        m.put("discard_opponent_hand_to_limit",      AttackEffectType.DISCARD_OPPONENT_HAND_TO_LIMIT);
+        m.put("place_opponent_basic_from_discard",    AttackEffectType.PLACE_OPPONENT_BASIC_FROM_DISCARD);
+        m.put("discard_trainer_from_opponent_hand",  AttackEffectType.DISCARD_TRAINER_FROM_OPPONENT_HAND);
+        m.put("shuffle_pokemon_from_discard",        AttackEffectType.SHUFFLE_POKEMON_FROM_DISCARD);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -141,6 +148,122 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> { });
         m.put(AttackEffectType.DAMAGE_PER_RETREAT_COST,
                 (amount, ctx) -> { });
+        m.put(AttackEffectType.PLACE_COUNTERS_OPPONENT,
+                (amount, ctx) -> {
+                    if (ctx.getDefender() != null) {
+                        ctx.getDefender().addDamageCounters(amount);
+                        if (ctx.getDefender().getDamageCounters() * 10 >= ctx.getDefender().getMaxHp()) {
+                            ctx.getMatchSession().getKnockoutHandler().onKnockout(ctx.getDefender(), ctx.getDefender().isEx() ? 2 : 1);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.PLACE_COUNTERS_DISTRIBUTED,
+                (amount, ctx) -> {
+                    ctx.getMatchSession().setPendingSelectionRequest(
+                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CURSED_DROP,
+                                    null,
+                                    amount,
+                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                            )
+                    );
+                    if (ctx.getMatchSession().getTurnManager() != null) {
+                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                    }
+                });
+        m.put(AttackEffectType.MOVE_OPPONENT_COUNTERS,
+                (amount, ctx) -> {
+                    ctx.getMatchSession().setPendingSelectionRequest(
+                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EAR_INFLUENCE,
+                                    null,
+                                    20,
+                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                            )
+                    );
+                    if (ctx.getMatchSession().getTurnManager() != null) {
+                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_HAND_TO_LIMIT,
+                (amount, ctx) -> {
+                    final PlayerRuntime defender = ctx.getDefenderRuntime();
+                    if (defender != null) {
+                        List<Card> hand = defender.getHand().getCards();
+                        if (hand.size() > amount) {
+                            List<Card> mutableHand = new java.util.ArrayList<>(hand);
+                            java.util.Collections.shuffle(mutableHand);
+                            int toDiscard = hand.size() - amount;
+                            for (int i = 0; i < toDiscard; i++) {
+                                Card c = mutableHand.get(i);
+                                defender.getHand().removeCard(c.getCardId());
+                                defender.getDiscardPile().add(c);
+                            }
+                        }
+                    }
+                });
+        m.put(AttackEffectType.PLACE_OPPONENT_BASIC_FROM_DISCARD,
+                (amount, ctx) -> {
+                    final PlayerRuntime defender = ctx.getDefenderRuntime();
+                    if (defender != null && defender.getBench().getAll().size() < 5) {
+                        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = null;
+                        for (Card card : defender.getDiscardPile().getCards()) {
+                            if (card instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                                basic = pc;
+                                break;
+                            }
+                        }
+                        if (basic != null) {
+                            defender.getDiscardPile().remove(basic);
+                            ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(basic);
+                            state.setOwner(defender);
+                            defender.getBench().place(state);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_TRAINER_FROM_OPPONENT_HAND,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null) {
+                        boolean hasTrainer = opponent.getHand().getCards().stream()
+                                .anyMatch(c -> c instanceof TrainerCard);
+                        if (hasTrainer) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE,
+                                            null,
+                                            1,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
+                    }
+                });
+        m.put(AttackEffectType.SHUFFLE_POKEMON_FROM_DISCARD,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        long pokemonCount = attacker.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard).count();
+                        int toSelect = Math.min(amount, (int) pokemonCount);
+                        if (toSelect > 0) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE,
+                                            null,
+                                            toSelect,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
+                    }
+                });
         m.put(AttackEffectType.SMOKESCREEN,
                 (amount, ctx) -> ctx.getDefenderStatusManager().apply(StatusEffectType.PRECISION_BAJA));
         m.put(AttackEffectType.COIN_FLIP_SELF_DISABLE,
