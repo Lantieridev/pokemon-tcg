@@ -287,6 +287,14 @@ class CardMapperTest {
         assertEquals(1, pokemon.getAttacks().size());
         assertEquals("coin_flip_prevent_damage", pokemon.getAttacks().get(0).effectText());
     }
+    @Test
+    void shouldMapIcyWindToSleep() {
+        final CardEntity entity = pokemonEntity("xy2-51", "Sneasel", "Basic", 60,
+                "[{\"name\":\"Icy Wind\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,\"damage\":\"\",\"text\":\"Your opponent's Active Pokémon is now Asleep.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("sleep", card.getAttacks().get(0).effectText());
+    }
 
     // --- helpers ---
 
