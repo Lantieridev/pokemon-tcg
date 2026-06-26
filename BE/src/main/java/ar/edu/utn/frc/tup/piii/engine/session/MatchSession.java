@@ -432,6 +432,13 @@ public final class MatchSession {
                 return result;
             }
         };
+        if (playerRuntimes != null) {
+            for (final var runtime : playerRuntimes) {
+                if (runtime.getStatusEffectManager() != null) {
+                    runtime.getStatusEffectManager().setCoinFlipper(this.coinFlipper);
+                }
+            }
+        }
     }
 
     public VictoryConditionChecker getVictoryConditionChecker() {

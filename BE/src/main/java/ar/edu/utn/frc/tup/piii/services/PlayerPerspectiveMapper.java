@@ -67,7 +67,8 @@ public final class PlayerPerspectiveMapper {
                     var stream = runtime.getDiscardPile().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
-                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH) {
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH
+                            || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
                     } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
