@@ -20,6 +20,7 @@ export interface UIPokemon {
   cardId: string;
   name: string;
   energies: string[];       // PokemonType[] convertidos a lowercase para energy-pip
+  energyCardIds: string[];
   damage: number;           // damageCounters * 10
   maxHp: number;
   isEx: boolean;
@@ -411,6 +412,7 @@ export class MatchStore {
       cardId: dto.cardId,
       name: dto.name,
       energies: (dto.attachedEnergies ?? []).map((e) => e.toLowerCase()),
+      energyCardIds: dto.attachedEnergyCardIds ?? [],
       damage: dto.damageCounters * 10,
       maxHp: dto.maxHp,
       isEx: dto.isEx,

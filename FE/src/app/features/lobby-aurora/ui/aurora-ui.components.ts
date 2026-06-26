@@ -477,8 +477,3 @@ export class SigCardComponent {
     return t[this.type] || t['fire'];
   }
 }
-lightning: ['#f5d34c', '#d6a31f', '#423207']
-    };
-return t[this.type] || t['fire'];
-  }
-}

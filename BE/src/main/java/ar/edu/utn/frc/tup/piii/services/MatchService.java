@@ -3,6 +3,9 @@ package ar.edu.utn.frc.tup.piii.services;
 import ar.edu.utn.frc.tup.piii.dtos.ActionRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
 import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
+import ar.edu.utn.frc.tup.piii.services.ChatService;
+import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
+import java.time.LocalDateTime;
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
@@ -69,6 +72,7 @@ public class MatchService {
     private final BotDecisionService botDecisionService;
     private final MmrCalculationService mmrCalculationService;
     private final CampaignService campaignService;
+    private final ChatService chatService;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -97,6 +101,7 @@ public class MatchService {
                         @Lazy final BotDecisionService botDecisionService,
                         final MmrCalculationService pMmrCalculationService,
                         @Lazy final CampaignService campaignService,
+                        final ChatService chatService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -111,6 +116,7 @@ public class MatchService {
         this.botDecisionService = botDecisionService;
         this.mmrCalculationService = Objects.requireNonNull(pMmrCalculationService, "mmrCalculationService must not be null");
         this.campaignService = Objects.requireNonNull(campaignService, "campaignService must not be null");
+        this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -174,6 +180,15 @@ public class MatchService {
             }
 
             final TurnManager turnManager = session.getTurnManager();
+            // Look up card name in hand if cardId is provided in dto
+            String cardName = null;
+            if (dto.cardId() != null) {
+                final String targetCardId = dto.cardId();
+                cardName = session.getPlayerRuntime(playerIndex).getHand().getCards().stream()
+                        .filter(c -> c.getCardId().equals(targetCardId))
+                        .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getName)
+                        .findFirst().orElse(null);
+            }
 
             // Track action-specific stats
             if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction attackAction) {
@@ -184,6 +199,33 @@ public class MatchService {
 
             // Apply action and manage TurnManager phase transitions
             applyWithPhaseTransitions(session, action, turnManager);
+
+            // Log Trainer card usage
+            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+                final String name = cardName != null ? cardName : "Entrenador";
+                sendSystemMessage(matchId, playerId + " jugó la carta de Entrenador: " + name);
+            }
+
+            // Log coin flips
+            final java.util.List<Boolean> flips = session.getLastCoinFlips();
+            if (!flips.isEmpty()) {
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Lanzamiento de moneda");
+                if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction declareAttackAction) {
+                    sb.append(" para el ataque '").append(declareAttackAction.attack().name()).append("'");
+                } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+                    final String name = cardName != null ? cardName : "Entrenador";
+                    sb.append(" para la carta de Entrenador '").append(name).append("'");
+                } else if (dto.type() == ActionType.END_TURN) {
+                    sb.append(" para chequeo de estado");
+                }
+                sb.append(": ");
+                for (int i = 0; i < flips.size(); i++) {
+                    if (i > 0) sb.append(", ");
+                    sb.append(flips.get(i) ? "CARA" : "SECA");
+                }
+                sendSystemMessage(matchId, sb.toString());
+            }
 
             session.incrementVersion();
 
@@ -644,5 +686,15 @@ public class MatchService {
                 break;
             }
         }
+    }
+
+    private void sendSystemMessage(final String matchId, final String message) {
+        final ChatMessageResponse response = ChatMessageResponse.builder()
+                .sender("SISTEMA")
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .build();
+        chatService.addMessage(matchId, response);
+        messaging.convertAndSend("/topic/chat/" + matchId, response);
     }
 }

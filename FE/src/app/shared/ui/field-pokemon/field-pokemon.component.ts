@@ -268,6 +268,10 @@ export class FieldPokemonComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['cardId']) {
+      this.initialized = false;
+    }
+
     // Initialize displayed HP on first load
     if (!this.initialized && this.maxHp > 0) {
       this.displayedHp = this.currentHp;

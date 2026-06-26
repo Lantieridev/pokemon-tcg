@@ -50,6 +50,7 @@ export interface BattlePokemonDTO {
   weaknessType: PokemonType | null;
   resistanceType: PokemonType | null;
   attachedEnergies: PokemonType[];
+  attachedEnergyCardIds?: string[];
   retreatCost: number;
   hasToolAttached: boolean;
   attachedToolCardId?: string | null;
