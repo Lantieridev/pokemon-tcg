@@ -247,6 +247,9 @@ public final class CardMapper {
             }
             return "damage_all_opponents:10";
         }
+        if ("parabolic charge".equals(lowerName)) {
+            return "search_deck_energy:2";
+        }
         if ("brilliant search".equals(lowerName)) {
             return "search_deck_any:3";
         }

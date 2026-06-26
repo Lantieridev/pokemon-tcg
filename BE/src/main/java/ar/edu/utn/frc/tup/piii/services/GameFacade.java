@@ -992,6 +992,19 @@ public final class GameFacade {
                 }
                 runtime.getDeck().shuffle();
             }
+        } else if (effectId == TrainerEffectId.PARABOLIC_CHARGE) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        if (!(found.get(0) instanceof EnergyCard ec)) {
+                            throw new IllegalArgumentException("Parabolic Charge can only select energy cards");
+                        }
+                        runtime.getHand().addCard(ec);
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
         }
         
         session.setPendingSelectionRequest(null);
