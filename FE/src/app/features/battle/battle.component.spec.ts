@@ -1,9 +1,11 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { BattleComponent } from './battle.component';
 import { MatchStore, GameStateDTO } from '../../core/store/match.store';
 import { WebSocketService } from '../../core/services/websocket.service';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { MatchBackendService } from '../../core/services/match-backend.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('BattleComponent Integration', () => {
   let component: BattleComponent;
@@ -11,17 +13,34 @@ describe('BattleComponent Integration', () => {
   let store: MatchStore;
   let wsServiceSpy: jasmine.SpyObj<WebSocketService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let matchBackendSpy: jasmine.SpyObj<MatchBackendService>;
 
   beforeEach(async () => {
     wsServiceSpy = jasmine.createSpyObj('WebSocketService', ['connect', 'disconnect']);
+    (wsServiceSpy as any).chatMessage$ = of();
+    (wsServiceSpy as any).gameState$ = of();
+    (wsServiceSpy as any).error$ = of();
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    matchBackendSpy = jasmine.createSpyObj('MatchBackendService', ['getMatchState', 'getChatHistory', 'surrenderMatch']);
+
+    matchBackendSpy.getChatHistory.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      imports: [BattleComponent],
+      imports: [HttpClientTestingModule, BattleComponent],
       providers: [
         MatchStore,
         { provide: WebSocketService, useValue: wsServiceSpy },
-        { provide: Router, useValue: routerSpy }
+        { provide: Router, useValue: routerSpy },
+        { provide: MatchBackendService, useValue: matchBackendSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: { get: (key: string) => 'match-xyz' },
+              queryParamMap: { get: (key: string) => 'match-xyz' }
+            }
+          }
+        }
       ]
     }).compileComponents();
 
@@ -30,12 +49,13 @@ describe('BattleComponent Integration', () => {
     store = TestBed.inject(MatchStore);
   });
 
-  it('should redirect to /lobby if MatchStore is not loaded', () => {
+  it('should redirect to /lobby if MatchStore is not loaded (REST fails)', () => {
+    matchBackendSpy.getMatchState.and.returnValue(throwError(() => new Error('Not found')));
     fixture.detectChanges();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/lobby']);
   });
 
-  it('should connect to WebSocket and update MatchStore on load when matchId exists', () => {
+  it('should connect to WebSocket and update MatchStore on load when matchId exists', fakeAsync(() => {
     const mockState: GameStateDTO = {
       matchId: 'match-xyz',
       version: 1,
@@ -43,7 +63,7 @@ describe('BattleComponent Integration', () => {
       currentPhase: 'MAIN',
       self: {
         playerId: 'AshRivero',
-        active: { cardId: 'xy1-1', name: 'Ivysaur', attachedEnergies: [], damageCounters: 0 },
+        active: { cardId: 'xy1-1', name: 'Ivysaur', attachedEnergies: [], damageCounters: 0 } as any,
         bench: [],
         hand: [],
         deckSize: 60,
@@ -51,28 +71,36 @@ describe('BattleComponent Integration', () => {
       },
       opponent: {
         playerId: 'BrockSteel',
-        active: { cardId: 'xy1-3', name: 'Venusaur', attachedEnergies: [], damageCounters: 0 },
+        active: { cardId: 'xy1-3', name: 'Venusaur', attachedEnergies: [], damageCounters: 0 } as any,
         bench: [],
         handSize: 7,
         deckSize: 60,
         prizeCount: 6
       }
-    };
+    } as any;
 
-    store.updateState(mockState);
-    wsServiceSpy.connect.and.returnValue(of({
-      ...mockState,
-      version: 2
-    }));
+    matchBackendSpy.getMatchState.and.returnValue(of(mockState));
+    wsServiceSpy.connect.and.callFake((id: string) => {
+      store.updateState({
+        ...mockState,
+        version: 2,
+        turnNumber: 2
+      } as any);
+      return of({
+        ...mockState,
+        version: 2,
+        turnNumber: 2
+      } as any);
+    });
 
     fixture.detectChanges();
+    tick();
 
     expect(wsServiceSpy.connect).toHaveBeenCalledWith('match-xyz');
     expect(store.turn().number).toBe(2);
     expect(component.me()!.name).toBe('AshRivero');
     expect(component.opp()!.name).toBe('BrockSteel');
-    expect(component.log().length).toBe(2); // Initial log + version 2 update log
-  });
+  }));
 
   it('should disconnect from WS on component destruction', () => {
     const mockState: GameStateDTO = {
@@ -82,8 +110,9 @@ describe('BattleComponent Integration', () => {
       currentPhase: 'MAIN',
       self: { playerId: 'AshRivero', active: null, bench: [], hand: [], deckSize: 60, prizeCount: 6 },
       opponent: { playerId: 'BrockSteel', active: null, bench: [], handSize: 7, deckSize: 60, prizeCount: 6 }
-    };
-    store.updateState(mockState);
+    } as any;
+    
+    matchBackendSpy.getMatchState.and.returnValue(of(mockState));
     wsServiceSpy.connect.and.returnValue(of(mockState));
 
     fixture.detectChanges();

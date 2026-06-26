@@ -19,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for PlayerPerspectiveMapper — war-fog security and state mapping.
+ * Tesgit push -u origin feature/pokemon-animationsts for PlayerPerspectiveMapper — war-fog security and state mapping.
  */
 class PlayerPerspectiveMapperTest {
 
@@ -136,6 +136,7 @@ class PlayerPerspectiveMapperTest {
         assertThat(dto.cardId()).isEqualTo("xy1-46");
         assertThat(dto.retreatCost()).isEqualTo(1);
         assertThat(dto.attachedEnergies()).hasSize(2);
+        assertThat(dto.attachedEnergyCardIds()).containsOnly("fake_energy");
         assertThat(dto.hasToolAttached()).isTrue();
         assertThat(dto.attachedToolCardId()).isEqualTo("tool");
     }

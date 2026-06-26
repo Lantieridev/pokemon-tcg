@@ -19,9 +19,10 @@ describe('MatchStore', () => {
   });
 
   it('should update state and correctly calculate computed properties', () => {
-    const mockState: GameStateDTO = {
+    const mockState: any = {
       matchId: 'match-123',
       version: 5,
+      turnNumber: 5,
       activePlayerIndex: 0,
       currentPhase: 'MAIN',
       self: {
@@ -30,9 +31,10 @@ describe('MatchStore', () => {
           cardId: 'xy1-1',
           name: 'Ivysaur',
           attachedEnergies: ['Fire'],
+          attachedEnergyCardIds: ['xy1-131'],
           damageCounters: 3,
           statusConditions: ['DORMIDO']
-        },
+        } as any,
         bench: [],
         hand: ['xy1-2'],
         deckSize: 45,
@@ -46,7 +48,7 @@ describe('MatchStore', () => {
           attachedEnergies: [],
           damageCounters: 0,
           statusConditions: []
-        },
+        } as any,
         bench: [],
         handSize: 5,
         deckSize: 40,
@@ -67,6 +69,7 @@ describe('MatchStore', () => {
     expect(me!.active!.name).toBe('Ivysaur');
     expect(me!.active!.damage).toBe(30);
     expect(me!.active!.status).toBe('asleep');
+    expect(me!.active!.energyCardIds).toEqual(['xy1-131']);
     expect(me!.deckCount).toBe(45);
 
     const opp = store.opp();
