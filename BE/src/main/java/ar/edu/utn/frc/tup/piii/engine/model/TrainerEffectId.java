@@ -66,5 +66,6 @@ public enum TrainerEffectId {
     FANG_SNIPE,
     PARABOLIC_CHARGE,
     REVIVAL,
+    PUSH_DOWN,
     NONE
 }

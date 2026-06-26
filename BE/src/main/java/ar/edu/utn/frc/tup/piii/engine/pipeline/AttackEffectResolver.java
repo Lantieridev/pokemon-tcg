@@ -414,12 +414,26 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime defender = ctx.getDefenderRuntime();
                     if (defender != null && !defender.getBench().getAll().isEmpty()) {
-                        final BattlePokemonState oldActive = defender.getActivePokemon();
-                        final BattlePokemonState newActive = defender.getBench().promote(0);
-                        defender.setActivePokemon(newActive);
-                        defender.getBench().place(oldActive);
-                        defender.getStatusEffectManager().clearAll();
-                        defender.recordPokemonEntered(oldActive);
+                        if (defender.getBench().getAll().size() == 1) {
+                            final BattlePokemonState oldActive = defender.getActivePokemon();
+                            final BattlePokemonState newActive = defender.getBench().promote(0);
+                            defender.setActivePokemon(newActive);
+                            defender.getBench().place(oldActive);
+                            defender.getStatusEffectManager().clearAll();
+                            defender.recordPokemonEntered(oldActive);
+                        } else {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN,
+                                            null,
+                                            1,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
                     }
                 });
         m.put(AttackEffectType.BENCH_DAMAGE_ONE,
