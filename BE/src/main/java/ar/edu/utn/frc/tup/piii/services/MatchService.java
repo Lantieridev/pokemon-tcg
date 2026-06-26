@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.dtos.ActionType;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
@@ -29,7 +30,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -323,7 +326,14 @@ public class MatchService {
                     return; // between-turns will run once PROMOTE_ACTIVE is received
                 }
                 processBetweenTurns(session, turnManager);
+                session.setBetweenTurnsProcessed(true);
+                if (resolveBetweenTurnsKnockouts(session)) {
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                }
                 turnManager.endBetweenTurns();
+                session.setBetweenTurnsProcessed(false);
             }
             case SelectCardsAction selectCards -> {
                 final boolean isAttackSelection = session.getPendingSelectionRequest() != null
@@ -350,7 +360,14 @@ public class MatchService {
                         return;
                     }
                     processBetweenTurns(session, turnManager);
+                    session.setBetweenTurnsProcessed(true);
+                    if (resolveBetweenTurnsKnockouts(session)) {
+                        if (checkForPendingPromotion(session)) {
+                            return;
+                        }
+                    }
                     turnManager.endBetweenTurns();
+                    session.setBetweenTurnsProcessed(false);
                 } else {
                     if (session.getVictoryConditionChecker() != null) {
                         session.getVictoryConditionChecker().checkFieldVictory();
@@ -363,16 +380,32 @@ public class MatchService {
             case EndTurnAction ignored -> {
                 turnManager.passTurn();
                 processBetweenTurns(session, turnManager);
+                session.setBetweenTurnsProcessed(true);
+                if (resolveBetweenTurnsKnockouts(session)) {
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                }
                 turnManager.endBetweenTurns();
+                session.setBetweenTurnsProcessed(false);
             }
             case PromoteActiveAction ignored -> {
                 final boolean wasAwaiting = session.isAwaitingPromotion();
                 facade.apply(session, action, turnManager);
                 if (wasAwaiting) {
                     session.clearAwaitingPromotion();
-                    // Resume the deferred between-turns phase that was paused for this promotion
-                    processBetweenTurns(session, turnManager);
+                    if (!session.isBetweenTurnsProcessed()) {
+                        // Resume the deferred between-turns phase that was paused for this promotion
+                        processBetweenTurns(session, turnManager);
+                        session.setBetweenTurnsProcessed(true);
+                        if (resolveBetweenTurnsKnockouts(session)) {
+                            if (checkForPendingPromotion(session)) {
+                                return;
+                            }
+                        }
+                    }
                     turnManager.endBetweenTurns();
+                    session.setBetweenTurnsProcessed(false);
                 }
             }
             default -> {
@@ -385,6 +418,7 @@ public class MatchService {
                 }
             }
         }
+
     }
 
     /**
@@ -405,6 +439,30 @@ public class MatchService {
         }
         return false;
     }
+
+    private boolean resolveBetweenTurnsKnockouts(final MatchSession session) {
+        boolean anyKnockout = false;
+        for (int i = 0; i < 2; i++) {
+            final var runtime = session.getPlayerRuntime(i);
+            final var active = runtime.getActivePokemon();
+            if (active != null && isKnockedOut(active)) {
+                session.getKnockoutHandler().onKnockout(active, active.isEx() ? 2 : 1);
+                anyKnockout = true;
+            }
+            for (final var benched : List.copyOf(runtime.getBench().getAll())) {
+                if (isKnockedOut(benched)) {
+                    session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
+                    anyKnockout = true;
+                }
+            }
+        }
+        return anyKnockout;
+    }
+
+    private boolean isKnockedOut(final BattlePokemonState state) {
+        return state.getDamageCounters() * 10 >= state.getMaxHp();
+    }
+
 
     /**
      * Runs between-turns status effects for both players' Active Pokémon.
