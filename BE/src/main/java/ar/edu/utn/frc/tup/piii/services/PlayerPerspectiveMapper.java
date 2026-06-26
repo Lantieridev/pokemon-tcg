@@ -41,7 +41,10 @@ public final class PlayerPerspectiveMapper {
         if (session.getPendingSelectionRequest() != null) {
             final var req = session.getPendingSelectionRequest();
             java.util.List<String> options = java.util.Collections.emptyList();
-            if (session.getActivePlayerIndex() == viewerIndex) {
+            final boolean isOpponentChoosing = req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW;
+            final boolean isViewerChoosing = (isOpponentChoosing && session.getActivePlayerIndex() != viewerIndex)
+                    || (!isOpponentChoosing && session.getActivePlayerIndex() == viewerIndex);
+            if (isViewerChoosing) {
                 final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = session.getPlayerRuntime(viewerIndex);
                 if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
                     var stream = runtime.getDeck().getCards().stream();
@@ -85,6 +88,8 @@ public final class PlayerPerspectiveMapper {
                     var stream = runtime.getHand().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ROCK_RUSH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && (ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIGHTING || ec.isProvidesAllTypes()));
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 }

@@ -53,5 +53,7 @@ public enum TrainerEffectId {
     CLAIRVOYANT_EYE,
     CALL_FOR_FAMILY,
     QUIVER_DANCE,
+    FLASH_CLAW,
+    ROCK_RUSH,
     NONE
 }

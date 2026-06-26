@@ -391,5 +391,77 @@ class PreDamageEffectsStepTest {
         org.junit.jupiter.api.Assertions.assertEquals(1, discardPile.getCards().size());
         org.junit.jupiter.api.Assertions.assertSame(tool, discardPile.getCards().get(0));
     }
+
+    @Test
+    void testProcess_rockRush_firstRun_withFightingEnergies_setsSelectionRequestAndZeroDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Hand hand = new ar.edu.utn.frc.tup.piii.engine.model.Hand();
+        hand.addCard(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Fighting Energy", PokemonType.FIGHTING, true));
+        org.mockito.Mockito.when(attackerRuntime.getHand()).thenReturn(hand);
+
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Rock Rush", 0, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("discard_hand_energy_multiply_damage:fighting:30")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ROCK_RUSH
+                && req.maxSelections() == 1
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+        ));
+        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+        assertFalse(ctx.getDefenderModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getDefenderModifiers().get(0).apply(30));
+    }
+
+    @Test
+    void testProcess_rockRush_firstRun_withoutFightingEnergies_doesZeroDamageAndNoRequest() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Hand hand = new ar.edu.utn.frc.tup.piii.engine.model.Hand();
+        hand.addCard(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Fire Energy", PokemonType.FIRE, true));
+        org.mockito.Mockito.when(attackerRuntime.getHand()).thenReturn(hand);
+
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Rock Rush", 0, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("discard_hand_energy_multiply_damage:fighting:30")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        org.mockito.Mockito.verify(session, org.mockito.Mockito.never()).setPendingSelectionRequest(org.mockito.ArgumentMatchers.any());
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getAttackerModifiers().get(0).apply(30));
+    }
+
+    @Test
+    void testProcess_rockRush_secondRun_calculatesCorrectDamage() {
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Rock Rush", 0, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("discard_hand_energy_multiply_damage:fighting:30")
+                .build();
+
+        ctx.setRockRushResolved(true);
+        ctx.setRockRushDiscardCount(2);
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(60, ctx.getAttackerModifiers().get(0).apply(30));
+    }
 }
 

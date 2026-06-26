@@ -135,6 +135,37 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                         ctx.getDefender().detachTool();
                     });
                 }
+            } else if (effectText.startsWith("discard_hand_energy_multiply_damage:fighting:")) {
+                String[] parts = effectText.split(":");
+                int dmgPerEnergy = Integer.parseInt(parts[2]);
+                if (ctx.isRockRushResolved()) {
+                    final int totalDamage = dmgPerEnergy * ctx.getRockRushDiscardCount();
+                    ctx.addAttackerModifier(dmg -> totalDamage);
+                } else {
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    int fightingEnergiesInHand = 0;
+                    if (runtime != null) {
+                        fightingEnergiesInHand = (int) runtime.getHand().getCards().stream()
+                                .filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && (ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIGHTING || ec.isProvidesAllTypes()))
+                                .count();
+                    }
+                    if (fightingEnergiesInHand > 0) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ROCK_RUSH,
+                                        null,
+                                        fightingEnergiesInHand,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                        ctx.addDefenderModifier(dmg -> 0);
+                    } else {
+                        ctx.addAttackerModifier(dmg -> 0);
+                    }
+                }
             }
         }
 
