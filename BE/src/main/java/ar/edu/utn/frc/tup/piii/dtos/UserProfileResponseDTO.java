@@ -39,8 +39,20 @@ public class UserProfileResponseDTO {
     private List<String> unlockedAvatars;
 
     private List<ShowcaseSlot> showcase;
+    private List<CollectedCardDTO> packCollection;
     private ShowcasedDeck showcasedDeck;
     private AdvancedStatsDTO advancedStats;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CollectedCardDTO {
+        private String cardId;
+        private String cardName;
+        private boolean isFoil;
+        private String rarity;
+    }
 
     @Data
     @NoArgsConstructor

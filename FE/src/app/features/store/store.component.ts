@@ -58,6 +58,7 @@ export class StoreComponent implements OnInit {
         if (this.packsInventory()[key] > 0 && !storePackIds.has(key)) {
           // Generar nombre legible: "pack_kanto_base" -> "Kanto Base"
           let readableName = key.replace('pack_', '').replace(/_/g, ' ');
+          readableName = readableName.replace('solluna', 'sol/luna');
           readableName = readableName.charAt(0).toUpperCase() + readableName.slice(1);
           
           inventoryPacks.push({
@@ -82,7 +83,6 @@ export class StoreComponent implements OnInit {
   }
 
   getImageSrc(item: StoreItemDTO): string {
-    if (item.imageUrl === 'pack_base' || item.imageUrl === 'pack_xy_base') return 'assets/images/rewards/pack_comun.png';
     if (item.itemType === 'AVATAR') {
       if (item.imageUrl === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
       if (item.imageUrl === 'charmander_fire') return 'assets/store/avatar_charmander.png';

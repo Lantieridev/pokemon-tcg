@@ -18,7 +18,6 @@ import { RouterModule } from '@angular/router';
         @case ('arrow') { <path d="M5 12h14M13 6l6 6-6 6" /> }
         @case ('fire') { <path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-1.5.5-2.5 1.5-3.5C9.5 5.5 11 5 12 2z" /><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /> }
         @case ('pokecoin') { <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 7v10M9 9.5a3 3 0 1 0 0 5h2.5" /> }
-        @case ('help') { <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /> }
       }
     </svg>
   `
@@ -45,7 +44,7 @@ export class IconComponent {
     </div>
   `
 })
-export class LogoComponent {}
+export class LogoComponent { }
 
 @Component({
   selector: 'aurora-trainer-chip',
@@ -159,7 +158,7 @@ export class TrainerChipComponent {
   toggle() { this.open = !this.open; }
 
   getAvatarEmoji(icon: string | undefined): string {
-    if (!icon) return '';
+    if (!icon) return '🎒';
     switch (icon.toLowerCase()) {
       case 'ash': return '🧢';
       case 'misty': return '💧';
@@ -167,26 +166,36 @@ export class TrainerChipComponent {
       case 'gary': return '👑';
       case 'serena': return '🎀';
       case 'red': return '⚡';
-      default: return '';
+      default: return '🎒';
     }
   }
 
   isCustomAvatar(av: string | undefined): boolean {
     if (!av) return false;
-    const defaultEmojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red'];
-    return !defaultEmojis.includes(av);
+    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red', 'default_trainer'];
+    return !emojis.includes(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    
+
+    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
+    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
+    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
+    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
+    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
+    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
+    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
+    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
+    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
+    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
+
     const normalizedValue = av.toLowerCase()
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_]/g, '');
-      
+
     const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
-    
     return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
   }
 
@@ -310,7 +319,7 @@ export class CoinIconComponent {
 export class BattleCtaComponent implements OnDestroy {
   @Input() title: string = 'BATALLAR';
   @Input() sub: string = 'Clasificatoria · Liga Oro III';
-  
+
   @Input() set searching(val: boolean) {
     this._searching.set(val);
     if (val) {
@@ -326,7 +335,7 @@ export class BattleCtaComponent implements OnDestroy {
 
   @Output() startBattle = new EventEmitter<void>();
   @Output() cancelBattle = new EventEmitter<void>();
-  
+
   secs = signal(0);
   intervalId: any;
 
@@ -435,5 +444,41 @@ export class SparksComponent {
     </svg>
   `
 })
-export class AmbientComponent {}
+export class AmbientComponent { }
 
+@Component({
+  selector: 'aurora-sig-card',
+  standalone: true,
+  template: `
+    <div [style]="'width: ' + w + 'px; aspect-ratio: 5/7; border-radius: ' + (w * 0.06) + 'px; position: relative; flex: 0 0 auto; transform: rotate(' + rot + 'deg); background: linear-gradient(160deg, ' + tones()[0] + ', ' + tones()[1] + ' 55%, ' + tones()[2] + '); box-shadow: 0 30px 60px -22px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.18);'">
+      <div [style]="'position: absolute; inset: ' + (w * 0.045) + 'px; border-radius: ' + (w * 0.04) + 'px; border: 1px solid rgba(255,255,255,.22); overflow: hidden;'">
+        <div style="position: absolute; inset: 0; background: linear-gradient(125deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 62%); background-size: 250% 250%; animation: holo 6s ease-in-out infinite;"></div>
+        <div [style]="'position: absolute; left: 8%; right: 8%; top: 14%; height: 52%; border-radius: ' + (w * 0.03) + 'px; border: 1px solid rgba(255,255,255,.25); background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.4), transparent 70%), repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 8px, transparent 8px 16px);'"></div>
+        <div [style]="'position: absolute; left: 8%; right: 8%; top: 7%; font-family: Space Grotesk,sans-serif; font-weight: 700; font-size: ' + (w * 0.072) + 'px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); display: flex; justify-content: space-between;'">
+          <span>{{ name }}</span><span class="num" [style]="'font-size: ' + (w * 0.05) + 'px; opacity: .9;'">HP 180</span>
+        </div>
+        <div [style]="'position: absolute; left: 8%; right: 8%; bottom: 7%; height: ' + (w * 0.14) + 'px; border-radius: ' + (w * 0.02) + 'px; background: rgba(0,0,0,.28); display: flex; align-items: center; padding: 0 8%; font-family: Space Mono,monospace; font-size: ' + (w * 0.042) + 'px; color: rgba(255,255,255,.8); letter-spacing: .06em;'">XY · 011/146</div>
+      </div>
+    </div>
+  `
+})
+export class SigCardComponent {
+  @Input() w: number = 230;
+  @Input() type: string = 'fire';
+  @Input() name: string = 'CHARIZARD';
+  @Input() rot: number = 0;
+
+  tones() {
+    const t: Record<string, string[]> = {
+      fire: ['#ff8a4c', '#c0392b', '#3a1410'],
+      water: ['#5aa9e6', '#2a5a9e', '#0c1f38'],
+      lightning: ['#f5d34c', '#d6a31f', '#423207']
+    };
+    return t[this.type] || t['fire'];
+  }
+}
+lightning: ['#f5d34c', '#d6a31f', '#423207']
+    };
+return t[this.type] || t['fire'];
+  }
+}
