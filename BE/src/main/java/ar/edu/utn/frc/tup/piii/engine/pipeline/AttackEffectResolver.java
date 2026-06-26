@@ -228,18 +228,16 @@ public final class AttackEffectResolver {
                     if (opponent != null) {
                         boolean hasTrainer = opponent.getHand().getCards().stream()
                                 .anyMatch(c -> c instanceof TrainerCard);
-                        if (hasTrainer) {
-                            ctx.getMatchSession().setPendingSelectionRequest(
-                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE,
-                                            null,
-                                            1,
-                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
-                                    )
-                            );
-                            if (ctx.getMatchSession().getTurnManager() != null) {
-                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                            }
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE,
+                                        null,
+                                        hasTrainer ? 1 : 0,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
                         }
                     }
                 });

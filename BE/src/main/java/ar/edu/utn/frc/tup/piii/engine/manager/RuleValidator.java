@@ -931,10 +931,25 @@ public final class RuleValidator {
                 }
             }
             if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CURSED_DROP
-                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE
                     || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE) {
                 if (action.cardIds().size() != req.maxSelections()) {
                     return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE) {
+                final int opponentIndex = 1 - turnManager.activePlayerIndex();
+                final boolean opponentHasTrainer = handStateProvider.getHandCards(opponentIndex).stream()
+                        .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard);
+                final int expectedAmount = opponentHasTrainer ? req.maxSelections() : 0;
+                if (action.cardIds().size() != expectedAmount) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+                if (opponentHasTrainer && !action.cardIds().isEmpty()) {
+                    final String cardId = action.cardIds().get(0);
+                    final java.util.Optional<Card> optCard = handStateProvider.getCardInHand(opponentIndex, cardId);
+                    if (optCard.isEmpty() || !(optCard.get() instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard)) {
+                        return new ValidationResult.Invalid("must_select_trainer_card");
+                    }
                 }
             }
             if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE) {

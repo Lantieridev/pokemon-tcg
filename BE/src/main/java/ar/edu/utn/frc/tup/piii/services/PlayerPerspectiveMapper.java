@@ -87,7 +87,10 @@ public final class PlayerPerspectiveMapper {
                     var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(limitAmount);
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
-                    var stream = runtime.getHand().getCards().stream();
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime targetHandRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE)
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    var stream = targetHandRuntime.getHand().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
                     } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ROCK_RUSH) {

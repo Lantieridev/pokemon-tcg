@@ -173,5 +173,93 @@ class BloqueDTest {
         verify(deck).addCards(argThat(list -> list.contains(p1) && list.contains(p2) && list.size() == 2));
         verify(deck).shuffle();
     }
+
+    @Test
+    void testStompOff() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final DiscardPile discard = new DiscardPile();
+        final Deck deck = mock(Deck.class);
+
+        Card topCard = mock(Card.class);
+        when(topCard.getCardId()).thenReturn("top-card");
+        when(deck.isEmpty()).thenReturn(false);
+        when(deck.draw()).thenReturn(topCard);
+
+        when(opponentRuntime.getDiscardPile()).thenReturn(discard);
+        when(opponentRuntime.getDeck()).thenReturn(deck);
+
+        final Attack attack = new Attack("Stomp Off", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(opponentRuntime)
+                .effectText("discard_opponent_deck:1")
+                .build();
+
+        pipeline.execute(ctx);
+
+        verify(deck, times(1)).draw();
+        assertEquals(1, discard.getCards().size());
+        assertTrue(discard.getCards().contains(topCard));
+    }
+
+    @Test
+    void testFangSnipeWithTrainers() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final Hand hand = mock(Hand.class);
+        final MatchSession mockSession = mock(MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        
+        TrainerCard tc = mock(TrainerCard.class);
+        when(opponentRuntime.getHand()).thenReturn(hand);
+        when(hand.getCards()).thenReturn(List.of(tc));
+
+        final Attack attack = new Attack("Fang Snipe", 40, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(opponentRuntime)
+                .effectText("discard_trainer_from_opponent_hand")
+                .matchSession(mockSession)
+                .build();
+
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.FANG_SNIPE &&
+            req.maxSelections() == 1
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
+
+    @Test
+    void testFangSnipeWithoutTrainers() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final Hand hand = mock(Hand.class);
+        final MatchSession mockSession = mock(MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        
+        Card pc = mock(PokemonCard.class);
+        when(opponentRuntime.getHand()).thenReturn(hand);
+        when(hand.getCards()).thenReturn(List.of(pc));
+
+        final Attack attack = new Attack("Fang Snipe", 40, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(opponentRuntime)
+                .effectText("discard_trainer_from_opponent_hand")
+                .matchSession(mockSession)
+                .build();
+
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.FANG_SNIPE &&
+            req.maxSelections() == 0
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
 }
 
