@@ -530,7 +530,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   triggerAbility(abilityName: string, sourceIndex: number | null): void {
     this.closeMenu();
-    if (abilityName === 'Water Shuriken') {
+    if (abilityName === 'Water Shuriken' || abilityName === 'Energy Grace' || abilityName === 'Shadow Void') {
       this.targetingAbility.set({ name: abilityName, sourceIndex });
     } else if (abilityName === 'Fairy Transfer') {
       const targetIndex = sourceIndex === -1 ? 0 : -1;
@@ -559,7 +559,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   isActiveAbility(name: string): boolean {
-    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off', 'Leaf Draw', 'Energy Grace'];
+    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off', 'Leaf Draw', 'Energy Grace', 'Shadow Void'];
     return activeAbilities.includes(name);
   }
 

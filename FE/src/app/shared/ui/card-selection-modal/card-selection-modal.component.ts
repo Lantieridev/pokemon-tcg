@@ -56,7 +56,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
           <button class="btn-cancel" (click)="onCancel()">Cancelar</button>
           <button
             class="btn-confirm"
-            [disabled]="selectedIndices().size === 0"
+            [disabled]="selectedIndices().size === 0 && maxSelections > 0"
             (click)="onConfirm()"
           >
             Confirmar
