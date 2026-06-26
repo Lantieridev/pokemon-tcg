@@ -39,13 +39,7 @@ public class Application {
     public org.springframework.boot.ApplicationRunner devDataInjector(
             ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository userRepository) {
         return args -> {
-            userRepository.findByUsername("prueba1").ifPresent(user -> {
-                user.setXp(55000);
-                user.setLevel(50);
-                user.setPokecoins(5000);
-                userRepository.save(user);
-                System.out.println("====== HACK: INYECTADOS 55,000 XP A 'prueba1' LOCALMENTE ======");
-            });
+            // Elimino el hack de inyección de XP y Monedas para el merge final
         };
     }
 }

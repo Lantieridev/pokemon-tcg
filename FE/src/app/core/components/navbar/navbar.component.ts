@@ -12,6 +12,7 @@ import { PublicProfileModalComponent } from '../../../shared/components/public-p
 import { ChatModalComponent } from '../../../shared/components/chat-modal/chat-modal.component';
 import { PublicProfileDTO, FriendshipDTO } from '../../models/friends.models';
 import { FriendsApiService } from '../../services/friends-api.service';
+import { FriendsWsService } from '../../services/friends-ws.service';
 import { ToastService } from '../../services/toast.service';
 import { Subject } from 'rxjs';
 
@@ -28,9 +29,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   private friendsApi = inject(FriendsApiService);
+  private friendsWs = inject(FriendsWsService);
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
   private destroy$ = new Subject<void>();
+
+  pendingRequestsCount = signal<number>(0);
+  unreadMessagesCount = signal<number>(0);
+  unreadMessagesPerUser = signal<Record<string, number>>({});
+  customNotification = signal<{ sender: string, message: string } | null>(null);
+  private notificationTimeout: any;
 
   profileData = signal<UserProfileResponseDTO | null>(null);
 
@@ -52,11 +60,23 @@ export class NavbarComponent implements OnInit, OnDestroy {
   @ViewChild(FriendsSidebarComponent) friendsSidebar!: FriendsSidebarComponent;
 
   toggleFriendsSidebar() {
+    this.unreadMessagesCount.set(0);
+    this.fetchPendingRequests(); // Refrescar al abrir
     if (this.friendsSidebar) {
       this.friendsSidebar.toggleSidebar();
     } else {
       console.error('FriendsSidebarComponent is undefined');
     }
+  }
+
+  fetchPendingRequests() {
+    this.friendsApi.getPendingRequests().subscribe({
+      next: (reqs) => {
+        this.pendingRequestsCount.set(reqs.length);
+        this.cdr.markForCheck();
+      },
+      error: () => { }
+    });
   }
 
   openProfileModal(username: string) {
@@ -82,8 +102,38 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.closeChatModal();
     } else {
       this.selectedChatFriend.set(friend);
+      // Reset unread count for this user
+      this.unreadMessagesPerUser.update(prev => {
+        const copy = { ...prev };
+        const count = copy[friend.friendUsername] || 0;
+        delete copy[friend.friendUsername];
+        this.unreadMessagesCount.update(c => Math.max(0, c - count));
+        return copy;
+      });
     }
     this.cdr.markForCheck();
+  }
+
+  openChatWithSender(sender: string) {
+    if (this.friendsSidebar && !this.friendsSidebar.isOpen()) {
+      this.friendsSidebar.toggleSidebar();
+    }
+    const friend = this.friendsSidebar?.friends?.find(f => f.friendUsername === sender);
+    if (friend) {
+      this.openChatModal(friend);
+    } else {
+      this.openChatModal({ friendUsername: sender, status: 'ACCEPTED', avatarIcon: '' } as FriendshipDTO);
+    }
+    this.customNotification.set(null);
+  }
+
+  showCustomNotification(msg: any) {
+    this.customNotification.set({ sender: msg.senderUsername, message: msg.content });
+    if (this.notificationTimeout) clearTimeout(this.notificationTimeout);
+    this.notificationTimeout = setTimeout(() => {
+      this.customNotification.set(null);
+      this.cdr.markForCheck();
+    }, 4000);
   }
 
   closeChatModal() {
@@ -130,6 +180,32 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.profileService.getProfile(this.username).subscribe({
         error: (err) => console.error('Error fetching profile for navbar', err)
       });
+
+      this.fetchPendingRequests();
+      // Polling cada 30 segundos para solicitudes de amistad
+      setInterval(() => {
+        if (this.username !== 'Invitado') this.fetchPendingRequests();
+      }, 30000);
+
+      // Escuchar nuevos mensajes del WebSocket
+      this.friendsWs.messages$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(msg => {
+          // Ignorar si soy el que envía el mensaje
+          if (msg.senderUsername === this.username) return;
+
+          // Ignorar si el chat con este amigo ya está abierto
+          if (this.selectedChatFriend()?.friendUsername === msg.senderUsername) return;
+
+          this.unreadMessagesPerUser.update(prev => ({
+            ...prev,
+            [msg.senderUsername]: (prev[msg.senderUsername] || 0) + 1
+          }));
+          this.unreadMessagesCount.update(c => c + 1);
+
+          this.showCustomNotification(msg);
+          this.cdr.markForCheck();
+        });
     }
   }
 

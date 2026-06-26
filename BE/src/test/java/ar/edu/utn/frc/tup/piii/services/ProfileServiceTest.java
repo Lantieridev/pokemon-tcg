@@ -45,6 +45,7 @@ public class ProfileServiceTest {
     private ProfanityFilterService profanityFilterService;
     private ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository userCardStatRepository;
     private ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository userEnergyStatRepository;
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository userShowcaseInventoryRepository;
     private ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper cardMapper;
     private ProfileService profileService;
 
@@ -59,6 +60,7 @@ public class ProfileServiceTest {
         profanityFilterService = mock(ProfanityFilterService.class);
         userCardStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository.class);
         userEnergyStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository.class);
+        userShowcaseInventoryRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository.class);
         cardMapper = mock(ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper.class);
 
         profileService = new ProfileServiceImpl(
@@ -71,6 +73,7 @@ public class ProfileServiceTest {
                 profanityFilterService,
                 userCardStatRepository,
                 userEnergyStatRepository,
+                userShowcaseInventoryRepository,
                 cardMapper
         );
     }
@@ -106,7 +109,7 @@ public class ProfileServiceTest {
         assertEquals(1, profile.getLevel());
         assertEquals(20, profile.getXp());
         assertEquals(100, profile.getXpToNextLevel());
-        assertEquals(3, profile.getHonors().get(HonorType.GOOD_SPORTSMAN));
+        assertEquals(3, profile.getHonors().get(HonorType.GOOD_SPORTSMAN.name()));
     }
 
     @Test
@@ -405,8 +408,7 @@ public class ProfileServiceTest {
 
         final UserProfileResponseDTO response = profileService.getProfile("lucas");
 
-        assertNotNull(response);
-        final Set<String> titles = response.getUnlockedTitles();
+        final List<String> titles = response.getUnlockedTitles();
         assertNotNull(titles);
 
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Novato"));

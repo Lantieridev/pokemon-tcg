@@ -338,3 +338,17 @@
 .confirm-actions button.danger:hover {
   background: rgba(239, 68, 68, 0.2);
 }
+
+.unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff4757;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 10px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}

@@ -63,6 +63,13 @@ export interface UserProfileResponseDTO {
     cardId: string;
     cardName: string;
   }[];
+  packCollection: {
+    cardId: string;
+    cardName: string;
+    isFoil?: boolean;
+    foil?: boolean;
+    rarity: string;
+  }[];
   showcasedDeck: {
     id: number;
     name: string;
