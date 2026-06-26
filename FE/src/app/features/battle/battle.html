@@ -435,6 +435,12 @@
                 <span>Habilidad: {{ ab.name }}</span>
                 <span class="key">HAB</span>
               </div>
+            } @else {
+              <div class="item opacity-75 cursor-not-allowed">
+                <app-icon name="star" svgClass="w-4 h-4" style="color:#a0a0a0"></app-icon>
+                <span>Habilidad (Pasiva): {{ ab.name }}</span>
+                <span class="key">PASIVA</span>
+              </div>
             }
           }
         }
