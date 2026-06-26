@@ -937,6 +937,11 @@ public final class RuleValidator {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE) {
+                if (action.cardIds().size() > req.maxSelections()) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.

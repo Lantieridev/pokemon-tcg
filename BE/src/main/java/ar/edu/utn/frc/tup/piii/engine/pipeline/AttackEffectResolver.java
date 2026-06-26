@@ -122,6 +122,7 @@ public final class AttackEffectResolver {
         m.put("place_opponent_basic_from_discard",    AttackEffectType.PLACE_OPPONENT_BASIC_FROM_DISCARD);
         m.put("discard_trainer_from_opponent_hand",  AttackEffectType.DISCARD_TRAINER_FROM_OPPONENT_HAND);
         m.put("shuffle_pokemon_from_discard",        AttackEffectType.SHUFFLE_POKEMON_FROM_DISCARD);
+        m.put("search_deck_energy",                  AttackEffectType.SEARCH_DECK_ENERGY);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -261,6 +262,23 @@ public final class AttackEffectResolver {
                             if (ctx.getMatchSession().getTurnManager() != null) {
                                 ctx.getMatchSession().getTurnManager().interruptMainPhase();
                             }
+                        }
+                    }
+                });
+        m.put(AttackEffectType.SEARCH_DECK_ENERGY,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE,
+                                        null,
+                                        amount,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
                         }
                     }
                 });
