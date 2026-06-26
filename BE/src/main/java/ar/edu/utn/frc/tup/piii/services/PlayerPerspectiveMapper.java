@@ -81,7 +81,8 @@ public final class PlayerPerspectiveMapper {
                             ? session.getPlayerRuntime(1 - viewerIndex)
                             : runtime;
                     final int limitAmount = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL) ? 1
-                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE) ? 3 : 7;
+                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE) ? 3
+                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BURIED_TREASURE_HUNT) ? 4 : 7;
                     var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(limitAmount);
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {

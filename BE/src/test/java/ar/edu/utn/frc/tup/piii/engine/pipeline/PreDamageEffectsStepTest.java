@@ -463,5 +463,19 @@ class PreDamageEffectsStepTest {
         assertFalse(ctx.getAttackerModifiers().isEmpty());
         org.junit.jupiter.api.Assertions.assertEquals(60, ctx.getAttackerModifiers().get(0).apply(30));
     }
+
+    @Test
+    void testProcess_damageAllOpponents_setsBaseDamage() {
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Petal Blizzard", 0, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_all_opponents:20")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(20, ctx.getAttackerModifiers().get(0).apply(0));
+    }
 }
 

@@ -806,6 +806,25 @@ public final class GameFacade {
             ctx.setRockRushResolved(true);
             ctx.setRockRushDiscardCount(selectedIds.size());
             attackPipeline.execute(ctx);
+        } else if (effectId == TrainerEffectId.BRILLIANT_SEARCH) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        runtime.getHand().addCard(found.get(0));
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.BURIED_TREASURE_HUNT) {
+            final List<Card> topCards = runtime.getDeck().drawMultiple(Math.min(4, runtime.getDeck().size()));
+            for (Card card : topCards) {
+                if (selectedIds.contains(card.getCardId())) {
+                    runtime.getHand().addCard(card);
+                } else {
+                    runtime.getDiscardPile().add(card);
+                }
+            }
         }
         
         session.setPendingSelectionRequest(null);

@@ -1014,4 +1014,80 @@ class AttackEffectResolverTest {
         ));
         org.mockito.Mockito.verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void shouldDamageAllOpponentBenchPokemonForDamageAllOpponents() {
+        final FakeBattlePokemonState benchPokemon1 = new FakeBattlePokemonState(50, PokemonType.COLORLESS, null, null, false);
+        final FakeBattlePokemonState benchPokemon2 = new FakeBattlePokemonState(60, PokemonType.COLORLESS, null, null, false);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("damage_all_opponents:20")
+                .defenderBench(List.of(benchPokemon1, benchPokemon2))
+                .build();
+                
+        resolver.apply(ctx);
+        
+        assertEquals(2, benchPokemon1.getDamageCounters());
+        assertEquals(2, benchPokemon2.getDamageCounters());
+    }
+
+    @Test
+    void shouldTriggerBrilliantSearchDeckSelectionRequest() {
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(deck.size()).thenReturn(10);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("search_deck_any:3")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BRILLIANT_SEARCH
+                && req.maxSelections() == 3
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+        ));
+        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+    }
+
+    @Test
+    void shouldTriggerBuriedTreasureHuntSelectionRequest() {
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(deck.size()).thenReturn(10);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+        
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("look_top_4_take_2_discard_rest")
+                .attackerRuntime(attackerRuntime)
+                .matchSession(session)
+                .build();
+                
+        resolver.apply(ctx);
+        
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BURIED_TREASURE_HUNT
+                && req.maxSelections() == 2
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK
+        ));
+        org.mockito.Mockito.verify(turnManager).interruptMainPhase();
+    }
 }

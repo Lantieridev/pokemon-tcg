@@ -330,7 +330,9 @@ public class MatchService {
                         && (session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FLASH_CLAW
-                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.ROCK_RUSH);
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.ROCK_RUSH
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BRILLIANT_SEARCH
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BURIED_TREASURE_HUNT);
 
                 facade.apply(session, action, turnManager);
 
