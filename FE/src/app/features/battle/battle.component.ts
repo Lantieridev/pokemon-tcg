@@ -170,6 +170,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly attackCoinFlips = signal<boolean[]>([]);
   readonly currentAttackFlipIndex = signal<number>(-1);
   readonly currentAttackFlipResult = signal<'heads' | 'tails' | null>(null);
+  readonly coinFlipSubText = signal<string>('');
+  readonly isSmokescreenFlip = signal<boolean>(false);
 
   // ── Computed helpers ──────────────────────────────────────────────────────
   readonly myEmptyBench = computed(() =>
@@ -1003,12 +1005,47 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    const isSmokescreen = this.store.hadPrecisionBaja() && index === 0;
+    this.isSmokescreenFlip.set(isSmokescreen);
     this.currentAttackFlipIndex.set(index);
     this.currentAttackFlipResult.set(null);
 
+    if (isSmokescreen) {
+      this.coinFlipSubText.set('Chequeo de Humo (Precisión Baja): Cruz falla el ataque');
+    } else {
+      this.coinFlipSubText.set(
+        this.store.hadPrecisionBaja()
+          ? `Lanzando moneda para el ataque/entrenador (Moneda #${index})...`
+          : `Lanzando moneda para el ataque/entrenador (Moneda #${index + 1})...`
+      );
+    }
+
     setTimeout(() => {
-      this.currentAttackFlipResult.set(flips[index] ? 'heads' : 'tails');
+      const result = flips[index] ? 'heads' : 'tails';
+      this.currentAttackFlipResult.set(result);
+      
+      if (isSmokescreen) {
+        if (result === 'heads') {
+          this.coinFlipSubText.set('¡Cara! Evitaste el humo. El ataque procede...');
+        } else {
+          this.coinFlipSubText.set('¡Cruz! El ataque ha fallado por el humo.');
+        }
+      } else {
+        const flipNum = this.store.hadPrecisionBaja() ? index : index + 1;
+        this.coinFlipSubText.set(
+          flips[index] 
+            ? `¡Cara! (Moneda #${flipNum} exitosa)` 
+            : `¡Cruz! (Moneda #${flipNum} fallida)`
+        );
+      }
+
       setTimeout(() => {
+        if (isSmokescreen && result === 'tails') {
+          this.isAttackCoinFlipping.set(false);
+          this.currentAttackFlipIndex.set(-1);
+          this.currentAttackFlipResult.set(null);
+          return;
+        }
         this.animateFlip(index + 1);
       }, 2000);
     }, 50);
