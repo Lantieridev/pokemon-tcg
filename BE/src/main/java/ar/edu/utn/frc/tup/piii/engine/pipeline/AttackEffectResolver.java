@@ -112,6 +112,9 @@ public final class AttackEffectResolver {
         m.put("damage_per_opponent_all_energy",      AttackEffectType.DAMAGE_PER_OPPONENT_ALL_ENERGY);
         m.put("bench_damage_one",                    AttackEffectType.BENCH_DAMAGE_ONE);
         m.put("force_switch_opponent",                AttackEffectType.FORCE_SWITCH_OPPONENT);
+        m.put("draw_cards",                          AttackEffectType.DRAW_CARDS);
+        m.put("damage_times_self_counters",          AttackEffectType.DAMAGE_TIMES_SELF_COUNTERS);
+        m.put("damage_per_retreat_cost",              AttackEffectType.DAMAGE_PER_RETREAT_COST);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -126,6 +129,17 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.NONE,
                 (amount, ctx) -> { });
         m.put(AttackEffectType.DAMAGE_PER_OPPONENT_ALL_ENERGY,
+                (amount, ctx) -> { });
+        m.put(AttackEffectType.DRAW_CARDS,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null) {
+                        attacker.getHand().addCards(attacker.getDeck().drawMultiple(amount));
+                    }
+                });
+        m.put(AttackEffectType.DAMAGE_TIMES_SELF_COUNTERS,
+                (amount, ctx) -> { });
+        m.put(AttackEffectType.DAMAGE_PER_RETREAT_COST,
                 (amount, ctx) -> { });
         m.put(AttackEffectType.SMOKESCREEN,
                 (amount, ctx) -> ctx.getDefenderStatusManager().apply(StatusEffectType.PRECISION_BAJA));
