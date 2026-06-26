@@ -35,5 +35,7 @@ public record BattlePokemonDTO(
         boolean hasToolAttached,
         String attachedToolCardId,
         List<AttackDTO> attacks,
-        List<String> statusConditions) {
+        List<String> statusConditions,
+        List<String> attachedEnergyCardIds) {
 }
+

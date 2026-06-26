@@ -25,6 +25,7 @@ import { MatchStore, DamageEvent } from '../../core/store/match.store';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
+import { ProfileService, UserAchievementProgressDTO } from '../../core/services/profile.service';
 import { ActionRequestDTO, SpecialCondition, PokemonTcgCard, PokemonType } from '../../core/models/game-state.models';
 import { CARDS } from '../../shared/data/cards.mock';
 import { LOCAL_CARDS_DB } from '../../shared/data/cards-local-db';
@@ -120,6 +121,10 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   private authService = inject(AuthService);
   readonly tcgService = inject(PokemonTcgService);
   private toastService = inject(ToastService);
+  private profileService = inject(ProfileService);
+
+  readonly achievements = signal<UserAchievementProgressDTO[]>([]);
+  readonly showFilledProgress = signal<boolean>(false);
 
   // ── Alias del store para el template ──────────────────────────────────────
   readonly me = this.store.me;
@@ -451,6 +456,31 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         onCleanup(() => clearTimeout(timer));
       }
     });
+
+    // Fetch achievements on match end
+    effect((onCleanup) => {
+      if (this.isFinished()) {
+        const username = this.authService.username;
+        if (username && username !== 'Invitado') {
+          // Reset progress bar filling state
+          this.showFilledProgress.set(false);
+          const sub = this.profileService.getAchievements(username).subscribe({
+            next: (data) => {
+              const filtered = data.filter(a => a.category !== 'DEFECTO' && !a.unlocked && a.progress < a.target);
+              this.achievements.set(filtered);
+              
+              // Brief delay before starting the progress bar animation
+              const animTimer = setTimeout(() => {
+                this.showFilledProgress.set(true);
+              }, 400);
+              onCleanup(() => clearTimeout(animTimer));
+            },
+            error: (err) => console.error('Error fetching achievements on match end', err)
+          });
+          onCleanup(() => sub.unsubscribe());
+        }
+      }
+    });
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -492,9 +522,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.connectWebSocket();
       },
       error: (err) => {
-        console.warn('[Battle] Error REST inicial, conectando WS de todas formas:', err);
-        // Intentar WebSocket aunque falle el REST (puede que el estado llegue por WS)
-        this.connectWebSocket();
+        console.warn('[Battle] Error REST inicial, redirigiendo a lobby:', err);
+        this.router.navigate(['/lobby']);
       },
     });
 
@@ -508,7 +537,15 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
           text: msg.message,
           t: new Date(msg.timestamp).toTimeString().slice(0, 5)
         }));
-        this.chat.set(mapped as ChatEntry[]);
+        const filteredChat = mapped.filter(entry => entry.from !== 'system');
+        this.chat.set(filteredChat as ChatEntry[]);
+
+        // Clear and reload system event logs in chronological order
+        this.log.set([]);
+        const systemMessages = history.filter(msg => msg.sender === 'SISTEMA' || msg.sender === 'SYSTEM');
+        systemMessages.forEach(msg => {
+          this.addSystemLog(msg.message);
+        });
 
         // Show Toast alerts for system messages (Mulligans)
         mapped.forEach(msg => {
@@ -552,9 +589,11 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
           text: msg.message,
           t: new Date().toTimeString().slice(0, 5)
         };
-        this.chat.update(c => [...c, mapped]);
         if (mapped.from === 'system') {
           this.toastService.info(mapped.text);
+          this.addSystemLog(mapped.text);
+        } else {
+          this.chat.update(c => [...c, mapped]);
         }
       });
       const stateSub = this.wsService.gameState$.subscribe(state => {
@@ -1042,6 +1081,76 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.wsService.sendChatMessage(this.matchId, text);
   }
 
+  getCategoryColor(category: string): string {
+    switch (category) {
+      case 'NIVEL': return '#ffce32';
+      case 'VICTORIAS': return '#4aa3ff';
+      case 'PARTIDAS_JUGADAS': return '#a855f7';
+      case 'COLECCION': return '#5ad27a';
+      case 'HONORES': return '#ff3b47';
+      case 'RESILIENCIA': return '#ec4899';
+      case 'COMPETITIVO': return '#f43f5e';
+      case 'VERSATILIDAD': return '#f59e0b';
+      case 'TITULOS': return '#10b981';
+      case 'ECONOMIA': return '#14b8a6';
+      case 'COMBATE': return '#ef4444';
+      default: return '#a1a1aa';
+    }
+  }
+
+  addSystemLog(text: string): void {
+    const txt = text.trim();
+    if (!txt) return;
+
+    let kind = 'system';
+    let who = 'Sistema';
+    let mine = false;
+
+    const lower = txt.toLowerCase();
+    const myName = this.authService.username || 'me';
+    const oppName = this.opp()?.name || 'opp';
+
+    if (lower.includes(myName.toLowerCase())) {
+      who = myName;
+      mine = true;
+    } else if (lower.includes(oppName.toLowerCase())) {
+      who = oppName;
+      mine = false;
+    }
+
+    if (lower.includes('mulligan') || lower.includes('mano vacía') || lower.includes('robar')) {
+      kind = 'mulligan';
+    } else if (lower.includes('moneda') || lower.includes('lanzamiento') || lower.includes('cara') || lower.includes('seca') || lower.includes('flip')) {
+      kind = 'flip';
+    } else if (lower.includes('entrenador') || lower.includes('carta de partidario') || lower.includes('objeto') || lower.includes('estadio') || lower.includes('juega')) {
+      kind = 'trainer';
+    } else if (lower.includes('ataque') || lower.includes('daño') || lower.includes('dañó') || lower.includes('ataca')) {
+      kind = 'attack';
+    } else if (lower.includes('energía') || lower.includes('une')) {
+      kind = 'energy';
+    } else if (lower.includes('fuera de combate') || lower.includes('ko') || lower.includes('derrotado')) {
+      kind = 'ko';
+    } else if (lower.includes('banca')) {
+      kind = 'bench';
+    } else if (lower.includes('descarte') || lower.includes('descarta')) {
+      kind = 'discard';
+    }
+
+    const turnState = this.turn();
+    const turnNumber = turnState?.number ?? 1;
+
+    const logEntry: LogEntry = {
+      t: turnNumber,
+      who,
+      kind,
+      txt,
+      mine
+    };
+
+    // Prepend so latest events are at the top
+    this.log.update(logs => [logEntry, ...logs]);
+  }
+
   onLeave(): void {
     this.matchBackend.surrenderMatch(this.matchId).subscribe({
       next: () => {
@@ -1064,6 +1173,9 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       ko: { color: '#fff', label: 'KO!' },
       draw: { color: '#7aa3ff', label: 'DRW' },
       bench: { color: '#c87bff', label: 'BNC' },
+      trainer: { color: '#ff7bf4', label: 'TRN' },
+      flip: { color: '#7be3ff', label: 'FLP' },
+      mulligan: { color: '#ffb87b', label: 'MUL' },
     };
     return map[kind] ?? map['attack'];
   }

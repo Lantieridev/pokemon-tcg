@@ -171,6 +171,9 @@ public final class PlayerPerspectiveMapper {
         final String toolCardId = pokemon.getAttachedTool()
                 .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
                 .orElse(null);
+        final List<String> energyCardIds = pokemon.getAttachedEnergyCards().stream()
+                .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
+                .toList();
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -185,6 +188,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.hasToolAttached(),
                 toolCardId,
                 attackDtos,
-                statusConditions);
+                statusConditions,
+                energyCardIds);
     }
 }

@@ -124,6 +124,13 @@ public final class MatchCreationService {
         final SetupManager setupManager = new SetupManager(coinFlipper);
         final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
         final int firstPlayerIndex = setupResult.firstPlayerIndex();
+        // Broadcast initial coin flip who goes first
+        final String firstPlayerName = firstPlayerIndex == 0 ? playerAId : playerBId;
+        chatService.addMessage(matchId, ChatMessageResponse.builder()
+                .sender("SISTEMA")
+                .message("Lanzamiento de moneda: " + firstPlayerName + " ganó el coin flip y empieza la partida.")
+                .timestamp(LocalDateTime.now())
+                .build());
 
         // Broadcast mulligans to chat history so they appear on screen as alerts
         final int mullP0 = setupResult.mulligansP0().size();
