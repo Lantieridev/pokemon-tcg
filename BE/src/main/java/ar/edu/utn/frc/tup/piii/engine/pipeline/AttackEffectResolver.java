@@ -811,7 +811,7 @@ public final class AttackEffectResolver {
                                         ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAIN_PELLETS,
                                         null,
                                         1,
-                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD
                                     )
                             );
                             if (ctx.getMatchSession().getTurnManager() != null) {
