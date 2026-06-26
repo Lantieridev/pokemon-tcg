@@ -261,5 +261,28 @@ class BloqueDTest {
         ));
         verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void testCursedDropSelectionSource() {
+        final MatchSession mockSession = mock(MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        final Attack attack = new Attack("Cursed Drop", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("place_counters_distributed:4")
+                .matchSession(mockSession)
+                .build();
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.CURSED_DROP &&
+            req.maxSelections() == 4 &&
+            req.source() == SelectionSource.OPPONENT_FIELD
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
 }
 

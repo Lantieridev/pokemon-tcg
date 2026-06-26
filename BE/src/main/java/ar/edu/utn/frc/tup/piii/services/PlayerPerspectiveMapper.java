@@ -97,6 +97,21 @@ public final class PlayerPerspectiveMapper {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && (ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIGHTING || ec.isProvidesAllTypes()));
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD) {
+                    final java.util.List<String> list = new java.util.ArrayList<>();
+                    final ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState active = session.getBoard().getActivePokemon(opponentIndex);
+                    if (active != null) {
+                        list.add(active.getCardId());
+                    }
+                    final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(opponentIndex);
+                    if (benched != null) {
+                        for (var p : benched) {
+                            if (p != null) {
+                                list.add(p.getCardId());
+                            }
+                        }
+                    }
+                    options = list;
                 }
             }
             requestDto = new PendingSelectionRequestDTO(req.sourceEffect(), req.target() != null ? req.target().getCardId() : null, req.maxSelections(), req.source(), options);
