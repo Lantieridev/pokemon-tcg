@@ -296,6 +296,15 @@ class CardMapperTest {
         assertEquals("sleep", card.getAttacks().get(0).effectText());
     }
 
+    @Test
+    void shouldMapChipOffToDiscardOpponentHandToLimit() {
+        final CardEntity entity = pokemonEntity("xy2-61", "Durant", "Basic", 70,
+                "[{\"name\":\"Chip Off\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,\"damage\":\"\",\"text\":\"Discard cards from your opponent's hand at random until he or she has 4 cards in his or her hand.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_opponent_hand_to_limit:4", card.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,
