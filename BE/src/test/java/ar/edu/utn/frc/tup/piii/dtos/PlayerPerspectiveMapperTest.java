@@ -305,7 +305,7 @@ class PlayerPerspectiveMapperTest {
     }
 
     @Test
-    void shouldFilterPendingSelectionOptionsFromDiscardPileForRescueAndSacredAsh() {
+    void shouldFilterPendingSelectionOptionsFromDiscardPileForSacredAsh() {
         PokemonCard pikachu = new PokemonCard.Builder("xy1-1", "Pikachu", 60, PokemonType.LIGHTNING)
                 .evolutionStage(EvolutionStage.BASIC)
                 .build();
@@ -328,16 +328,9 @@ class PlayerPerspectiveMapperTest {
         customSession.setActivePlayerIndex(0);
 
         customSession.setPendingSelectionRequest(new PendingSelectionRequest(
-                TrainerEffectId.RESCUE, null, 3, SelectionSource.DISCARD_PILE));
-
-        GameStateResponseDTO response = mapper.toResponse(customSession, 0);
-        assertThat(response.pendingSelectionRequest()).isNotNull();
-        assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-1");
-
-        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
                 TrainerEffectId.SACRED_ASH, null, 5, SelectionSource.DISCARD_PILE));
 
-        response = mapper.toResponse(customSession, 0);
+        GameStateResponseDTO response = mapper.toResponse(customSession, 0);
         assertThat(response.pendingSelectionRequest()).isNotNull();
         assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-1");
     }

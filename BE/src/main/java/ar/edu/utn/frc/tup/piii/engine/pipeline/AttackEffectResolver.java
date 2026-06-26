@@ -247,21 +247,20 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime attacker = ctx.getAttackerRuntime();
                     if (attacker != null) {
-                        long pokemonCount = attacker.getDiscardPile().getCards().stream()
-                                .filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard).count();
-                        int toSelect = Math.min(amount, (int) pokemonCount);
+                        java.util.List<ar.edu.utn.frc.tup.piii.engine.model.PokemonCard> pokemonInDiscard = attacker.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard)
+                                .map(c -> (ar.edu.utn.frc.tup.piii.engine.model.PokemonCard) c)
+                                .collect(java.util.stream.Collectors.toList());
+                        int toSelect = Math.min(amount, pokemonInDiscard.size());
                         if (toSelect > 0) {
-                            ctx.getMatchSession().setPendingSelectionRequest(
-                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE,
-                                            null,
-                                            toSelect,
-                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE
-                                    )
-                            );
-                            if (ctx.getMatchSession().getTurnManager() != null) {
-                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            java.util.List<ar.edu.utn.frc.tup.piii.engine.model.Card> toReturn = new java.util.ArrayList<>();
+                            for (int i = 0; i < toSelect; i++) {
+                                ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc = pokemonInDiscard.get(i);
+                                attacker.getDiscardPile().remove(pc);
+                                toReturn.add(pc);
                             }
+                            attacker.getDeck().addCards(toReturn);
+                            attacker.getDeck().shuffle();
                         }
                     }
                 });

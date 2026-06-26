@@ -726,7 +726,11 @@
       </div>
       <div class="mt-12 text-center">
         <h2 class="text-3xl font-display font-bold tracking-[0.2em] text-[#ffcb05] uppercase drop-shadow-[0_2px_10px_rgba(255,203,5,0.3)] animate-fade-in">Lanzamiento de Moneda</h2>
-        <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de ataque / entrenador...</p>
+        @if (store.phase() === 'BETWEEN_TURNS') {
+          <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de estado entre turnos...</p>
+        } @else {
+          <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de ataque / entrenador...</p>
+        }
         
         <!-- Sequential display -->
         <div class="mt-8 flex items-center justify-center gap-3">
