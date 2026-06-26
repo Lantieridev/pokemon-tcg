@@ -135,4 +135,43 @@ class BloqueDTest {
         assertEquals(0, discard.getCards().size());
         assertEquals("basic-1", bench.getAll().get(0).getBaseCard().getCardId());
     }
+
+    @Test
+    void shouldShufflePokemonFromDiscardAutomatically() {
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final DiscardPile discard = new DiscardPile();
+        final Deck deck = mock(Deck.class);
+
+        PokemonCard p1 = mock(PokemonCard.class);
+        when(p1.getCardId()).thenReturn("p1");
+        EnergyCard e1 = mock(EnergyCard.class);
+        when(e1.getCardId()).thenReturn("e1");
+        PokemonCard p2 = mock(PokemonCard.class);
+        when(p2.getCardId()).thenReturn("p2");
+
+        discard.add(p1);
+        discard.add(e1);
+        discard.add(p2);
+
+        when(attackerRuntime.getDiscardPile()).thenReturn(discard);
+        when(attackerRuntime.getDeck()).thenReturn(deck);
+
+        final Attack attack = new Attack("Rescue", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .attackerRuntime(attackerRuntime)
+                .effectText("shuffle_pokemon_from_discard:3")
+                .build();
+
+        pipeline.execute(ctx);
+
+        // Discard should have only e1 remaining, since both Pokemon cards (p1, p2) should have been moved.
+        assertEquals(1, discard.getCards().size());
+        assertTrue(discard.getCards().contains(e1));
+
+        // The mock deck should have received the two pokemon cards and shuffled
+        verify(deck).addCards(argThat(list -> list.contains(p1) && list.contains(p2) && list.size() == 2));
+        verify(deck).shuffle();
+    }
 }
+
