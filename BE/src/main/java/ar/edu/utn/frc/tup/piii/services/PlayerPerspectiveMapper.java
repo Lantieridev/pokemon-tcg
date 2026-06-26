@@ -41,7 +41,8 @@ public final class PlayerPerspectiveMapper {
         if (session.getPendingSelectionRequest() != null) {
             final var req = session.getPendingSelectionRequest();
             java.util.List<String> options = java.util.Collections.emptyList();
-            final boolean isOpponentChoosing = req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW;
+            final boolean isOpponentChoosing = req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN;
             final boolean isViewerChoosing = (isOpponentChoosing && session.getActivePlayerIndex() != viewerIndex)
                     || (!isOpponentChoosing && session.getActivePlayerIndex() == viewerIndex);
             if (isViewerChoosing) {
@@ -108,6 +109,17 @@ public final class PlayerPerspectiveMapper {
                         list.add(active.getCardId());
                     }
                     final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(opponentIndex);
+                    if (benched != null) {
+                        for (var p : benched) {
+                            if (p != null) {
+                                list.add(p.getCardId());
+                            }
+                        }
+                    }
+                    options = list;
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH) {
+                    final java.util.List<String> list = new java.util.ArrayList<>();
+                    final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(viewerIndex);
                     if (benched != null) {
                         for (var p : benched) {
                             if (p != null) {

@@ -1011,6 +1011,27 @@ public final class GameFacade {
                     throw new IllegalArgumentException("Can only place basic Pokemon cards from opponent's discard pile");
                 }
             }
+        } else if (effectId == TrainerEffectId.PUSH_DOWN) {
+            final PlayerRuntime opponentRuntime = session.getPlayerRuntime(1 - session.getTurnManager().activePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                int index = -1;
+                final java.util.List<BattlePokemonState> benched = opponentRuntime.getBench().getAll();
+                for (int i = 0; i < benched.size(); i++) {
+                    if (benched.get(i).getCardId().equals(cardId)) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index != -1) {
+                    final BattlePokemonState oldActive = opponentRuntime.getActivePokemon();
+                    final BattlePokemonState newActive = opponentRuntime.getBench().promote(index);
+                    opponentRuntime.setActivePokemon(newActive);
+                    opponentRuntime.getBench().place(oldActive);
+                    opponentRuntime.getStatusEffectManager().clearAll();
+                    opponentRuntime.recordPokemonEntered(oldActive);
+                }
+            }
         } else if (effectId == TrainerEffectId.PARABOLIC_CHARGE) {
             if (!selectedIds.isEmpty()) {
                 for (String id : selectedIds) {

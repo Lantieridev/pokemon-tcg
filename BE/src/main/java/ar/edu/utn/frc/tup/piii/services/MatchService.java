@@ -151,7 +151,8 @@ public class MatchService {
             } else {
                 boolean isOpponentChoosing = false;
                 if (session.getPendingSelectionRequest() != null
-                        && session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW) {
+                        && (session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
+                        || session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN)) {
                     isOpponentChoosing = true;
                 }
 
@@ -350,6 +351,8 @@ public class MatchService {
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.EAR_INFLUENCE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.RESCUE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FANG_SNIPE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.REVIVAL
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PUSH_DOWN
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PARABOLIC_CHARGE);
 
                 facade.apply(session, action, turnManager);
