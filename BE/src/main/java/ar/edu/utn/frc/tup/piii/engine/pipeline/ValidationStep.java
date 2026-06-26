@@ -29,7 +29,7 @@ public final class ValidationStep implements AttackPipelineStep {
             return;
         }
         final AttackModifierResult result = ctx.getAttackerStatusManager().onAttackAttempt(ctx.getAttacker());
-        if (result instanceof AttackModifierResult.ConfusionFailed) {
+        if (result instanceof AttackModifierResult.ConfusionFailed || result instanceof AttackModifierResult.SmokescreenFailed) {
             ctx.setAttackBlocked(true);
             return;
         }

@@ -746,4 +746,209 @@ class AttackEffectResolverTest {
         ));
         org.mockito.Mockito.verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void shouldResolveHealSelfAndSleepCorrectly() {
+        assertEquals(AttackEffectType.HEAL_SELF_AND_SLEEP, resolver.resolveType("heal_and_sleep:60"));
+
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final StatusEffectManager statusEffectManager = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(attackerRuntime.getStatusEffectManager()).thenReturn(statusEffectManager);
+
+        attacker.addDamageCounters(8); // 80 damage
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("heal_and_sleep:60")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals(2, attacker.getDamageCounters()); // Healed 60 (6 counters) -> 2 counters left
+        org.mockito.Mockito.verify(statusEffectManager).apply(StatusEffectType.DORMIDO);
+    }
+
+    @Test
+    void shouldResolveDiscardDeckSelfCorrectly() {
+        assertEquals(AttackEffectType.DISCARD_DECK_SELF, resolver.resolveType("discard_deck_self:5"));
+
+        final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.DiscardPile discardPile = mock(ar.edu.utn.frc.tup.piii.engine.model.DiscardPile.class);
+
+        org.mockito.Mockito.when(attackerRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(attackerRuntime.getDiscardPile()).thenReturn(discardPile);
+        final List<ar.edu.utn.frc.tup.piii.engine.model.Card> topCards = List.of(mock(ar.edu.utn.frc.tup.piii.engine.model.Card.class));
+        org.mockito.Mockito.when(deck.drawMultiple(5)).thenReturn(topCards);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("discard_deck_self:5")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        resolver.apply(ctx);
+
+        org.mockito.Mockito.verify(deck).drawMultiple(5);
+        org.mockito.Mockito.verify(discardPile).addAll(topCards);
+    }
+
+    @Test
+    void shouldResolveCoinFlipDiscardEnergyOnTails() {
+        assertEquals(AttackEffectType.COIN_FLIP_DISCARD_ENERGY, resolver.resolveType("coin_flip_discard_energy:1"));
+
+        // Setup attacker with an energy
+        final ar.edu.utn.frc.tup.piii.engine.model.EnergyCard energyCard = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("fake_id", "Fake Energy", PokemonType.FIRE, true);
+        attacker.attachEnergy(energyCard);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> false) // Tails
+                .effectText("coin_flip_discard_energy:1")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertTrue(attacker.getAttachedEnergyCards().isEmpty());
+    }
+
+    @Test
+    void shouldNotResolveCoinFlipDiscardEnergyOnHeads() {
+        // Setup attacker with an energy
+        final ar.edu.utn.frc.tup.piii.engine.model.EnergyCard energyCard = new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("fake_id", "Fake Energy", PokemonType.FIRE, true);
+        attacker.attachEnergy(energyCard);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true) // Heads
+                .effectText("coin_flip_discard_energy:1")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals(1, attacker.getAttachedEnergyCards().size());
+    }
+
+    @Test
+    void shouldResolveCoinFlipsUntilTailsDiscardOpponentEnergyWithHeads() {
+        assertEquals(AttackEffectType.COIN_FLIPS_UNTIL_TAILS_DISCARD_OPPONENT_ENERGY, resolver.resolveType("coin_flips_until_tails_discard_opponent_energy"));
+
+        // Setup defender with 3 energies
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Energy 1", PokemonType.GRASS, true));
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e2", "Energy 2", PokemonType.GRASS, true));
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e3", "Energy 3", PokemonType.GRASS, true));
+
+        // Set coin flipper to flip: true, true, false (2 heads, then tails)
+        final java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(0);
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class),
+                () -> {
+                    int step = count.getAndIncrement();
+                    return step < 2; // heads, heads, tails
+                })
+                .effectText("coin_flips_until_tails_discard_opponent_energy")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals(1, defender.getAttachedEnergyCards().size());
+    }
+
+    @Test
+    void shouldResolveCoinFlipsUntilTailsDiscardOpponentEnergyWithTailsFirst() {
+        // Setup defender with 3 energies
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Energy 1", PokemonType.GRASS, true));
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e2", "Energy 2", PokemonType.GRASS, true));
+        defender.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e3", "Energy 3", PokemonType.GRASS, true));
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class),
+                () -> false) // tails first
+                .effectText("coin_flips_until_tails_discard_opponent_energy")
+                .build();
+
+        resolver.apply(ctx);
+
+        assertEquals(3, defender.getAttachedEnergyCards().size());
+    }
+
+    @Test
+    void shouldResolveSmokescreenType() {
+        assertEquals(AttackEffectType.SMOKESCREEN, resolver.resolveType("smokescreen"));
+
+        final AttackContext ctx = buildCtx("smokescreen");
+        resolver.apply(ctx);
+
+        assertTrue(defenderSM.has(StatusEffectType.PRECISION_BAJA));
+    }
+
+    @Test
+    void shouldResolveCoinFlipSelfDisableOnTails() {
+        assertEquals(AttackEffectType.COIN_FLIP_SELF_DISABLE, resolver.resolveType("coin_flip_self_disable"));
+
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_self_disable", () -> false); // Tails
+        resolver.apply(ctx);
+
+        assertTrue(attackerSM.isSelfDisabledNextTurn());
+        assertTrue(attackerSM.isSelfDisabledNextTurnSetThisTurn());
+    }
+    @Test
+    void shouldNotResolveCoinFlipSelfDisableOnHeads() {
+        final AttackContext ctx = buildCtxWithCoinFlipper("coin_flip_self_disable", () -> true); // Heads
+        resolver.apply(ctx);
+
+        assertFalse(attackerSM.isSelfDisabledNextTurn());
+        assertFalse(attackerSM.isSelfDisabledNextTurnSetThisTurn());
+    }
+
+    @Test
+    void shouldResolvePreventDamage20() {
+        assertEquals(AttackEffectType.PREVENT_DAMAGE_20, resolver.resolveType("prevent_damage_20"));
+
+        final AttackContext ctx = buildCtx("prevent_damage_20");
+        resolver.apply(ctx);
+
+        assertTrue(attackerSM.isDamageReducedBy20NextTurn());
+    }
+
+    @Test
+    void shouldResolveDiscardStadium() {
+        assertEquals(AttackEffectType.DISCARD_STADIUM, resolver.resolveType("discard_stadium"));
+
+        ar.edu.utn.frc.tup.piii.engine.model.TrainerCard stadium = mock(ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.class);
+        ar.edu.utn.frc.tup.piii.engine.session.MatchBoard board = new ar.edu.utn.frc.tup.piii.engine.session.MatchBoard(
+                List.of(mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerState.class), mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerState.class))
+        );
+        board.replaceStadium(stadium);
+        board.setActiveStadiumOwnerIndex(1); // Player 1 owned it
+
+        ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        org.mockito.Mockito.when(session.getBoard()).thenReturn(board);
+
+        PlayerRuntime player1 = mock(PlayerRuntime.class);
+        ar.edu.utn.frc.tup.piii.engine.model.DiscardPile discardPile = new ar.edu.utn.frc.tup.piii.engine.model.DiscardPile();
+        org.mockito.Mockito.when(player1.getDiscardPile()).thenReturn(discardPile);
+        org.mockito.Mockito.when(session.getPlayerRuntime(1)).thenReturn(player1);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("discard_stadium")
+                .matchSession(session)
+                .build();
+
+        resolver.apply(ctx);
+
+        // Board stadium should be removed
+        org.junit.jupiter.api.Assertions.assertNull(board.getActiveStadium());
+        org.junit.jupiter.api.Assertions.assertEquals(-1, board.getActiveStadiumOwnerIndex());
+        // Should be discarded to Player 1's discard pile
+        assertEquals(1, discardPile.getCards().size());
+        org.junit.jupiter.api.Assertions.assertSame(stadium, discardPile.getCards().get(0));
+    }
 }

@@ -403,9 +403,16 @@ public class MatchService {
                     } else {
                         sem.setSelfDisabledAttackName(null);
                     }
+                    if (sem.isSelfDisabledNextTurnSetThisTurn()) {
+                        sem.setSelfDisabledNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setSelfDisabledNextTurn(false);
+                    }
+                    session.getPlayerRuntime(i).setKnockedOutLastTurn(false);
                 } else {
                     sem.setDamagePreventedNextTurn(false);
                     sem.setDamagePreventedIf60OrLessNextTurn(false);
+                    sem.setDamageReducedBy20NextTurn(false);
                 }
             }
         }
