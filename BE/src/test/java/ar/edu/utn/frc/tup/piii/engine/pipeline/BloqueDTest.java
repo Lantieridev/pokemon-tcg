@@ -137,6 +137,46 @@ class BloqueDTest {
     }
 
     @Test
+    void shouldRequestSelectionWhenMultipleOpponentBasicInDiscard() {
+        final PlayerRuntime defenderRuntime = mock(PlayerRuntime.class);
+        final DiscardPile discard = new DiscardPile();
+        final Bench bench = new Bench();
+        final MatchSession mockSession = mock(MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+
+        PokemonCard basic1 = mock(PokemonCard.class);
+        when(basic1.getCardId()).thenReturn("basic-1");
+        when(basic1.getEvolutionStage()).thenReturn(EvolutionStage.BASIC);
+        PokemonCard basic2 = mock(PokemonCard.class);
+        when(basic2.getCardId()).thenReturn("basic-2");
+        when(basic2.getEvolutionStage()).thenReturn(EvolutionStage.BASIC);
+
+        discard.add(basic1);
+        discard.add(basic2);
+
+        when(defenderRuntime.getDiscardPile()).thenReturn(discard);
+        when(defenderRuntime.getBench()).thenReturn(bench);
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        final Attack attack = new Attack("Revival", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .defenderRuntime(defenderRuntime)
+                .effectText("place_opponent_basic_from_discard")
+                .matchSession(mockSession)
+                .build();
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.REVIVAL &&
+            req.maxSelections() == 1 &&
+            req.source() == SelectionSource.DISCARD_PILE
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
+
+    @Test
     void shouldShufflePokemonFromDiscardAutomatically() {
         final PlayerRuntime attackerRuntime = mock(PlayerRuntime.class);
         final DiscardPile discard = new DiscardPile();

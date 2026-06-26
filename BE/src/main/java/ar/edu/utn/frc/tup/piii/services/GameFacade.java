@@ -992,6 +992,25 @@ public final class GameFacade {
                 }
                 runtime.getDeck().shuffle();
             }
+        } else if (effectId == TrainerEffectId.REVIVAL) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            if (!selectedIds.isEmpty() && opponent.getBench().getAll().size() < 5) {
+                Card found = null;
+                for (Card c : opponent.getDiscardPile().getCards()) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        found = c;
+                        break;
+                    }
+                }
+                if (found instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                    opponent.getDiscardPile().remove(pc);
+                    ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(pc);
+                    state.setOwner(opponent);
+                    opponent.getBench().place(state);
+                } else if (found != null) {
+                    throw new IllegalArgumentException("Can only place basic Pokemon cards from opponent's discard pile");
+                }
+            }
         } else if (effectId == TrainerEffectId.PARABOLIC_CHARGE) {
             if (!selectedIds.isEmpty()) {
                 for (String id : selectedIds) {
