@@ -7,5 +7,6 @@ public enum SelectionSource {
     DECK,
     DISCARD_PILE,
     TOP_7_DECK,
-    HAND
+    HAND,
+    OPPONENT_FIELD
 }
