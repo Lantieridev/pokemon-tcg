@@ -8,7 +8,6 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.services.CardResolutionService;
 import ar.edu.utn.frc.tup.piii.services.MatchCreationService;
 import ar.edu.utn.frc.tup.piii.services.MatchSessionRegistry;
-import ar.edu.utn.frc.tup.piii.services.MatchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +41,7 @@ class MatchRestControllerTest {
     private CardResolutionService cardResolutionService;
 
     @Mock
-    private MatchService matchService;
+    private ar.edu.utn.frc.tup.piii.services.MatchService matchService;
 
     private MatchRestController controller;
 

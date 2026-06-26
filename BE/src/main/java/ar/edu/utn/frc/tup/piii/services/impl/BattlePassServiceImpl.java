@@ -70,7 +70,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         UserBattlePassEntity userPass = userBattlePassRepository.findByUserId(user.getId())
-                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).build());
+                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).isNew(true).build());
 
         if (isPremium && !userPass.getIsPremium()) {
             throw new IllegalArgumentException("No tienes el pase de batalla premium");
@@ -123,7 +123,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         UserBattlePassEntity userPass = userBattlePassRepository.findByUserId(user.getId())
-                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).build());
+                .orElse(UserBattlePassEntity.builder().user(user).userId(user.getId()).isNew(true).build());
 
         if (userPass.getIsPremium()) {
             throw new IllegalArgumentException("Ya tienes el pase de batalla premium");
