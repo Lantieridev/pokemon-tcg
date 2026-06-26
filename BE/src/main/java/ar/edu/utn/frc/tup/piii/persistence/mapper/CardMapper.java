@@ -304,7 +304,7 @@ public final class CardMapper {
         if ("peck off".equals(lowerName)) {
             return "discard_opponent_tool";
         }
-        final String lower = text.toLowerCase();
+        final String lower = text.toLowerCase().replace("’", "'").replace("`", "'");
 
         if ("bounce".equals(lowerName)) {
             if (lower.contains("flip a coin")) {
