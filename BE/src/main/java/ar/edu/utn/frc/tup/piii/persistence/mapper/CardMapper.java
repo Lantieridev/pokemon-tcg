@@ -340,6 +340,31 @@ public final class CardMapper {
             return "block_retreat";
         }
 
+        // --- Draw cards ---
+        if (lower.contains("draw a card")) {
+            return "draw_cards:1";
+        }
+        java.util.regex.Matcher mDraw = java.util.regex.Pattern.compile("draw\\s+(\\d+)\\s+cards").matcher(lower);
+        if (mDraw.find()) {
+            return "draw_cards:" + mDraw.group(1);
+        }
+
+        // --- Damage times self counters ---
+        if (lower.contains("times the number of damage counters on this pok")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage\\s+times").matcher(lower);
+            if (m.find()) {
+                return "damage_times_self_counters:" + m.group(1);
+            }
+        }
+
+        // --- Damage per retreat cost ---
+        if (lower.contains("for each") && lower.contains("opponent") && lower.contains("retreat cost")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "damage_per_retreat_cost:" + m.group(1);
+            }
+        }
+
         // --- Damage per ALL energies on opponent (e.g. Meowstic Psychic) ---
         if (lower.contains("more damage for each energy attached to your opponent")) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);

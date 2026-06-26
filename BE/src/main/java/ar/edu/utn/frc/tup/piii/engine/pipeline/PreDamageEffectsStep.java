@@ -114,6 +114,18 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 }
                 final long finalTotal = totalEnergies;
                 ctx.addAttackerModifier(dmg -> dmg + (int)(finalTotal * dmgPerEnergy));
+            } else if (effectText.startsWith("damage_times_self_counters:")) {
+                final int dmgPer = parseAmount(effectText, "damage_times_self_counters:".length());
+                final int c = ctx.getAttacker().getDamageCounters();
+                ctx.addAttackerModifier(dmg -> c * dmgPer);
+            } else if (effectText.startsWith("damage_per_retreat_cost:")) {
+                final int dmgPerColorless = parseAmount(effectText, "damage_per_retreat_cost:".length());
+                int retreatCost = 0;
+                if (ctx.getDefender() != null) {
+                    retreatCost = ctx.getDefender().getRetreatCost();
+                }
+                final int finalRetreat = retreatCost;
+                ctx.addAttackerModifier(dmg -> dmg + (finalRetreat * dmgPerColorless));
             } else if (effectText.startsWith("damage_per_energy_type:")) {
                 String[] parts = effectText.split(":");
                 String energyTypeStr = parts[1];
