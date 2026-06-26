@@ -4,6 +4,7 @@ import {
   BattlePokemonDTO,
   SpecialCondition,
   TurnPhase,
+  AbilityDTO,
 } from '../models/game-state.models';
 
 /** Versión normalizada para la UI del BattleComponent */
@@ -19,6 +20,7 @@ export interface UIPokemon {
   hasToolAttached: boolean;
   attachedToolCardId: string | null;
   attacks: { name: string; baseDamage: number; energyCost: string[] }[];
+  abilities: AbilityDTO[];
   statusConditions: SpecialCondition[];
   // Compatibilidad con FieldPokemonComponent (status único legacy)
   status: string;
@@ -198,6 +200,7 @@ export class MatchStore {
         baseDamage: a.baseDamage,
         energyCost: a.energyCost.map((e) => e.toLowerCase()),
       })),
+      abilities: dto.abilities ?? [],
       statusConditions: conditions,
       // Compatibilidad legacy con FieldPokemonComponent
       status: this.primaryStatus(conditions),

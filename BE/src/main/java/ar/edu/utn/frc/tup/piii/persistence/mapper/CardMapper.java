@@ -516,6 +516,7 @@ public final class CardMapper {
 
         // --- Damage prevention ---
         if (lower.contains("prevent all damage done to this pok")
+                || lower.contains("prevent all effects of attacks, including damage, done to this pok")
                 || lower.contains("prevent that attack's damage done to this pok")) {
             if (lower.contains("60 or less")) {
                 if (lower.contains("flip a coin")) {

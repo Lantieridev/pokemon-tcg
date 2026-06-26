@@ -277,6 +277,17 @@ class CardMapperTest {
         assertEquals("prevent_damage", pokemon.getAttacks().get(1).effectText());
     }
 
+    @Test
+    void shouldMapAgilityEffectsPrevention() {
+        final CardEntity entity = pokemonEntity("xy2-14", "Ponyta", "Basic", 60,
+                "[{\"name\":\"Agility\",\"cost\":[\"Fire\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"10\",\"text\":\"Flip a coin. If heads, prevent all effects of attacks, including damage, done to this Pokémon during your opponent's next turn.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pokemon = assertInstanceOf(PokemonCard.class, mapper.map(entity));
+        assertEquals(1, pokemon.getAttacks().size());
+        assertEquals("coin_flip_prevent_damage", pokemon.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,
