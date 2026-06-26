@@ -207,14 +207,26 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime defender = ctx.getDefenderRuntime();
                     if (defender != null && defender.getBench().getAll().size() < 5) {
-                        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = null;
+                        final List<ar.edu.utn.frc.tup.piii.engine.model.PokemonCard> basics = new java.util.ArrayList<>();
                         for (Card card : defender.getDiscardPile().getCards()) {
                             if (card instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
-                                basic = pc;
-                                break;
+                                basics.add(pc);
                             }
                         }
-                        if (basic != null) {
+                        if (basics.size() > 1) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL,
+                                            null,
+                                            1,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        } else if (basics.size() == 1) {
+                            ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = basics.get(0);
                             defender.getDiscardPile().remove(basic);
                             ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(basic);
                             state.setOwner(defender);

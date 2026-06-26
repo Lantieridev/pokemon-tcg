@@ -64,8 +64,12 @@ public final class PlayerPerspectiveMapper {
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
-                    var stream = runtime.getDiscardPile().getCards().stream();
-                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime targetDiscardRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL)
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    var stream = targetDiscardRuntime.getDiscardPile().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE
+                            || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
                     } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH
                             || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE) {
