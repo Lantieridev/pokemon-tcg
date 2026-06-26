@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
 import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.engine.model.EnergyCard;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import java.util.List;
 
@@ -77,6 +78,22 @@ public final class AttackEffectResolver {
         m.put("clairvoyant_eye",                     AttackEffectType.CLAIRVOYANT_EYE);
         m.put("call_for_family",                     AttackEffectType.CALL_FOR_FAMILY);
         m.put("quiver_dance",                        AttackEffectType.QUIVER_DANCE);
+        m.put("heal_and_sleep",                      AttackEffectType.HEAL_SELF_AND_SLEEP);
+        m.put("discard_deck_self",                   AttackEffectType.DISCARD_DECK_SELF);
+        m.put("coin_flip_discard_energy",            AttackEffectType.COIN_FLIP_DISCARD_ENERGY);
+        m.put("coin_flips_until_tails_discard_opponent_energy", AttackEffectType.COIN_FLIPS_UNTIL_TAILS_DISCARD_OPPONENT_ENERGY);
+        m.put("coin_flips_until_tails_extra",        AttackEffectType.COIN_FLIPS_UNTIL_TAILS_EXTRA);
+        m.put("powerful_friends",                    AttackEffectType.POWERFUL_FRIENDS);
+        m.put("damage_per_energy_type",             AttackEffectType.DAMAGE_PER_ENERGY_TYPE);
+        m.put("damage_if_target_damaged",            AttackEffectType.DAMAGE_IF_TARGET_DAMAGED);
+        m.put("damage_minus_per_counter",            AttackEffectType.DAMAGE_MINUS_PER_COUNTER);
+        m.put("revenge_damage",                      AttackEffectType.REVENGE_DAMAGE);
+        m.put("damage_per_opponent_prize",           AttackEffectType.DAMAGE_PER_OPPONENT_PRIZE);
+        m.put("smokescreen",                         AttackEffectType.SMOKESCREEN);
+        m.put("coin_flip_self_disable",              AttackEffectType.COIN_FLIP_SELF_DISABLE);
+        m.put("prevent_damage_20",                   AttackEffectType.PREVENT_DAMAGE_20);
+        m.put("discard_stadium",                     AttackEffectType.DISCARD_STADIUM);
+        m.put("discard_opponent_tool",               AttackEffectType.DISCARD_OPPONENT_TOOL);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -90,6 +107,15 @@ public final class AttackEffectResolver {
                 new EnumMap<>(AttackEffectType.class);
         m.put(AttackEffectType.NONE,
                 (amount, ctx) -> { });
+        m.put(AttackEffectType.SMOKESCREEN,
+                (amount, ctx) -> ctx.getDefenderStatusManager().apply(StatusEffectType.PRECISION_BAJA));
+        m.put(AttackEffectType.COIN_FLIP_SELF_DISABLE,
+                (amount, ctx) -> {
+                    if (!ctx.getCoinFlipper().flip()) {
+                        ctx.getAttackerStatusManager().setSelfDisabledNextTurn(true);
+                        ctx.getAttackerStatusManager().setSelfDisabledNextTurnSetThisTurn(true);
+                    }
+                });
         m.put(AttackEffectType.COIN_FLIP_EXTRA_DAMAGE,
                 (amount, ctx) -> { }); // handled in PreDamageEffectsStep
         m.put(AttackEffectType.DERANGED_DANCE,
@@ -371,6 +397,75 @@ public final class AttackEffectResolver {
                     }
                     runtime.getDeck().shuffle();
                 });
+        m.put(AttackEffectType.HEAL_SELF_AND_SLEEP,
+                (amount, ctx) -> {
+                    ctx.getAttacker().heal(amount);
+                    if (ctx.getAttackerRuntime() != null) {
+                        ctx.getAttackerRuntime().getStatusEffectManager().apply(StatusEffectType.DORMIDO);
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_DECK_SELF,
+                (amount, ctx) -> {
+                    if (ctx.getAttackerRuntime() != null) {
+                        final List<Card> discarded = ctx.getAttackerRuntime().getDeck().drawMultiple(amount);
+                        ctx.getAttackerRuntime().getDiscardPile().addAll(discarded);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIP_DISCARD_ENERGY,
+                (amount, ctx) -> {
+                    if (!ctx.getCoinFlipper().flip()) { // cruz / tails
+                        ctx.getAttacker().removeEnergies(amount);
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIPS_UNTIL_TAILS_DISCARD_OPPONENT_ENERGY,
+                (amount, ctx) -> {
+                    int heads = 0;
+                    while (ctx.getCoinFlipper().flip()) {
+                        heads++;
+                    }
+                    if (heads > 0) {
+                        final BattlePokemonState defender = ctx.getDefender();
+                        if (defender != null && !defender.getAttachedEnergies().isEmpty()) {
+                            defender.removeEnergies(heads);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.COIN_FLIPS_UNTIL_TAILS_EXTRA,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.POWERFUL_FRIENDS,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DAMAGE_PER_ENERGY_TYPE,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DAMAGE_IF_TARGET_DAMAGED,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DAMAGE_MINUS_PER_COUNTER,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.REVENGE_DAMAGE,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DAMAGE_PER_OPPONENT_PRIZE,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.PREVENT_DAMAGE_20,
+                (amount, ctx) -> {
+                    ctx.getAttackerStatusManager().setDamageReducedBy20NextTurn(true);
+                });
+        m.put(AttackEffectType.DISCARD_STADIUM,
+                (amount, ctx) -> {
+                    final int ownerIdx = ctx.getMatchSession().getBoard().getActiveStadiumOwnerIndex();
+                    final TrainerCard stadium = ctx.getMatchSession().getBoard().removeStadium();
+                    if (stadium != null) {
+                        int finalOwnerIdx = ownerIdx;
+                        if (finalOwnerIdx == -1 && ctx.getMatchSession().getTurnManager() != null) {
+                            finalOwnerIdx = ctx.getMatchSession().getTurnManager().activePlayerIndex();
+                        }
+                        if (finalOwnerIdx != -1) {
+                            ctx.getMatchSession().getPlayerRuntime(finalOwnerIdx).getDiscardPile().add(stadium);
+                        } else if (ctx.getAttackerRuntime() != null) {
+                            ctx.getAttackerRuntime().getDiscardPile().add(stadium);
+                        }
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_TOOL,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
         this.handlers = Collections.unmodifiableMap(m);
     }
 

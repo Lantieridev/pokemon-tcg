@@ -12,6 +12,7 @@ import ar.edu.utn.frc.tup.piii.engine.statuseffect.BurnedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.ConfusedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.ParalyzedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.PoisonedEffect;
+import ar.edu.utn.frc.tup.piii.engine.statuseffect.PrecisionBajaEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.StatusEffect;
 
 import java.util.ArrayList;
@@ -34,7 +35,8 @@ public class StatusEffectManager {
             StatusEffectType.ENVENENADO,
             StatusEffectType.QUEMADO,
             StatusEffectType.DORMIDO,
-            StatusEffectType.PARALIZADO
+            StatusEffectType.PARALIZADO,
+            StatusEffectType.PRECISION_BAJA
     );
 
     private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
@@ -43,8 +45,11 @@ public class StatusEffectManager {
     private String disabledAttackName;
     private boolean damagePreventedNextTurn;
     private boolean damagePreventedIf60OrLessNextTurn;
+    private boolean damageReducedBy20NextTurn;
     private String selfDisabledAttackName;
     private boolean selfDisabledAttackSetThisTurn;
+    private boolean selfDisabledNextTurn;
+    private boolean selfDisabledNextTurnSetThisTurn;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -127,8 +132,11 @@ public class StatusEffectManager {
         this.disabledAttackName = null;
         this.damagePreventedNextTurn = false;
         this.damagePreventedIf60OrLessNextTurn = false;
+        this.damageReducedBy20NextTurn = false;
         this.selfDisabledAttackName = null;
         this.selfDisabledAttackSetThisTurn = false;
+        this.selfDisabledNextTurn = false;
+        this.selfDisabledNextTurnSetThisTurn = false;
     }
 
     /**
@@ -193,6 +201,12 @@ public class StatusEffectManager {
                 return new AttackModifierResult.ConfusionFailed(CONFUSION_SELF_DAMAGE_COUNTERS);
             }
         }
+        if (has(StatusEffectType.PRECISION_BAJA)) {
+            boolean headsResult = coinFlipper.flip();
+            if (!headsResult) {
+                return new AttackModifierResult.SmokescreenFailed();
+            }
+        }
         return new AttackModifierResult.Proceed();
     }
 
@@ -225,6 +239,7 @@ public class StatusEffectManager {
             case CONFUNDIDO -> new ConfusedEffect();
             case PARALIZADO -> new ParalyzedEffect();
             case ENVENENADO -> new PoisonedEffect();
+            case PRECISION_BAJA -> new PrecisionBajaEffect();
         };
     }
 
@@ -252,6 +267,14 @@ public class StatusEffectManager {
         this.damagePreventedIf60OrLessNextTurn = damagePreventedIf60OrLessNextTurn;
     }
 
+    public boolean isDamageReducedBy20NextTurn() {
+        return damageReducedBy20NextTurn;
+    }
+
+    public void setDamageReducedBy20NextTurn(final boolean damageReducedBy20NextTurn) {
+        this.damageReducedBy20NextTurn = damageReducedBy20NextTurn;
+    }
+
     public String getSelfDisabledAttackName() {
         return selfDisabledAttackName;
     }
@@ -266,5 +289,21 @@ public class StatusEffectManager {
 
     public void setSelfDisabledAttackSetThisTurn(final boolean selfDisabledAttackSetThisTurn) {
         this.selfDisabledAttackSetThisTurn = selfDisabledAttackSetThisTurn;
+    }
+
+    public boolean isSelfDisabledNextTurn() {
+        return selfDisabledNextTurn;
+    }
+
+    public void setSelfDisabledNextTurn(final boolean selfDisabledNextTurn) {
+        this.selfDisabledNextTurn = selfDisabledNextTurn;
+    }
+
+    public boolean isSelfDisabledNextTurnSetThisTurn() {
+        return selfDisabledNextTurnSetThisTurn;
+    }
+
+    public void setSelfDisabledNextTurnSetThisTurn(final boolean selfDisabledNextTurnSetThisTurn) {
+        this.selfDisabledNextTurnSetThisTurn = selfDisabledNextTurnSetThisTurn;
     }
 }

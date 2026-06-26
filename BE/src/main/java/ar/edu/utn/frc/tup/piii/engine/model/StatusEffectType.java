@@ -9,5 +9,6 @@ public enum StatusEffectType {
     QUEMADO,
     CONFUNDIDO,
     PARALIZADO,
-    ENVENENADO
+    ENVENENADO,
+    PRECISION_BAJA
 }
