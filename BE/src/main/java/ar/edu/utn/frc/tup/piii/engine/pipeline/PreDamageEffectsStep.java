@@ -105,6 +105,15 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 if (hasStage2OnBench) {
                     ctx.addAttackerModifier(dmg -> dmg + extraDamage);
                 }
+            } else if (effectText.startsWith("damage_per_opponent_all_energy:")) {
+                final int dmgPerEnergy = parseAmount(effectText, "damage_per_opponent_all_energy:".length());
+                long totalEnergies = 0;
+                if (ctx.getDefender() != null) {
+                    totalEnergies = ctx.getDefender().getAttachedEnergyCards().stream()
+                            .mapToLong(ec -> ec.getEnergyCount()).sum();
+                }
+                final long finalTotal = totalEnergies;
+                ctx.addAttackerModifier(dmg -> dmg + (int)(finalTotal * dmgPerEnergy));
             } else if (effectText.startsWith("damage_per_energy_type:")) {
                 String[] parts = effectText.split(":");
                 String energyTypeStr = parts[1];

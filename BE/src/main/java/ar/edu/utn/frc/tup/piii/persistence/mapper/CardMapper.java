@@ -340,6 +340,14 @@ public final class CardMapper {
             return "block_retreat";
         }
 
+        // --- Damage per ALL energies on opponent (e.g. Meowstic Psychic) ---
+        if (lower.contains("more damage for each energy attached to your opponent")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "damage_per_opponent_all_energy:" + m.group(1);
+            }
+        }
+
         // --- Damage per energy type ---
         if (lower.contains("more damage for each") && lower.contains("energy")) {
             java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);

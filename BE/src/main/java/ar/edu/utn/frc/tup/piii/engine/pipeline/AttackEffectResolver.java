@@ -109,6 +109,7 @@ public final class AttackEffectResolver {
         m.put("strong_gust",                         AttackEffectType.STRONG_GUST);
         m.put("ignore_resistance",                   AttackEffectType.IGNORE_RESISTANCE);
         m.put("block_retreat",                       AttackEffectType.BLOCK_RETREAT);
+        m.put("damage_per_opponent_all_energy",      AttackEffectType.DAMAGE_PER_OPPONENT_ALL_ENERGY);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -121,6 +122,8 @@ public final class AttackEffectResolver {
         final Map<AttackEffectType, BiConsumer<Integer, AttackContext>> m =
                 new EnumMap<>(AttackEffectType.class);
         m.put(AttackEffectType.NONE,
+                (amount, ctx) -> { });
+        m.put(AttackEffectType.DAMAGE_PER_OPPONENT_ALL_ENERGY,
                 (amount, ctx) -> { });
         m.put(AttackEffectType.SMOKESCREEN,
                 (amount, ctx) -> ctx.getDefenderStatusManager().apply(StatusEffectType.PRECISION_BAJA));
