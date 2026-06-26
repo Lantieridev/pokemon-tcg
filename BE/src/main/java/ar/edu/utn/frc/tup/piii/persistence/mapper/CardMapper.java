@@ -289,6 +289,9 @@ public final class CardMapper {
         if ("smokescreen".equals(lowerName) || "sand-attack".equals(lowerName)) {
             return "smokescreen";
         }
+        if ("icy wind".equals(lowerName)) {
+            return "sleep";
+        }
         if ("sitdown bounce".equals(lowerName)) {
             return "coin_flip_self_disable";
         }
