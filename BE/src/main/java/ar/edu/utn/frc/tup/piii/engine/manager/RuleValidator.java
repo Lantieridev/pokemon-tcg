@@ -920,6 +920,11 @@ public final class RuleValidator {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BENCH_DAMAGE_ONE) {
+                if (action.cardIds().size() != 1) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.

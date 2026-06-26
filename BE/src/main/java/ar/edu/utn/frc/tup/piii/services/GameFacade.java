@@ -875,6 +875,28 @@ public final class GameFacade {
                     session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
                 }
             }
+        } else if (effectId == TrainerEffectId.BENCH_DAMAGE_ONE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            int damageAmount = 20; // Default fallback
+            if (runtime.getActivePokemon() != null) {
+                for (ar.edu.utn.frc.tup.piii.engine.model.Attack attack : runtime.getActivePokemon().getAttacks()) {
+                    String eff = attack.effectText();
+                    if (eff != null && eff.startsWith("bench_damage_one:")) {
+                        try {
+                            damageAmount = Integer.parseInt(eff.substring("bench_damage_one:".length()));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+            final int counters = damageAmount / 10;
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    benched.addDamageCounters(counters);
+                    if (benched.getDamageCounters() * 10 >= benched.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
+                    }
+                }
+            }
         }
         
         session.setPendingSelectionRequest(null);

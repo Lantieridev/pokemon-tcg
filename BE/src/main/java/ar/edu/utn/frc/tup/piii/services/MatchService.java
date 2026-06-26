@@ -332,7 +332,15 @@ public class MatchService {
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FLASH_CLAW
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.ROCK_RUSH
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BRILLIANT_SEARCH
-                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BURIED_TREASURE_HUNT);
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BURIED_TREASURE_HUNT
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.DUAL_BULLET
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PAIN_PELLETS
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BENCH_DAMAGE_ONE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CURSED_DROP
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.EAR_INFLUENCE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.RESCUE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FANG_SNIPE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PARABOLIC_CHARGE);
 
                 facade.apply(session, action, turnManager);
 

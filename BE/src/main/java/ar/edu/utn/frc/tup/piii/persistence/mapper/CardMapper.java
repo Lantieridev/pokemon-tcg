@@ -487,7 +487,8 @@ public final class CardMapper {
         }
 
         // --- Damage prevention ---
-        if (lower.contains("prevent all damage done to this pok")) {
+        if (lower.contains("prevent all damage done to this pok")
+                || lower.contains("prevent that attack's damage done to this pok")) {
             if (lower.contains("60 or less")) {
                 if (lower.contains("flip a coin")) {
                     return "coin_flip_prevent_damage_60_or_less";
@@ -552,11 +553,27 @@ public final class CardMapper {
         }
 
         // --- Bench damage ---
-        if (lower.contains("each of your opponent's benched pok\u00e9mon") || lower.contains("opponent's benched")) {
+        if (lower.contains("each of your opponent's benched pok")) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
             if (m.find()) {
                 return "bench_damage:" + m.group(1);
             }
+        } else if (lower.contains("1 of your opponent's benched pok")
+                || lower.contains("one of your opponent's benched pok")
+                || (lower.contains("opponent's benched") && (lower.contains("1 of") || lower.contains("one of")))) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "bench_damage_one:" + m.group(1);
+            }
+        } else if (lower.contains("opponent's benched")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "bench_damage:" + m.group(1);
+            }
+        }
+
+        if (lower.contains("your opponent switches") && (lower.contains("benched") || lower.contains("bench"))) {
+            return "force_switch_opponent";
         }
 
         return "";
