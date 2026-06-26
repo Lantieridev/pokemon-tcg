@@ -193,8 +193,17 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final List<String> hand = session.getBoard().getHandOf(playerIndex);
 
-        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(playerIndex) != null) ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
-                .activeEffects().stream().map(Enum::name).toList() : List.of();
+        final List<String> activeConditions;
+        if (activePokemon != null && session.getPlayerRuntime(playerIndex) != null) {
+            final var sem = session.getPlayerRuntime(playerIndex).getStatusEffectManager();
+            final List<String> conds = new java.util.ArrayList<>(sem.activeEffects().stream().map(Enum::name).toList());
+            if (sem.isRetreatBlockedNextTurn()) {
+                conds.add("RETREAT_BLOCKED");
+            }
+            activeConditions = conds;
+        } else {
+            activeConditions = List.of();
+        }
 
         return new GameStateResponseDTO.PlayerView(
                 playerId,
@@ -214,8 +223,17 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final int handSize = session.getBoard().getHandOf(opponentIndex).size();
 
-        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(opponentIndex) != null) ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
-                .activeEffects().stream().map(Enum::name).toList() : List.of();
+        final List<String> activeConditions;
+        if (activePokemon != null && session.getPlayerRuntime(opponentIndex) != null) {
+            final var sem = session.getPlayerRuntime(opponentIndex).getStatusEffectManager();
+            final List<String> conds = new java.util.ArrayList<>(sem.activeEffects().stream().map(Enum::name).toList());
+            if (sem.isRetreatBlockedNextTurn()) {
+                conds.add("RETREAT_BLOCKED");
+            }
+            activeConditions = conds;
+        } else {
+            activeConditions = List.of();
+        }
 
         return new GameStateResponseDTO.OpponentView(
                 playerId,
