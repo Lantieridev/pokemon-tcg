@@ -20,6 +20,10 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                     ctx.addAttackerModifier(dmg -> dmg + extraDamage);
                 }
             }
+            if (effectText.startsWith("damage_all_opponents:")) {
+                final int amount = parseAmount(effectText, "damage_all_opponents:".length());
+                ctx.addAttackerModifier(dmg -> amount);
+            }
             if ("coin_flip_fail".equals(effectText)) {
                 if (!ctx.getCoinFlipper().flip()) {
                     ctx.setAttackBlocked(true);

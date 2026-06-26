@@ -49,7 +49,7 @@ public final class TrainerEffectResolver {
             case RED_CARD, TEAM_FLARE_GRUNT, CASSIUS, EVOSODA, GREAT_BALL, MAX_REVIVE, PROFESSORS_LETTER,
                  LYSANDRE, SACRED_ASH, POKEMON_FAN_CLUB, MAGNETIC_STORM, FIERY_TORCH, TRICK_SHOVEL,
                  STARTLING_MEGAPHONE, PAL_PAD, BLACKSMITH, POKEMON_CENTER_LADY, ULTRA_BALL, CLAIRVOYANT_EYE,
-                 CALL_FOR_FAMILY, QUIVER_DANCE, FLASH_CLAW, ROCK_RUSH -> null;
+                 CALL_FOR_FAMILY, QUIVER_DANCE, FLASH_CLAW, ROCK_RUSH, BRILLIANT_SEARCH, BURIED_TREASURE_HUNT -> null;
             case NONE              -> null;
         };
         return Optional.ofNullable(effect);

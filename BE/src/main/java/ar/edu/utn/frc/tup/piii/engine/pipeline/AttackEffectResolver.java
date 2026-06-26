@@ -97,6 +97,9 @@ public final class AttackEffectResolver {
         m.put("switch_self",                         AttackEffectType.SWITCH_SELF);
         m.put("discard_opponent_hand",               AttackEffectType.DISCARD_OPPONENT_HAND);
         m.put("discard_hand_energy_multiply_damage", AttackEffectType.DISCARD_HAND_ENERGY_MULTIPLY_DAMAGE);
+        m.put("damage_all_opponents",                AttackEffectType.DAMAGE_ALL_OPPONENTS);
+        m.put("search_deck_any",                     AttackEffectType.BRILLIANT_SEARCH);
+        m.put("look_top_4_take_2_discard_rest",      AttackEffectType.BURIED_TREASURE_HUNT);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -500,6 +503,51 @@ public final class AttackEffectResolver {
                 });
         m.put(AttackEffectType.DISCARD_HAND_ENERGY_MULTIPLY_DAMAGE,
                 (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.DAMAGE_ALL_OPPONENTS,
+                (amount, ctx) -> {
+                    final int counters = amount / DAMAGE_PER_COUNTER;
+                    ctx.getDefenderBench().forEach(benched -> benched.addDamageCounters(counters));
+                });
+        m.put(AttackEffectType.BRILLIANT_SEARCH,
+                (amount, ctx) -> {
+                    final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    if (runtime == null) return;
+                    final int deckSize = runtime.getDeck().size();
+                    if (deckSize > 0) {
+                        final int selectAmount = Math.min(amount, deckSize);
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BRILLIANT_SEARCH,
+                                        null,
+                                        selectAmount,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                    }
+                });
+        m.put(AttackEffectType.BURIED_TREASURE_HUNT,
+                (amount, ctx) -> {
+                    final PlayerRuntime runtime = ctx.getAttackerRuntime();
+                    if (runtime == null) return;
+                    final int deckSize = runtime.getDeck().size();
+                    if (deckSize > 0) {
+                        final int selectAmount = Math.min(2, deckSize);
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BURIED_TREASURE_HUNT,
+                                        null,
+                                        selectAmount,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                    }
+                });
         this.handlers = Collections.unmodifiableMap(m);
     }
 

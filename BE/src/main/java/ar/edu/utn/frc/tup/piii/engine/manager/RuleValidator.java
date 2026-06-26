@@ -898,6 +898,13 @@ public final class RuleValidator {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BURIED_TREASURE_HUNT) {
+                final int deckSize = getDeckSize(playerIndex);
+                final int expected = Math.min(2, deckSize);
+                if (action.cardIds().size() != expected) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.

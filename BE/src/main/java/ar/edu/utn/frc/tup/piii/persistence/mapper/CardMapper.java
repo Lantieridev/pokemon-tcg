@@ -240,6 +240,19 @@ public final class CardMapper {
         if ("deranged dance".equals(lowerName)) {
             return "deranged_dance";
         }
+        if ("petal blizzard".equals(lowerName)) {
+            final String lower = text.toLowerCase();
+            if (lower.contains("20")) {
+                return "damage_all_opponents:20";
+            }
+            return "damage_all_opponents:10";
+        }
+        if ("brilliant search".equals(lowerName)) {
+            return "search_deck_any:3";
+        }
+        if ("buried treasure hunt".equals(lowerName)) {
+            return "look_top_4_take_2_discard_rest";
+        }
         if ("stoke".equals(lowerName)) {
             return "stoke";
         }

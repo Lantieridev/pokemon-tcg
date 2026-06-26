@@ -55,5 +55,7 @@ public enum TrainerEffectId {
     QUIVER_DANCE,
     FLASH_CLAW,
     ROCK_RUSH,
+    BRILLIANT_SEARCH,
+    BURIED_TREASURE_HUNT,
     NONE
 }
