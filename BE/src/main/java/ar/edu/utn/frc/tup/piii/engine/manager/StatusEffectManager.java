@@ -40,7 +40,7 @@ public class StatusEffectManager {
     );
 
     private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
-    private final CoinFlipper coinFlipper;
+    private CoinFlipper coinFlipper;
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;
     private boolean damagePreventedNextTurn;
@@ -58,6 +58,7 @@ public class StatusEffectManager {
     private boolean strongGustUsedLastTurn;
     private boolean strongGustUsedLastTurnSetThisTurn;
     private int poisonDamageCounters = 1;
+    private boolean isPrecisionBajaSetThisTurn = false;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -66,6 +67,10 @@ public class StatusEffectManager {
      * @throws NullPointerException if {@code coinFlipper} is null
      */
     public StatusEffectManager(final CoinFlipper coinFlipper) {
+        this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
+    }
+
+    public void setCoinFlipper(final CoinFlipper coinFlipper) {
         this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
     }
 

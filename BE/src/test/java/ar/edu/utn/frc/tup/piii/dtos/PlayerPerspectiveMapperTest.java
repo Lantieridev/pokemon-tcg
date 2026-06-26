@@ -303,4 +303,42 @@ class PlayerPerspectiveMapperTest {
         assertThat(response.pendingSelectionRequest()).isNotNull();
         assertThat(response.pendingSelectionRequest().options()).containsExactlyInAnyOrder("xy1-1", "xy1-2", "xy1-3", "xy1-4", "xy1-5");
     }
+
+    @Test
+    void shouldFilterPendingSelectionOptionsFromDiscardPileForRescueAndSacredAsh() {
+        PokemonCard pikachu = new PokemonCard.Builder("xy1-1", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .build();
+        EnergyCard basicLightning = new EnergyCard("xy1-3", "Lightning Energy", PokemonType.LIGHTNING, true);
+        TrainerCard itemCard = new TrainerCard.Builder("xy1-5", "Potion", TrainerType.ITEM).build();
+
+        DiscardPile discard = new DiscardPile();
+        discard.add(pikachu);
+        discard.add(basicLightning);
+        discard.add(itemCard);
+
+        PlayerRuntime pr = new PlayerRuntime(
+                new Deck(List.of(pikachu)),
+                new Hand(), new Bench(), discard,
+                new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(new ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper()),
+                null, List.of()
+        );
+        MatchSession customSession = new MatchSession(
+                "custom-sel-discard", List.of("playerA", "playerB"), session.getBoard(), List.of(pr, pr));
+        customSession.setActivePlayerIndex(0);
+
+        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
+                TrainerEffectId.RESCUE, null, 3, SelectionSource.DISCARD_PILE));
+
+        GameStateResponseDTO response = mapper.toResponse(customSession, 0);
+        assertThat(response.pendingSelectionRequest()).isNotNull();
+        assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-1");
+
+        customSession.setPendingSelectionRequest(new PendingSelectionRequest(
+                TrainerEffectId.SACRED_ASH, null, 5, SelectionSource.DISCARD_PILE));
+
+        response = mapper.toResponse(customSession, 0);
+        assertThat(response.pendingSelectionRequest()).isNotNull();
+        assertThat(response.pendingSelectionRequest().options()).containsExactly("xy1-1");
+    }
 }
