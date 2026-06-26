@@ -305,6 +305,15 @@ class CardMapperTest {
         assertEquals("discard_opponent_hand_to_limit:4", card.getAttacks().get(0).effectText());
     }
 
+    @Test
+    void shouldMapIronCrashToDamagePerRetreatCost() {
+        final CardEntity entity = pokemonEntity("xy2-60", "Forretress", "Stage 1", 100,
+                "[{\"name\":\"Iron Crash\",\"cost\":[\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":2,\"damage\":\"20+\",\"text\":\"This attack does 20 more damage for each Colorless in your opponent's Active Pokémon's Retreat Cost.\"}]",
+                "[]", "[]", "[\"Colorless\",\"Colorless\",\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("damage_per_retreat_cost:20", card.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,
