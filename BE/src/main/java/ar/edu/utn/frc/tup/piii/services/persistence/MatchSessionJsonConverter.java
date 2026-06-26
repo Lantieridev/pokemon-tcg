@@ -328,6 +328,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             } else {
                 gen.writeNullField("activeStadium");
             }
+            gen.writeNumberField("activeStadiumOwnerIndex", value.getActiveStadiumOwnerIndex());
             try {
                 java.lang.reflect.Field field = MatchBoard.class.getDeclaredField("players");
                 field.setAccessible(true);
@@ -354,6 +355,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             MatchBoard board = new MatchBoard(players);
             if (node.has("activeStadium") && !node.get("activeStadium").isNull()) {
                 board.replaceStadium(p.getCodec().treeToValue(node.get("activeStadium"), TrainerCard.class));
+            }
+            if (node.has("activeStadiumOwnerIndex")) {
+                board.setActiveStadiumOwnerIndex(node.get("activeStadiumOwnerIndex").asInt());
             }
             return board;
         }
@@ -399,6 +403,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
             }
             gen.writeEndObject();
+
+            gen.writeBooleanField("knockedOutLastTurn", value.isKnockedOutLastTurn());
+            gen.writeNumberField("startingPrizeCount", value.getStartingPrizeCount());
 
             gen.writeEndObject();
         }
@@ -448,7 +455,13 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
             }
 
-            return new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
+            boolean knockedOutLastTurn = node.has("knockedOutLastTurn") ? node.get("knockedOutLastTurn").asBoolean() : false;
+            int startingPrizeCount = node.has("startingPrizeCount") ? node.get("startingPrizeCount").asInt() : 6;
+
+            PlayerRuntime playerRuntime = new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
+            playerRuntime.setKnockedOutLastTurn(knockedOutLastTurn);
+            playerRuntime.setStartingPrizeCount(startingPrizeCount);
+            return playerRuntime;
         }
     }
 

@@ -34,6 +34,7 @@ public final class MatchBoard
 
     private final List<PlayerState> players;
     private TrainerCard activeStadium;
+    private int activeStadiumOwnerIndex = -1;
 
     /**
      * Live runtime references; non-null once {@link #bindRuntimes(List)} is called.
@@ -224,6 +225,26 @@ public final class MatchBoard
         final TrainerCard previous = activeStadium;
         activeStadium = newStadium;
         return previous;
+    }
+
+    /**
+     * Removes the active Stadium card completely from play (e.g. via Shatter).
+     *
+     * @return the previously active Stadium, or null if none was in play
+     */
+    public TrainerCard removeStadium() {
+        final TrainerCard previous = activeStadium;
+        activeStadium = null;
+        activeStadiumOwnerIndex = -1;
+        return previous;
+    }
+
+    public int getActiveStadiumOwnerIndex() {
+        return activeStadiumOwnerIndex;
+    }
+
+    public void setActiveStadiumOwnerIndex(final int activeStadiumOwnerIndex) {
+        this.activeStadiumOwnerIndex = activeStadiumOwnerIndex;
     }
 
     @Override

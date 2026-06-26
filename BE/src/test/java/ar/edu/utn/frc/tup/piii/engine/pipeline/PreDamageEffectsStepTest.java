@@ -134,4 +134,262 @@ class PreDamageEffectsStepTest {
         // Over 60 damage should NOT be reduced
         org.junit.jupiter.api.Assertions.assertEquals(70, ctx.getDefenderModifiers().get(0).apply(70));
     }
+
+    @Test
+    void testProcess_coinFlipsUntilTailsExtra_heads_addsExtraDamage() {
+        // Set coin flipper to flip: true, true, false (2 heads, then tails)
+        final java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger(0);
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Wham Bam Punch", 100, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> {
+                    int step = count.getAndIncrement();
+                    return step < 2; // heads, heads, tails
+                })
+                .effectText("coin_flips_until_tails_extra:30")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Initial damage is 100. Modifiers add 2 * 30 = 60. Final damage should be 160.
+        org.junit.jupiter.api.Assertions.assertEquals(160, ctx.getAttackerModifiers().get(0).apply(100));
+    }
+
+    @Test
+    void testProcess_coinFlipsUntilTailsExtra_tailsFirst_noExtraDamage() {
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Wham Bam Punch", 100, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> false) // Tails on first flip
+                .effectText("coin_flips_until_tails_extra:30")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Initial damage is 100. 0 heads. Final damage should be 100.
+        org.junit.jupiter.api.Assertions.assertEquals(100, ctx.getAttackerModifiers().get(0).apply(100));
+    }
+
+    @Test
+    void testProcess_powerfulFriends_withStage2OnBench_addsDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Bench bench = new ar.edu.utn.frc.tup.piii.engine.model.Bench();
+        final FakeBattlePokemonState benchedStage2 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        benchedStage2.setEvolutionStage(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2);
+        bench.place(benchedStage2);
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(bench);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Powerful Friends", 10, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("powerful_friends:70")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 10. Modifiers add 70. Final damage should be 80.
+        org.junit.jupiter.api.Assertions.assertEquals(80, ctx.getAttackerModifiers().get(0).apply(10));
+    }
+
+    @Test
+    void testProcess_powerfulFriends_withoutStage2OnBench_noExtraDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Bench bench = new ar.edu.utn.frc.tup.piii.engine.model.Bench();
+        final FakeBattlePokemonState benchedStage1 = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        benchedStage1.setEvolutionStage(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_1);
+        bench.place(benchedStage1);
+        org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(bench);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Powerful Friends", 10, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("powerful_friends:70")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertTrue(ctx.getAttackerModifiers().isEmpty());
+    }
+
+    @Test
+    void testProcess_damagePerEnergyType_addsExtraDamage() {
+        // Setup attacker with 2 Fairy energy cards
+        attacker.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e1", "Fairy Energy 1", PokemonType.FAIRY, true));
+        attacker.attachEnergy(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard("e2", "Fairy Energy 2", PokemonType.FAIRY, true));
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Wonder Blast", 40, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_per_energy_type:fairy:20")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 40. Modifiers add 2 * 20 = 40. Final damage should be 80.
+        org.junit.jupiter.api.Assertions.assertEquals(80, ctx.getAttackerModifiers().get(0).apply(40));
+    }
+
+    @Test
+    void testProcess_damageIfTargetDamaged_withDamagedDefender_addsDamage() {
+        defender.setDamageCounters(3); // Defender has 30 damage
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Claw Rend", 60, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_if_target_damaged:30")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 60. Modifiers add 30. Final damage should be 90.
+        org.junit.jupiter.api.Assertions.assertEquals(90, ctx.getAttackerModifiers().get(0).apply(60));
+    }
+
+    @Test
+    void testProcess_damageIfTargetDamaged_withUndamagedDefender_noExtraDamage() {
+        defender.setDamageCounters(0); // Defender is healthy
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Claw Rend", 60, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_if_target_damaged:30")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertTrue(ctx.getAttackerModifiers().isEmpty());
+    }
+
+    @Test
+    void testProcess_damageMinusPerCounter_subtractsDamage() {
+        attacker.setDamageCounters(3); // Attacker has 30 damage
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Big Tusk", 100, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_minus_per_counter:10")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 100. Resta 3 * 10 = 30. Daño final 70.
+        org.junit.jupiter.api.Assertions.assertEquals(70, ctx.getAttackerModifiers().get(0).apply(100));
+    }
+
+    @Test
+    void testProcess_damageMinusPerCounter_clampsToZero() {
+        attacker.setDamageCounters(12); // Attacker has 120 damage
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Big Tusk", 100, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_minus_per_counter:10")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 100. Resta 12 * 10 = 120. Daño final clamp a 0.
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getAttackerModifiers().get(0).apply(100));
+    }
+
+    @Test
+    void testProcess_revengeDamage_withKnockoutLastTurn_addsDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        org.mockito.Mockito.when(attackerRuntime.isKnockedOutLastTurn()).thenReturn(true);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Revenge", 20, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("revenge_damage:70")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 20. Modifiers add 70. Final damage should be 90.
+        org.junit.jupiter.api.Assertions.assertEquals(90, ctx.getAttackerModifiers().get(0).apply(20));
+    }
+
+    @Test
+    void testProcess_revengeDamage_withoutKnockoutLastTurn_noExtraDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime attackerRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        org.mockito.Mockito.when(attackerRuntime.isKnockedOutLastTurn()).thenReturn(false);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Revenge", 20, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("revenge_damage:70")
+                .attackerRuntime(attackerRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertTrue(ctx.getAttackerModifiers().isEmpty());
+    }
+
+    @Test
+    void testProcess_damagePerOpponentPrize_calculatesCorrectDamage() {
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime defenderRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        org.mockito.Mockito.when(defenderRuntime.getStartingPrizeCount()).thenReturn(6);
+        org.mockito.Mockito.when(defenderRuntime.getPrizeCount()).thenReturn(4); // 2 prizes taken by opponent
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Electricounter", 0, List.of()),
+                mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("damage_per_opponent_prize:40")
+                .defenderRuntime(defenderRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        // Base damage 0. Modifiers set total to 2 * 40 = 80.
+        org.junit.jupiter.api.Assertions.assertEquals(80, ctx.getAttackerModifiers().get(0).apply(0));
+    }
+
+    @Test
+    void testProcess_withDamageReducedBy20NextTurn_reducesIncomingDamage() {
+        StatusEffectManager defenderSem = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(defenderSem.isDamageReducedBy20NextTurn()).thenReturn(true);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Tackle", 20, List.of()), mock(StatusEffectManager.class), defenderSem, mock(KnockoutHandler.class), () -> true).build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getDefenderModifiers().isEmpty());
+        // 50 damage reduced by 20 -> 30
+        org.junit.jupiter.api.Assertions.assertEquals(30, ctx.getDefenderModifiers().get(0).apply(50));
+        // 10 damage reduced by 20 -> 0 (min 0)
+        org.junit.jupiter.api.Assertions.assertEquals(0, ctx.getDefenderModifiers().get(0).apply(10));
+    }
+
+    @Test
+    void testProcess_withDiscardOpponentTool_discardsDefenderTool() {
+        ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tool = mock(ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.class);
+        defender.attachTool(tool);
+
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime defenderRuntime = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        ar.edu.utn.frc.tup.piii.engine.model.DiscardPile discardPile = new ar.edu.utn.frc.tup.piii.engine.model.DiscardPile();
+        org.mockito.Mockito.when(defenderRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Peck Off", 10, List.of()), mock(StatusEffectManager.class), mock(StatusEffectManager.class), mock(KnockoutHandler.class), () -> true)
+                .effectText("discard_opponent_tool")
+                .defenderRuntime(defenderRuntime)
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(defender.hasToolAttached());
+        org.junit.jupiter.api.Assertions.assertEquals(1, discardPile.getCards().size());
+        org.junit.jupiter.api.Assertions.assertSame(tool, discardPile.getCards().get(0));
+    }
 }
+

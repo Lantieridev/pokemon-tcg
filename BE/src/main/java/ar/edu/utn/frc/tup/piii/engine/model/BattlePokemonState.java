@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.engine.model;
 
+import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import java.util.List;
 
 /**
@@ -11,6 +12,12 @@ import java.util.List;
  * signal the absence of a weakness or resistance — no sentinel enum value is used.</p>
  */
 public interface BattlePokemonState extends ActivePokemonState {
+
+    default PlayerRuntime getOwner() {
+        return null;
+    }
+
+    default void setOwner(PlayerRuntime owner) {}
 
     /**
      * Returns the display name of this Pokémon (e.g. "Charmander").

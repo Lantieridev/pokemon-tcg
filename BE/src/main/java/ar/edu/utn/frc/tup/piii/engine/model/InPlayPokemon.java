@@ -23,6 +23,17 @@ public final class InPlayPokemon implements BattlePokemonState {
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private final java.util.Set<String> usedAbilitiesThisTurn = new java.util.HashSet<>();
     private TrainerCard attachedTool;
+    private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime owner;
+
+    @Override
+    public ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime getOwner() {
+        return owner;
+    }
+
+    @Override
+    public void setOwner(final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime owner) {
+        this.owner = owner;
+    }
 
     /**
      * @param card the source card data (never null)
@@ -104,7 +115,13 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     @Override
     public int getMaxHp() {
-        return card.getHp();
+        int hp = card.getHp();
+        if (owner != null && card.getPokemonType() == PokemonType.GRASS) {
+            if (owner.hasAbility(AbilityEffectId.FLOWER_VEIL)) {
+                hp += 20;
+            }
+        }
+        return hp;
     }
 
     @Override
