@@ -729,30 +729,44 @@
         @if (store.phase() === 'BETWEEN_TURNS') {
           <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de estado entre turnos...</p>
         } @else {
-          <p class="font-chunky text-[11px] tracking-widest text-[#5b6885] mt-1.5 uppercase animate-fade-in">Resolviendo efectos de ataque / entrenador...</p>
+          <p class="font-chunky text-[12px] tracking-widest text-white/80 mt-1.5 uppercase animate-fade-in">{{ coinFlipSubText() || 'Resolviendo efectos de ataque / entrenador...' }}</p>
         }
         
         <!-- Sequential display -->
-        <div class="mt-8 flex items-center justify-center gap-3">
-          @for (flip of attackCoinFlips(); track $index) {
-            @if ($index < currentAttackFlipIndex() || ($index === currentAttackFlipIndex() && currentAttackFlipResult() !== null)) {
-              <div class="w-10 h-10 rounded-full flex items-center justify-center border font-chunky text-sm shadow-md animate-scale-up"
-                   [style.background]="flip ? 'linear-gradient(135deg, #2ecc71, #27ae60)' : 'linear-gradient(135deg, #e74c3c, #c0392b)'"
-                   [style.borderColor]="flip ? '#2ecc71' : '#e74c3c'"
-                   style="color: #fff;">
-                {{ flip ? '⚡' : '☠' }}
-              </div>
-            } @else if ($index === currentAttackFlipIndex()) {
-              <div class="w-10 h-10 rounded-full flex items-center justify-center border border-dashed border-[#ffcb05] font-chunky text-sm animate-pulse"
-                   style="color: #ffcb05;">
-                ?
-              </div>
-            } @else {
-              <div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 bg-white/5 font-chunky text-sm text-white/30">
-                -
+        <div class="mt-8 flex flex-col items-center gap-3">
+          @if (isSmokescreenFlip() || (store.hadPrecisionBaja() && currentAttackFlipIndex() >= 0)) {
+            <div class="text-[10px] font-chunky tracking-wider text-[#ffcb05] uppercase bg-white/5 border border-white/10 px-3 py-1 rounded-full animate-fade-in shadow-[0_0_15px_rgba(255,203,5,0.1)]">
+              La primera moneda es el chequeo de Smokescreen (Humo)
+            </div>
+          }
+          <div class="flex items-center justify-center gap-4">
+            @for (flip of attackCoinFlips(); track $index) {
+              <div class="flex flex-col items-center gap-1.5">
+                @if ($index < currentAttackFlipIndex() || ($index === currentAttackFlipIndex() && currentAttackFlipResult() !== null)) {
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center border font-chunky text-sm shadow-md animate-scale-up"
+                       [style.background]="flip ? 'linear-gradient(135deg, #2ecc71, #27ae60)' : 'linear-gradient(135deg, #e74c3c, #c0392b)'"
+                       [style.borderColor]="flip ? '#2ecc71' : '#e74c3c'"
+                       style="color: #fff;">
+                    {{ flip ? '⚡' : '☠' }}
+                  </div>
+                } @else if ($index === currentAttackFlipIndex()) {
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center border border-dashed border-[#ffcb05] font-chunky text-sm animate-pulse"
+                       style="color: #ffcb05;">
+                    ?
+                  </div>
+                } @else {
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 bg-white/5 font-chunky text-sm text-white/30">
+                    -
+                  </div>
+                }
+                @if ($index === 0 && store.hadPrecisionBaja()) {
+                  <span class="text-[9px] font-chunky text-[#ffcb05] uppercase tracking-wider">Humo</span>
+                } @else {
+                  <span class="text-[9px] font-chunky text-white/40 uppercase tracking-wider">#{{ store.hadPrecisionBaja() ? $index : $index + 1 }}</span>
+                }
               </div>
             }
-          }
+          </div>
         </div>
       </div>
     </div>

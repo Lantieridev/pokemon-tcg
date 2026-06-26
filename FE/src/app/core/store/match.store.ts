@@ -148,8 +148,21 @@ export class MatchStore {
 
   // ── Mutaciones ────────────────────────────────────────────────────────────
 
+  readonly hadPrecisionBaja = signal<boolean>(false);
+
   updateState(newState: GameStateResponseDTO): void {
     const oldState = this.state();
+    if (oldState) {
+      const oldIsMyTurn = oldState.activePlayerIndex === 0;
+      const oldActivePlayer = oldIsMyTurn ? oldState.self : oldState.opponent;
+      const oldActivePokemon = oldActivePlayer?.active;
+      const oldConditions = oldActivePokemon?.statusConditions || [];
+      const hasBaja = oldConditions.some((c: any) => String(c).toUpperCase() === 'PRECISION_BAJA');
+      this.hadPrecisionBaja.set(hasBaja);
+    } else {
+      this.hadPrecisionBaja.set(false);
+    }
+
     const turnChanged = !oldState || 
                         oldState.turnNumber !== newState.turnNumber || 
                         oldState.activePlayerIndex !== newState.activePlayerIndex;
@@ -169,6 +182,7 @@ export class MatchStore {
 
   reset(): void {
     this.state.set(null);
+    this.hadPrecisionBaja.set(false);
     if (this.timerInterval) clearInterval(this.timerInterval);
   }
 
