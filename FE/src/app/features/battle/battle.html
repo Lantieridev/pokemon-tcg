@@ -636,6 +636,41 @@
     </div>
   }
 
+  <!-- Pyroar Scorching Fang Discard Prompt Modal -->
+  @if (scorchingFangPrompt(); as prompt) {
+    <div class="fixed inset-0 z-[65] flex items-center justify-center bg-black/70 backdrop-blur-sm" style="animation: fadeIn 0.2s ease-out;">
+      <div class="flex flex-col items-center gap-5 text-center max-w-md px-6 py-8 rounded-[24px] border border-white/10 bg-white/[0.03] shadow-[0_20px_50px_rgba(0,0,0,0.5)]" style="backdrop-filter: blur(20px);">
+        <!-- Icon/Header -->
+        <div class="w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-tr from-[#ee1515] to-[#f39c12] border-2 border-white/90 shadow-[0_0_20px_rgba(238,21,21,0.4)]">
+          <app-icon name="bolt" svgClass="w-7 h-7" style="color:#fff"></app-icon>
+        </div>
+        
+        <!-- Text -->
+        <div>
+          <h3 class="font-display text-xl font-black tracking-wider text-[#ffcb05] uppercase">
+            Colmillo Ígneo
+          </h3>
+          <p class="mt-3 text-sm tracking-wide text-white/90 font-chunky leading-relaxed">
+            ¿Deseas descartar una energía Fuego unida a Pyroar para infligir 30 puntos de daño adicionales (+30 de daño)?
+          </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-4 mt-2">
+          <button class="px-6 py-2.5 rounded-xl border border-transparent font-chunky text-sm tracking-wider uppercase transition-all duration-200 cursor-pointer"
+                  style="background: linear-gradient(135deg, #5ad27a, #27ae60); color: #fff; box-shadow: 0 4px 10px rgba(90,210,122,0.3);"
+                  (click)="resolveScorchingFang(prompt.attackIndex, true)">
+            Sí, descartar
+          </button>
+          <button class="px-6 py-2.5 rounded-xl border border-white/10 bg-white/5 font-chunky text-sm tracking-wider uppercase transition-all duration-200 text-white/70 hover:text-white hover:bg-white/10 cursor-pointer"
+                  (click)="resolveScorchingFang(prompt.attackIndex, false)">
+            No, mantener
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Card Selection Modal (PendingSelectionRequest) -->
   @if (pendingSelection(); as sel) {
     <app-card-selection-modal

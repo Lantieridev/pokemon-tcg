@@ -148,6 +148,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly draggedCardIndex = signal<number | null>(null);
   readonly isRetreating = signal<boolean>(false);
   readonly targetingAbility = signal<{ name: string; sourceIndex: number | null } | null>(null);
+  readonly scorchingFangPrompt = signal<{ attackIndex: number } | null>(null);
 
   readonly quickChat = QUICK_CHAT;
   Math = Math;
@@ -456,19 +457,24 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const atk = active?.attacks?.[attackIndex];
     if (active?.cardId === 'xy2-20' && atk?.name === 'Scorching Fang') {
       const hasFireEnergy = active.energies?.some((e: string) => e.toUpperCase() === 'FIRE');
-      if (hasFireEnergy) {
-        const wantsDiscard = confirm('¿Deseas descartar una energía Fuego unida a Pyroar para infligir 30 puntos de daño adicionales?');
-        this.sendAction({
-          type: 'DECLARE_ATTACK',
-          attackIndex,
-          selectedCardIds: wantsDiscard ? ['discard_fire_energy'] : []
-        });
+      const hasThreeOrMoreEnergies = active.energies && active.energies.length >= 3;
+      if (hasFireEnergy && hasThreeOrMoreEnergies) {
+        this.scorchingFangPrompt.set({ attackIndex });
         this.closeMenu();
         return;
       }
     }
     this.sendAction({ type: 'DECLARE_ATTACK', attackIndex });
     this.closeMenu();
+  }
+
+  resolveScorchingFang(attackIndex: number, wantsDiscard: boolean): void {
+    this.sendAction({
+      type: 'DECLARE_ATTACK',
+      attackIndex,
+      selectedCardIds: wantsDiscard ? ['discard_fire_energy'] : []
+    });
+    this.scorchingFangPrompt.set(null);
   }
 
   retreat(targetIndex: number, energyIndices: number[]): void {
