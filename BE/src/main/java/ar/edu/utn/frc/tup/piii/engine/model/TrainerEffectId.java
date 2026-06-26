@@ -59,5 +59,11 @@ public enum TrainerEffectId {
     BURIED_TREASURE_HUNT,
     DUAL_BULLET,
     PAIN_PELLETS,
+    BENCH_DAMAGE_ONE,
+    CURSED_DROP,
+    EAR_INFLUENCE,
+    RESCUE,
+    FANG_SNIPE,
+    PARABOLIC_CHARGE,
     NONE
 }

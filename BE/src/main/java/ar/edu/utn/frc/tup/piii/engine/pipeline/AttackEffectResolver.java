@@ -110,6 +110,8 @@ public final class AttackEffectResolver {
         m.put("ignore_resistance",                   AttackEffectType.IGNORE_RESISTANCE);
         m.put("block_retreat",                       AttackEffectType.BLOCK_RETREAT);
         m.put("damage_per_opponent_all_energy",      AttackEffectType.DAMAGE_PER_OPPONENT_ALL_ENERGY);
+        m.put("bench_damage_one",                    AttackEffectType.BENCH_DAMAGE_ONE);
+        m.put("force_switch_opponent",                AttackEffectType.FORCE_SWITCH_OPPONENT);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -242,6 +244,43 @@ public final class AttackEffectResolver {
                         defender.getBench().place(oldActive);
                         defender.getStatusEffectManager().clearAll();
                         defender.recordPokemonEntered(oldActive);
+                    }
+                });
+        m.put(AttackEffectType.FORCE_SWITCH_OPPONENT,
+                (amount, ctx) -> {
+                    final PlayerRuntime defender = ctx.getDefenderRuntime();
+                    if (defender != null && !defender.getBench().getAll().isEmpty()) {
+                        final BattlePokemonState oldActive = defender.getActivePokemon();
+                        final BattlePokemonState newActive = defender.getBench().promote(0);
+                        defender.setActivePokemon(newActive);
+                        defender.getBench().place(oldActive);
+                        defender.getStatusEffectManager().clearAll();
+                        defender.recordPokemonEntered(oldActive);
+                    }
+                });
+        m.put(AttackEffectType.BENCH_DAMAGE_ONE,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null) {
+                        List<BattlePokemonState> bench = opponent.getBench().getAll();
+                        if (bench.size() == 1) {
+                            bench.get(0).addDamageCounters(amount / DAMAGE_PER_COUNTER);
+                            if (bench.get(0).getDamageCounters() * 10 >= bench.get(0).getMaxHp()) {
+                                ctx.getMatchSession().getKnockoutHandler().onKnockout(bench.get(0), bench.get(0).isEx() ? 2 : 1);
+                            }
+                        } else if (bench.size() > 1) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BENCH_DAMAGE_ONE,
+                                            null,
+                                            1,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
                     }
                 });
         m.put(AttackEffectType.COIN_FLIP_SWITCH_SELF,
