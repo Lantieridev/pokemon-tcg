@@ -57,5 +57,7 @@ public enum TrainerEffectId {
     ROCK_RUSH,
     BRILLIANT_SEARCH,
     BURIED_TREASURE_HUNT,
+    DUAL_BULLET,
+    PAIN_PELLETS,
     NONE
 }

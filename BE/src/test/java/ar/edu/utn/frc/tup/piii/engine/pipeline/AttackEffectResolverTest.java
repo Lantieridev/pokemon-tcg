@@ -1090,4 +1090,115 @@ class AttackEffectResolverTest {
         ));
         org.mockito.Mockito.verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void shouldApplyExcitingShake() {
+        final AttackContext ctx = buildCtx("exciting_shake");
+        resolver.apply(ctx);
+        assertTrue(attackerSM.isExcitingShakeActiveNextTurn());
+        assertTrue(attackerSM.isExcitingShakeActiveNextTurnSetThisTurn());
+    }
+
+    @Test
+    void shouldApplyCoinFlipSkipOpponentDraw() {
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("coin_flip_skip_opponent_draw")
+                .build();
+        resolver.apply(ctx);
+        assertTrue(defenderSM.isDrawStepBlocked());
+    }
+
+    @Test
+    void shouldDiscardOpponentDeck() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck deck = mock(ar.edu.utn.frc.tup.piii.engine.model.Deck.class);
+        final ar.edu.utn.frc.tup.piii.engine.model.DiscardPile discard = mock(ar.edu.utn.frc.tup.piii.engine.model.DiscardPile.class);
+        org.mockito.Mockito.when(opponentRuntime.getDeck()).thenReturn(deck);
+        org.mockito.Mockito.when(opponentRuntime.getDiscardPile()).thenReturn(discard);
+        org.mockito.Mockito.when(deck.isEmpty()).thenReturn(false);
+        final ar.edu.utn.frc.tup.piii.engine.model.Card dummyCard = mock(ar.edu.utn.frc.tup.piii.engine.model.Card.class);
+        org.mockito.Mockito.when(deck.draw()).thenReturn(dummyCard);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("discard_opponent_deck:1")
+                .defenderRuntime(opponentRuntime)
+                .build();
+        resolver.apply(ctx);
+        org.mockito.Mockito.verify(deck).draw();
+        org.mockito.Mockito.verify(discard).add(dummyCard);
+    }
+
+    @Test
+    void shouldTriggerDualBullet() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        org.mockito.Mockito.when(opponentRuntime.getActivePokemon()).thenReturn(mock(BattlePokemonState.class));
+        final Bench bench = mock(Bench.class);
+        org.mockito.Mockito.when(opponentRuntime.getBench()).thenReturn(bench);
+        org.mockito.Mockito.when(bench.getAll()).thenReturn(List.of());
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("dual_bullet")
+                .defenderRuntime(opponentRuntime)
+                .matchSession(session)
+                .build();
+        resolver.apply(ctx);
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET
+                && req.maxSelections() == 1
+        ));
+    }
+
+    @Test
+    void shouldTriggerPainPellets() {
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        org.mockito.Mockito.when(session.getTurnManager()).thenReturn(turnManager);
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, BASIC_ATTACK,
+                attackerSM, defenderSM,
+                mock(KnockoutHandler.class), () -> true)
+                .effectText("pain_pellets")
+                .defenderRuntime(opponentRuntime)
+                .matchSession(session)
+                .build();
+        resolver.apply(ctx);
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAIN_PELLETS
+                && req.maxSelections() == 1
+        ));
+    }
+
+    @Test
+    void shouldApplyTriplePoison() {
+        final AttackContext ctx = buildCtx("triple_poison");
+        resolver.apply(ctx);
+        assertTrue(defenderSM.has(StatusEffectType.ENVENENADO));
+        assertEquals(3, defenderSM.getPoisonDamageCounters());
+    }
+
+    @Test
+    void shouldApplyStrongGust() {
+        final AttackContext ctx = buildCtx("strong_gust");
+        resolver.apply(ctx);
+        assertTrue(attackerSM.isStrongGustUsedLastTurn());
+        assertTrue(attackerSM.isStrongGustUsedLastTurnSetThisTurn());
+    }
+
+    @Test
+    void shouldApplyBlockRetreat() {
+        final AttackContext ctx = buildCtx("block_retreat");
+        resolver.apply(ctx);
+        assertTrue(defenderSM.isRetreatBlockedNextTurn());
+        assertTrue(defenderSM.isRetreatBlockedNextTurnSetThisTurn());
+    }
 }

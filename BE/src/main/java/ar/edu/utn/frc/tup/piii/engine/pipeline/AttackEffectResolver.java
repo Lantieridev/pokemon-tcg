@@ -100,6 +100,15 @@ public final class AttackEffectResolver {
         m.put("damage_all_opponents",                AttackEffectType.DAMAGE_ALL_OPPONENTS);
         m.put("search_deck_any",                     AttackEffectType.BRILLIANT_SEARCH);
         m.put("look_top_4_take_2_discard_rest",      AttackEffectType.BURIED_TREASURE_HUNT);
+        m.put("exciting_shake",                      AttackEffectType.EXCITING_SHAKE);
+        m.put("coin_flip_skip_opponent_draw",        AttackEffectType.COIN_FLIP_SKIP_OPPONENT_DRAW);
+        m.put("discard_opponent_deck",               AttackEffectType.DISCARD_OPPONENT_DECK);
+        m.put("dual_bullet",                         AttackEffectType.DUAL_BULLET);
+        m.put("pain_pellets",                        AttackEffectType.PAIN_PELLETS);
+        m.put("triple_poison",                       AttackEffectType.TRIPLE_POISON);
+        m.put("strong_gust",                         AttackEffectType.STRONG_GUST);
+        m.put("ignore_resistance",                   AttackEffectType.IGNORE_RESISTANCE);
+        m.put("block_retreat",                       AttackEffectType.BLOCK_RETREAT);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -547,6 +556,78 @@ public final class AttackEffectResolver {
                             ctx.getMatchSession().getTurnManager().interruptMainPhase();
                         }
                     }
+                });
+        m.put(AttackEffectType.EXCITING_SHAKE,
+                (amount, ctx) -> {
+                    ctx.getAttackerStatusManager().setExcitingShakeActiveNextTurn(true);
+                    ctx.getAttackerStatusManager().setExcitingShakeActiveNextTurnSetThisTurn(true);
+                });
+        m.put(AttackEffectType.COIN_FLIP_SKIP_OPPONENT_DRAW,
+                (amount, ctx) -> {
+                    if (ctx.getCoinFlipper().flip()) {
+                        ctx.getDefenderStatusManager().setDrawStepBlocked(true);
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_DECK,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null && !opponent.getDeck().isEmpty()) {
+                        final Card discarded = opponent.getDeck().draw();
+                        opponent.getDiscardPile().add(discarded);
+                    }
+                });
+        m.put(AttackEffectType.DUAL_BULLET,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null) {
+                        int targets = Math.min(2, (opponent.getActivePokemon() != null ? 1 : 0) + opponent.getBench().getAll().size());
+                        if (targets > 0) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET,
+                                            null,
+                                            targets,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
+                    }
+                });
+        m.put(AttackEffectType.PAIN_PELLETS,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAIN_PELLETS,
+                                        null,
+                                        1,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
+                        }
+                    });
+        m.put(AttackEffectType.TRIPLE_POISON,
+                (amount, ctx) -> {
+                    ctx.getDefenderStatusManager().apply(StatusEffectType.ENVENENADO, 3);
+                });
+        m.put(AttackEffectType.STRONG_GUST,
+                (amount, ctx) -> {
+                    ctx.getAttackerStatusManager().setStrongGustUsedLastTurn(true);
+                    ctx.getAttackerStatusManager().setStrongGustUsedLastTurnSetThisTurn(true);
+                });
+        m.put(AttackEffectType.IGNORE_RESISTANCE,
+                (amount, ctx) -> { });
+        m.put(AttackEffectType.BLOCK_RETREAT,
+                (amount, ctx) -> {
+                    ctx.getDefenderStatusManager().setRetreatBlockedNextTurn(true);
+                    ctx.getDefenderStatusManager().setRetreatBlockedNextTurnSetThisTurn(true);
                 });
         this.handlers = Collections.unmodifiableMap(m);
     }

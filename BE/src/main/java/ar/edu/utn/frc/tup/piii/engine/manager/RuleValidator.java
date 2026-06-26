@@ -905,6 +905,21 @@ public final class RuleValidator {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET) {
+                final int opponentIndex = 1 - playerIndex;
+                final int opponentBenchCount = benchStateProvider != null ? benchStateProvider.getBenchSize(opponentIndex) : 0;
+                final BattlePokemonState opponentActive = battlefieldProvider != null ? battlefieldProvider.getActivePokemon(opponentIndex) : null;
+                final int opponentPokemonCount = (opponentActive != null ? 1 : 0) + opponentBenchCount;
+                final int expected = Math.min(2, opponentPokemonCount);
+                if (action.cardIds().size() != expected) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAIN_PELLETS) {
+                if (action.cardIds().size() != 1) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
         }
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.

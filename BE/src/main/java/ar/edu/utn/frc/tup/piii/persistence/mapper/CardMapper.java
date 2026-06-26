@@ -312,6 +312,33 @@ public final class CardMapper {
         if ("rock rush".equals(lowerName)) {
             return "discard_hand_energy_multiply_damage:fighting:30";
         }
+        if ("exciting shake".equals(lowerName)) {
+            return "exciting_shake";
+        }
+        if ("heart wink".equals(lowerName)) {
+            return "coin_flip_skip_opponent_draw";
+        }
+        if ("stomp off".equals(lowerName)) {
+            return "discard_opponent_deck:1";
+        }
+        if ("dual bullet".equals(lowerName)) {
+            return "dual_bullet";
+        }
+        if ("pain pellets".equals(lowerName)) {
+            return "pain_pellets";
+        }
+        if ("triple poison".equals(lowerName)) {
+            return "triple_poison";
+        }
+        if ("strong gust".equals(lowerName)) {
+            return "strong_gust";
+        }
+        if ("smash uppercut".equals(lowerName)) {
+            return "ignore_resistance";
+        }
+        if ("clutch".equals(lowerName) || "corner".equals(lowerName) || "dark clamp".equals(lowerName)) {
+            return "block_retreat";
+        }
 
         // --- Damage per energy type ---
         if (lower.contains("more damage for each") && lower.contains("energy")) {
