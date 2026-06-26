@@ -64,6 +64,13 @@ public final class MatchSession {
     private int promotingPlayerIndex = UNSET_PLAYER_INDEX;
 
     /**
+     * Flag indicating whether status effects between turns have already been processed
+     * for the current transition.
+     */
+    private boolean betweenTurnsProcessed = false;
+
+
+    /**
      * Set when an interactive action (like Evosoda) pauses the MainPhase to wait for
      * the player to select cards from their deck/discard.
      */
@@ -521,6 +528,15 @@ public final class MatchSession {
         this.awaitingPromotion = false;
         this.promotingPlayerIndex = UNSET_PLAYER_INDEX;
     }
+
+    public boolean isBetweenTurnsProcessed() {
+        return betweenTurnsProcessed;
+    }
+
+    public void setBetweenTurnsProcessed(final boolean processed) {
+        this.betweenTurnsProcessed = processed;
+    }
+
 
     /**
      * Returns the zero-based index of the given player within this session.
