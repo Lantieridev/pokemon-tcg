@@ -324,5 +324,28 @@ class BloqueDTest {
         ));
         verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void testEarInfluenceSelectionSource() {
+        final MatchSession mockSession = mock(MatchSession.class);
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        final Attack attack = new Attack("Ear Influence", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("move_opponent_counters")
+                .matchSession(mockSession)
+                .build();
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.EAR_INFLUENCE &&
+            req.maxSelections() == 20 &&
+            req.source() == SelectionSource.OPPONENT_FIELD
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
 }
 
