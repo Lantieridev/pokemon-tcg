@@ -287,6 +287,19 @@ public final class CardMapper {
         }
         final String lower = text.toLowerCase();
 
+        if ("bounce".equals(lowerName)) {
+            if (lower.contains("flip a coin")) {
+                return "coin_flip_switch_self";
+            }
+            return "switch_self";
+        }
+        if ("flash claw".equals(lowerName)) {
+            return "discard_opponent_hand:1";
+        }
+        if ("rock rush".equals(lowerName)) {
+            return "discard_hand_energy_multiply_damage:fighting:30";
+        }
+
         // --- Damage per energy type ---
         if (lower.contains("more damage for each") && lower.contains("energy")) {
             java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);

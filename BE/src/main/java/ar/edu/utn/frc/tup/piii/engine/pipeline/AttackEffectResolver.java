@@ -94,6 +94,9 @@ public final class AttackEffectResolver {
         m.put("prevent_damage_20",                   AttackEffectType.PREVENT_DAMAGE_20);
         m.put("discard_stadium",                     AttackEffectType.DISCARD_STADIUM);
         m.put("discard_opponent_tool",               AttackEffectType.DISCARD_OPPONENT_TOOL);
+        m.put("switch_self",                         AttackEffectType.SWITCH_SELF);
+        m.put("discard_opponent_hand",               AttackEffectType.DISCARD_OPPONENT_HAND);
+        m.put("discard_hand_energy_multiply_damage", AttackEffectType.DISCARD_HAND_ENERGY_MULTIPLY_DAMAGE);
         TEXT_TO_TYPE = Collections.unmodifiableMap(m);
     }
 
@@ -465,6 +468,37 @@ public final class AttackEffectResolver {
                     }
                 });
         m.put(AttackEffectType.DISCARD_OPPONENT_TOOL,
+                (amount, ctx) -> { }); // handled in PreDamageEffectsStep
+        m.put(AttackEffectType.SWITCH_SELF,
+                (amount, ctx) -> {
+                    final PlayerRuntime attacker = ctx.getAttackerRuntime();
+                    if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
+                        final BattlePokemonState oldActive = attacker.getActivePokemon();
+                        final BattlePokemonState newActive = attacker.getBench().promote(0);
+                        attacker.setActivePokemon(newActive);
+                        attacker.getBench().place(oldActive);
+                        attacker.getStatusEffectManager().clearAll();
+                        attacker.recordPokemonEntered(oldActive);
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_OPPONENT_HAND,
+                (amount, ctx) -> {
+                    final PlayerRuntime opponent = ctx.getDefenderRuntime();
+                    if (opponent != null && !opponent.getHand().getCards().isEmpty()) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW,
+                                        null,
+                                        amount,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
+                    }
+                });
+        m.put(AttackEffectType.DISCARD_HAND_ENERGY_MULTIPLY_DAMAGE,
                 (amount, ctx) -> { }); // handled in PreDamageEffectsStep
         this.handlers = Collections.unmodifiableMap(m);
     }

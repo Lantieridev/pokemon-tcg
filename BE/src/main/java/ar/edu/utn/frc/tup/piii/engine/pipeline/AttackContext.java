@@ -48,6 +48,8 @@ public final class AttackContext {
     private boolean attackBlocked;
     private boolean scorchingFangDiscarded;
     private boolean weaknessSuppressed;
+    private int rockRushDiscardCount;
+    private boolean rockRushResolved;
     private final List<DamageModifier> attackerModifiers = new ArrayList<>();
     private final List<DamageModifier> defenderModifiers = new ArrayList<>();
     private DamageResult damageResult;
@@ -144,6 +146,22 @@ public final class AttackContext {
 
     public void setScorchingFangDiscarded(final boolean scorchingFangDiscarded) {
         this.scorchingFangDiscarded = scorchingFangDiscarded;
+    }
+
+    public int getRockRushDiscardCount() {
+        return rockRushDiscardCount;
+    }
+
+    public void setRockRushDiscardCount(final int rockRushDiscardCount) {
+        this.rockRushDiscardCount = rockRushDiscardCount;
+    }
+
+    public boolean isRockRushResolved() {
+        return rockRushResolved;
+    }
+
+    public void setRockRushResolved(final boolean rockRushResolved) {
+        this.rockRushResolved = rockRushResolved;
     }
 
     public boolean isAttackBlocked() {

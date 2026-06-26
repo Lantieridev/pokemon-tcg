@@ -146,8 +146,20 @@ public class MatchService {
                 }
                 isAuthorized = true;
             } else {
-                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
-                    isAuthorized = true;
+                boolean isOpponentChoosing = false;
+                if (session.getPendingSelectionRequest() != null
+                        && session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW) {
+                    isOpponentChoosing = true;
+                }
+
+                if (isOpponentChoosing) {
+                    if (playerIndex == 1 - session.getTurnManager().activePlayerIndex()) {
+                        isAuthorized = true;
+                    }
+                } else {
+                    if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                        isAuthorized = true;
+                    }
                 }
             }
 
@@ -316,7 +328,9 @@ public class MatchService {
             case SelectCardsAction selectCards -> {
                 final boolean isAttackSelection = session.getPendingSelectionRequest() != null
                         && (session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE
-                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE);
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FLASH_CLAW
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.ROCK_RUSH);
 
                 facade.apply(session, action, turnManager);
 

@@ -756,6 +756,56 @@ public final class GameFacade {
                     runtime.getDeck().addToTop(reordered.get(i));
                 }
             }
+        } else if (effectId == TrainerEffectId.FLASH_CLAW) {
+            final PlayerRuntime opponentRuntime = session.getPlayerRuntime(1 - session.getTurnManager().activePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                final Card discarded = opponentRuntime.getHand().removeCard(cardId);
+                if (discarded != null) {
+                    opponentRuntime.getDiscardPile().add(discarded);
+                }
+            }
+        } else if (effectId == TrainerEffectId.ROCK_RUSH) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final Card discarded = runtime.getHand().removeCard(id);
+                    if (discarded != null) {
+                        runtime.getDiscardPile().add(discarded);
+                    }
+                }
+            }
+            session.setPendingSelectionRequest(null);
+            
+            final int defenderIndex = 1 - session.getActivePlayerIndex();
+            final PlayerRuntime defender = session.getPlayerRuntime(defenderIndex);
+            
+            final Attack attack = runtime.getActivePokemon().getAttacks().stream()
+                    .filter(a -> "Rock Rush".equalsIgnoreCase(a.name()))
+                    .findFirst()
+                    .orElseGet(() -> runtime.getActivePokemon().getAttacks().get(0));
+            
+            final AttackContext ctx = new AttackContext.Builder(
+                    runtime.getActivePokemon(),
+                    defender.getActivePokemon(),
+                    attack,
+                    runtime.getStatusEffectManager(),
+                    defender.getStatusEffectManager(),
+                    session.getKnockoutHandler(),
+                    session.getCoinFlipper()::flip
+            )
+            .attackerRuntime(runtime)
+            .defenderRuntime(defender)
+            .defenderBench(defender.getBench().getAll())
+            .effectText(attack.effectText())
+            .stadiumProvider(session.getBoard())
+            .attackerStats(runtime.getStatisticsTracker())
+            .defenderStats(defender.getStatisticsTracker())
+            .matchSession(session)
+            .build();
+            
+            ctx.setRockRushResolved(true);
+            ctx.setRockRushDiscardCount(selectedIds.size());
+            attackPipeline.execute(ctx);
         }
         
         session.setPendingSelectionRequest(null);
