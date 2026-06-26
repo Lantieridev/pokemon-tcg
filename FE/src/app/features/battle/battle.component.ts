@@ -83,7 +83,12 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly activeStadiumCardId = this.store.activeStadiumCardId;
   readonly pendingSelection = computed(() => {
     const sel = this.store.pendingSelection();
-    return sel && this.isMyTurn() ? sel : null;
+    if (!sel) return null;
+    const isOpponentChoosing = sel.sourceEffect === 'FLASH_CLAW';
+    if (isOpponentChoosing) {
+      return !this.isMyTurn() ? sel : null;
+    }
+    return this.isMyTurn() ? sel : null;
   });
   readonly isFinished = computed(() => {
     const phase = this.store.phase();
