@@ -543,6 +543,70 @@ class MatchPersistenceTest {
         assertEquals(1, restored.getPendingSelectionRequest().maxSelections());
         assertNull(restored.getPendingSelectionRequest().target());
     }
+
+    @Test
+    void testSerializationAndDeserializationOfBlock4Fields() {
+        MatchSessionJsonConverter converter = new MatchSessionJsonConverter();
+
+        PokemonCard pokemon = new PokemonCard.Builder("p-001", "Pikachu", 60, PokemonType.LIGHTNING)
+                .evolutionStage(EvolutionStage.BASIC)
+                .retreatCost(1)
+                .build();
+
+        PlayerRuntime runtimeA = new PlayerRuntime(
+                new Deck(List.of(pokemon)),
+                new Hand(),
+                new Bench(),
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                new InPlayPokemon(pokemon),
+                List.of(pokemon),
+                new HashMap<>()
+        );
+        runtimeA.setKnockedOutLastTurn(true);
+        runtimeA.setStartingPrizeCount(4);
+
+        PlayerRuntime runtimeB = new PlayerRuntime(
+                new Deck(List.of(pokemon)),
+                new Hand(),
+                new Bench(),
+                new DiscardPile(),
+                new StatusEffectManager(() -> true),
+                new InPlayPokemon(pokemon),
+                List.of(pokemon),
+                new HashMap<>()
+        );
+        runtimeB.setKnockedOutLastTurn(false);
+        runtimeB.setStartingPrizeCount(5);
+
+        PlayerState psA = new PlayerState(runtimeA.getActivePokemon(), List.of(), List.of(), 60, 6, new HashMap<>());
+        PlayerState psB = new PlayerState(runtimeB.getActivePokemon(), List.of(), List.of(), 60, 6, new HashMap<>());
+        MatchBoard board = new MatchBoard(List.of(psA, psB));
+
+        MatchSession session = new MatchSession(
+                "match-block4-test",
+                List.of("player-a", "player-b"),
+                board,
+                List.of(runtimeA, runtimeB)
+        );
+
+        String json = converter.convertToDatabaseColumn(session);
+        assertNotNull(json);
+
+        MatchSession restored = converter.convertToEntityAttribute(json);
+        assertNotNull(restored);
+
+        PlayerRuntime restoredRuntimeA = restored.getPlayerRuntime(0);
+        PlayerRuntime restoredRuntimeB = restored.getPlayerRuntime(1);
+
+        assertNotNull(restoredRuntimeA);
+        assertTrue(restoredRuntimeA.isKnockedOutLastTurn());
+        assertEquals(4, restoredRuntimeA.getStartingPrizeCount());
+
+        assertNotNull(restoredRuntimeB);
+        assertFalse(restoredRuntimeB.isKnockedOutLastTurn());
+        assertEquals(5, restoredRuntimeB.getStartingPrizeCount());
+    }
 }
 
 

@@ -28,6 +28,10 @@ public final class ReactiveAbilityHandler {
             // Put 3 damage counters (30 damage) on the attacker
             attacker.addDamageCounters(3);
         }
+        if (defender != null && attacker != null && hasAbility(defender, AbilityEffectId.COUNTERATTACK_QUILLS)) {
+            // Put 2 damage counters (20 damage) on the attacker
+            attacker.addDamageCounters(2);
+        }
     }
 
     /**

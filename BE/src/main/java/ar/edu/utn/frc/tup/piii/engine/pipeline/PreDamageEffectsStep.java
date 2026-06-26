@@ -46,6 +46,15 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 }
                 final int totalDamage = heads * dmgPerHead;
                 ctx.addAttackerModifier(dmg -> totalDamage);
+            } else if (effectText.startsWith("coin_flips_until_tails_extra:")) {
+                String[] parts = effectText.split(":");
+                int dmgPerHead = Integer.parseInt(parts[1]);
+                int heads = 0;
+                while (ctx.getCoinFlipper().flip()) {
+                    heads++;
+                }
+                final int totalDamage = heads * dmgPerHead;
+                ctx.addAttackerModifier(dmg -> dmg + totalDamage);
             } else if (effectText.startsWith("coin_flips_per_energy:")) {
                 String[] parts = effectText.split(":");
                 String energyTypeStr = parts[1];
@@ -75,6 +84,57 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 }
                 final int totalDamage = heads * dmgPerHead;
                 ctx.addAttackerModifier(dmg -> totalDamage);
+            } else if (effectText.startsWith("powerful_friends:")) {
+                final int extraDamage = parseAmount(effectText, "powerful_friends:".length());
+                boolean hasStage2OnBench = false;
+                if (ctx.getAttackerRuntime() != null) {
+                    hasStage2OnBench = ctx.getAttackerRuntime().getBench().getAll().stream()
+                            .anyMatch(p -> p.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2);
+                }
+                if (hasStage2OnBench) {
+                    ctx.addAttackerModifier(dmg -> dmg + extraDamage);
+                }
+            } else if (effectText.startsWith("damage_per_energy_type:")) {
+                String[] parts = effectText.split(":");
+                String energyTypeStr = parts[1];
+                int dmgPerEnergy = Integer.parseInt(parts[2]);
+                ar.edu.utn.frc.tup.piii.engine.model.PokemonType targetType = ar.edu.utn.frc.tup.piii.engine.model.PokemonType.valueOf(energyTypeStr.toUpperCase());
+                long matchingEnergies = ctx.getAttacker().getAttachedEnergyCards().stream()
+                        .filter(ec -> ec.getEnergyType() == targetType || ec.isProvidesAllTypes())
+                        .mapToLong(ec -> ec.getEnergyCount())
+                        .sum();
+                final int totalDamage = (int) (matchingEnergies * dmgPerEnergy);
+                ctx.addAttackerModifier(dmg -> dmg + totalDamage);
+            } else if (effectText.startsWith("damage_if_target_damaged:")) {
+                final int extraDamage = parseAmount(effectText, "damage_if_target_damaged:".length());
+                if (ctx.getDefender() != null && ctx.getDefender().getDamageCounters() > 0) {
+                    ctx.addAttackerModifier(dmg -> dmg + extraDamage);
+                }
+            } else if (effectText.startsWith("damage_minus_per_counter:")) {
+                final int minusDamagePerCounter = parseAmount(effectText, "damage_minus_per_counter:".length());
+                final int counters = ctx.getAttacker().getDamageCounters();
+                ctx.addAttackerModifier(dmg -> Math.max(0, dmg - (counters * minusDamagePerCounter)));
+            } else if (effectText.startsWith("revenge_damage:")) {
+                final int extraDamage = parseAmount(effectText, "revenge_damage:".length());
+                if (ctx.getAttackerRuntime() != null && ctx.getAttackerRuntime().isKnockedOutLastTurn()) {
+                    ctx.addAttackerModifier(dmg -> dmg + extraDamage);
+                }
+            } else if (effectText.startsWith("damage_per_opponent_prize:")) {
+                final int dmgPerPrize = parseAmount(effectText, "damage_per_opponent_prize:".length());
+                if (ctx.getDefenderRuntime() != null) {
+                    final int prizesTaken = Math.max(0, ctx.getDefenderRuntime().getStartingPrizeCount() - ctx.getDefenderRuntime().getPrizeCount());
+                    final int totalDamage = prizesTaken * dmgPerPrize;
+                    ctx.addAttackerModifier(dmg -> totalDamage);
+                }
+            } else if ("discard_opponent_tool".equals(effectText)) {
+                if (ctx.getDefender() != null && ctx.getDefender().hasToolAttached()) {
+                    ctx.getDefender().getAttachedTool().ifPresent(tool -> {
+                        if (ctx.getDefenderRuntime() != null) {
+                            ctx.getDefenderRuntime().getDiscardPile().add(tool);
+                        }
+                        ctx.getDefender().detachTool();
+                    });
+                }
             }
         }
 
@@ -93,6 +153,10 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
 
         if (ctx.getDefenderStatusManager() != null && ctx.getDefenderStatusManager().isDamagePreventedIf60OrLessNextTurn()) {
             ctx.addDefenderModifier(dmg -> dmg <= 60 ? 0 : dmg);
+        }
+
+        if (ctx.getDefenderStatusManager() != null && ctx.getDefenderStatusManager().isDamageReducedBy20NextTurn()) {
+            ctx.addDefenderModifier(dmg -> Math.max(0, dmg - 20));
         }
 
         if (ctx.isScorchingFangDiscarded()) {
