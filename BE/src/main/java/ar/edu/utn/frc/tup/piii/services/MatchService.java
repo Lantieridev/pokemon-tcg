@@ -424,6 +424,25 @@ public class MatchService {
                     } else {
                         sem.setSelfDisabledNextTurn(false);
                     }
+                    
+                    if (sem.isRetreatBlockedNextTurnSetThisTurn()) {
+                        sem.setRetreatBlockedNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setRetreatBlockedNextTurn(false);
+                    }
+
+                    if (sem.isExcitingShakeActiveNextTurnSetThisTurn()) {
+                        sem.setExcitingShakeActiveNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setExcitingShakeActiveNextTurn(false);
+                    }
+
+                    if (sem.isStrongGustUsedLastTurnSetThisTurn()) {
+                        sem.setStrongGustUsedLastTurnSetThisTurn(false);
+                    } else {
+                        sem.setStrongGustUsedLastTurn(false);
+                    }
+
                     session.getPlayerRuntime(i).setKnockedOutLastTurn(false);
                 } else {
                     sem.setDamagePreventedNextTurn(false);

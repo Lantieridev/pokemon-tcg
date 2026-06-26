@@ -825,6 +825,56 @@ public final class GameFacade {
                     runtime.getDiscardPile().add(card);
                 }
             }
+        } else if (effectId == TrainerEffectId.DUAL_BULLET) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            final BattlePokemonState attacker = runtime.getActivePokemon();
+            final List<BattlePokemonState> targets = new ArrayList<>();
+            if (opponent.getActivePokemon() != null && selectedIds.contains(opponent.getActivePokemon().getCardId())) {
+                targets.add(opponent.getActivePokemon());
+            }
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    targets.add(benched);
+                }
+            }
+            for (BattlePokemonState target : targets) {
+                if (target == opponent.getActivePokemon()) {
+                    final ar.edu.utn.frc.tup.piii.engine.model.DamageContext dmgCtx = new ar.edu.utn.frc.tup.piii.engine.model.DamageContext(
+                            attacker,
+                            target,
+                            new Attack("Dual Bullet", 50, List.of(), ""),
+                            List.of(),
+                            List.of()
+                    );
+                    final ar.edu.utn.frc.tup.piii.engine.model.DamageResult dmgResult = new DamageCalculator().calculate(dmgCtx, false, false);
+                    target.addDamageCounters(dmgResult.damageCountersToPlace());
+                } else {
+                    target.addDamageCounters(5);
+                }
+                if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                    session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+                }
+            }
+        } else if (effectId == TrainerEffectId.PAIN_PELLETS) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            final BattlePokemonState attacker = runtime.getActivePokemon();
+            final List<BattlePokemonState> targets = new ArrayList<>();
+            if (opponent.getActivePokemon() != null && selectedIds.contains(opponent.getActivePokemon().getCardId())) {
+                targets.add(opponent.getActivePokemon());
+            }
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    targets.add(benched);
+                }
+            }
+            if (!targets.isEmpty() && attacker != null) {
+                final BattlePokemonState target = targets.get(0);
+                final int countersToPlace = attacker.getDamageCounters();
+                target.addDamageCounters(countersToPlace);
+                if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                    session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+                }
+            }
         }
         
         session.setPendingSelectionRequest(null);

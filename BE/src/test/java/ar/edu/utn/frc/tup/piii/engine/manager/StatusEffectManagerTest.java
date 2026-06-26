@@ -418,4 +418,41 @@ class StatusEffectManagerTest {
         assertFalse(manager.isSelfDisabledNextTurn());
         assertFalse(manager.isSelfDisabledNextTurnSetThisTurn());
     }
+
+    @Test
+    void shouldTrackAndClearNewCorrectionsFlags() {
+        assertFalse(manager.isRetreatBlockedNextTurn());
+        assertFalse(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertFalse(manager.isDrawStepBlocked());
+        assertFalse(manager.isExcitingShakeActiveNextTurn());
+        assertFalse(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertFalse(manager.isStrongGustUsedLastTurn());
+        assertFalse(manager.isStrongGustUsedLastTurnSetThisTurn());
+
+        manager.setRetreatBlockedNextTurn(true);
+        manager.setRetreatBlockedNextTurnSetThisTurn(true);
+        manager.setDrawStepBlocked(true);
+        manager.setExcitingShakeActiveNextTurn(true);
+        manager.setExcitingShakeActiveNextTurnSetThisTurn(true);
+        manager.setStrongGustUsedLastTurn(true);
+        manager.setStrongGustUsedLastTurnSetThisTurn(true);
+
+        assertTrue(manager.isRetreatBlockedNextTurn());
+        assertTrue(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertTrue(manager.isDrawStepBlocked());
+        assertTrue(manager.isExcitingShakeActiveNextTurn());
+        assertTrue(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertTrue(manager.isStrongGustUsedLastTurn());
+        assertTrue(manager.isStrongGustUsedLastTurnSetThisTurn());
+
+        manager.clearAll();
+
+        assertFalse(manager.isRetreatBlockedNextTurn());
+        assertFalse(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertFalse(manager.isDrawStepBlocked());
+        assertFalse(manager.isExcitingShakeActiveNextTurn());
+        assertFalse(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertFalse(manager.isStrongGustUsedLastTurn());
+        assertFalse(manager.isStrongGustUsedLastTurnSetThisTurn());
+    }
 }

@@ -33,6 +33,9 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 String[] parts = effectText.split(":");
                 int coins = Integer.parseInt(parts[1]);
                 int dmgPerHead = Integer.parseInt(parts[2]);
+                if (ctx.getAttackerStatusManager() != null && ctx.getAttackerStatusManager().isExcitingShakeActiveNextTurn() && coins == 2) {
+                    coins = 6;
+                }
                 int heads = 0;
                 for (int i = 0; i < coins; i++) {
                     if (ctx.getCoinFlipper().flip()) {
@@ -41,6 +44,10 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
                 }
                 final int totalDamage = heads * dmgPerHead;
                 ctx.addAttackerModifier(dmg -> totalDamage);
+            } else if ("strong_gust".equals(effectText)) {
+                if (ctx.getAttackerStatusManager() != null && ctx.getAttackerStatusManager().isStrongGustUsedLastTurn()) {
+                    ctx.addAttackerModifier(dmg -> dmg + 60);
+                }
             } else if (effectText.startsWith("coin_flips_until_tails:")) {
                 String[] parts = effectText.split(":");
                 int dmgPerHead = Integer.parseInt(parts[1]);

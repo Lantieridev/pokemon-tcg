@@ -31,7 +31,8 @@ public final class DamageCalculationStep implements AttackPipelineStep {
                 ctx.getAttackerModifiers(),
                 ctx.getDefenderModifiers());
         final ar.edu.utn.frc.tup.piii.engine.model.TrainerCard activeStadium = ctx.getActiveStadium();
-        final boolean suppressResistance = activeStadium != null && "xy2-91".equals(activeStadium.getCardId());
+        final boolean suppressResistance = (activeStadium != null && "xy2-91".equals(activeStadium.getCardId()))
+                || "ignore_resistance".equals(ctx.getEffectText());
         
         final DamageResult result = calculator.calculate(dmgCtx, ctx.isWeaknessSuppressed(), suppressResistance);
         

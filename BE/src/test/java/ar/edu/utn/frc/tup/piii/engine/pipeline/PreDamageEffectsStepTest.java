@@ -477,5 +477,43 @@ class PreDamageEffectsStepTest {
         assertFalse(ctx.getAttackerModifiers().isEmpty());
         org.junit.jupiter.api.Assertions.assertEquals(20, ctx.getAttackerModifiers().get(0).apply(0));
     }
+
+    @Test
+    void testProcess_coinFlipsMultiplier_withExcitingShake_flips6Coins() {
+        StatusEffectManager attackerStatus = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(attackerStatus.isExcitingShakeActiveNextTurn()).thenReturn(true);
+        
+        ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper flipper = mock(ar.edu.utn.frc.tup.piii.engine.model.CoinFlipper.class);
+        org.mockito.Mockito.when(flipper.flip()).thenReturn(true); // all heads
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Prickly Needles", 0, List.of()),
+                attackerStatus, mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                flipper)
+                .effectText("coin_flips_multiplier:2:20")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        org.mockito.Mockito.verify(flipper, org.mockito.Mockito.times(6)).flip();
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(120, ctx.getAttackerModifiers().get(0).apply(0));
+    }
+
+    @Test
+    void testProcess_strongGust_adds60Damage() {
+        StatusEffectManager attackerStatus = mock(StatusEffectManager.class);
+        org.mockito.Mockito.when(attackerStatus.isStrongGustUsedLastTurn()).thenReturn(true);
+
+        ctx = new AttackContext.Builder(attacker, defender, new Attack("Strong Gust", 60, List.of()),
+                attackerStatus, mock(StatusEffectManager.class), mock(KnockoutHandler.class),
+                () -> true)
+                .effectText("strong_gust")
+                .build();
+
+        step.process(ctx, () -> {});
+
+        assertFalse(ctx.getAttackerModifiers().isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals(120, ctx.getAttackerModifiers().get(0).apply(60));
+    }
 }
 

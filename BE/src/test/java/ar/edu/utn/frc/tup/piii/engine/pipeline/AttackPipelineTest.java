@@ -310,6 +310,21 @@ class AttackPipelineTest {
         assertEquals(3, grassDefender.getDamageCounters());
     }
 
+    @Test
+    void shouldSuppressResistanceWhenIgnoreResistanceEffectTextIsActive() {
+        final FakeBattlePokemonState grassDefender =
+                new FakeBattlePokemonState(100, PokemonType.GRASS, null, PokemonType.FIRE, false);
+        final Attack attack = new Attack("Smash Uppercut", 30, List.of());
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, grassDefender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("ignore_resistance")
+                .build();
+        pipeline.execute(ctx);
+
+        assertEquals(3, grassDefender.getDamageCounters());
+    }
+
     // --- helpers ---
 
     private AttackContext buildCtx(final Attack attack, final String effectText) {

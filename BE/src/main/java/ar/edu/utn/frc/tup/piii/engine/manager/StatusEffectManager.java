@@ -50,6 +50,14 @@ public class StatusEffectManager {
     private boolean selfDisabledAttackSetThisTurn;
     private boolean selfDisabledNextTurn;
     private boolean selfDisabledNextTurnSetThisTurn;
+    private boolean retreatBlockedNextTurn;
+    private boolean retreatBlockedNextTurnSetThisTurn;
+    private boolean drawStepBlocked;
+    private boolean excitingShakeActiveNextTurn;
+    private boolean excitingShakeActiveNextTurnSetThisTurn;
+    private boolean strongGustUsedLastTurn;
+    private boolean strongGustUsedLastTurnSetThisTurn;
+    private int poisonDamageCounters = 1;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -91,8 +99,15 @@ public class StatusEffectManager {
      * @throws InvalidStatusEffectException if {@code type} is null
      */
     public void apply(final StatusEffectType type) {
+        apply(type, 1);
+    }
+
+    public void apply(final StatusEffectType type, final int poisonDamage) {
         if (type == null) {
             throw new InvalidStatusEffectException("Status effect type must not be null");
+        }
+        if (type == StatusEffectType.ENVENENADO) {
+            this.poisonDamageCounters = poisonDamage;
         }
         
         if (ar.edu.utn.frc.tup.piii.engine.pipeline.PassiveAbilityRegistry.preventStatusEffect(type, playerRuntime)) {
@@ -137,6 +152,14 @@ public class StatusEffectManager {
         this.selfDisabledAttackSetThisTurn = false;
         this.selfDisabledNextTurn = false;
         this.selfDisabledNextTurnSetThisTurn = false;
+        this.retreatBlockedNextTurn = false;
+        this.retreatBlockedNextTurnSetThisTurn = false;
+        this.drawStepBlocked = false;
+        this.excitingShakeActiveNextTurn = false;
+        this.excitingShakeActiveNextTurnSetThisTurn = false;
+        this.strongGustUsedLastTurn = false;
+        this.strongGustUsedLastTurnSetThisTurn = false;
+        this.poisonDamageCounters = 1;
     }
 
     /**
@@ -173,6 +196,9 @@ public class StatusEffectManager {
      * @return {@code true} if no active effect blocks retreating
      */
     public boolean canRetreat() {
+        if (retreatBlockedNextTurn) {
+            return false;
+        }
         return activeEffects.values().stream().noneMatch(StatusEffect::blocksRetreat);
     }
 
@@ -238,7 +264,7 @@ public class StatusEffectManager {
             case QUEMADO -> new BurnedEffect();
             case CONFUNDIDO -> new ConfusedEffect();
             case PARALIZADO -> new ParalyzedEffect();
-            case ENVENENADO -> new PoisonedEffect();
+            case ENVENENADO -> new PoisonedEffect(poisonDamageCounters);
             case PRECISION_BAJA -> new PrecisionBajaEffect();
         };
     }
@@ -305,5 +331,69 @@ public class StatusEffectManager {
 
     public void setSelfDisabledNextTurnSetThisTurn(final boolean selfDisabledNextTurnSetThisTurn) {
         this.selfDisabledNextTurnSetThisTurn = selfDisabledNextTurnSetThisTurn;
+    }
+
+    public boolean isRetreatBlockedNextTurn() {
+        return retreatBlockedNextTurn;
+    }
+
+    public void setRetreatBlockedNextTurn(final boolean retreatBlockedNextTurn) {
+        this.retreatBlockedNextTurn = retreatBlockedNextTurn;
+    }
+
+    public boolean isRetreatBlockedNextTurnSetThisTurn() {
+        return retreatBlockedNextTurnSetThisTurn;
+    }
+
+    public void setRetreatBlockedNextTurnSetThisTurn(final boolean retreatBlockedNextTurnSetThisTurn) {
+        this.retreatBlockedNextTurnSetThisTurn = retreatBlockedNextTurnSetThisTurn;
+    }
+
+    public boolean isDrawStepBlocked() {
+        return drawStepBlocked;
+    }
+
+    public void setDrawStepBlocked(final boolean drawStepBlocked) {
+        this.drawStepBlocked = drawStepBlocked;
+    }
+
+    public boolean isExcitingShakeActiveNextTurn() {
+        return excitingShakeActiveNextTurn;
+    }
+
+    public void setExcitingShakeActiveNextTurn(final boolean excitingShakeActiveNextTurn) {
+        this.excitingShakeActiveNextTurn = excitingShakeActiveNextTurn;
+    }
+
+    public boolean isExcitingShakeActiveNextTurnSetThisTurn() {
+        return excitingShakeActiveNextTurnSetThisTurn;
+    }
+
+    public void setExcitingShakeActiveNextTurnSetThisTurn(final boolean excitingShakeActiveNextTurnSetThisTurn) {
+        this.excitingShakeActiveNextTurnSetThisTurn = excitingShakeActiveNextTurnSetThisTurn;
+    }
+
+    public boolean isStrongGustUsedLastTurn() {
+        return strongGustUsedLastTurn;
+    }
+
+    public void setStrongGustUsedLastTurn(final boolean strongGustUsedLastTurn) {
+        this.strongGustUsedLastTurn = strongGustUsedLastTurn;
+    }
+
+    public boolean isStrongGustUsedLastTurnSetThisTurn() {
+        return strongGustUsedLastTurnSetThisTurn;
+    }
+
+    public void setStrongGustUsedLastTurnSetThisTurn(final boolean strongGustUsedLastTurnSetThisTurn) {
+        this.strongGustUsedLastTurnSetThisTurn = strongGustUsedLastTurnSetThisTurn;
+    }
+
+    public int getPoisonDamageCounters() {
+        return poisonDamageCounters;
+    }
+
+    public void setPoisonDamageCounters(final int poisonDamageCounters) {
+        this.poisonDamageCounters = poisonDamageCounters;
     }
 }
