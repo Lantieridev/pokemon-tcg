@@ -372,5 +372,35 @@ class BloqueDTest {
         ));
         verify(turnManager).interruptMainPhase();
     }
+
+    @Test
+    void testDualBulletSelectionSource() {
+        final MatchSession mockSession = mock(MatchSession.class);
+        final PlayerRuntime opponentRuntime = mock(PlayerRuntime.class);
+        final BattlePokemonState activePokemon = mock(BattlePokemonState.class);
+        final Bench bench = new Bench();
+        when(opponentRuntime.getActivePokemon()).thenReturn(activePokemon);
+        when(opponentRuntime.getBench()).thenReturn(bench);
+
+        final ar.edu.utn.frc.tup.piii.engine.manager.TurnManager turnManager = mock(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class);
+        when(mockSession.getTurnManager()).thenReturn(turnManager);
+
+        final Attack attack = new Attack("Dual Bullet", 0, List.of());
+        final AttackContext ctx = new AttackContext.Builder(attacker, defender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("dual_bullet")
+                .defenderRuntime(opponentRuntime)
+                .matchSession(mockSession)
+                .build();
+
+        pipeline.execute(ctx);
+
+        verify(mockSession).setPendingSelectionRequest(argThat(req -> 
+            req.sourceEffect() == TrainerEffectId.DUAL_BULLET &&
+            req.maxSelections() == 1 &&
+            req.source() == SelectionSource.OPPONENT_FIELD
+        ));
+        verify(turnManager).interruptMainPhase();
+    }
 }
 
