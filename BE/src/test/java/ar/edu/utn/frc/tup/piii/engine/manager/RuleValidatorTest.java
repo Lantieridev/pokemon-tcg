@@ -1135,6 +1135,18 @@ class RuleValidatorTest {
         assertInstanceOf(ValidationResult.Valid.class, result);
     }
 
+    @Test
+    void testRuleValidatorBlocksAttackWhenSelfDisabledNextTurn() {
+        FakeBattlePokemonState activeAttacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        Attack attack = new Attack("Slash", 20, List.of(PokemonType.COLORLESS));
+        when(statusEffectManager.isSelfDisabledNextTurn()).thenReturn(true);
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(activeAttacker, attack));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "attack_disabled_by_effect");
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     private void assertInvalidReason(final ValidationResult result, final String expectedReason) {

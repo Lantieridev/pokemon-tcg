@@ -230,6 +230,10 @@ public final class RuleValidator {
         if (!getActiveStatusEffectManager(playerIndex).canRetreat()) {
             return new ValidationResult.Invalid(RETREAT_BLOCKED_BY_STATUS);
         }
+        if (getActiveStatusEffectManager(playerIndex).has(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.ENVENENADO)
+                && opponentHasAbility(playerIndex, AbilityEffectId.POISON_BARRIER)) {
+            return new ValidationResult.Invalid("retreat_blocked_by_poison_barrier");
+        }
         if (benchStateProvider.getBenchSize(playerIndex) == 0) {
             return new ValidationResult.Invalid(EMPTY_BENCH_FOR_RETREAT);
         }
@@ -591,6 +595,9 @@ public final class RuleValidator {
         if (selfDisabledAttack != null && selfDisabledAttack.equalsIgnoreCase(action.attack().name())) {
             return new ValidationResult.Invalid(ATTACK_DISABLED_BY_EFFECT);
         }
+        if (getActiveStatusEffectManager(playerIndex).isSelfDisabledNextTurn()) {
+            return new ValidationResult.Invalid(ATTACK_DISABLED_BY_EFFECT);
+        }
         if (!hasEnoughEnergyForAttack(action.attacker(), action.attack())) {
             return new ValidationResult.Invalid(INSUFFICIENT_ENERGY_FOR_ATTACK);
         }
@@ -644,6 +651,7 @@ public final class RuleValidator {
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ENERGY_GRACE ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.BIG_JUMP ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
             if (source.hasUsedAbilityThisTurn(effId.name())) {
                 return new ValidationResult.Invalid("ability_already_used_this_turn");
@@ -651,6 +659,18 @@ public final class RuleValidator {
         }
         
         final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = getActiveStatusEffectManager(playerIndex).getPlayerRuntime();
+
+        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.GOOEY_REGENERATION) {
+            if (runtime == null) {
+                return new ValidationResult.Invalid("player_runtime_required");
+            }
+            if (source.getAttachedEnergyCards().isEmpty()) {
+                return new ValidationResult.Invalid("no_energy_attached");
+            }
+            if (source.getDamageCounters() == 0) {
+                return new ValidationResult.Invalid("no_damage_to_heal");
+            }
+        }
         
         if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF) {
             if (runtime == null || runtime.getActivePokemon() != source) {
@@ -882,6 +902,24 @@ public final class RuleValidator {
         
         // Zone and Type validation is deferred to GameFacade because RuleValidator lacks Deck/Discard access.
         return new ValidationResult.Valid();
+    }
+
+    private boolean opponentHasAbility(final int playerIndex, final AbilityEffectId abilityId) {
+        final int opponentIndex = 1 - playerIndex;
+        if (battlefieldProvider != null) {
+            final BattlePokemonState active = battlefieldProvider.getActivePokemon(opponentIndex);
+            if (active != null && hasAbility(active, abilityId)) {
+                return true;
+            }
+        }
+        if (benchStateProvider != null) {
+            for (final BattlePokemonState benched : benchStateProvider.getBenchedPokemon(opponentIndex)) {
+                if (benched != null && hasAbility(benched, abilityId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean hasAbility(final BattlePokemonState pokemon, final AbilityEffectId abilityId) {

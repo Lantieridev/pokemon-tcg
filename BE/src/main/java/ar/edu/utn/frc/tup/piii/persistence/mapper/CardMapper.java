@@ -87,6 +87,13 @@ public final class CardMapper {
         ab.put("Hand Lock",      AbilityEffectId.HAND_LOCK);
         ab.put("Shadow Void",    AbilityEffectId.SHADOW_VOID);
         ab.put("Adaptive Evolution", AbilityEffectId.ADAPTIVE_EVOLUTION);
+        ab.put("Counterattack Quills", AbilityEffectId.COUNTERATTACK_QUILLS);
+        ab.put("Flower Veil",          AbilityEffectId.FLOWER_VEIL);
+        ab.put("Poison Barrier",       AbilityEffectId.POISON_BARRIER);
+        ab.put("Stir and Snooze",      AbilityEffectId.STIR_AND_SNOOZE);
+        ab.put("Thorn Tempest",        AbilityEffectId.THORN_TEMPEST);
+        ab.put("Big Jump",             AbilityEffectId.BIG_JUMP);
+        ab.put("Gooey Regeneration",   AbilityEffectId.GOOEY_REGENERATION);
         ABILITY_EFFECT_ID_BY_NAME = Collections.unmodifiableMap(ab);
     }
 
@@ -260,7 +267,73 @@ public final class CardMapper {
         if ("quiver dance".equals(lowerName)) {
             return "quiver_dance";
         }
+        if ("powerful friends".equals(lowerName)) {
+            return "powerful_friends:70";
+        }
+        if ("smokescreen".equals(lowerName) || "sand-attack".equals(lowerName)) {
+            return "smokescreen";
+        }
+        if ("sitdown bounce".equals(lowerName)) {
+            return "coin_flip_self_disable";
+        }
+        if ("frost barrier".equals(lowerName)) {
+            return "prevent_damage_20";
+        }
+        if ("shatter".equals(lowerName)) {
+            return "discard_stadium";
+        }
+        if ("peck off".equals(lowerName)) {
+            return "discard_opponent_tool";
+        }
         final String lower = text.toLowerCase();
+
+        // --- Damage per energy type ---
+        if (lower.contains("more damage for each") && lower.contains("energy")) {
+            java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
+            if (mDamage.find() && mEnergy.find()) {
+                return "damage_per_energy_type:" + mEnergy.group(1) + ":" + mDamage.group(1);
+            }
+        }
+
+        // --- Damage modifiers based on counters and prizes ---
+        if (lower.contains("already has any damage counters")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "damage_if_target_damaged:" + m.group(1);
+            }
+        }
+        if (lower.contains("minus") && lower.contains("damage for each damage counter on this")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("minus\\s+(\\d+)\\s+damage\\s+for\\s+each").matcher(lower);
+            if (m.find()) {
+                return "damage_minus_per_counter:" + m.group(1);
+            }
+        }
+        if (lower.contains("if any of your pokémon were knocked out") && lower.contains("last turn")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            if (m.find()) {
+                return "revenge_damage:" + m.group(1);
+            }
+        }
+        if (lower.contains("times the number of prize cards your opponent has taken")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+times").matcher(lower);
+            if (m.find()) {
+                return "damage_per_opponent_prize:" + m.group(1);
+            }
+        }
+
+        // --- Coin-flips until tails ---
+        if (lower.contains("until you get tails")) {
+            if (lower.contains("discard") && lower.contains("energy") && (lower.contains("opponent") || lower.contains("defending") || lower.contains("active"))) {
+                return "coin_flips_until_tails_discard_opponent_energy";
+            }
+            if (lower.contains("more damage")) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
+                if (m.find()) {
+                    return "coin_flips_until_tails_extra:" + m.group(1);
+                }
+            }
+        }
 
         // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
         if (lower.contains("flip") && lower.contains("coin") && lower.contains("times the number of heads")) {
@@ -317,6 +390,17 @@ public final class CardMapper {
             if (lower.contains("poisoned"))   return "coin_flip_poison";
             if (lower.contains("burned"))     return "coin_flip_burn";
             if (lower.contains("confused"))   return "coin_flip_confusion";
+        }
+
+        // --- Sleep self (Rest, Sleepy Press) ---
+        if (lower.contains("this pokémon is now asleep") || lower.contains("this pokemon is now asleep")) {
+            if (lower.contains("heal")) {
+                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
+                if (m.find()) {
+                    return "heal_and_sleep:" + m.group(1);
+                }
+            }
+            return "sleep_self";
         }
 
         // --- Guaranteed status conditions ---
@@ -377,6 +461,14 @@ public final class CardMapper {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+to\\s+itself").matcher(lower);
             if (m.find()) {
                 return "self_damage:" + m.group(1);
+            }
+        }
+
+        // --- Discard cards from deck ---
+        if (lower.contains("discard") && lower.contains("top") && lower.contains("your deck")) {
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("discard\\s+the\\s+top\\s+(\\d+)\\s+cards").matcher(lower);
+            if (m.find()) {
+                return "discard_deck_self:" + m.group(1);
             }
         }
 

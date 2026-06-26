@@ -110,7 +110,7 @@ public final class GameFacade {
                     turnManager.requireMainPhase().recordEnergyAttached();
                 }
             }
-            case EvolveAction evolve           -> applyEvolve(evolve, runtime);
+            case EvolveAction evolve           -> applyEvolve(evolve, runtime, session);
             case RetreatAction retreat         -> {
                 applyRetreat(retreat, runtime);
                 if (turnManager != null) {
@@ -196,7 +196,7 @@ public final class GameFacade {
         }
     }
 
-    private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime) {
+    private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime, final MatchSession session) {
         if (action.evolution() != null) {
             PokemonCard newCard = (PokemonCard) runtime.getHand().removeCard(action.evolution().getCardId());
             action.target().evolveInto(newCard);
@@ -210,6 +210,25 @@ public final class GameFacade {
             // Track stats!
             if (runtime.getStatisticsTracker() != null) {
                 runtime.getStatisticsTracker().incrementPokemonPlayed(newCard.getCardId());
+            }
+
+            // Thorn Tempest: put 1 damage counter on each of opponent's Pokémon.
+            if (action.target().getAbilities().stream().anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.THORN_TEMPEST)) {
+                if (session != null) {
+                    int playerIndex = session.getPlayerRuntime(0) == runtime ? 0 : 1;
+                    int opponentIndex = 1 - playerIndex;
+                    PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+                    if (opponent != null) {
+                        if (opponent.getActivePokemon() != null) {
+                            opponent.getActivePokemon().addDamageCounters(1);
+                        }
+                        for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                            if (benched != null) {
+                                benched.addDamageCounters(1);
+                            }
+                        }
+                    }
+                }
             }
         }
         
@@ -296,9 +315,13 @@ public final class GameFacade {
             case STADIUM -> {
                 // Stadium replaces the current field stadium; previous one goes to discard.
                 if (trainerCard != null) {
+                    final int prevOwnerIdx = session.getBoard().getActiveStadiumOwnerIndex();
                     final TrainerCard previous = session.getBoard().replaceStadium(trainerCard);
+                    final int activePlayerIdx = session.getPlayerRuntime(0) == runtime ? 0 : 1;
+                    session.getBoard().setActiveStadiumOwnerIndex(activePlayerIdx);
                     if (previous != null) {
-                        runtime.getDiscardPile().add(previous);
+                        final PlayerRuntime prevOwner = prevOwnerIdx != -1 ? session.getPlayerRuntime(prevOwnerIdx) : runtime;
+                        prevOwner.getDiscardPile().add(previous);
                     }
                 }
             }
