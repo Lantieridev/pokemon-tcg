@@ -793,7 +793,7 @@ public final class AttackEffectResolver {
                                             ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET,
                                             null,
                                             targets,
-                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD
                                     )
                             );
                             if (ctx.getMatchSession().getTurnManager() != null) {
