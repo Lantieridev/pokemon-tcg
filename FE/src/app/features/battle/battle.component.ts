@@ -457,10 +457,11 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (active?.cardId === 'xy2-20' && atk?.name === 'Scorching Fang') {
       const hasFireEnergy = active.energies?.some((e: string) => e.toUpperCase() === 'FIRE');
       if (hasFireEnergy) {
+        const wantsDiscard = confirm('¿Deseas descartar una energía Fuego unida a Pyroar para infligir 30 puntos de daño adicionales?');
         this.sendAction({
           type: 'DECLARE_ATTACK',
           attackIndex,
-          selectedCardIds: ['discard_fire_energy']
+          selectedCardIds: wantsDiscard ? ['discard_fire_energy'] : []
         });
         this.closeMenu();
         return;
