@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import ar.edu.utn.frc.tup.piii.services.ChatService;
 
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ class MatchServiceAbandonTest {
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
     private CampaignService campaignService;
+    private ChatService chatService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -76,6 +78,7 @@ class MatchServiceAbandonTest {
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
         campaignService = mock(CampaignService.class);
+        chatService = mock(ChatService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -101,7 +104,7 @@ class MatchServiceAbandonTest {
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
                 scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
-                campaignService, TIMEOUT_SECONDS);
+                campaignService, chatService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -1,17 +1,23 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
+import { signal } from '@angular/core';
 
 describe('authGuard', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let isAuthenticatedSignal: any;
 
   beforeEach(() => {
+    isAuthenticatedSignal = signal(false);
     authServiceSpy = jasmine.createSpyObj('AuthService', [], {
-      token: null
+      isAuthenticated: isAuthenticatedSignal
     });
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routerSpy = jasmine.createSpyObj('Router', ['createUrlTree']);
+    routerSpy.createUrlTree.and.callFake((commands: any[]) => {
+      return { toString: () => commands.join('/') } as UrlTree;
+    });
 
     TestBed.configureTestingModule({
       providers: [
@@ -27,21 +33,21 @@ describe('authGuard', () => {
     );
   };
 
-  it('should redirect to /login and return false when not authenticated', () => {
-    Object.defineProperty(authServiceSpy, 'token', { get: () => null });
+  it('should return UrlTree to /login when not authenticated', () => {
+    isAuthenticatedSignal.set(false);
 
     const result = runGuard();
 
-    expect(result).toBeFalse();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+    expect(result).not.toBeTrue();
+    expect(routerSpy.createUrlTree).toHaveBeenCalledWith(['/login']);
   });
 
   it('should return true when authenticated', () => {
-    Object.defineProperty(authServiceSpy, 'token', { get: () => 'fake-jwt-token' });
+    isAuthenticatedSignal.set(true);
 
     const result = runGuard();
 
     expect(result).toBeTrue();
-    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(routerSpy.createUrlTree).not.toHaveBeenCalled();
   });
 });

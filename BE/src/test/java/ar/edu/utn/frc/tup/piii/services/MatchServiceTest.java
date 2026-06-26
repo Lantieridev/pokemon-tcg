@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import ar.edu.utn.frc.tup.piii.services.ChatService;
 
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,7 @@ class MatchServiceTest {
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
     private CampaignService campaignService;
+    private ChatService chatService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -82,6 +84,7 @@ class MatchServiceTest {
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
         campaignService = mock(CampaignService.class);
+        chatService = mock(ChatService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -120,7 +123,7 @@ class MatchServiceTest {
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
                 scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
-                campaignService, TIMEOUT_SECONDS);
+                campaignService, chatService, TIMEOUT_SECONDS);
     }
 
     @Test
@@ -260,5 +263,57 @@ class MatchServiceTest {
         matchService.processAction(MATCH_ID, "test", dto);
 
         verify(campaignService).completeNode("test", 1, MATCH_ID);
+    }
+
+    @Test
+    void shouldLogTrainerCardPlayToChat() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.PLAY_TRAINER, "xy1-118", null, null, null, null);
+        
+        final ar.edu.utn.frc.tup.piii.engine.model.Card trainerCard = 
+                new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("xy1-118", "Profesor Cipres", ar.edu.utn.frc.tup.piii.engine.model.TrainerType.SUPPORTER).build();
+        session.getPlayerRuntime(0).getHand().addCard(trainerCard);
+
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerType.SUPPORTER, null, "xy1-118"));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        final org.mockito.ArgumentCaptor<ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse> captor =
+                org.mockito.ArgumentCaptor.forClass(ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse.class);
+        verify(chatService).addMessage(org.mockito.ArgumentMatchers.eq(MATCH_ID), captor.capture());
+
+        ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse loggedMessage = captor.getValue();
+        org.assertj.core.api.Assertions.assertThat(loggedMessage.getSender()).isEqualTo("SISTEMA");
+        org.assertj.core.api.Assertions.assertThat(loggedMessage.getMessage()).isEqualTo(PLAYER_A_ID + " jugó la carta de Entrenador: Profesor Cipres");
+    }
+
+    @Test
+    void shouldLogCoinFlipsToChat() {
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0)));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        session.setCoinFlipper(() -> true);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            session.getCoinFlipper().flip();
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        final org.mockito.ArgumentCaptor<ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse> captor =
+                org.mockito.ArgumentCaptor.forClass(ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse.class);
+        verify(chatService).addMessage(org.mockito.ArgumentMatchers.eq(MATCH_ID), captor.capture());
+
+        ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse loggedMessage = captor.getValue();
+        org.assertj.core.api.Assertions.assertThat(loggedMessage.getSender()).isEqualTo("SISTEMA");
+        org.assertj.core.api.Assertions.assertThat(loggedMessage.getMessage()).contains("Lanzamiento de moneda");
+        org.assertj.core.api.Assertions.assertThat(loggedMessage.getMessage()).contains("CARA");
     }
 }

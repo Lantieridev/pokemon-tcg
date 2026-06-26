@@ -21,28 +21,34 @@ describe('PokemonTcgService', () => {
   });
 
   it('should fetch cards from API and cache them in localStorage', () => {
-    const dummyCards = [{ id: 'xy1-1', name: 'Ivysaur', supertype: 'Pokémon' }];
+    const dummyCards = [{ id: 'xy1-1', name: 'Ivysaur', supertype: 'Pokémon' }] as any;
 
-    service.getCards().subscribe(cards => {
-      expect(cards.length).toBe(1);
-      expect(cards).toEqual(dummyCards);
-      expect(localStorage.getItem('pokemon_cards_xy1')).toBe(JSON.stringify(dummyCards));
-    });
+    service.loadCards();
 
-    const req = httpMock.expectOne('https://api.pokemontcg.io/v2/cards?q=set.id:xy1&pageSize=250&page=1');
+    const req = httpMock.expectOne('https://api.pokemontcg.io/v2/cards?q=set.id:xy1&pageSize=250');
     expect(req.request.method).toBe('GET');
     req.flush({ data: dummyCards });
+
+    expect(service.cards().length).toBe(1);
+    expect(service.cards()).toEqual(dummyCards);
+    expect(localStorage.getItem('xy1_cards_cache')).toBe(JSON.stringify(dummyCards));
   });
 
   it('should return cards from localStorage cache if present', () => {
-    const cachedCards = [{ id: 'xy1-2', name: 'Venusaur', supertype: 'Pokémon' }];
-    localStorage.setItem('pokemon_cards_xy1', JSON.stringify(cachedCards));
+    const cachedCards = [{ id: 'xy1-2', name: 'Venusaur', supertype: 'Pokémon' }] as any;
+    localStorage.setItem('xy1_cards_cache', JSON.stringify(cachedCards));
 
-    service.getCards().subscribe(cards => {
-      expect(cards.length).toBe(1);
-      expect(cards).toEqual(cachedCards);
-    });
+    service.loadCards();
 
-    httpMock.expectNone('https://api.pokemontcg.io/v2/cards?q=set.id:xy1&pageSize=250&page=1');
+    expect(service.cards().length).toBe(1);
+    expect(service.cards()).toEqual(cachedCards);
+    httpMock.expectNone('https://api.pokemontcg.io/v2/cards?q=set.id:xy1&pageSize=250');
+  });
+
+  it('should clear cache and cards signal', () => {
+    localStorage.setItem('xy1_cards_cache', '[]');
+    service.clearCache();
+    expect(localStorage.getItem('xy1_cards_cache')).toBeNull();
+    expect(service.cards()).toEqual([]);
   });
 });
