@@ -25,7 +25,9 @@ public final class PassiveAbilityRegistry {
     public static int modifyIncomingDamage(final int baseDamage, final AttackContext ctx) {
         int damage = baseDamage;
         if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.FUR_COAT)) {
-            damage = (int) (Math.ceil((damage / 2.0) / 10.0) * 10);
+            if (damage > 0) {
+                damage = 20;
+            }
         }
         return damage;
     }

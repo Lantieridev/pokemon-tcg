@@ -136,7 +136,8 @@ public class AsyncPersistenceListener {
 
         for (String cardId : cardIds) {
             if (cardId == null) continue;
-            UserCardStatEntity stat = userCardStatRepository.findByUserIdAndCardId(user.getId(), cardId);
+            java.util.List<UserCardStatEntity> stats = userCardStatRepository.findByUserIdAndCardId(user.getId(), cardId);
+            UserCardStatEntity stat = stats.isEmpty() ? null : stats.get(0);
             if (stat == null) {
                 stat = UserCardStatEntity.builder()
                         .user(user)
@@ -162,7 +163,8 @@ public class AsyncPersistenceListener {
             int count = entry.getValue();
             if (type == null || count <= 0) continue;
             String typeName = type.name();
-            UserEnergyStatEntity stat = userEnergyStatRepository.findByUserIdAndEnergyType(user.getId(), typeName);
+            java.util.List<UserEnergyStatEntity> stats = userEnergyStatRepository.findByUserIdAndEnergyType(user.getId(), typeName);
+            UserEnergyStatEntity stat = stats.isEmpty() ? null : stats.get(0);
             if (stat == null) {
                 stat = UserEnergyStatEntity.builder()
                         .user(user)
@@ -186,7 +188,7 @@ public class AsyncPersistenceListener {
 
     private UserEntity getOrCreateUser(final String username) {
         if (username == null) return null;
-        return userRepository.findByUsername(username).orElseGet(() -> {
+        return userRepository.findFirstByUsername(username).orElseGet(() -> {
             final UserEntity newUser = UserEntity.builder()
                     .username(username)
                     .email(username + "@example.com")

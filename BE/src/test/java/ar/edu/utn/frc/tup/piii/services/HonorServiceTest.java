@@ -40,8 +40,8 @@ class HonorServiceTest {
         final UserEntity giver = UserEntity.builder().id(1L).username(giverName).build();
         final UserEntity receiver = UserEntity.builder().id(2L).username(receiverName).build();
 
-        when(userRepository.findByUsername(giverName)).thenReturn(Optional.of(giver));
-        when(userRepository.findByUsername(receiverName)).thenReturn(Optional.of(receiver));
+        when(userRepository.findFirstByUsername(giverName)).thenReturn(Optional.of(giver));
+        when(userRepository.findFirstByUsername(receiverName)).thenReturn(Optional.of(receiver));
 
         final List<UserHonorEntity> mockHonors = new ArrayList<>();
         mockHonors.add(UserHonorEntity.builder().giver(giver).receiver(receiver).honorType(HonorType.GOOD_SPORTSMAN).build());
@@ -66,7 +66,7 @@ class HonorServiceTest {
         final String player = "ash";
         honorService.awardHonor(player, player, HonorType.GREAT_STRATEGIST);
 
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userRepository, never()).findFirstByUsername(anyString());
     }
 
     @Test
@@ -85,6 +85,6 @@ class HonorServiceTest {
         honorService.awardHonor("ash", null, HonorType.GOOD_SPORTSMAN);
         honorService.awardHonor("ash", "gary", null);
 
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userRepository, never()).findFirstByUsername(anyString());
     }
 }

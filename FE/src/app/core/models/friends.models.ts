@@ -6,6 +6,8 @@ export interface FriendshipDTO {
     activeTitle: string;
     status: string;
     createdAt: string;
+    mmr: number;
+    tier: string;
 }
 
 export interface ChatMessageDTO {

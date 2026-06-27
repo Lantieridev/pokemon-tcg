@@ -54,7 +54,7 @@ class PenaltyServiceTest {
                 .build();
 
         // Mocks de UserRepository
-        lenient().when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(userEntity));
+        lenient().when(userRepository.findFirstByUsername(anyString())).thenReturn(Optional.of(userEntity));
         lenient().when(userRepository.findById(anyLong())).thenReturn(Optional.of(userEntity));
         lenient().when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             userEntity = invocation.getArgument(0);

@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface UserEnergyStatRepository extends JpaRepository<UserEnergyStatEntity, Long> {
     List<UserEnergyStatEntity> findByUserId(Long userId);
-    UserEnergyStatEntity findByUserIdAndEnergyType(Long userId, String energyType);
+    List<UserEnergyStatEntity> findByUserIdAndEnergyType(Long userId, String energyType);
 }

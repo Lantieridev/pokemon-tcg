@@ -19,20 +19,22 @@ describe('MatchStore', () => {
   });
 
   it('should update state and correctly calculate computed properties', () => {
-    const mockState: GameStateDTO = {
+    const mockState: any = {
       matchId: 'match-123',
       version: 5,
+      turnNumber: 5,
       activePlayerIndex: 0,
       currentPhase: 'MAIN',
+      pendingSelectionRequest: null,
       self: {
         playerId: 'AshRivero',
         active: {
           cardId: 'xy1-1',
           name: 'Ivysaur',
-          attachedEnergies: ['Fire'],
+          attachedEnergies: ['FIRE'],
           damageCounters: 3,
-          statusConditions: ['DORMIDO']
-        },
+          statusConditions: ['ASLEEP']
+        } as any,
         bench: [],
         hand: ['xy1-2'],
         deckSize: 45,
@@ -46,12 +48,15 @@ describe('MatchStore', () => {
           attachedEnergies: [],
           damageCounters: 0,
           statusConditions: []
-        },
+        } as any,
         bench: [],
         handSize: 5,
         deckSize: 40,
         prizeCount: 6
-      }
+      },
+      discardPile: [],
+      opponentDiscardPile: [],
+      log: []
     };
 
     store.updateState(mockState);

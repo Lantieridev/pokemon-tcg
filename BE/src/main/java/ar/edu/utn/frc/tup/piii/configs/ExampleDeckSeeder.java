@@ -26,7 +26,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Optional<UserEntity> userOpt = userRepository.findByUsername("usuario");
+        Optional<UserEntity> userOpt = userRepository.findFirstByUsername("usuario");
         if (userOpt.isPresent()) {
             UserEntity user = userOpt.get();
             
@@ -44,8 +44,9 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-4", 4), // Charmander
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-20", 4), // Slugma
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-22", 4), // Pansear
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-5", 3), // Charmeleon
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-6", 2), // Charizard
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-20", 3), // Slugma
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-11", 2), // Charizard EX
                             
                             // Trainers
@@ -69,8 +70,9 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                     List.of(
                             // Pokemons
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-31", 4), // Shellder
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-33", 4), // Staryu
-                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-35", 4), // Lapras
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-32", 3), // Cloyster
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-33", 3), // Staryu
+                            new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-34", 2), // Starmie
                             new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-29", 2), // Blastoise EX
                             
                             // Trainers
