@@ -335,4 +335,27 @@ public final class InPlayPokemon implements BattlePokemonState {
     public void detachTool() {
         this.attachedTool = null;
     }
+
+    private String uuid = java.util.UUID.randomUUID().toString();
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InPlayPokemon that = (InPlayPokemon) o;
+        return Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
+    }
 }

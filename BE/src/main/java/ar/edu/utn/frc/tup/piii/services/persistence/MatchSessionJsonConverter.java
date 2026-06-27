@@ -749,6 +749,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("@type", "inPlay");
+            gen.writeStringField("uuid", value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
@@ -765,6 +766,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serializeWithType(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers, com.fasterxml.jackson.databind.jsontype.TypeSerializer typeSer) throws IOException {
             com.fasterxml.jackson.core.type.WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen,
                     typeSer.typeId(value, com.fasterxml.jackson.core.JsonToken.START_OBJECT));
+            gen.writeStringField("uuid", value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
@@ -814,7 +816,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node.has("attachedTool") && !node.get("attachedTool").isNull()) {
                 tool = p.getCodec().treeToValue(node.get("attachedTool"), TrainerCard.class);
             }
-            return new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
+            String uuidVal = node.has("uuid") ? node.get("uuid").asText() : UUID.randomUUID().toString();
+            final InPlayPokemon ip = new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
+            ip.setUuid(uuidVal);
+            return ip;
         }
     }
 

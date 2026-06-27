@@ -533,11 +533,12 @@ public final class GameFacade {
         
         if (effectId == TrainerEffectId.EVOSODA) {
             if (!selectedIds.isEmpty()) {
+                final BattlePokemonState target = resolveLivePokemon(session, request.target());
                 final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
                 if (!found.isEmpty()) {
                     Card selectedCard = found.get(0);
-                    if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(request.target().getName())) {
-                        request.target().evolveInto(pc);
+                    if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(target.getName())) {
+                        target.evolveInto(pc);
                         if (pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
                             session.setMegaEvolvedThisTurn(true);
                         }
@@ -685,7 +686,7 @@ public final class GameFacade {
                 }
             }
         } else if (effectId == TrainerEffectId.TRICK_SHOVEL) {
-            final BattlePokemonState target = request.target();
+            final BattlePokemonState target = resolveLivePokemon(session, request.target());
             final int targetPlayerIndex = (target != null && target.equals(runtime.getActivePokemon()))
                     ? session.getActivePlayerIndex() : (1 - session.getActivePlayerIndex());
             final PlayerRuntime targetRuntime = session.getPlayerRuntime(targetPlayerIndex);
@@ -718,7 +719,7 @@ public final class GameFacade {
             }
         } else if (effectId == TrainerEffectId.BLACKSMITH) {
             if (!selectedIds.isEmpty()) {
-                final BattlePokemonState target = request.target();
+                final BattlePokemonState target = resolveLivePokemon(session, request.target());
                 if (target == null) {
                     throw new IllegalStateException("Blacksmith requires a target Pokemon");
                 }
@@ -1081,6 +1082,27 @@ public final class GameFacade {
     }
 
     // --- helpers ---
+
+    private BattlePokemonState resolveLivePokemon(final MatchSession session, final BattlePokemonState target) {
+        if (target == null) {
+            return null;
+        }
+        for (int pIdx = 0; pIdx < 2; pIdx++) {
+            final var player = session.getPlayerRuntime(pIdx);
+            if (player == null) continue;
+            final var active = player.getActivePokemon();
+            if (active != null && active.equals(target)) {
+                return active;
+            }
+            final var benched = player.getBench().getAll();
+            for (var b : benched) {
+                if (b != null && b.equals(target)) {
+                    return b;
+                }
+            }
+        }
+        return target;
+    }
 
     private EnergyCard findEnergyInHand(final PlayerRuntime runtime, final PokemonType type) {
         return runtime.getHand().getCards().stream()
