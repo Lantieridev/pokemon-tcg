@@ -41,7 +41,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
               <div class="card-slot counter-slot" [class.has-counters]="getCounter(id) > 0">
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="id"
+                  [alt]="cleanCardId(id)"
                   class="card-img"
                   draggable="false"
                 />
@@ -69,7 +69,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
               >
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="id"
+                  [alt]="cleanCardId(id)"
                   class="card-img"
                   draggable="false"
                 />
@@ -88,7 +88,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
               >
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="id"
+                  [alt]="cleanCardId(id)"
                   class="card-img"
                   draggable="false"
                 />
@@ -585,9 +585,17 @@ export class CardSelectionModalComponent {
     this.selectedSourceId.set(null);
   }
 
+  cleanCardId(cardId: string): string {
+    if (cardId && cardId.includes(':')) {
+      return cardId.split(':')[1];
+    }
+    return cardId;
+  }
+
   getCardName(cardId: string): string {
-    const found = this.tcgService.cards().find(c => c.id === cardId);
-    return found ? found.name : cardId;
+    const cleanId = this.cleanCardId(cardId);
+    const found = this.tcgService.cards().find(c => c.id === cleanId);
+    return found ? found.name : cleanId;
   }
 
   // --- Confirmation / Cancellation ---
@@ -625,15 +633,16 @@ export class CardSelectionModalComponent {
   }
 
   getCardImageUrl(cardId: string): string {
+    const cleanId = this.cleanCardId(cardId);
     // 1. Try the TCG service cache
     const allCards = this.tcgService.cards();
-    const found = allCards.find(c => c.id === cardId);
+    const found = allCards.find(c => c.id === cleanId);
     if (found) {
       return found.images?.small ?? found.images?.large ?? '';
     }
 
     // 2. Parse ID format  e.g. "xy1-108" → https://images.pokemontcg.io/xy1/108.png
-    const parts = cardId.split('-');
+    const parts = cleanId.split('-');
     if (parts.length === 2) {
       return `https://images.pokemontcg.io/${parts[0]}/${parts[1]}.png`;
     }
