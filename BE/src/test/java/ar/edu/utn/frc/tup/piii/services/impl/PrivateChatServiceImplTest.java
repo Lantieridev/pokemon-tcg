@@ -31,7 +31,7 @@ public class PrivateChatServiceImplTest {
 
     @Test
     public void testSaveAndSendMessageUserNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> {
             privateChatService.saveAndSendMessage("unknown", "lucas", "hello");
         });
@@ -50,8 +50,8 @@ public class PrivateChatServiceImplTest {
                 .createdAt(time)
                 .build();
 
-        when(userRepository.findByUsername("sender")).thenReturn(Optional.of(sender));
-        when(userRepository.findByUsername("receiver")).thenReturn(Optional.of(receiver));
+        when(userRepository.findFirstByUsername("sender")).thenReturn(Optional.of(sender));
+        when(userRepository.findFirstByUsername("receiver")).thenReturn(Optional.of(receiver));
         when(chatMessageRepository.save(any(ChatMessageEntity.class))).thenReturn(chatMsg);
 
         ChatMessageDTO result = privateChatService.saveAndSendMessage("sender", "receiver", "hola amigo");
@@ -76,8 +76,8 @@ public class PrivateChatServiceImplTest {
                 .createdAt(time)
                 .build();
 
-        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user1));
-        when(userRepository.findByUsername("user2")).thenReturn(Optional.of(user2));
+        when(userRepository.findFirstByUsername("user1")).thenReturn(Optional.of(user1));
+        when(userRepository.findFirstByUsername("user2")).thenReturn(Optional.of(user2));
         when(chatMessageRepository.findChatHistory(user1, user2)).thenReturn(List.of(chatMsg));
 
         List<ChatMessageDTO> history = privateChatService.getChatHistory("user1", "user2");

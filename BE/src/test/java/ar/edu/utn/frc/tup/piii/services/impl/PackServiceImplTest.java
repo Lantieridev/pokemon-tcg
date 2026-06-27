@@ -38,7 +38,7 @@ public class PackServiceImplTest {
 
     @Test
     public void testOpenPackUserNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> {
             packService.openPack("unknown", "pack_base");
         });
@@ -51,7 +51,7 @@ public class PackServiceImplTest {
                 .packsInventory(new HashMap<>())
                 .packs(0)
                 .build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
 
         assertThrows(IllegalArgumentException.class, () -> {
             packService.openPack("lucas", "pack_base");
@@ -65,7 +65,7 @@ public class PackServiceImplTest {
                 .packsInventory(new HashMap<>(Map.of("pack_base", 1)))
                 .packs(1)
                 .build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.findAll()).thenReturn(List.of());
 
         assertThrows(IllegalStateException.class, () -> {
@@ -93,7 +93,7 @@ public class PackServiceImplTest {
         CardEntity card8 = CardEntity.builder().id("card-8").name("Weedle").subtype("Basic").build();
         CardEntity card9 = CardEntity.builder().id("card-9").name("Pidgeotto").subtype("Basic").build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.findAll()).thenReturn(List.of(card1, card2, card3, card4, card5, card6, card7, card8, card9));
 
         // User already has card1 in inventory
@@ -127,7 +127,7 @@ public class PackServiceImplTest {
                 .build();
 
         CardEntity card1 = CardEntity.builder().id("card-1").name("Mewtwo EX").subtype("EX").build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.findAll()).thenReturn(List.of(card1));
         when(inventoryRepository.findByUserId(1L)).thenReturn(new ArrayList<>());
 
