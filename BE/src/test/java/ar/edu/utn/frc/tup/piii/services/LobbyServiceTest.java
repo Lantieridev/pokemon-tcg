@@ -88,7 +88,7 @@ public class LobbyServiceTest {
     @Test
     public void testJoinQueueRankedUserNotFound() {
         when(penaltyService.isRankedBanned("player1")).thenReturn(false);
-        when(userRepository.findByUsername("player1")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("player1")).thenReturn(Optional.empty());
         assertThrows(NoSuchElementException.class, () -> {
             lobbyService.joinQueue("player1", 10L, true);
         });
@@ -98,7 +98,7 @@ public class LobbyServiceTest {
     public void testJoinQueueRankedWaiting() {
         when(penaltyService.isRankedBanned("player1")).thenReturn(false);
         UserEntity user = UserEntity.builder().username("player1").mmr(1000).build();
-        when(userRepository.findByUsername("player1")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player1")).thenReturn(Optional.of(user));
 
         LobbyResponseDTO response = lobbyService.joinQueue("player1", 10L, true);
         assertNotNull(response);
@@ -111,13 +111,13 @@ public class LobbyServiceTest {
         // Enqueue first player
         when(penaltyService.isRankedBanned("player1")).thenReturn(false);
         UserEntity user1 = UserEntity.builder().username("player1").mmr(1000).build();
-        when(userRepository.findByUsername("player1")).thenReturn(Optional.of(user1));
+        when(userRepository.findFirstByUsername("player1")).thenReturn(Optional.of(user1));
         lobbyService.joinQueue("player1", 10L, true);
 
         // Second player joins with mmr 1050 (difference <= 100)
         when(penaltyService.isRankedBanned("player2")).thenReturn(false);
         UserEntity user2 = UserEntity.builder().username("player2").mmr(1050).build();
-        when(userRepository.findByUsername("player2")).thenReturn(Optional.of(user2));
+        when(userRepository.findFirstByUsername("player2")).thenReturn(Optional.of(user2));
 
         List<Card> mockCards1 = List.of(mock(Card.class));
         List<Card> mockCards2 = List.of(mock(Card.class));
@@ -142,13 +142,13 @@ public class LobbyServiceTest {
         // Enqueue first player with 1000 mmr
         when(penaltyService.isRankedBanned("player1")).thenReturn(false);
         UserEntity user1 = UserEntity.builder().username("player1").mmr(1000).build();
-        when(userRepository.findByUsername("player1")).thenReturn(Optional.of(user1));
+        when(userRepository.findFirstByUsername("player1")).thenReturn(Optional.of(user1));
         lobbyService.joinQueue("player1", 10L, true);
 
         // Second player joins with 1150 mmr (difference > 100)
         when(penaltyService.isRankedBanned("player2")).thenReturn(false);
         UserEntity user2 = UserEntity.builder().username("player2").mmr(1150).build();
-        when(userRepository.findByUsername("player2")).thenReturn(Optional.of(user2));
+        when(userRepository.findFirstByUsername("player2")).thenReturn(Optional.of(user2));
 
         LobbyResponseDTO response = lobbyService.joinQueue("player2", 20L, true);
 

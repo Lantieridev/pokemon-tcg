@@ -499,6 +499,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         // Show rank-up after victory screen has settled
         const t = setTimeout(() => this.showRankUpAnimation.set(true), 2400);
         onCleanup(() => clearTimeout(t));
+      }
+    });
     // Fetch achievements on match end
     effect((onCleanup) => {
       if (this.isFinished()) {

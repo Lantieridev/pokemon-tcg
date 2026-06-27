@@ -21,7 +21,7 @@ class DatabaseSeederTest {
         MatchRepository matchRepository = mock(MatchRepository.class);
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
-        when(userRepository.findByUsername(any())).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername(any())).thenReturn(Optional.empty());
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(matchRepository.count()).thenReturn(0L);
         when(passwordEncoder.encode(any())).thenReturn("encoded");
@@ -39,7 +39,7 @@ class DatabaseSeederTest {
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
         UserEntity fakeUser = UserEntity.builder().username("fake").build();
-        when(userRepository.findByUsername(any())).thenReturn(Optional.of(fakeUser));
+        when(userRepository.findFirstByUsername(any())).thenReturn(Optional.of(fakeUser));
         when(matchRepository.count()).thenReturn(2L);
 
         DatabaseSeeder seeder = new DatabaseSeeder(userRepository, matchRepository, passwordEncoder);

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
@@ -47,6 +47,7 @@ import { Router } from '@angular/router';
 })
 export class DeckRailComponent {
   @Input() deckData: any = null;
+  @Input() set deck(val: any) { this.deckData = val; }
   @Input() display: string = "'Instrument Serif',serif";
   @Input() deckName: string = '';
   @Input() totalCards: number = 0;

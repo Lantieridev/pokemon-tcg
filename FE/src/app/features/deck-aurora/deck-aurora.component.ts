@@ -78,7 +78,6 @@ interface Filters {
                       Seleccionar como Activo
                     </button>
                   }
-                  <button class="delete-btn" (click)="$event.stopPropagation(); deleteDeck(deck.id)" title="Eliminar Mazo">✕</button>
                   <button class="delete-btn" (click)="$event.stopPropagation(); deckToDelete.set(deck.id)" title="Eliminar Mazo">✕</button>
                 </div>
               }
