@@ -28,14 +28,17 @@ public final class GooeyRegenerationStrategy implements AbilityEffect {
         if (energyIndex >= 0 && energyIndex < source.getAttachedEnergyCards().size()) {
             final EnergyCard energy = source.getAttachedEnergyCards().get(energyIndex);
             
-            // Remove from Pokémon
-            source.removeEnergies(List.of(energyIndex));
-            
-            // Discard
-            runtime.getDiscardPile().add(energy);
-            
-            // Heal 60 HP
-            source.heal(60);
+            // Validate that the discarded energy card is indeed Fairy
+            if (energy.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY || energy.isProvidesAllTypes()) {
+                // Remove from Pokémon
+                source.removeEnergies(List.of(energyIndex));
+                
+                // Discard
+                runtime.getDiscardPile().add(energy);
+                
+                // Heal 60 HP
+                source.heal(60);
+            }
         }
     }
 }

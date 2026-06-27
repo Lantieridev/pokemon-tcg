@@ -48,11 +48,13 @@ public final class BigJumpStrategy implements AbilityEffect {
         final Optional<TrainerCard> attachedTool = source.getAttachedTool();
         attachedTool.ifPresent(runtime.getHand()::addCard);
 
-        // Remove the Pokémon from the board
         if (runtime.getActivePokemon() == source) {
             runtime.clearActivePokemon();
             if (!runtime.getBench().isEmpty()) {
                 session.setAwaitingPromotion(playerIndex);
+                if (session.getTurnManager() != null) {
+                    session.getTurnManager().interruptMainPhase();
+                }
             }
         } else {
             final int index = runtime.getBench().getAll().indexOf(source);

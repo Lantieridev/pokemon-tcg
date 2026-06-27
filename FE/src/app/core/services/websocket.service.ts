@@ -5,6 +5,7 @@ import { Observable, Subject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { MatchStore } from '../store/match.store';
 import { GameStateResponseDTO, ActionRequestDTO } from '../models/game-state.models';
+import { ToastService } from './toast.service';
 
 /**
  * Servicio STOMP para la comunicación en tiempo real del tablero de juego.
@@ -20,6 +21,7 @@ export class WebSocketService {
   private authService = inject(AuthService);
   private matchStore = inject(MatchStore);
   private ngZone = inject(NgZone);
+  private toastService = inject(ToastService);
 
   private stompClient: Client | null = null;
   private messageSubject = new Subject<GameStateResponseDTO>();
@@ -100,6 +102,9 @@ export class WebSocketService {
 
     this.stompClient.onStompError = (frame) => {
       console.error('[WS] Error STOMP:', frame.headers['message'], frame.body);
+      const rawMessage = frame.headers['message'] || 'Error en la partida';
+      const friendlyMessage = this.mapFriendlyErrorMessage(rawMessage);
+      this.toastService.error(friendlyMessage);
     };
 
     this.stompClient.onDisconnect = () => {
@@ -166,5 +171,25 @@ export class WebSocketService {
 
   get matchId(): string | null {
     return this.currentMatchId;
+  }
+
+  private mapFriendlyErrorMessage(raw: string): string {
+    const lower = raw.toLowerCase();
+    if (lower.includes('retreat_blocked_by_poison_barrier')) {
+      return 'No puedes retirar a este Pokémon porque está envenenado y el oponente posee a Dragalge (Poison Barrier).';
+    }
+    if (lower.includes('not_your_turn')) {
+      return 'No es tu turno.';
+    }
+    if (lower.includes('ability_already_used_this_turn')) {
+      return 'Ya has usado esta habilidad este turno.';
+    }
+    if (lower.includes('no_fairy_energy_attached')) {
+      return 'Debes tener al menos una energía Hada (Fairy) asignada para usar esta habilidad.';
+    }
+    if (lower.includes('no_damage_to_heal')) {
+      return 'El Pokémon no tiene daño para curar.';
+    }
+    return raw;
   }
 }

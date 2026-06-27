@@ -705,12 +705,17 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime attacker = ctx.getAttackerRuntime();
                     if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
-                        final BattlePokemonState oldActive = attacker.getActivePokemon();
-                        final BattlePokemonState newActive = attacker.getBench().promote(0);
-                        attacker.setActivePokemon(newActive);
-                        attacker.getBench().place(oldActive);
-                        attacker.getStatusEffectManager().clearAll();
-                        attacker.recordPokemonEntered(oldActive);
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
+                                        null,
+                                        1,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        }
                     }
                 });
         m.put(AttackEffectType.DISCARD_OPPONENT_HAND,

@@ -200,6 +200,13 @@ public final class GameFacade {
         if (action.evolution() != null) {
             PokemonCard newCard = (PokemonCard) runtime.getHand().removeCard(action.evolution().getCardId());
             action.target().evolveInto(newCard);
+            
+            if (newCard.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+                if (session != null) {
+                    session.setMegaEvolvedThisTurn(true);
+                }
+            }
+
             // XY1 §2: a Pokémon cannot evolve in the same turn it evolved. The
             // BattlePokemonState mutates in-place, so we must reset its turnsInPlay
             // counter to 0 so RuleValidator sees it as "just entered". Done HERE
@@ -531,12 +538,34 @@ public final class GameFacade {
                     Card selectedCard = found.get(0);
                     if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(request.target().getName())) {
                         request.target().evolveInto(pc);
+                        if (pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+                            session.setMegaEvolvedThisTurn(true);
+                        }
                     } else {
                         throw new IllegalArgumentException("Selected card is not a valid evolution for the target");
                     }
                 }
             }
             runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.BOUNCE) {
+            if (!selectedIds.isEmpty()) {
+                final String selectedCardId = selectedIds.get(0);
+                int benchIndex = -1;
+                for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
+                    if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
+                        benchIndex = i;
+                        break;
+                    }
+                }
+                if (benchIndex != -1) {
+                    final BattlePokemonState newActive = runtime.getBench().promote(benchIndex);
+                    final BattlePokemonState oldActive = runtime.getActivePokemon();
+                    runtime.setActivePokemon(newActive);
+                    runtime.getBench().place(oldActive);
+                    runtime.getStatusEffectManager().clearAll();
+                    runtime.recordPokemonEntered(oldActive);
+                }
+            }
         } else if (effectId == TrainerEffectId.GREAT_BALL) {
             if (!selectedIds.isEmpty()) {
                 final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));

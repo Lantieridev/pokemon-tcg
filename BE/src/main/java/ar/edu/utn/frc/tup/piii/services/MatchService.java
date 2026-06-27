@@ -400,18 +400,22 @@ public class MatchService {
                     if (checkForPendingPromotion(session)) {
                         return;
                     }
-                    if (!session.isBetweenTurnsProcessed()) {
-                        // Resume the deferred between-turns phase that was paused for this promotion
-                        processBetweenTurns(session, turnManager);
-                        session.setBetweenTurnsProcessed(true);
-                        if (resolveBetweenTurnsKnockouts(session)) {
-                            if (checkForPendingPromotion(session)) {
-                                return;
+                    if (turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase) {
+                        if (!session.isBetweenTurnsProcessed()) {
+                            // Resume the deferred between-turns phase that was paused for this promotion
+                            processBetweenTurns(session, turnManager);
+                            session.setBetweenTurnsProcessed(true);
+                            if (resolveBetweenTurnsKnockouts(session)) {
+                                if (checkForPendingPromotion(session)) {
+                                    return;
+                                }
                             }
                         }
+                        turnManager.endBetweenTurns();
+                        session.setBetweenTurnsProcessed(false);
+                    } else if (turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase) {
+                        turnManager.resumeMainPhase();
                     }
-                    turnManager.endBetweenTurns();
-                    session.setBetweenTurnsProcessed(false);
                 }
             }
             default -> {
@@ -425,6 +429,19 @@ public class MatchService {
             }
         }
 
+        if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED && session.isMegaEvolvedThisTurn()) {
+            session.setMegaEvolvedThisTurn(false);
+            turnManager.passTurn();
+            processBetweenTurns(session, turnManager);
+            session.setBetweenTurnsProcessed(true);
+            if (resolveBetweenTurnsKnockouts(session)) {
+                if (checkForPendingPromotion(session)) {
+                    return;
+                }
+            }
+            turnManager.endBetweenTurns();
+            session.setBetweenTurnsProcessed(false);
+        }
     }
 
     /**

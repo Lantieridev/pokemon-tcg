@@ -314,6 +314,15 @@ class CardMapperTest {
         assertEquals("damage_per_retreat_cost:20", card.getAttacks().get(0).effectText());
     }
 
+    @Test
+    void shouldMapFangSnipeToDiscardTrainerFromOpponentHand() {
+        final CardEntity entity = pokemonEntity("xy2-34", "Luxray", "Stage 2", 140,
+                "[{\"name\":\"Fang Snipe\",\"cost\":[\"Lightning\",\"Colorless\"],\"convertedEnergyCost\":2,\"damage\":\"40\",\"text\":\"Your opponent reveals his or her hand. Discard a Trainer card you find there.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_trainer_from_opponent_hand", card.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,

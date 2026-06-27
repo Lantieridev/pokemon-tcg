@@ -652,6 +652,7 @@ public final class RuleValidator {
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ENERGY_GRACE ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.BIG_JUMP ||
+            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.GOOEY_REGENERATION ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
             if (source.hasUsedAbilityThisTurn(effId.name())) {
                 return new ValidationResult.Invalid("ability_already_used_this_turn");
@@ -666,6 +667,11 @@ public final class RuleValidator {
             }
             if (source.getAttachedEnergyCards().isEmpty()) {
                 return new ValidationResult.Invalid("no_energy_attached");
+            }
+            final boolean hasFairyEnergy = source.getAttachedEnergyCards().stream()
+                    .anyMatch(ec -> ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY || ec.isProvidesAllTypes());
+            if (!hasFairyEnergy) {
+                return new ValidationResult.Invalid("no_fairy_energy_attached");
             }
             if (source.getDamageCounters() == 0) {
                 return new ValidationResult.Invalid("no_damage_to_heal");
@@ -954,6 +960,11 @@ public final class RuleValidator {
             }
             if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE) {
                 if (action.cardIds().size() > req.maxSelections()) {
+                    return new ValidationResult.Invalid("must_select_exact_amount");
+                }
+            }
+            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE) {
+                if (action.cardIds().size() != 1) {
                     return new ValidationResult.Invalid("must_select_exact_amount");
                 }
             }
