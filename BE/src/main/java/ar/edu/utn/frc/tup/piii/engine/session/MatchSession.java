@@ -657,7 +657,6 @@ public final class MatchSession {
         this.mmrChangeB = mmrChangeB;
     }
 
-<<<<<<< HEAD
     public Integer getCoinsGainedA() {
         return coinsGainedA;
     }
