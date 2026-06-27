@@ -1,124 +1,109 @@
-<div class="absolute inset-0 login-wrapper overflow-hidden font-sans">
-  
-  <!-- Kanto Panning Background -->
-  <div class="kanto-bg panning-bg"></div>
-  <!-- Darker overlay for modern dark mode feel -->
-  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+<div class="absolute inset-0 flex items-center justify-center login-bg">
+  <div class="login-card flex flex-col items-center">
 
-  <!-- Decorative modern glow -->
-  <div class="absolute inset-0 pointer-events-none overflow-hidden">
-    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px]"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-[80px]"></div>
-  </div>
+    <!-- Logo -->
+    <h1 class="login-title">
+      POKÉMON
+      <span class="login-subtitle">TCG WEB</span>
+    </h1>
 
-  <div class="relative z-10 h-full w-full flex items-center justify-center p-6">
-    <div class="modern-glass-card flex flex-col items-center">
+    <p class="login-desc">
+      @if (isLogin) { Iniciá sesión para acceder a tu mazo. }
+      @else { Creá tu cuenta y empezá a jugar. }
+    </p>
 
-      <!-- Logo -->
-      <h1 class="modern-title-pokemon text-center mb-1">
-        POKÉMON<br/>
-        <span class="modern-subtitle-pokemon">TCG WEB</span>
-      </h1>
+    <!-- Toggle modo -->
+    <div class="mode-tabs">
+      <button class="tab-btn" [class.tab-active]="isLogin" (click)="mode.set('login')">
+        Iniciar sesión
+      </button>
+      <button class="tab-btn" [class.tab-active]="!isLogin" (click)="mode.set('register')">
+        Registrarse
+      </button>
+    </div>
 
-      <p class="text-gray-400 text-sm text-center mb-8 font-light tracking-wide">
-        @if (isLogin) { Inicia sesión para acceder a tu mazo. }
-        @else { Crea tu cuenta y empieza a jugar. }
-      </p>
+    <!-- Formulario -->
+    <div class="w-full flex flex-col gap-4 mt-6">
 
-      <!-- Toggle modo -->
-      <div class="modern-tabs mb-8">
-        <button class="modern-tab-btn" [class.modern-tab-active]="isLogin" (click)="mode.set('login')">
-          Iniciar sesión
-        </button>
-        <button class="modern-tab-btn" [class.modern-tab-active]="!isLogin" (click)="mode.set('register')">
-          Registrarse
-        </button>
+      <!-- Usuario -->
+      <div class="field-group">
+        <label class="field-label">Usuario</label>
+        <input
+          id="login-username"
+          type="text"
+          class="field-input"
+          placeholder="Ej: AshRivero"
+          autocomplete="username"
+          [ngModel]="username()"
+          (ngModelChange)="username.set($event)"
+        />
       </div>
 
-      <!-- Formulario -->
-      <div class="w-full flex flex-col gap-5">
-
-        <!-- Usuario -->
-        <div class="modern-field-group">
-          <label class="modern-label">Usuario</label>
+      <!-- Email (solo en registro) -->
+      @if (!isLogin) {
+        <div class="field-group">
+          <label class="field-label">Email</label>
           <input
-            id="login-username"
-            type="text"
-            class="modern-input"
-            placeholder="Ej: AshRivero"
-            autocomplete="username"
-            [ngModel]="username()"
-            (ngModelChange)="username.set($event)"
+            id="login-email"
+            type="email"
+            class="field-input"
+            placeholder="ash@pokemon.com"
+            autocomplete="email"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
           />
         </div>
+      }
 
-        <!-- Email (solo en registro) -->
-        @if (!isLogin) {
-          <div class="modern-field-group">
-            <label class="modern-label">Email</label>
-            <input
-              id="login-email"
-              type="email"
-              class="modern-input"
-              placeholder="ash@pokemon.com"
-              autocomplete="email"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-            />
-          </div>
-        }
-
-        <!-- Contraseña -->
-        <div class="modern-field-group">
-          <label class="modern-label">Contraseña</label>
-          <input
-            id="login-password"
-            type="password"
-            class="modern-input"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            (keyup.enter)="submit()"
-          />
-        </div>
-
-        <!-- Error message -->
-        @if (errorMsg()) {
-          <div class="modern-error" role="alert">
-            <span class="mr-2">⚠</span> {{ errorMsg() }}
-          </div>
-        }
-
-        <!-- Botón submit -->
-        <button
-          id="login-submit-btn"
-          class="modern-submit-btn mt-2"
-          [class.modern-submit-btn-red]="!isLogin"
-          [disabled]="loading()"
-          (click)="submit()"
-        >
-          @if (loading()) {
-            <span class="modern-spinner"></span>
-            <span>{{ isLogin ? 'INGRESANDO...' : 'REGISTRANDO...' }}</span>
-          } @else {
-            <span>{{ isLogin ? 'INGRESAR' : 'CREAR CUENTA' }}</span>
-          }
-        </button>
-
+      <!-- Contraseña -->
+      <div class="field-group">
+        <label class="field-label">Contraseña</label>
+        <input
+          id="login-password"
+          type="password"
+          class="field-input"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          (keyup.enter)="submit()"
+        />
       </div>
 
-      <!-- Footer toggle -->
-      <div class="modern-footer mt-8">
-        @if (isLogin) {
-          <span class="text-gray-400">¿No tienes cuenta?</span>
-          <button class="modern-link-btn" (click)="toggleMode()">Regístrate acá</button>
+      <!-- Error message -->
+      @if (errorMsg()) {
+        <div class="error-banner" role="alert">
+          <span>⚠ {{ errorMsg() }}</span>
+        </div>
+      }
+
+      <!-- Botón submit -->
+      <button
+        id="login-submit-btn"
+        class="submit-btn"
+        [disabled]="loading()"
+        (click)="submit()"
+      >
+        @if (loading()) {
+          <span class="spinner"></span>
+          <span>{{ isLogin ? 'Ingresando...' : 'Registrando...' }}</span>
         } @else {
-          <span class="text-gray-400">¿Ya tienes cuenta?</span>
-          <button class="modern-link-btn" (click)="toggleMode()">Inicia sesión</button>
+          <span>{{ isLogin ? 'INGRESAR' : 'CREAR CUENTA' }}</span>
         }
-      </div>
+      </button>
 
     </div>
+
+    <!-- Footer toggle -->
+    <div class="login-footer">
+      @if (isLogin) {
+        ¿No tenés cuenta?
+        <button class="link-btn" (click)="toggleMode()">Registrate acá</button>
+      } @else {
+        ¿Ya tenés cuenta?
+        <button class="link-btn" (click)="toggleMode()">Iniciá sesión</button>
+      }
+    </div>
+
   </div>
 </div>

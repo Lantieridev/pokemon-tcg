@@ -10,8 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -22,14 +20,11 @@ class GameWebSocketControllerTest {
     @Mock
     private MatchService matchService;
 
-    @Mock
-    private SimpMessagingTemplate messagingTemplate;
-
     private GameWebSocketController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new GameWebSocketController(matchService, messagingTemplate);
+        controller = new GameWebSocketController(matchService);
     }
 
     @Test

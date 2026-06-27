@@ -72,7 +72,7 @@ public final class TrainerEffectResolver {
             };
             case HARD_CHARM -> (ctx, isAttacker) -> {
                 if (!isAttacker) {
-                    ctx.addDefenderModifier(dmg -> dmg > 0 ? 20 : 0);
+                    ctx.addDefenderModifier(dmg -> Math.max(0, dmg - 20));
                 }
             };
             case NONE -> null;

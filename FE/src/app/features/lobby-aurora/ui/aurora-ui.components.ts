@@ -17,7 +17,6 @@ import { RouterModule } from '@angular/router';
         @case ('sword') { <path d="M14 3h7v7M21 3l-9 9M3 21l5-1 4-4-4-4-4 4-1 5Z" /> }
         @case ('arrow') { <path d="M5 12h14M13 6l6 6-6 6" /> }
         @case ('fire') { <path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-1.5.5-2.5 1.5-3.5C9.5 5.5 11 5 12 2z" /><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /> }
-        @case ('pokecoin') { <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 7v10M9 9.5a3 3 0 1 0 0 5h2.5" /> }
       }
     </svg>
   `
@@ -44,7 +43,7 @@ export class IconComponent {
     </div>
   `
 })
-export class LogoComponent { }
+export class LogoComponent {}
 
 @Component({
   selector: 'aurora-trainer-chip',
@@ -158,7 +157,7 @@ export class TrainerChipComponent {
   toggle() { this.open = !this.open; }
 
   getAvatarEmoji(icon: string | undefined): string {
-    if (!icon) return '🎒';
+    if (!icon) return '';
     switch (icon.toLowerCase()) {
       case 'ash': return '🧢';
       case 'misty': return '💧';
@@ -166,37 +165,17 @@ export class TrainerChipComponent {
       case 'gary': return '👑';
       case 'serena': return '🎀';
       case 'red': return '⚡';
-      default: return '🎒';
+      default: return '';
     }
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    if (!av) return false;
-    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red', 'default_trainer'];
-    return !emojis.includes(av);
+    return !!av && av.startsWith('avatar_');
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-
-    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
-    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
-    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
-    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
-    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
-    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
-    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
-    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
-    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
-    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
-
-    const normalizedValue = av.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '');
-
-    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
-    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
+    return `assets/achievements/avatars/${av}.png`;
   }
 
   logout() {
@@ -276,20 +255,6 @@ export class BallIconComponent {
 }
 
 @Component({
-  selector: 'aurora-coin-icon',
-  standalone: true,
-  template: `
-    <span [style.width.px]="size" [style.height.px]="size" style="border-radius: 50%; display: inline-block; flex: 0 0 auto; position: relative; background: linear-gradient(135deg, #fff080 0%, #f1c40f 40%, #b9770e 100%); box-shadow: inset 0 0 0 1px #fcf3cf, 0 1px 4px rgba(0,0,0,.6);">
-      <span [style.width.px]="size * 0.65" [style.height.px]="size * 0.65" style="position: absolute; top: 50%; left: 50%; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.6); transform: translate(-50%,-50%); box-shadow: inset 0 0 2px rgba(0,0,0,0.1);"></span>
-      <span [style.fontSize.px]="size * 0.45" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.95); font-weight: 800; font-family: var(--display, sans-serif); line-height: 1; padding-top: 1px; text-shadow: 0 1px 1px rgba(0,0,0,0.3);">P</span>
-    </span>
-  `
-})
-export class CoinIconComponent {
-  @Input() size: number = 16;
-}
-
-@Component({
   selector: 'aurora-battle-cta',
   standalone: true,
   imports: [CommonModule, IconComponent],
@@ -319,7 +284,7 @@ export class CoinIconComponent {
 export class BattleCtaComponent implements OnDestroy {
   @Input() title: string = 'BATALLAR';
   @Input() sub: string = 'Clasificatoria · Liga Oro III';
-
+  
   @Input() set searching(val: boolean) {
     this._searching.set(val);
     if (val) {
@@ -335,7 +300,7 @@ export class BattleCtaComponent implements OnDestroy {
 
   @Output() startBattle = new EventEmitter<void>();
   @Output() cancelBattle = new EventEmitter<void>();
-
+  
   secs = signal(0);
   intervalId: any;
 
@@ -444,7 +409,7 @@ export class SparksComponent {
     </svg>
   `
 })
-export class AmbientComponent { }
+export class AmbientComponent {}
 
 @Component({
   selector: 'aurora-sig-card',
@@ -475,10 +440,5 @@ export class SigCardComponent {
       lightning: ['#f5d34c', '#d6a31f', '#423207']
     };
     return t[this.type] || t['fire'];
-  }
-}
-lightning: ['#f5d34c', '#d6a31f', '#423207']
-    };
-return t[this.type] || t['fire'];
   }
 }

@@ -31,36 +31,16 @@ export class PublicProfileModalComponent implements OnInit {
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    if (!av) return false;
-    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red', 'default_trainer'];
-    return !emojis.includes(av);
+    return !!av && av.startsWith('avatar_');
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    
-    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
-    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
-    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
-    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
-    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
-    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
-    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
-    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
-    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
-    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
-
-    const normalizedValue = av.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '');
-      
-    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
-    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
+    return `assets/achievements/avatars/${av}.png`;
   }
 
   getAvatarEmoji(icon: string | undefined): string {
-    if (!icon) return '🎒';
+    if (!icon) return '👤';
     switch (icon.toLowerCase()) {
       case 'ash': return '🧢';
       case 'misty': return '💧';
@@ -68,7 +48,7 @@ export class PublicProfileModalComponent implements OnInit {
       case 'gary': return '👑';
       case 'serena': return '🎀';
       case 'red': return '⚡';
-      default: return '🎒';
+      default: return '👤';
     }
   }
 
@@ -138,7 +118,21 @@ export class PublicProfileModalComponent implements OnInit {
   }
 
   getEnergyIconEmoji(type: string): string {
-    return '';
+    if (!type) return '⚪';
+    switch (type.toUpperCase()) {
+      case 'FIRE': return '🔥';
+      case 'WATER': return '💧';
+      case 'GRASS': return '🌿';
+      case 'LIGHTNING': return '⚡';
+      case 'PSYCHIC': return '🔮';
+      case 'FIGHTING': return '👊';
+      case 'DARKNESS': return '🌙';
+      case 'METAL': return '🔩';
+      case 'FAIRY': return '🎀';
+      case 'DRAGON': return '🐉';
+      case 'COLORLESS': return '⚪';
+      default: return '⚪';
+    }
   }
 
   getEnergyLabel(type: string): string {

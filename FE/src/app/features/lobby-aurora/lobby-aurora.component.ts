@@ -21,7 +21,7 @@ import {
   AmbientComponent,
   BattleCtaComponent,
 } from './ui/aurora-ui.components';
-import { HoloCardComponent, AuroraCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+import { HoloCardComponent, AuroraCardComponent } from './components/cards.components';
 import { DeckRailComponent } from './components/deck-rail.component';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -29,7 +29,6 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
 import { LobbyService } from '../../core/services/lobby.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { DeckSummaryDTO } from '../../core/models/game-state.models';
-import { TutorialService } from '../../core/services/tutorial.service';
 
 type LobbyTab = 'public' | 'private';
 type PrivateMode = 'create' | 'join';
@@ -467,27 +466,6 @@ type PrivateMode = 'create' | 'join';
       margin-bottom: 24px;
       text-align: center;
     }
-
-    .help-trigger-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent2, #fbbf24);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      padding: 0;
-      margin-left: 2px;
-    }
-    .help-trigger-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: var(--accent2, #fbbf24);
-      box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
-    }
   `],
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
@@ -508,12 +486,9 @@ type PrivateMode = 'create' | 'join';
 
         <!-- ── Left copy ─────────────────────────────────────────────── -->
         <div style="width: 560px; flex: 0 0 auto; z-index: 3;">
-          <div class="fu" style="display: flex; align-items: center; gap: 12px;">
+          <div class="fu" style="display: flex; align-items: center; gap: 10px;">
             <span class="live"></span>
             <span class="eyebrow">Temporada 7 · Liga Oro III</span>
-            <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-              <aurora-icon n="help" [s]="13"></aurora-icon>
-            </button>
           </div>
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw"
               style="font-size: 76px; line-height: 0.98; letter-spacing: -0.015em; margin: 18px 0 0; animation-delay: .05s;">
@@ -527,7 +502,6 @@ type PrivateMode = 'create' | 'join';
           <!-- Original CTA Buttons -->
           <div class="fu" style="display: flex; align-items: center; gap: 16px; margin-top: 40px; animation-delay: .16s;">
             <aurora-battle-cta
-              id="btn-battle"
               title="BATALLAR"
               sub="Clasificatoria"
               [searching]="lobby.queueStatus() === 'waiting'"
@@ -538,14 +512,14 @@ type PrivateMode = 'create' | 'join';
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
             <div class="bot-section">
-              <button class="action-btn bot" style="margin-top: 0; padding: 12px 18px;" [disabled]="lobby.decks().length === 0" (click)="openModal('bot')">
+              <button class="action-btn bot" [disabled]="lobby.decks().length === 0" (click)="startBotMatch()">
                 <span class="bot-icon">🤖</span> Jugar vs Bot
               </button>
             </div>
           </div>
 
           <!-- Rank strip -->
-          <div id="rango-info" class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
+          <div class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
             <aurora-rank-crest [size]="48" tier="III"></aurora-rank-crest>
             <div style="border-right: 1px solid var(--line); padding-right: 18px;">
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
@@ -596,15 +570,12 @@ type PrivateMode = 'create' | 'join';
             <h3 class="modal-title">
               @if (modalMode() === 'competitive') {
                 🏆 Clasificatoria
-              } @else if (modalMode() === 'casual') {
-                ⚔️ Partida Casual
               } @else {
-                🤖 Jugar vs Bot
+                ⚔️ Partida Casual
               }
             </h3>
 
             <!-- Tabs: Pública / Privada -->
-            @if (modalMode() !== 'bot') {
             <div class="panel-tabs">
               <button class="panel-tab" [class.active]="activeTab() === 'public'" (click)="setTab('public')" id="tab-public">
                 🌐 Partida Pública
@@ -613,7 +584,6 @@ type PrivateMode = 'create' | 'join';
                 🔒 Sala Privada
               </button>
             </div>
-            }
 
             <!-- ── Deck selector ── -->
             @if (!isAnyMatchPending()) {
@@ -640,7 +610,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PÚBLICA ══════════════ -->
-            @if (activeTab() === 'public' && modalMode() !== 'bot') {
+            @if (activeTab() === 'public') {
 
               @if (lobby.queueStatus() === 'idle') {
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -675,7 +645,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PRIVADA ══════════════ -->
-            @if (activeTab() === 'private' && modalMode() !== 'bot') {
+            @if (activeTab() === 'private') {
 
               <!-- Sub-tabs: Crear / Unirse -->
               @if (!isAnyMatchPending()) {
@@ -743,19 +713,6 @@ type PrivateMode = 'create' | 'join';
 
             }
 
-            <!-- ══════════════ MODO BOT ══════════════ -->
-            @if (modalMode() === 'bot') {
-              <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button
-                  class="action-btn bot"
-                  style="margin-top: 0; width: 100%;"
-                  [disabled]="lobby.decks().length === 0"
-                  (click)="startBotMatch()">
-                  <span class="bot-icon">🤖</span> Iniciar Partida
-                </button>
-              </div>
-            }
-
             <!-- Error message -->
             @if (lobby.lobbyError()) {
               <div class="error-msg">⚠️ {{ lobby.lobbyError() }}</div>
@@ -775,7 +732,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   private profileService = inject(ProfileService);
   private matchBackendService = inject(MatchBackendService);
   readonly lobby = inject(LobbyService);
-  private tutorialService = inject(TutorialService);
 
   get username(): string {
     return this.authService.username ?? 'Invitado';
@@ -786,7 +742,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   readonly privateMode = signal<PrivateMode>('create');
   readonly copied = signal(false);
   readonly modalOpen = signal(false);
-  readonly modalMode = signal<'competitive' | 'casual' | 'bot'>('competitive');
+  readonly modalMode = signal<'competitive' | 'casual'>('competitive');
   joinCode = '';
 
   profileData: UserProfileResponseDTO | null = null;
@@ -835,7 +791,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     this.lobby.reset();
     this.lobby.loadDecks();
     this.lobby.connectLobbyWebSocket();
-    this.tutorialService.triggerTutorial('lobby');
 
     const username = this.authService.username;
     if (username) {
@@ -882,7 +837,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     }
   }
 
-  openModal(mode: 'competitive' | 'casual' | 'bot'): void {
+  openModal(mode: 'competitive' | 'casual'): void {
     this.modalMode.set(mode);
     this.modalOpen.set(true);
   }
@@ -923,9 +878,5 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     this.lobby.roomStatus.set('idle');
     this.lobby.roomCode.set(null);
     this.lobby.lobbyError.set(null);
-  }
-
-  triggerHelp(): void {
-    this.tutorialService.triggerTutorial('lobby', true);
   }
 }

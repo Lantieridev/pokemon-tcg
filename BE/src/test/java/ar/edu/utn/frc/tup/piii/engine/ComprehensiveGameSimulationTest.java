@@ -109,7 +109,7 @@ class ComprehensiveGameSimulationTest {
             deckB.add(new EnergyCard("basic-grass-b-" + deckB.size(), "Grass Energy", PokemonType.GRASS, true));
         }
 
-        matchId = matchCreationService.createMatch("AshKetchum",  "Misty",  deckA,  deckB, false);
+        matchId = matchCreationService.createMatch("AshKetchum", "Misty", deckA, deckB);
         session = sessionRegistry.find(matchId).orElseThrow();
     }
 

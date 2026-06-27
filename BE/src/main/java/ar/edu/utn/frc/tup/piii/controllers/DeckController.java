@@ -9,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,16 +70,5 @@ public final class DeckController {
     @PostMapping
     public ResponseEntity<DeckResponseDTO> create(@RequestBody final DeckRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<DeckResponseDTO> update(@PathVariable final Long id, @RequestBody final DeckRequestDTO request) {
-        return ResponseEntity.ok(deckService.update(id, request));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable final Long id) {
-        deckService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

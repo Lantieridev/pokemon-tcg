@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('FE/src/app/core/models/game-state.models.ts', 'utf8'); c = c.replace(/supertype: 'Pok[^']*mon'/g, "supertype: 'Pokémon'"); fs.writeFileSync('FE/src/app/core/models/game-state.models.ts', c, 'utf8');

@@ -1,20 +1,28 @@
-# TPI Pokémon TCG - Documentación Técnica y Arquitectura
+<p align="center"> <img src="./BE/docs/assets/images/pokemon-tcg.png" alt="Pokemon TCG"/> </p>
 
-Bienvenido a la documentación oficial del proyecto. Esta documentación ha sido diseñada **tanto para desarrolladores humanos como para Agentes de IA (LLMs)**. Cada archivo detalla clases, flujos de datos y convenciones de diseño estrictas que deben respetarse.
+# Pokémon Trading Card Game
 
-## Directorio de Documentación
+El Pokémon Trading Card Game, inspirado en el universo creado por Nintendo, es un juego de cartas estratégico en el que los
+jugadores asumen el rol de entrenadores Pokémon que compiten entre sí utilizando mazos personalizados. Cada jugador construye su
+estrategia combinando Pokémon, cartas de energía y cartas de entrenador, buscando derrotar a los Pokémon rivales mediante
+ataques, habilidades y decisiones tácticas a lo largo de la partida.
 
-### 1. [Arquitectura y Flujo de Datos](docs/01_arquitectura_y_flujo.md)
-Detalla la separación entre el Cliente (Angular) y el Servidor (Spring Boot), el uso intensivo de WebSockets (STOMP) para el Game Engine, y cómo se gestiona la concurrencia (`ReentrantLock`) y la persistencia (`MatchSessionJsonConverter`).
+A diferencia de otros juegos de estrategia tradicionales, el Pokémon TCG combina planificación y adaptabilidad, ya que el
+éxito depende tanto de la construcción del mazo como de la toma de decisiones en tiempo real. Los jugadores deben
+gestionar recursos, evolucionar sus Pokémon y anticipar los movimientos del oponente para obtener ventaja en el combate.
 
-### 2. [Sistemas Core y Reglas de Negocio](docs/02_sistemas_core.md)
-Contiene la lógica de dominio del proyecto:
-- **Game Engine:** Fases del turno, mecánicas de daño, tipos de cartas (Pokémon, Entrenadores, Energía) y condiciones de victoria.
-- **Matchmaking y MMR (Rankeds):** Implementación de la fórmula Elo, Ligas y el reset de temporadas.
-- **Sistemas Sociales:** Sistema de amigos, chat en vivo, reportes de toxicidad y penalizaciones automáticas (`PenaltyService`).
+En este contexto, como parte de la materia Programación III, se presenta el desafío de desarrollar una versión digital
+del juego de cartas Pokémon, implementando tanto el front-end como el back-end de la aplicación. Este proyecto permitirá
+poner en práctica conceptos fundamentales de desarrollo de software, incluyendo la arquitectura cliente-servidor, el
+diseño de APIs, la gestión del estado del juego y la interacción entre múltiples jugadores.
 
-### 3. [Guía de Desarrollo, CI y Setup](docs/03_guia_desarrollo_y_setup.md)
-Instrucciones para levantar el proyecto localmente, comandos de Maven y NPM, convenciones de código (Checkstyle) y Testing.
+Los estudiantes deberán modelar las entidades del juego, definir las reglas principales y garantizar una experiencia de
+usuario fluida e interactiva, integrando lógica de negocio con una interfaz clara y funcional.
 
-### 4. [Roadmap y Backlog de Tareas](docs/04_roadmap_y_pendientes.md)
-Listado de todo lo que queda por hacer (Sistema Económico, Sobres, Pase de Batalla). **Los agentes de IA deben consultar este archivo para entender el contexto futuro y las dependencias de features.**
+Este desafío propone una experiencia completa que combina estrategia, diseño y programación, permitiendo aplicar los
+conocimientos adquiridos en un entorno práctico y motivador.
+
+
+<p align="center"> <img src="./BE/docs/assets/images/UTN-FRC_logo.png" alt="UTN - FRC"/> </p>
+
+<p align="center"> <img src="./BE/docs/assets/images/Tup_completo_negro_transparente.png" alt="TUP"/> </p>

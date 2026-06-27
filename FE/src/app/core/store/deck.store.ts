@@ -38,7 +38,7 @@ export class DeckStore {
   private _deckCards = signal<PokemonTcgCard[]>([]);
 
   /** Nombre del mazo actual */
-  readonly deckName = signal('');
+  readonly deckName = signal('Mi Mazo');
 
   // ── Selectors (computed) ──────────────────────────────────────────────────
 
@@ -170,19 +170,5 @@ export class DeckStore {
   loadDeck(cards: PokemonTcgCard[], name?: string): void {
     this._deckCards.set(cards);
     if (name) this.deckName.set(name);
-  }
-
-  /** Carga desde DTOs devueltos por la API */
-  loadFromRequestDTOs(dtos: {cardId: string; quantity: number}[], catalog: PokemonTcgCard[], name?: string): void {
-    const loadedCards: PokemonTcgCard[] = [];
-    for (const dto of dtos) {
-      const card = catalog.find(c => c.id === dto.cardId);
-      if (card) {
-        for (let i = 0; i < dto.quantity; i++) {
-          loadedCards.push(card);
-        }
-      }
-    }
-    this.loadDeck(loadedCards, name);
   }
 }

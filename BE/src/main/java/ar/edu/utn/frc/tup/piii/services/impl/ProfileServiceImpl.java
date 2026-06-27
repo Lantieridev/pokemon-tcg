@@ -12,8 +12,6 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.DeckEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
-import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository;
-import ar.edu.utn.frc.tup.piii.persistence.entity.UserShowcaseInventoryEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository;
@@ -80,7 +78,6 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfanityFilterService profanityFilterService;
     private final UserCardStatRepository userCardStatRepository;
     private final UserEnergyStatRepository userEnergyStatRepository;
-    private final UserShowcaseInventoryRepository userShowcaseInventoryRepository;
     private final CardMapper cardMapper;
 
     public ProfileServiceImpl(final UserRepository userRepository,
@@ -92,7 +89,6 @@ public class ProfileServiceImpl implements ProfileService {
                               final ProfanityFilterService profanityFilterService,
                               final UserCardStatRepository userCardStatRepository,
                               final UserEnergyStatRepository userEnergyStatRepository,
-                              final UserShowcaseInventoryRepository userShowcaseInventoryRepository,
                               final CardMapper cardMapper) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.userShowcaseRepository = Objects.requireNonNull(userShowcaseRepository, "userShowcaseRepository must not be null");
@@ -103,7 +99,6 @@ public class ProfileServiceImpl implements ProfileService {
         this.profanityFilterService = Objects.requireNonNull(profanityFilterService, "profanityFilterService must not be null");
         this.userCardStatRepository = Objects.requireNonNull(userCardStatRepository, "userCardStatRepository must not be null");
         this.userEnergyStatRepository = Objects.requireNonNull(userEnergyStatRepository, "userEnergyStatRepository must not be null");
-        this.userShowcaseInventoryRepository = Objects.requireNonNull(userShowcaseInventoryRepository, "userShowcaseInventoryRepository must not be null");
         this.cardMapper = Objects.requireNonNull(cardMapper, "cardMapper must not be null");
     }
 
@@ -265,37 +260,6 @@ public class ProfileServiceImpl implements ProfileService {
                 .totalKOsSuffered(totalKOsSuffered)
                 .build();
 
-        Map<String, Integer> pInv = user.getPacksInventory() != null ? new java.util.HashMap<>(user.getPacksInventory()) : new java.util.HashMap<>();
-        int totalPacks = user.getPacks() != null ? user.getPacks() : 0;
-
-        List<UserShowcaseInventoryEntity> userInventory = userShowcaseInventoryRepository.findByUserId(user.getId());
-        List<UserProfileResponseDTO.CollectedCardDTO> packCollection = new ArrayList<>();
-        
-        for (UserShowcaseInventoryEntity invEntity : userInventory) {
-            String cardName = "Carta Desconocida";
-            String rarity = "COMUN";
-            Optional<CardEntity> cardEntityOpt = cardRepository.findById(invEntity.getCardId());
-            if (cardEntityOpt.isPresent()) {
-                CardEntity cardEntity = cardEntityOpt.get();
-                cardName = cardEntity.getName();
-                String subtype = cardEntity.getSubtype() != null ? cardEntity.getSubtype().toUpperCase() : "";
-                
-                if (subtype.contains("EX") || subtype.contains("GX") || subtype.contains(" V") || subtype.equals("V") || subtype.contains("MEGA") || subtype.contains("LEGEND")) {
-                    rarity = "LEGENDARIA";
-                } else if (subtype.contains("STAGE 2")) {
-                    rarity = "EPICA";
-                } else if (subtype.contains("STAGE 1")) {
-                    rarity = "RARA";
-                }
-            }
-            packCollection.add(UserProfileResponseDTO.CollectedCardDTO.builder()
-                    .cardId(invEntity.getCardId())
-                    .cardName(cardName)
-                    .isFoil(invEntity.getIsFoil() != null ? invEntity.getIsFoil() : false)
-                    .rarity(rarity)
-                    .build());
-        }
-
         return UserProfileResponseDTO.builder()
                 .username(user.getUsername())
                 .createdAt(user.getCreatedAt())
@@ -309,16 +273,10 @@ public class ProfileServiceImpl implements ProfileService {
                 .mmr(user.getMmr() != null ? user.getMmr() : 1000)
                 .pokecoins(user.getPokecoins() != null ? user.getPokecoins() : 0)
                 .battlePoints(user.getBattlePoints() != null ? user.getBattlePoints() : 0)
-                .packs(totalPacks)
-                .packsInventory(pInv)
-                .stardust(user.getStardust() != null ? user.getStardust() : 0)
                 .statistics(stats)
-                .honors(honors.entrySet().stream()
-                        .collect(java.util.stream.Collectors.toMap(e -> e.getKey().name(), java.util.Map.Entry::getValue)))
-                .unlockedTitles(user.getUnlockedTitles() != null ? new java.util.ArrayList<>(user.getUnlockedTitles()) : new java.util.ArrayList<>())
-                .unlockedAvatars(user.getUnlockedAvatars() != null ? new java.util.ArrayList<>(user.getUnlockedAvatars()) : new java.util.ArrayList<>())
+                .honors(honors)
+                .unlockedTitles(user.getUnlockedTitles())
                 .showcase(showcaseSlots)
-                .packCollection(packCollection)
                 .showcasedDeck(showcasedDeckDto)
                 .advancedStats(advancedStatsDTO)
                 .build();
@@ -419,11 +377,8 @@ public class ProfileServiceImpl implements ProfileService {
         }
         user.setTotalKos((user.getTotalKos() != null ? user.getTotalKos() : 0) + kos);
 
-        // 1. Asignar XP y Pokecoins
+        // 1. Asignar XP
         final int xpGained = won ? 50 : 25;
-        final int coinsGained = won ? 50 : 10;
-        user.setPokecoins((user.getPokecoins() != null ? user.getPokecoins() : 0) + coinsGained);
-
         int currentXp = user.getXp() != null ? user.getXp() : 0;
         int currentLevel = user.getLevel() != null ? user.getLevel() : 1;
 

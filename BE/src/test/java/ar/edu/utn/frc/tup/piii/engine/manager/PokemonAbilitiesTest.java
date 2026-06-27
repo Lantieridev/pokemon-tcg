@@ -63,7 +63,7 @@ class PokemonAbilitiesTest {
                 .build();
 
         int result = PassiveAbilityRegistry.modifyIncomingDamage(50, ctx);
-        assertEquals(20, result);
+        assertEquals(30, result);
     }
 
     @Test

@@ -28,31 +28,13 @@ public class UserProfileResponseDTO {
     private Integer mmr;
     private Integer pokecoins;
     private Integer battlePoints;
-    private Integer packs;
-    private Map<String, Integer> packsInventory;
-    private Integer stardust;
 
     private Statistics statistics;
-    private Map<String, Integer> honors;
-
-    private List<String> unlockedTitles;
-    private List<String> unlockedAvatars;
-
+    private Map<HonorType, Integer> honors;
+    private Set<String> unlockedTitles;
     private List<ShowcaseSlot> showcase;
-    private List<CollectedCardDTO> packCollection;
     private ShowcasedDeck showcasedDeck;
     private AdvancedStatsDTO advancedStats;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class CollectedCardDTO {
-        private String cardId;
-        private String cardName;
-        private boolean isFoil;
-        private String rarity;
-    }
 
     @Data
     @NoArgsConstructor
