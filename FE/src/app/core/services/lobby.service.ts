@@ -83,8 +83,13 @@ export class LobbyService {
 
   async loadDecks(): Promise<void> {
     try {
+      const userId = this.authService.userId;
+      if (!userId) {
+        console.warn('[LobbyService] No authenticated user ID found.');
+        return;
+      }
       const decks = await firstValueFrom(
-        this.http.get<DeckSummaryDTO[]>('http://localhost:8081/api/decks')
+        this.http.get<DeckSummaryDTO[]>(`http://localhost:8081/api/decks/user/${userId}`)
       );
       this.decks.set(decks ?? []);
       

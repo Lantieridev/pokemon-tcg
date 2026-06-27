@@ -8,11 +8,14 @@ import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
 import ar.edu.utn.frc.tup.piii.engine.model.Action;
+import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 import ar.edu.utn.frc.tup.piii.dtos.ActionType;
 import ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction;
 import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction;
 import ar.edu.utn.frc.tup.piii.engine.model.ValidationResult;
+import ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction;
+import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
@@ -28,7 +31,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -151,10 +156,23 @@ public class MatchService {
                 }
                 isAuthorized = true;
             } else {
-                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
-                    isAuthorized = true;
-                } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
-                    isAuthorized = true;
+                boolean isOpponentChoosing = false;
+                if (session.getPendingSelectionRequest() != null
+                        && (session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
+                        || session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN)) {
+                    isOpponentChoosing = true;
+                }
+
+                if (isOpponentChoosing) {
+                    if (playerIndex == 1 - session.getTurnManager().activePlayerIndex()) {
+                        isAuthorized = true;
+                    }
+                } else {
+                    if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                        isAuthorized = true;
+                    } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
+                        isAuthorized = true;
+                    }
                 }
             }
 
@@ -342,6 +360,9 @@ public class MatchService {
             case DeclareAttackAction ignored -> {
                 turnManager.declareAttack();
                 facade.apply(session, action, turnManager);
+                if (session.getPendingSelectionRequest() != null) {
+                    return; // pause turn advancement for Clairvoyant Eye / Stoke
+                }
                 // PhaseExited(AttackPhase) fires here → KnockoutManager checks for KOs
                 turnManager.endAttack();
                 if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
@@ -352,30 +373,116 @@ public class MatchService {
                     return; // between-turns will run once PROMOTE_ACTIVE is received
                 }
                 processBetweenTurns(session, turnManager);
+                session.setBetweenTurnsProcessed(true);
+                if (resolveBetweenTurnsKnockouts(session)) {
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                }
                 turnManager.endBetweenTurns();
+<<<<<<< HEAD
                 if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                     return;
+=======
+                session.setBetweenTurnsProcessed(false);
+            }
+            case SelectCardsAction selectCards -> {
+                final boolean isAttackSelection = session.getPendingSelectionRequest() != null
+                        && (session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CLAIRVOYANT_EYE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.QUIVER_DANCE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FLASH_CLAW
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.ROCK_RUSH
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BRILLIANT_SEARCH
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BURIED_TREASURE_HUNT
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.DUAL_BULLET
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PAIN_PELLETS
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BENCH_DAMAGE_ONE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.CURSED_DROP
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.EAR_INFLUENCE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.RESCUE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FANG_SNIPE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.REVIVAL
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PUSH_DOWN
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BOUNCE
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PARABOLIC_CHARGE);
+
+                facade.apply(session, action, turnManager);
+
+                if (isAttackSelection) {
+                    turnManager.endAttack();
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                    processBetweenTurns(session, turnManager);
+                    session.setBetweenTurnsProcessed(true);
+                    if (resolveBetweenTurnsKnockouts(session)) {
+                        if (checkForPendingPromotion(session)) {
+                            return;
+                        }
+                    }
+                    turnManager.endBetweenTurns();
+                    session.setBetweenTurnsProcessed(false);
+                } else {
+                    if (session.getVictoryConditionChecker() != null) {
+                        session.getVictoryConditionChecker().checkFieldVictory();
+                    }
+                    if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                        checkForPendingPromotion(session);
+                    }
+>>>>>>> feature/flashfire-corrections
                 }
             }
             case EndTurnAction ignored -> {
                 turnManager.passTurn();
                 processBetweenTurns(session, turnManager);
+                session.setBetweenTurnsProcessed(true);
+                if (resolveBetweenTurnsKnockouts(session)) {
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                }
                 turnManager.endBetweenTurns();
+<<<<<<< HEAD
                 if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                     return;
                 }
+=======
+                session.setBetweenTurnsProcessed(false);
+>>>>>>> feature/flashfire-corrections
             }
             case PromoteActiveAction ignored -> {
                 final boolean wasAwaiting = session.isAwaitingPromotion();
                 facade.apply(session, action, turnManager);
                 if (wasAwaiting) {
                     session.clearAwaitingPromotion();
+<<<<<<< HEAD
                     // Resume the deferred between-turns phase that was paused for this promotion
                     processBetweenTurns(session, turnManager);
                     turnManager.endBetweenTurns();
                     if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                         return;
                     }
+=======
+                    if (checkForPendingPromotion(session)) {
+                        return;
+                    }
+                    if (turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase) {
+                        if (!session.isBetweenTurnsProcessed()) {
+                            // Resume the deferred between-turns phase that was paused for this promotion
+                            processBetweenTurns(session, turnManager);
+                            session.setBetweenTurnsProcessed(true);
+                            if (resolveBetweenTurnsKnockouts(session)) {
+                                if (checkForPendingPromotion(session)) {
+                                    return;
+                                }
+                            }
+                        }
+                        turnManager.endBetweenTurns();
+                        session.setBetweenTurnsProcessed(false);
+                    } else if (turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase) {
+                        turnManager.resumeMainPhase();
+                    }
+>>>>>>> feature/flashfire-corrections
                 }
             }
             default -> {
@@ -387,6 +494,20 @@ public class MatchService {
                     checkForPendingPromotion(session);
                 }
             }
+        }
+
+        if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED && session.isMegaEvolvedThisTurn()) {
+            session.setMegaEvolvedThisTurn(false);
+            turnManager.passTurn();
+            processBetweenTurns(session, turnManager);
+            session.setBetweenTurnsProcessed(true);
+            if (resolveBetweenTurnsKnockouts(session)) {
+                if (checkForPendingPromotion(session)) {
+                    return;
+                }
+            }
+            turnManager.endBetweenTurns();
+            session.setBetweenTurnsProcessed(false);
         }
     }
 
@@ -409,6 +530,30 @@ public class MatchService {
         return false;
     }
 
+    private boolean resolveBetweenTurnsKnockouts(final MatchSession session) {
+        boolean anyKnockout = false;
+        for (int i = 0; i < 2; i++) {
+            final var runtime = session.getPlayerRuntime(i);
+            final var active = runtime.getActivePokemon();
+            if (active != null && isKnockedOut(active)) {
+                session.getKnockoutHandler().onKnockout(active, active.isEx() ? 2 : 1);
+                anyKnockout = true;
+            }
+            for (final var benched : List.copyOf(runtime.getBench().getAll())) {
+                if (isKnockedOut(benched)) {
+                    session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
+                    anyKnockout = true;
+                }
+            }
+        }
+        return anyKnockout;
+    }
+
+    private boolean isKnockedOut(final BattlePokemonState state) {
+        return state.getDamageCounters() * 10 >= state.getMaxHp();
+    }
+
+
     /**
      * Runs between-turns status effects for both players' Active Pokémon.
      * Must be called AFTER entering BetweenTurnsPhase and BEFORE calling
@@ -422,11 +567,43 @@ public class MatchService {
             if (session.getPlayerRuntime(i).getActivePokemon() != null) {
                 final StatusEffectManager sem =
                         session.getPlayerRuntime(i).getStatusEffectManager();
-                sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon());
+                sem.processBetweenTurns(session.getPlayerRuntime(i).getActivePokemon(), i == turnManager.activePlayerIndex());
                 if (i == turnManager.activePlayerIndex()) {
                     sem.setDisabledAttackName(null);
+                    if (sem.isSelfDisabledAttackSetThisTurn()) {
+                        sem.setSelfDisabledAttackSetThisTurn(false);
+                    } else {
+                        sem.setSelfDisabledAttackName(null);
+                    }
+                    if (sem.isSelfDisabledNextTurnSetThisTurn()) {
+                        sem.setSelfDisabledNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setSelfDisabledNextTurn(false);
+                    }
+                    
+                    if (sem.isRetreatBlockedNextTurnSetThisTurn()) {
+                        sem.setRetreatBlockedNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setRetreatBlockedNextTurn(false);
+                    }
+
+                    if (sem.isExcitingShakeActiveNextTurnSetThisTurn()) {
+                        sem.setExcitingShakeActiveNextTurnSetThisTurn(false);
+                    } else {
+                        sem.setExcitingShakeActiveNextTurn(false);
+                    }
+
+                    if (sem.isStrongGustUsedLastTurnSetThisTurn()) {
+                        sem.setStrongGustUsedLastTurnSetThisTurn(false);
+                    } else {
+                        sem.setStrongGustUsedLastTurn(false);
+                    }
+
+                    session.getPlayerRuntime(i).setKnockedOutLastTurn(false);
                 } else {
                     sem.setDamagePreventedNextTurn(false);
+                    sem.setDamagePreventedIf60OrLessNextTurn(false);
+                    sem.setDamageReducedBy20NextTurn(false);
                 }
             }
         }

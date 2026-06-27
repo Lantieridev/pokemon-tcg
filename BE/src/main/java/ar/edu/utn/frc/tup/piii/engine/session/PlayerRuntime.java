@@ -30,6 +30,8 @@ public final class PlayerRuntime {
     private BattlePokemonState activePokemon;
     private final List<Card> prizePile;
     private final MatchStatisticsTracker statisticsTracker = new MatchStatisticsTracker();
+    private boolean knockedOutLastTurn = false;
+    private int startingPrizeCount = 6;
 
     /**
      * Tracks how many full turns each Pokémon has been in play.
@@ -64,6 +66,7 @@ public final class PlayerRuntime {
         this.statusEffectManager = Objects.requireNonNull(statusEffectManager, "statusEffectManager must not be null");
         this.activePokemon = activePokemon;
         this.prizePile = new ArrayList<>(Objects.requireNonNull(prizePile, "prizePile must not be null"));
+        this.startingPrizeCount = this.prizePile.size();
     }
 
     /**
@@ -128,6 +131,7 @@ public final class PlayerRuntime {
     }
 
     public Bench getBench() {
+        refreshPokemonOwners();
         return bench;
     }
 
@@ -140,16 +144,33 @@ public final class PlayerRuntime {
     }
 
     public BattlePokemonState getActivePokemon() {
+        refreshPokemonOwners();
         return activePokemon;
     }
 
     public void setActivePokemon(final BattlePokemonState pokemon) {
         this.activePokemon = pokemon;
+        if (pokemon != null) {
+            pokemon.setOwner(this);
+        }
     }
 
     public void clearActivePokemon() {
         this.activePokemon = null;
         this.statusEffectManager.clearAll();
+    }
+
+    public void refreshPokemonOwners() {
+        if (activePokemon != null) {
+            activePokemon.setOwner(this);
+        }
+        if (bench != null) {
+            for (BattlePokemonState benched : bench.getAll()) {
+                if (benched != null) {
+                    benched.setOwner(this);
+                }
+            }
+        }
     }
 
     /**
@@ -191,6 +212,7 @@ public final class PlayerRuntime {
     public List<Card> clearPrizes() {
         final List<Card> removed = new ArrayList<>(prizePile);
         prizePile.clear();
+        this.startingPrizeCount = 0;
         return removed;
     }
 
@@ -201,6 +223,7 @@ public final class PlayerRuntime {
      */
     public void addPrizes(final List<Card> prizes) {
         prizePile.addAll(Objects.requireNonNull(prizes, "prizes must not be null"));
+        this.startingPrizeCount = prizePile.size();
     }
 
     // -------------------------------------------------------------------------
@@ -297,5 +320,21 @@ public final class PlayerRuntime {
 
     public MatchStatisticsTracker getStatisticsTracker() {
         return statisticsTracker;
+    }
+
+    public boolean isKnockedOutLastTurn() {
+        return knockedOutLastTurn;
+    }
+
+    public void setKnockedOutLastTurn(final boolean knockedOutLastTurn) {
+        this.knockedOutLastTurn = knockedOutLastTurn;
+    }
+
+    public int getStartingPrizeCount() {
+        return startingPrizeCount;
+    }
+
+    public void setStartingPrizeCount(final int startingPrizeCount) {
+        this.startingPrizeCount = startingPrizeCount;
     }
 }

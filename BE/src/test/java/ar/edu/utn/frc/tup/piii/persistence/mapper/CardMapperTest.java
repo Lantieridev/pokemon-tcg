@@ -277,6 +277,61 @@ class CardMapperTest {
         assertEquals("prevent_damage", pokemon.getAttacks().get(1).effectText());
     }
 
+    @Test
+    void shouldMapAgilityEffectsPrevention() {
+        final CardEntity entity = pokemonEntity("xy2-14", "Ponyta", "Basic", 60,
+                "[{\"name\":\"Agility\",\"cost\":[\"Fire\"],\"convertedEnergyCost\":1,"
+                + "\"damage\":\"10\",\"text\":\"Flip a coin. If heads, prevent all effects of attacks, including damage, done to this Pokémon during your opponent's next turn.\"}]",
+                "[]", "[]", "[]");
+        final PokemonCard pokemon = assertInstanceOf(PokemonCard.class, mapper.map(entity));
+        assertEquals(1, pokemon.getAttacks().size());
+        assertEquals("coin_flip_prevent_damage", pokemon.getAttacks().get(0).effectText());
+    }
+    @Test
+    void shouldMapIcyWindToSleep() {
+        final CardEntity entity = pokemonEntity("xy2-51", "Sneasel", "Basic", 60,
+                "[{\"name\":\"Icy Wind\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,\"damage\":\"\",\"text\":\"Your opponent's Active Pokémon is now Asleep.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("sleep", card.getAttacks().get(0).effectText());
+    }
+
+    @Test
+    void shouldMapChipOffToDiscardOpponentHandToLimit() {
+        final CardEntity entity = pokemonEntity("xy2-61", "Durant", "Basic", 70,
+                "[{\"name\":\"Chip Off\",\"cost\":[\"Colorless\"],\"convertedEnergyCost\":1,\"damage\":\"\",\"text\":\"Discard cards from your opponent's hand at random until he or she has 4 cards in his or her hand.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_opponent_hand_to_limit:4", card.getAttacks().get(0).effectText());
+    }
+
+    @Test
+    void shouldMapIronCrashToDamagePerRetreatCost() {
+        final CardEntity entity = pokemonEntity("xy2-60", "Forretress", "Stage 1", 100,
+                "[{\"name\":\"Iron Crash\",\"cost\":[\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":2,\"damage\":\"20+\",\"text\":\"This attack does 20 more damage for each Colorless in your opponent's Active Pokémon's Retreat Cost.\"}]",
+                "[]", "[]", "[\"Colorless\",\"Colorless\",\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("damage_per_retreat_cost:20", card.getAttacks().get(0).effectText());
+    }
+
+    @Test
+    void shouldMapFangSnipeToDiscardTrainerFromOpponentHand() {
+        final CardEntity entity = pokemonEntity("xy2-34", "Luxray", "Stage 2", 140,
+                "[{\"name\":\"Fang Snipe\",\"cost\":[\"Lightning\",\"Colorless\"],\"convertedEnergyCost\":2,\"damage\":\"40\",\"text\":\"Your opponent reveals his or her hand. Discard a Trainer card you find there.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_trainer_from_opponent_hand", card.getAttacks().get(0).effectText());
+    }
+
+    @Test
+    void shouldMapWildBlazeCorrectly() {
+        final CardEntity entity = pokemonEntity("xy2-69", "M Charizard-EX", "MEGA, EX", 230,
+                "[{\"name\":\"Wild Blaze\",\"cost\":[\"Fire\",\"Fire\",\"Darkness\",\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":5,\"damage\":\"300\",\"text\":\"Discard the top 5 cards of your deck.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_deck_self:5", card.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,

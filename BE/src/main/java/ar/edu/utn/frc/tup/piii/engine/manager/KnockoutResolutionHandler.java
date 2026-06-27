@@ -61,6 +61,7 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         
         final int opponentIndex = 1 - ownerIndex;
         final PlayerRuntime owner = playerRuntimes.get(ownerIndex);
+        owner.setKnockedOutLastTurn(true);
         final PlayerRuntime opponentPlayer = playerRuntimes.get(opponentIndex);
 
         // Discard all cards associated with the knocked Pokémon

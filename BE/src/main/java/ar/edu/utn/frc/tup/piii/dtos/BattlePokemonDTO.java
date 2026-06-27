@@ -20,6 +20,7 @@ import java.util.List;
  * @param hasToolAttached true if a Pokémon Tool card is currently attached
  * @param attachedToolCardId  card ID of the attached Pokémon Tool, or null if none
  * @param attacks         list of available attacks for this Pokémon
+ * @param abilities       list of abilities this Pokémon has (may be empty)
  */
 public record BattlePokemonDTO(
         String cardId,
@@ -35,5 +36,7 @@ public record BattlePokemonDTO(
         boolean hasToolAttached,
         String attachedToolCardId,
         List<AttackDTO> attacks,
+        List<AbilityDTO> abilities,
         List<String> statusConditions) {
 }
+

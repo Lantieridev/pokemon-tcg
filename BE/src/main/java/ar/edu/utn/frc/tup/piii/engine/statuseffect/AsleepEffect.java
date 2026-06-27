@@ -33,6 +33,15 @@ public class AsleepEffect implements StatusEffect {
 
     @Override
     public boolean processBetweenTurns(final ActivePokemonState state, final CoinFlipper flipper) {
+        if (state instanceof ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState bps) {
+            boolean hasStirAndSnooze = bps.getAbilities().stream()
+                    .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STIR_AND_SNOOZE);
+            if (hasStirAndSnooze) {
+                boolean first = flipper.flip();
+                boolean second = flipper.flip();
+                return first && second;
+            }
+        }
         return flipper.flip();
     }
 }

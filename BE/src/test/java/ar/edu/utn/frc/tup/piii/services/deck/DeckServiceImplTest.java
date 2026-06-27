@@ -117,7 +117,7 @@ class DeckServiceImplTest {
         final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
 
         assertThrows(NoSuchElementException.class, () -> service.create(request));
-        verify(validator, never()).validate(anyList(), any());
+        verify(validator, never()).validate(anyList(), any(), any(), any());
     }
 
     @Test
@@ -138,7 +138,7 @@ class DeckServiceImplTest {
 
         verify(apiClient, never()).findById(anyString());
         verify(cardRepository, never()).save(any(CardEntity.class));
-        verify(validator).validate(anyList(), any());
+        verify(validator).validate(anyList(), any(), any(), any());
     }
 
     @Test
@@ -189,7 +189,7 @@ class DeckServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.of(card));
         doThrow(new InvalidDeckException("deck has 59 cards, expected 60"))
-                .when(validator).validate(anyList(), any());
+                .when(validator).validate(anyList(), any(), any(), any());
 
         final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 59)));

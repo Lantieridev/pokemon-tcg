@@ -318,11 +318,33 @@ class StatusEffectManagerTest {
     }
 
     @Test
-    void shouldRemoveParalysisAfterBetweenTurnsProcessing() {
+    void shouldRemoveParalysisAfterBetweenTurnsProcessingWhenOwnerTurnEnding() {
         manager.apply(StatusEffectType.PARALIZADO);
-        manager.processBetweenTurns(fakeState);
+        manager.processBetweenTurns(fakeState, true);
         assertFalse(manager.has(StatusEffectType.PARALIZADO));
     }
+
+    @Test
+    void shouldRetainParalysisAfterBetweenTurnsProcessingWhenNotOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PARALIZADO);
+        manager.processBetweenTurns(fakeState, false);
+        assertTrue(manager.has(StatusEffectType.PARALIZADO));
+    }
+
+    @Test
+    void shouldRemovePrecisionBajaAfterBetweenTurnsProcessingWhenOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        manager.processBetweenTurns(fakeState, true);
+        assertFalse(manager.has(StatusEffectType.PRECISION_BAJA));
+    }
+
+    @Test
+    void shouldRetainPrecisionBajaAfterBetweenTurnsProcessingWhenNotOwnerTurnEnding() {
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        manager.processBetweenTurns(fakeState, false);
+        assertTrue(manager.has(StatusEffectType.PRECISION_BAJA));
+    }
+
 
     @Test
     void shouldRetainPoisonAfterBetweenTurnsProcessing() {
@@ -376,5 +398,83 @@ class StatusEffectManagerTest {
         assertTrue(manager.isDamagePreventedNextTurn());
         manager.clearAll();
         assertFalse(manager.isDamagePreventedNextTurn());
+    }
+
+    @Test
+    void shouldRemovePrecisionBajaAfterBetweenTurnsProcessing() {
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        assertTrue(manager.has(StatusEffectType.PRECISION_BAJA));
+        manager.processBetweenTurns(fakeState);
+        assertFalse(manager.has(StatusEffectType.PRECISION_BAJA));
+    }
+
+    @Test
+    void shouldReturnProceedWhenPrecisionBajaCoinIsHeads() {
+        when(coinFlipper.flip()).thenReturn(true);
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.Proceed.class, result);
+    }
+
+    @Test
+    void shouldReturnSmokescreenFailedWhenPrecisionBajaCoinIsTails() {
+        when(coinFlipper.flip()).thenReturn(false);
+        manager.apply(StatusEffectType.PRECISION_BAJA);
+        AttackModifierResult result = manager.onAttackAttempt(fakeState);
+        assertInstanceOf(AttackModifierResult.SmokescreenFailed.class, result);
+    }
+
+    @Test
+    void shouldTrackAndClearSelfDisabledNextTurnFlags() {
+        assertFalse(manager.isSelfDisabledNextTurn());
+        assertFalse(manager.isSelfDisabledNextTurnSetThisTurn());
+
+        manager.setSelfDisabledNextTurn(true);
+        manager.setSelfDisabledNextTurnSetThisTurn(true);
+
+        assertTrue(manager.isSelfDisabledNextTurn());
+        assertTrue(manager.isSelfDisabledNextTurnSetThisTurn());
+
+        manager.clearAll();
+
+        assertFalse(manager.isSelfDisabledNextTurn());
+        assertFalse(manager.isSelfDisabledNextTurnSetThisTurn());
+    }
+
+    @Test
+    void shouldTrackAndClearNewCorrectionsFlags() {
+        assertFalse(manager.isRetreatBlockedNextTurn());
+        assertFalse(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertFalse(manager.isDrawStepBlocked());
+        assertFalse(manager.isExcitingShakeActiveNextTurn());
+        assertFalse(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertFalse(manager.isStrongGustUsedLastTurn());
+        assertFalse(manager.isStrongGustUsedLastTurnSetThisTurn());
+
+        manager.setRetreatBlockedNextTurn(true);
+        manager.setRetreatBlockedNextTurnSetThisTurn(true);
+        manager.setDrawStepBlocked(true);
+        manager.setExcitingShakeActiveNextTurn(true);
+        manager.setExcitingShakeActiveNextTurnSetThisTurn(true);
+        manager.setStrongGustUsedLastTurn(true);
+        manager.setStrongGustUsedLastTurnSetThisTurn(true);
+
+        assertTrue(manager.isRetreatBlockedNextTurn());
+        assertTrue(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertTrue(manager.isDrawStepBlocked());
+        assertTrue(manager.isExcitingShakeActiveNextTurn());
+        assertTrue(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertTrue(manager.isStrongGustUsedLastTurn());
+        assertTrue(manager.isStrongGustUsedLastTurnSetThisTurn());
+
+        manager.clearAll();
+
+        assertFalse(manager.isRetreatBlockedNextTurn());
+        assertFalse(manager.isRetreatBlockedNextTurnSetThisTurn());
+        assertFalse(manager.isDrawStepBlocked());
+        assertFalse(manager.isExcitingShakeActiveNextTurn());
+        assertFalse(manager.isExcitingShakeActiveNextTurnSetThisTurn());
+        assertFalse(manager.isStrongGustUsedLastTurn());
+        assertFalse(manager.isStrongGustUsedLastTurnSetThisTurn());
     }
 }

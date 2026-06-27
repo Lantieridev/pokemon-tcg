@@ -295,4 +295,16 @@ class DeckBuilderValidatorTest {
         // total = 4+4+4+48 = 60
         assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID));
     }
+
+    @Test
+    void shouldRejectMoreThan4CopiesForOtherUsers() {
+        final List<DeckEntry> deck = new ArrayList<>();
+        deck.add(pokemon("Bulbasaur", "Basic", 4));
+        deck.add(trainer("Potion", 10)); // 10 copies of Potion (> 4)
+        deck.add(basicEnergy("Grass Energy", 46));
+        // total = 4+10+46 = 60
+        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "other-user"));
+        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "admin2"));
+        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "Mazo Especial"));
+    }
 }

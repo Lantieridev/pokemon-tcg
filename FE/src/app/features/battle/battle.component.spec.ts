@@ -2,7 +2,8 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { BattleComponent } from './battle.component';
-import { MatchStore, GameStateDTO } from '../../core/store/match.store';
+import { MatchStore } from '../../core/store/match.store';
+import { GameStateResponseDTO } from '../../core/models/game-state.models';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -127,7 +128,11 @@ describe('BattleComponent Integration', () => {
   });
 
   it('should disconnect from WS on component destruction', () => {
+<<<<<<< HEAD
     const mockState: any = {
+=======
+    const mockState: GameStateResponseDTO = {
+>>>>>>> feature/flashfire-corrections
       matchId: 'match-xyz',
       version: 1,
       turnNumber: 1,
@@ -150,6 +155,7 @@ describe('BattleComponent Integration', () => {
     expect(wsServiceSpy.disconnect).toHaveBeenCalled();
   });
 
+<<<<<<< HEAD
   describe('Campaign Victory/Defeat Overlays', () => {
     beforeEach(() => {
       wsServiceSpy.connect.and.returnValue(of({} as any));
@@ -277,5 +283,26 @@ describe('BattleComponent Integration', () => {
       ctaBtn.click();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/lobby']);
     });
+=======
+  it('should not show FLASH_CLAW pending selection to active player', () => {
+    const mockState: GameStateResponseDTO = {
+      matchId: 'match-xyz',
+      version: 1,
+      activePlayerIndex: 0,
+      currentPhase: 'MAIN',
+      self: { playerId: 'AshRivero', active: null, bench: [], hand: [], deckSize: 60, prizeCount: 6 },
+      opponent: { playerId: 'BrockSteel', active: null, bench: [], handSize: 7, deckSize: 60, prizeCount: 6 },
+      pendingSelectionRequest: {
+        sourceEffect: 'FLASH_CLAW',
+        maxSelections: 1,
+        source: 'HAND',
+        options: ['c1']
+      }
+    };
+    store.updateState(mockState);
+    fixture.detectChanges();
+
+    expect(component.pendingSelection()).toBeNull();
+>>>>>>> feature/flashfire-corrections
   });
 });

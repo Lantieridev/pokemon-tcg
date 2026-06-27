@@ -10,7 +10,15 @@ import ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType;
  */
 public class PoisonedEffect implements StatusEffect {
 
-    private static final int POISON_DAMAGE_COUNTERS = 1;
+    private final int damageCounters;
+
+    public PoisonedEffect() {
+        this(1);
+    }
+
+    public PoisonedEffect(final int damageCounters) {
+        this.damageCounters = damageCounters;
+    }
 
     @Override
     public StatusEffectType getType() {
@@ -34,7 +42,7 @@ public class PoisonedEffect implements StatusEffect {
 
     @Override
     public boolean processBetweenTurns(final ActivePokemonState state, final CoinFlipper flipper) {
-        state.addDamageCounters(POISON_DAMAGE_COUNTERS);
+        state.addDamageCounters(damageCounters);
         return false;
     }
 }

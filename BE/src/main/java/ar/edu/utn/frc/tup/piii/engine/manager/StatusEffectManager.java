@@ -12,6 +12,7 @@ import ar.edu.utn.frc.tup.piii.engine.statuseffect.BurnedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.ConfusedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.ParalyzedEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.PoisonedEffect;
+import ar.edu.utn.frc.tup.piii.engine.statuseffect.PrecisionBajaEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.StatusEffect;
 
 import java.util.ArrayList;
@@ -34,14 +35,30 @@ public class StatusEffectManager {
             StatusEffectType.ENVENENADO,
             StatusEffectType.QUEMADO,
             StatusEffectType.DORMIDO,
-            StatusEffectType.PARALIZADO
+            StatusEffectType.PARALIZADO,
+            StatusEffectType.PRECISION_BAJA
     );
 
     private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
-    private final CoinFlipper coinFlipper;
+    private CoinFlipper coinFlipper;
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;
     private boolean damagePreventedNextTurn;
+    private boolean damagePreventedIf60OrLessNextTurn;
+    private boolean damageReducedBy20NextTurn;
+    private String selfDisabledAttackName;
+    private boolean selfDisabledAttackSetThisTurn;
+    private boolean selfDisabledNextTurn;
+    private boolean selfDisabledNextTurnSetThisTurn;
+    private boolean retreatBlockedNextTurn;
+    private boolean retreatBlockedNextTurnSetThisTurn;
+    private boolean drawStepBlocked;
+    private boolean excitingShakeActiveNextTurn;
+    private boolean excitingShakeActiveNextTurnSetThisTurn;
+    private boolean strongGustUsedLastTurn;
+    private boolean strongGustUsedLastTurnSetThisTurn;
+    private int poisonDamageCounters = 1;
+    private boolean isPrecisionBajaSetThisTurn = false;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -50,6 +67,10 @@ public class StatusEffectManager {
      * @throws NullPointerException if {@code coinFlipper} is null
      */
     public StatusEffectManager(final CoinFlipper coinFlipper) {
+        this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
+    }
+
+    public void setCoinFlipper(final CoinFlipper coinFlipper) {
         this.coinFlipper = Objects.requireNonNull(coinFlipper, "coinFlipper must not be null");
     }
 
@@ -83,8 +104,15 @@ public class StatusEffectManager {
      * @throws InvalidStatusEffectException if {@code type} is null
      */
     public void apply(final StatusEffectType type) {
+        apply(type, 1);
+    }
+
+    public void apply(final StatusEffectType type, final int poisonDamage) {
         if (type == null) {
             throw new InvalidStatusEffectException("Status effect type must not be null");
+        }
+        if (type == StatusEffectType.ENVENENADO) {
+            this.poisonDamageCounters = poisonDamage;
         }
         
         if (ar.edu.utn.frc.tup.piii.engine.pipeline.PassiveAbilityRegistry.preventStatusEffect(type, playerRuntime)) {
@@ -123,6 +151,20 @@ public class StatusEffectManager {
         activeEffects.clear();
         this.disabledAttackName = null;
         this.damagePreventedNextTurn = false;
+        this.damagePreventedIf60OrLessNextTurn = false;
+        this.damageReducedBy20NextTurn = false;
+        this.selfDisabledAttackName = null;
+        this.selfDisabledAttackSetThisTurn = false;
+        this.selfDisabledNextTurn = false;
+        this.selfDisabledNextTurnSetThisTurn = false;
+        this.retreatBlockedNextTurn = false;
+        this.retreatBlockedNextTurnSetThisTurn = false;
+        this.drawStepBlocked = false;
+        this.excitingShakeActiveNextTurn = false;
+        this.excitingShakeActiveNextTurnSetThisTurn = false;
+        this.strongGustUsedLastTurn = false;
+        this.strongGustUsedLastTurnSetThisTurn = false;
+        this.poisonDamageCounters = 1;
     }
 
     /**
@@ -159,6 +201,9 @@ public class StatusEffectManager {
      * @return {@code true} if no active effect blocks retreating
      */
     public boolean canRetreat() {
+        if (retreatBlockedNextTurn) {
+            return false;
+        }
         return activeEffects.values().stream().noneMatch(StatusEffect::blocksRetreat);
     }
 
@@ -187,6 +232,12 @@ public class StatusEffectManager {
                 return new AttackModifierResult.ConfusionFailed(CONFUSION_SELF_DAMAGE_COUNTERS);
             }
         }
+        if (has(StatusEffectType.PRECISION_BAJA)) {
+            boolean headsResult = coinFlipper.flip();
+            if (!headsResult) {
+                return new AttackModifierResult.SmokescreenFailed();
+            }
+        }
         return new AttackModifierResult.Proceed();
     }
 
@@ -199,10 +250,17 @@ public class StatusEffectManager {
      * @param pokemon the mutable state of the active Pokémon
      */
     public void processBetweenTurns(final ActivePokemonState pokemon) {
+        processBetweenTurns(pokemon, true);
+    }
+
+    public void processBetweenTurns(final ActivePokemonState pokemon, final boolean isOwnerTurnEnding) {
         List<StatusEffectType> toRemove = new ArrayList<>();
         for (StatusEffectType type : BETWEEN_TURNS_ORDER) {
             StatusEffect effect = activeEffects.get(type);
             if (effect != null) {
+                if ((type == StatusEffectType.PARALIZADO || type == StatusEffectType.PRECISION_BAJA) && !isOwnerTurnEnding) {
+                    continue;
+                }
                 boolean shouldRemove = effect.processBetweenTurns(pokemon, coinFlipper);
                 if (shouldRemove) {
                     toRemove.add(type);
@@ -212,13 +270,15 @@ public class StatusEffectManager {
         toRemove.forEach(activeEffects::remove);
     }
 
+
     private StatusEffect buildEffect(final StatusEffectType type) {
         return switch (type) {
             case DORMIDO -> new AsleepEffect();
             case QUEMADO -> new BurnedEffect();
             case CONFUNDIDO -> new ConfusedEffect();
             case PARALIZADO -> new ParalyzedEffect();
-            case ENVENENADO -> new PoisonedEffect();
+            case ENVENENADO -> new PoisonedEffect(poisonDamageCounters);
+            case PRECISION_BAJA -> new PrecisionBajaEffect();
         };
     }
 
@@ -236,5 +296,117 @@ public class StatusEffectManager {
 
     public void setDamagePreventedNextTurn(final boolean damagePreventedNextTurn) {
         this.damagePreventedNextTurn = damagePreventedNextTurn;
+    }
+
+    public boolean isDamagePreventedIf60OrLessNextTurn() {
+        return damagePreventedIf60OrLessNextTurn;
+    }
+
+    public void setDamagePreventedIf60OrLessNextTurn(final boolean damagePreventedIf60OrLessNextTurn) {
+        this.damagePreventedIf60OrLessNextTurn = damagePreventedIf60OrLessNextTurn;
+    }
+
+    public boolean isDamageReducedBy20NextTurn() {
+        return damageReducedBy20NextTurn;
+    }
+
+    public void setDamageReducedBy20NextTurn(final boolean damageReducedBy20NextTurn) {
+        this.damageReducedBy20NextTurn = damageReducedBy20NextTurn;
+    }
+
+    public String getSelfDisabledAttackName() {
+        return selfDisabledAttackName;
+    }
+
+    public void setSelfDisabledAttackName(final String selfDisabledAttackName) {
+        this.selfDisabledAttackName = selfDisabledAttackName;
+    }
+
+    public boolean isSelfDisabledAttackSetThisTurn() {
+        return selfDisabledAttackSetThisTurn;
+    }
+
+    public void setSelfDisabledAttackSetThisTurn(final boolean selfDisabledAttackSetThisTurn) {
+        this.selfDisabledAttackSetThisTurn = selfDisabledAttackSetThisTurn;
+    }
+
+    public boolean isSelfDisabledNextTurn() {
+        return selfDisabledNextTurn;
+    }
+
+    public void setSelfDisabledNextTurn(final boolean selfDisabledNextTurn) {
+        this.selfDisabledNextTurn = selfDisabledNextTurn;
+    }
+
+    public boolean isSelfDisabledNextTurnSetThisTurn() {
+        return selfDisabledNextTurnSetThisTurn;
+    }
+
+    public void setSelfDisabledNextTurnSetThisTurn(final boolean selfDisabledNextTurnSetThisTurn) {
+        this.selfDisabledNextTurnSetThisTurn = selfDisabledNextTurnSetThisTurn;
+    }
+
+    public boolean isRetreatBlockedNextTurn() {
+        return retreatBlockedNextTurn;
+    }
+
+    public void setRetreatBlockedNextTurn(final boolean retreatBlockedNextTurn) {
+        this.retreatBlockedNextTurn = retreatBlockedNextTurn;
+    }
+
+    public boolean isRetreatBlockedNextTurnSetThisTurn() {
+        return retreatBlockedNextTurnSetThisTurn;
+    }
+
+    public void setRetreatBlockedNextTurnSetThisTurn(final boolean retreatBlockedNextTurnSetThisTurn) {
+        this.retreatBlockedNextTurnSetThisTurn = retreatBlockedNextTurnSetThisTurn;
+    }
+
+    public boolean isDrawStepBlocked() {
+        return drawStepBlocked;
+    }
+
+    public void setDrawStepBlocked(final boolean drawStepBlocked) {
+        this.drawStepBlocked = drawStepBlocked;
+    }
+
+    public boolean isExcitingShakeActiveNextTurn() {
+        return excitingShakeActiveNextTurn;
+    }
+
+    public void setExcitingShakeActiveNextTurn(final boolean excitingShakeActiveNextTurn) {
+        this.excitingShakeActiveNextTurn = excitingShakeActiveNextTurn;
+    }
+
+    public boolean isExcitingShakeActiveNextTurnSetThisTurn() {
+        return excitingShakeActiveNextTurnSetThisTurn;
+    }
+
+    public void setExcitingShakeActiveNextTurnSetThisTurn(final boolean excitingShakeActiveNextTurnSetThisTurn) {
+        this.excitingShakeActiveNextTurnSetThisTurn = excitingShakeActiveNextTurnSetThisTurn;
+    }
+
+    public boolean isStrongGustUsedLastTurn() {
+        return strongGustUsedLastTurn;
+    }
+
+    public void setStrongGustUsedLastTurn(final boolean strongGustUsedLastTurn) {
+        this.strongGustUsedLastTurn = strongGustUsedLastTurn;
+    }
+
+    public boolean isStrongGustUsedLastTurnSetThisTurn() {
+        return strongGustUsedLastTurnSetThisTurn;
+    }
+
+    public void setStrongGustUsedLastTurnSetThisTurn(final boolean strongGustUsedLastTurnSetThisTurn) {
+        this.strongGustUsedLastTurnSetThisTurn = strongGustUsedLastTurnSetThisTurn;
+    }
+
+    public int getPoisonDamageCounters() {
+        return poisonDamageCounters;
+    }
+
+    public void setPoisonDamageCounters(final int poisonDamageCounters) {
+        this.poisonDamageCounters = poisonDamageCounters;
     }
 }

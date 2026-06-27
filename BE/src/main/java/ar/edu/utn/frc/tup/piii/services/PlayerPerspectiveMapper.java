@@ -41,28 +41,97 @@ public final class PlayerPerspectiveMapper {
         if (session.getPendingSelectionRequest() != null) {
             final var req = session.getPendingSelectionRequest();
             java.util.List<String> options = java.util.Collections.emptyList();
-            if (session.getActivePlayerIndex() == viewerIndex) {
+            final boolean isOpponentChoosing = req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
+                    || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN;
+            final boolean isViewerChoosing = (isOpponentChoosing && session.getActivePlayerIndex() != viewerIndex)
+                    || (!isOpponentChoosing && session.getActivePlayerIndex() == viewerIndex);
+            if (isViewerChoosing) {
                 final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = session.getPlayerRuntime(viewerIndex);
                 if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
                     var stream = runtime.getDeck().getCards().stream();
                     if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.QUIVER_DANCE) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic());
                     } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc &&
                                 pc.getEvolvesFrom() != null &&
                                 req.target() != null &&
                                 pc.getEvolvesFrom().equalsIgnoreCase(req.target().getName()));
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_FAN_CLUB) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard);
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE) {
-                    var stream = runtime.getDiscardPile().getCards().stream();
-                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime targetDiscardRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL)
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    var stream = targetDiscardRuntime.getDiscardPile().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE
+                            || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL) {
                         stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH
+                            || req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RESCUE) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tc && tc.getTrainerType() == ar.edu.utn.frc.tup.piii.engine.model.TrainerType.SUPPORTER);
                     }
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
                 } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK) {
-                    var stream = runtime.getDeck().getCards().stream().limit(7);
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime deckOwnerRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL
+                            && req.target() != null && !runtime.hasPokemonInPlay(req.target()))
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    final int limitAmount = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL) ? 1
+                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CLAIRVOYANT_EYE) ? 3
+                            : (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BURIED_TREASURE_HUNT) ? 4 : 7;
+                    var stream = deckOwnerRuntime.getDeck().getCards().stream().limit(limitAmount);
                     options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
+                    final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime targetHandRuntime = (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FANG_SNIPE)
+                            ? session.getPlayerRuntime(1 - viewerIndex)
+                            : runtime;
+                    var stream = targetHandRuntime.getHand().getCards().stream();
+                    if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE);
+                    } else if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ROCK_RUSH) {
+                        stream = stream.filter(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && (ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIGHTING || ec.isProvidesAllTypes()));
+                    }
+                    options = stream.map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId).toList();
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD) {
+                    final java.util.List<String> list = new java.util.ArrayList<>();
+                    final ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState active = session.getBoard().getActivePokemon(opponentIndex);
+                    if (active != null) {
+                        list.add("active:" + active.getCardId());
+                    }
+                    final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(opponentIndex);
+                    if (benched != null) {
+                        for (int i = 0; i < benched.size(); i++) {
+                            final var p = benched.get(i);
+                            if (p != null) {
+                                list.add("bench_" + i + ":" + p.getCardId());
+                            }
+                        }
+                    }
+                    options = list;
+                } else if (req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH) {
+                    final java.util.List<String> list = new java.util.ArrayList<>();
+                    final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(viewerIndex);
+                    if (benched != null) {
+                        for (int i = 0; i < benched.size(); i++) {
+                            final var p = benched.get(i);
+                            if (p != null) {
+                                list.add("bench_" + i + ":" + p.getCardId());
+                            }
+                        }
+                    }
+                    options = list;
                 }
             }
             requestDto = new PendingSelectionRequestDTO(req.sourceEffect(), req.target() != null ? req.target().getCardId() : null, req.maxSelections(), req.source(), options);
@@ -105,7 +174,7 @@ public final class PlayerPerspectiveMapper {
                 session.getMatchId(),
                 session.getVersion(),
                 turnNumber,
-                session.getActivePlayerIndex() == -1 ? -1 : (session.getActivePlayerIndex() == viewerIndex ? 0 : 1),
+                (session.isAwaitingPromotion() ? session.getPromotingPlayerIndex() : session.getActivePlayerIndex()) == -1 ? -1 : ((session.isAwaitingPromotion() ? session.getPromotingPlayerIndex() : session.getActivePlayerIndex()) == viewerIndex ? 0 : 1),
                 session.getState() == MatchSessionState.FINISHED ? "FINISHED" : (session.getTurnManager() != null && session.getTurnManager().currentPhase() != null ? session.getTurnManager().currentPhase().name() : session.getState().name()),
                 requestDto,
                 self,
@@ -133,8 +202,17 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final List<String> hand = session.getBoard().getHandOf(playerIndex);
 
-        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(playerIndex) != null) ? session.getPlayerRuntime(playerIndex).getStatusEffectManager()
-                .activeEffects().stream().map(Enum::name).toList() : List.of();
+        final List<String> activeConditions;
+        if (activePokemon != null && session.getPlayerRuntime(playerIndex) != null) {
+            final var sem = session.getPlayerRuntime(playerIndex).getStatusEffectManager();
+            final List<String> conds = new java.util.ArrayList<>(sem.activeEffects().stream().map(Enum::name).toList());
+            if (sem.isRetreatBlockedNextTurn()) {
+                conds.add("RETREAT_BLOCKED");
+            }
+            activeConditions = conds;
+        } else {
+            activeConditions = List.of();
+        }
 
         return new GameStateResponseDTO.PlayerView(
                 playerId,
@@ -154,8 +232,17 @@ public final class PlayerPerspectiveMapper {
                 .collect(Collectors.toList());
         final int handSize = session.getBoard().getHandOf(opponentIndex).size();
 
-        final List<String> activeConditions = (activePokemon != null && session.getPlayerRuntime(opponentIndex) != null) ? session.getPlayerRuntime(opponentIndex).getStatusEffectManager()
-                .activeEffects().stream().map(Enum::name).toList() : List.of();
+        final List<String> activeConditions;
+        if (activePokemon != null && session.getPlayerRuntime(opponentIndex) != null) {
+            final var sem = session.getPlayerRuntime(opponentIndex).getStatusEffectManager();
+            final List<String> conds = new java.util.ArrayList<>(sem.activeEffects().stream().map(Enum::name).toList());
+            if (sem.isRetreatBlockedNextTurn()) {
+                conds.add("RETREAT_BLOCKED");
+            }
+            activeConditions = conds;
+        } else {
+            activeConditions = List.of();
+        }
 
         return new GameStateResponseDTO.OpponentView(
                 playerId,
@@ -174,6 +261,11 @@ public final class PlayerPerspectiveMapper {
         final String toolCardId = pokemon.getAttachedTool()
                 .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
                 .orElse(null);
+        final List<ar.edu.utn.frc.tup.piii.dtos.AbilityDTO> abilityDtos = pokemon.getAbilities() == null ? List.of() :
+                pokemon.getAbilities().stream()
+                        .filter(ab -> ab.name() != null)
+                        .map(ab -> new ar.edu.utn.frc.tup.piii.dtos.AbilityDTO(ab.name(), ab.text()))
+                        .toList();
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -188,6 +280,7 @@ public final class PlayerPerspectiveMapper {
                 pokemon.hasToolAttached(),
                 toolCardId,
                 attackDtos,
+                abilityDtos,
                 statusConditions);
     }
 }

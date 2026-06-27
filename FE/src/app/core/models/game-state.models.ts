@@ -39,6 +39,12 @@ export interface AttackDTO {
   energyCost: PokemonType[];
 }
 
+/** Refleja AbilityDTO.java */
+export interface AbilityDTO {
+  name: string;
+  text: string;
+}
+
 /** Refleja BattlePokemonDTO.java */
 export interface BattlePokemonDTO {
   cardId: string;           // ej: "xy1-46"
@@ -54,6 +60,7 @@ export interface BattlePokemonDTO {
   hasToolAttached: boolean;
   attachedToolCardId?: string | null;
   attacks: AttackDTO[];
+  abilities: AbilityDTO[];  // habilidades del Pokémon (puede estar vacío)
   statusConditions: SpecialCondition[];  // List<String> en Java
 }
 
