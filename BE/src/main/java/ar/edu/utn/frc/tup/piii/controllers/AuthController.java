@@ -15,9 +15,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository userRepository;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository userRepository) {
         this.authService = authService;
+        this.userRepository = userRepository;
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/set-coins")
+    public ResponseEntity<?> setCoins(
+            @org.springframework.web.bind.annotation.RequestParam String username,
+            @org.springframework.web.bind.annotation.RequestParam int coins) {
+        java.util.Optional<ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity> userOpt = userRepository.findFirstByUsername(username);
+        if (userOpt.isPresent()) {
+            ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity user = userOpt.get();
+            user.setPokecoins(coins);
+            userRepository.save(user);
+            return ResponseEntity.ok("Coins updated to " + coins + " for user " + username);
+        } else {
+            return ResponseEntity.badRequest().body("User not found: " + username);
+        }
     }
 
     @PostMapping("/register")

@@ -281,6 +281,11 @@ export class FieldPokemonComponent implements OnChanges, OnDestroy {
     }
 
     // 2. Initialize displayed HP on first load
+    if (changes['cardId']) {
+      this.initialized = false;
+    }
+
+    // Initialize displayed HP on first load
     if (!this.initialized && this.maxHp > 0) {
       this.displayedHp = this.currentHp;
       this.displayedHpPercent = this.hpPercent;

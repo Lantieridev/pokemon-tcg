@@ -79,8 +79,43 @@ interface Filters {
                     </button>
                   }
                   <button class="delete-btn" (click)="$event.stopPropagation(); deleteDeck(deck.id)" title="Eliminar Mazo">✕</button>
+                  <button class="delete-btn" (click)="$event.stopPropagation(); deckToDelete.set(deck.id)" title="Eliminar Mazo">✕</button>
                 </div>
               }
+            </div>
+          </div>
+        }
+
+        <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
+        @if (deckToDelete() !== null) {
+          <div class="fixed inset-0 z-50 flex items-center justify-center cursor-default"
+               style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10000; background: rgba(4, 2, 10, 0.65); backdrop-filter: blur(12px);"
+               (click)="deckToDelete.set(null)">
+            
+            <div class="relative p-8"
+                 style="background: rgba(15, 12, 30, 0.88); border: 1px solid rgba(255,255,255,0.12); border-radius: 28px; backdrop-filter: blur(24px); width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);"
+                 (click)="$event.stopPropagation()">
+              
+              <button class="absolute"
+                      style="top: 20px; right: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #7a8090; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.2s;"
+                      onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.color='#e8eaf6';"
+                      onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#7a8090';"
+                      (click)="deckToDelete.set(null)">✕</button>
+              
+              <div style="font-size: 48px; text-align: center; margin-bottom: 16px;">🗑️</div>
+              <h3 style="font-size: 20px; font-weight: 800; color: #e8eaf6; margin-bottom: 16px; text-align: center;">¿Eliminar mazo?</h3>
+              <p style="color: #7a8090; font-size: 14px; text-align: center; margin-bottom: 32px;">
+                Esta acción no se puede deshacer. ¿Estás seguro de que querés borrar este mazo?
+              </p>
+              
+              <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="ghost-btn" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 700;" (click)="deckToDelete.set(null)">Cancelar</button>
+                <button class="action-btn" 
+                        style="flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; cursor: pointer;"
+                        onmouseover="this.style.background='rgba(239,68,68,0.25)'"
+                        onmouseout="this.style.background='rgba(239,68,68,0.15)'"
+                        (click)="deleteDeck()">Sí, eliminar</button>
+              </div>
             </div>
           </div>
         }
@@ -379,6 +414,7 @@ export class DeckAuroraComponent implements OnInit {
   currentView = signal<'list' | 'create_options' | 'wizard_options' | 'builder'>('list');
   decks = signal<DeckSummaryDTO[]>([]);
   editingDeckId = signal<number | null>(null);
+  deckToDelete = signal<number | null>(null);
   generatingWizard = signal(false);
   selectedWizardTypes = signal<string[]>([]);
   wizardEvolutionLines = signal<number>(0);
@@ -495,13 +531,18 @@ export class DeckAuroraComponent implements OnInit {
     });
   }
 
-  deleteDeck(deckId: number) {
-    if (confirm('¿Estás seguro de que querés eliminar este mazo?')) {
+  deleteDeck() {
+    const deckId = this.deckToDelete();
+    if (deckId !== null) {
       this.deckApi.deleteDeck(deckId).subscribe({
         next: () => {
+          this.deckToDelete.set(null);
           this.loadDecks();
         },
-        error: (err) => alert('Error eliminando mazo: ' + err.message)
+        error: (err) => {
+          this.deckToDelete.set(null);
+          alert('Error eliminando mazo: ' + err.message);
+        }
       });
     }
   }

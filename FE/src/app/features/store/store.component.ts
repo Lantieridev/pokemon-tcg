@@ -6,11 +6,13 @@ import { ToastService } from '../../core/services/toast.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PackService } from '../../core/services/pack.service';
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 
 @Component({
   selector: 'app-store',
   standalone: true,
-  imports: [CommonModule, IconComponent, CoinIconComponent],
+  imports: [CommonModule, IconComponent, CoinIconComponent, HoloCardComponent],
   templateUrl: './store.component.html',
   styleUrl: './store.component.css'
 })
@@ -20,6 +22,9 @@ export class StoreComponent implements OnInit {
   private profileService = inject(ProfileService);
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
+  private tcgService = inject(PokemonTcgService);
+
+  zoomedCard = signal<any | null>(null);
 
   items = signal<StoreItemDTO[]>([]);
   pokecoins = signal<number>(0);
@@ -123,6 +128,7 @@ export class StoreComponent implements OnInit {
   ngOnInit() {
     this.loadStore();
     this.loadBalance();
+    this.tcgService.loadCards();
   }
 
   loadStore() {
@@ -204,5 +210,17 @@ export class StoreComponent implements OnInit {
   closePackResult() {
     this.packResult.set(null);
     this.openedCards.set([]);
+  }
+
+  zoomCard(card: any) {
+    const fullCard = this.tcgService.cards().find(c => c.id === card.cardId);
+    const hiresUrl = 'https://images.pokemontcg.io/' + card.cardId.split('-')[0] + '/' + card.cardId.split('-')[1] + '_hires.png';
+    this.zoomedCard.set({
+      img: fullCard?.images?.large ?? fullCard?.images?.small ?? hiresUrl,
+      name: card.cardName || fullCard?.name || 'Pokémon',
+      type: (fullCard?.types && fullCard?.types[0]?.toLowerCase()) || 'colorless',
+      rarity: (fullCard as any)?.rarity || card.rarity || 'Common',
+      subtypes: fullCard?.subtypes || []
+    });
   }
 }

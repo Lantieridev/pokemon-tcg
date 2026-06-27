@@ -141,7 +141,7 @@
                    [class.target-highlight]="isValidTarget('opponent', 'bench', $index)">
                 <app-field-pokemon
                   [cardId]="b.cardId"
-                  [energies]="b.energies"
+                  [energies]="b.energyCardIds"
                   [damage]="b.damage"
                   [maxHp]="b.maxHp"
                   [status]="b.status"
@@ -167,7 +167,7 @@
               }
               <app-field-pokemon
                 [cardId]="activeOpp.cardId"
-                [energies]="activeOpp.energies"
+                [energies]="activeOpp.energyCardIds"
                 [damage]="activeOpp.damage"
                 [maxHp]="activeOpp.maxHp"
                 [status]="activeOpp.status"
@@ -239,7 +239,7 @@
               }
               <app-field-pokemon
                 [cardId]="activeMe.cardId"
-                [energies]="activeMe.energies"
+                [energies]="activeMe.energyCardIds"
                 [damage]="activeMe.damage"
                 [maxHp]="activeMe.maxHp"
                 [status]="activeMe.status"
@@ -248,6 +248,7 @@
                 [width]="110"
                 [glow]="true"
                 direction="up"
+                [style.pointer-events]="draggedCard() !== null ? 'none' : 'auto'"
                 (toolClick)="zoomCard($event)">
               </app-field-pokemon>
             </div>
@@ -275,13 +276,14 @@
                    (drop)="onDropPokemon($event, 'bench', $index)">
                 <app-field-pokemon
                   [cardId]="b.cardId"
-                  [energies]="b.energies"
+                  [energies]="b.energyCardIds"
                   [damage]="b.damage"
                   [maxHp]="b.maxHp"
                   [attachedToolCardId]="b.attachedToolCardId"
                   [damageEvent]="myBenchDamageEvent($index)"
                   [width]="75"
                   direction="up"
+                  [style.pointer-events]="draggedCard() !== null ? 'none' : 'auto'"
                   (toolClick)="zoomCard($event)">
                 </app-field-pokemon>
               </div>
@@ -973,6 +975,49 @@
             </div>
           }
 
+
+          <!-- Achievements/Misiones Progress Section -->
+          @if (achievements().length > 0) {
+            <div class="w-full flex flex-col gap-3 mt-2 px-4 py-4 rounded-2xl border border-white/5 bg-white/[0.02] text-left max-h-[190px] overflow-y-auto" style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;">
+              <div class="font-display text-xs font-bold tracking-[0.25em] text-[#ffcb05]/90 uppercase text-center mb-1">
+                🎯 PROGRESO DE MISIONES 🎯
+              </div>
+              
+              @for (ach of achievements(); track ach.title) {
+                <div class="flex flex-col gap-1.5" [style.opacity]="ach.unlocked ? '1' : '0.8'">
+                  <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="font-bold text-white/95">{{ ach.title }}</span>
+                      <span [style.background]="getCategoryColor(ach.category)" class="text-[8px] font-extrabold px-1.5 py-0.5 rounded text-black uppercase">{{ ach.category }}</span>
+                    </div>
+                    <span class="text-[10px] text-white/50">{{ ach.unlocked ? '✅ Completada' : '🔒 En progreso' }}</span>
+                  </div>
+                  
+                  <!-- Progress bar -->
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <div [style.width]="showFilledProgress() ? (Math.min(ach.progress, ach.target) / ach.target * 100) + '%' : '0%'"
+                           [style.background]="ach.unlocked ? 'linear-gradient(90deg, #46e08a, #27ae60)' : 'linear-gradient(90deg, #38bdf8, #a855f7)'"
+                           class="h-full rounded-full transition-all duration-[1.5s] ease-out">
+                      </div>
+                    </div>
+                    <span class="font-mono text-[10px] text-white/70 min-w-[40px] text-right">{{ ach.progress }} / {{ ach.target }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Actions -->
+          <div class="flex gap-4 mt-3 w-full justify-center">
+            <button class="px-8 py-3 rounded-xl font-chunky text-sm tracking-wider uppercase transition-all duration-200 active:scale-95"
+                    style="background: #ffcb05; color: #1a1010; border: 3px solid #1a1010; box-shadow: 0 4px 0 #1a1010; cursor: pointer;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 0 #1a1010'"
+                    onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 0 #1a1010'"
+                    (click)="onLeave()">
+              Volver al Lobby
+            </button>
+          </div>
         </div>
       </div>
     }

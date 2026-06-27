@@ -1,9 +1,13 @@
 package ar.edu.utn.frc.tup.piii.services;
 
+import ar.edu.utn.frc.tup.piii.dtos.ActionRequestDTO;
+import ar.edu.utn.frc.tup.piii.dtos.ActionType;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import ar.edu.utn.frc.tup.piii.engine.FakeBattlePokemonState;
 import ar.edu.utn.frc.tup.piii.engine.manager.RuleValidator;
+import ar.edu.utn.frc.tup.piii.engine.manager.TurnManager;
+import ar.edu.utn.frc.tup.piii.engine.model.Action;
+import ar.edu.utn.frc.tup.piii.engine.model.EndTurnAction;
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
@@ -24,6 +28,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,10 +38,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
-/**
- * Tests for MatchService abandonment lifecycle (disconnect/reconnect/timeout).
- */
 class MatchServiceAbandonTest {
 
     private static final String MATCH_ID = "match-abandon";
@@ -57,6 +60,7 @@ class MatchServiceAbandonTest {
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
     private CampaignService campaignService;
+    private ChatService chatService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -76,17 +80,41 @@ class MatchServiceAbandonTest {
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
         campaignService = mock(CampaignService.class);
+        chatService = mock(ChatService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
         final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
         final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
         final MatchBoard board = new MatchBoard(List.of(player0, player1));
-        session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board);
+        
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime0 = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime1 = mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        when(runtime0.getActivePokemon()).thenReturn(active);
+        when(runtime1.getActivePokemon()).thenReturn(active);
+        when(runtime0.getBench()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.Bench());
+        when(runtime1.getBench()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.Bench());
+        
+        ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker0 = new ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker();
+        ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker1 = new ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker();
+        when(runtime0.getStatisticsTracker()).thenReturn(tracker0);
+        when(runtime1.getStatisticsTracker()).thenReturn(tracker1);
+        
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem0 = mock(ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager.class);
+        ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem1 = mock(ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager.class);
+        when(runtime0.getStatusEffectManager()).thenReturn(sem0);
+        when(runtime1.getStatusEffectManager()).thenReturn(sem1);
+
+        session = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), board, List.of(runtime0, runtime1), false);
         session.setup();
         session.start();
 
-        // Wire the per-session RuleValidator (MatchService reads it from the session, not from its constructor)
+        TurnManager turnManager = new TurnManager();
+        turnManager.setStartingPlayer(0);
+        turnManager.startTurn(0);
+        turnManager.endDraw(); // Transition to MainPhase
+        session.setTurnManager(turnManager);
+
         session.setRuleValidator(ruleValidator);
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
         when(userRepository.findFirstByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
@@ -101,124 +129,66 @@ class MatchServiceAbandonTest {
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
                 scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
-                campaignService, TIMEOUT_SECONDS);
+                campaignService, chatService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
-    void shouldScheduleAbandonmentFutureOnDisconnect() {
+    void shouldScheduleTurnTimerForActivePlayerOnStart() {
         final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
         when(scheduler.schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
                 .thenReturn(mockFuture);
 
-        matchService.onPlayerDisconnect(MATCH_ID, PLAYER_A_ID);
+        matchService.startTurnTimers(MATCH_ID);
 
-        // verify a future was scheduled
         verify(scheduler).schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS));
-        // verify the future is stored on the session
-        final Object storedFuture = session.getTimeoutFuture(PLAYER_A_ID);
+        Object storedFuture = session.getTimeoutFuture(PLAYER_A_ID);
         assertThat(storedFuture).isNotNull().isEqualTo(mockFuture);
+        assertNull(session.getTimeoutFuture(PLAYER_B_ID));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
-    void shouldCancelAbandonmentFutureAtomicallyInsideLockOnReconnect() {
-        final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
-        when(scheduler.schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
-                .thenReturn(mockFuture);
-
-        matchService.onPlayerDisconnect(MATCH_ID, PLAYER_A_ID);
-        matchService.onPlayerReconnect(MATCH_ID, PLAYER_A_ID);
-
-        // the future must have been cancelled
-        verify(mockFuture).cancel(false);
-        // the session must have cleared the stored future reference
-        final Object clearedFuture = session.getTimeoutFuture(PLAYER_A_ID);
-        assertThat(clearedFuture).isNull();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Test
-    void shouldHoldLockWhenSettingDisconnectTimeout() {
-        // Verify the timeout is set while the lock is held by checking that no
-        // concurrent reconnect can cancel a future that hasn't been stored yet.
-        // We do this by running disconnect and then immediately reconnect — without
-        // the lock, the cancel in reconnect would race with the store in disconnect.
-        // With the lock, disconnect stores first, reconnect cancels after.
-        final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
-        when(scheduler.schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
-                .thenReturn(mockFuture);
-
-        // Acquire the lock ourselves before calling disconnect — if disconnect also
-        // tries to acquire the lock, it will block until we release it.
-        session.getLock().lock();
-        try {
-            // Spawn disconnect in a separate thread that must wait for our lock
-            final Thread disconnectThread = new Thread(
-                    () -> matchService.onPlayerDisconnect(MATCH_ID, PLAYER_A_ID));
-            disconnectThread.start();
-
-            // Sleep briefly to let the thread reach the lock acquisition point
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            // While we hold the lock, the timeout future must NOT be stored yet
-            assertNull(session.getTimeoutFuture(PLAYER_A_ID),
-                    "timeout must not be stored until the lock is released");
-        } finally {
-            session.getLock().unlock();
-        }
-
-        // After releasing, the disconnect thread completes — future is now stored
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        assertNotNull(session.getTimeoutFuture(PLAYER_A_ID),
-                "timeout future must be stored after disconnect completes");
-    }
-
-    @Test
-    void shouldNotScheduleAbandonmentTimerWhenSessionIsNotActive() {
-        final FakeBattlePokemonState active = new FakeBattlePokemonState(
-                100, PokemonType.FIRE, null, null, false);
-        final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
-        final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
-        final MatchBoard waitingBoard = new MatchBoard(List.of(player0, player1));
-        final MatchSession waitingSession = new MatchSession(
-                "match-waiting", List.of(PLAYER_A_ID, PLAYER_B_ID), waitingBoard);
-        // deliberately NOT calling setup() or start() — session stays in WAITING
-
-        when(registry.find("match-waiting")).thenReturn(Optional.of(waitingSession));
-
-        matchService.onPlayerDisconnect("match-waiting", PLAYER_A_ID);
-
-        verify(scheduler, never()).schedule(any(Runnable.class), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS));
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Test
-    void shouldBroadcastAndRemoveMatchWhenAbandonmentTimerFires() {
+    void shouldSkipTurnOnFirstTimeout() {
         final ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
         final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
         when(scheduler.schedule(taskCaptor.capture(), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
                 .thenReturn(mockFuture);
+        
+        when(ruleValidator.validate(any(), eq(0))).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.ValidationResult.Valid());
+        when(facade.toEngineAction(any(), eq(0), any())).thenReturn(new EndTurnAction());
 
-        matchService.onPlayerDisconnect(MATCH_ID, PLAYER_A_ID);
+        matchService.startTurnTimers(MATCH_ID);
 
-        // fire the scheduled task directly (simulating timer expiry)
+        // Simulate turn timer expiry
         taskCaptor.getValue().run();
 
-        // broadcast must have been called (for both players)
-        verify(messaging, org.mockito.Mockito.atLeastOnce())
-                .convertAndSend(any(String.class), any(Object.class));
-        // verify that the winner was declared (since PLAYER_A_ID forfeited, PLAYER_B_ID wins)
+        // Verify no exception caused an abandon
+        verify(persistence, never()).declareWinner(any(), any());
+        
+        assertEquals(1, session.getMissedTurns(PLAYER_A_ID));
+        verify(chatService).addMessage(eq(MATCH_ID), any()); // System message sent
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void shouldAbandonMatchOnSecondTimeout() {
+        final ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+        final ScheduledFuture mockFuture = mock(ScheduledFuture.class);
+        when(scheduler.schedule(taskCaptor.capture(), eq(TIMEOUT_SECONDS), eq(TimeUnit.SECONDS)))
+                .thenReturn(mockFuture);
+        
+        session.incrementMissedTurns(PLAYER_A_ID); // Assume they already missed 1 turn
+
+        matchService.startTurnTimers(MATCH_ID);
+
+        // Simulate turn timer expiry again
+        taskCaptor.getValue().run();
+
+        assertEquals(2, session.getMissedTurns(PLAYER_A_ID));
+        
+        // Verifies match abandonment
         verify(persistence).declareWinner(MATCH_ID, PLAYER_B_ID);
-        // registry must have removed the match
         verify(registry).remove(MATCH_ID);
     }
 }

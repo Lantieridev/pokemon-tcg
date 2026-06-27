@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findFirstByUsername(String username);
+    Optional<UserEntity> findByUsername(String username);
 
     @Query("SELECT new ar.edu.utn.frc.tup.piii.dtos.RankingDto(u.username, u.mmr, '', u.rankedMatchesPlayed) " +
            "FROM UserEntity u " +

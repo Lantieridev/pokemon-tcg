@@ -266,6 +266,9 @@ public final class PlayerPerspectiveMapper {
                         .filter(ab -> ab.name() != null)
                         .map(ab -> new ar.edu.utn.frc.tup.piii.dtos.AbilityDTO(ab.name(), ab.text()))
                         .toList();
+        final List<String> energyCardIds = pokemon.getAttachedEnergyCards().stream()
+                .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getCardId)
+                .toList();
         return new BattlePokemonDTO(
                 pokemon.getCardId(),
                 pokemon.getName(),
@@ -281,6 +284,7 @@ public final class PlayerPerspectiveMapper {
                 toolCardId,
                 attackDtos,
                 abilityDtos,
-                statusConditions);
+                statusConditions,
+                energyCardIds);
     }
 }
