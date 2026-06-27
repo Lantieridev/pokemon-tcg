@@ -26,8 +26,6 @@ public class ExampleDeckSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-    @Override
-    public void run(String... args) throws Exception {
         List<UserEntity> users = userRepository.findAll();
         for (UserEntity user : users) {
             List<DeckEntity> existing = new java.util.ArrayList<>(deckRepository.findByUserId(user.getId()));

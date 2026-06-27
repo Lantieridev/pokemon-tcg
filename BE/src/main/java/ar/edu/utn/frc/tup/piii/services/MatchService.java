@@ -380,10 +380,9 @@ public class MatchService {
                     }
                 }
                 turnManager.endBetweenTurns();
-<<<<<<< HEAD
                 if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                     return;
-=======
+                }
                 session.setBetweenTurnsProcessed(false);
             }
             case SelectCardsAction selectCards -> {
@@ -429,7 +428,6 @@ public class MatchService {
                     if (session.getState() != ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                         checkForPendingPromotion(session);
                     }
->>>>>>> feature/flashfire-corrections
                 }
             }
             case EndTurnAction ignored -> {
@@ -442,27 +440,16 @@ public class MatchService {
                     }
                 }
                 turnManager.endBetweenTurns();
-<<<<<<< HEAD
                 if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
                     return;
                 }
-=======
                 session.setBetweenTurnsProcessed(false);
->>>>>>> feature/flashfire-corrections
             }
             case PromoteActiveAction ignored -> {
                 final boolean wasAwaiting = session.isAwaitingPromotion();
                 facade.apply(session, action, turnManager);
                 if (wasAwaiting) {
                     session.clearAwaitingPromotion();
-<<<<<<< HEAD
-                    // Resume the deferred between-turns phase that was paused for this promotion
-                    processBetweenTurns(session, turnManager);
-                    turnManager.endBetweenTurns();
-                    if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
-                        return;
-                    }
-=======
                     if (checkForPendingPromotion(session)) {
                         return;
                     }
@@ -477,12 +464,14 @@ public class MatchService {
                                 }
                             }
                         }
+                        if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                            return;
+                        }
                         turnManager.endBetweenTurns();
                         session.setBetweenTurnsProcessed(false);
                     } else if (turnManager.currentPhase() instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase) {
                         turnManager.resumeMainPhase();
                     }
->>>>>>> feature/flashfire-corrections
                 }
             }
             default -> {

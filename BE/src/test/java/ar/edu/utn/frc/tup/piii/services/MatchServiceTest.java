@@ -15,6 +15,8 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import ar.edu.utn.frc.tup.piii.services.CampaignService;
+import ar.edu.utn.frc.tup.piii.services.MmrCalculationService;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStatePersistence;
 import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentMatchers;
 
 /**
  * Tests for MatchService.processAction() — lock contract and validation.
@@ -58,6 +61,8 @@ class MatchServiceTest {
     private UserRepository userRepository;
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
+    private CampaignService campaignService;
+
 
     private MatchService matchService;
     private MatchSession session;
@@ -80,6 +85,8 @@ class MatchServiceTest {
         userRepository = mock(UserRepository.class);
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
+        campaignService = mock(CampaignService.class);
+
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -107,7 +114,7 @@ class MatchServiceTest {
         when(turnManager.activePlayerIndex()).thenReturn(0);
         when(turnManager.currentPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase());
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
+        when(userRepository.findFirstByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
                 MATCH_ID, 1L, 1, 0, "ACTIVE", null,
@@ -124,7 +131,7 @@ class MatchServiceTest {
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, campaignService, TIMEOUT_SECONDS);
     }
 
     @Test
@@ -590,8 +597,8 @@ class MatchServiceTest {
         matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
 
         // Verify save happened for both players with updated MMRs
-        verify(userRepository).save(argThat(u -> u.getUsername().equals(PLAYER_A_ID) && u.getMmr() == 1032 && u.getRankedMatchesPlayed() == 11));
-        verify(userRepository).save(argThat(u -> u.getUsername().equals(PLAYER_B_ID) && u.getMmr() == 968 && u.getRankedMatchesPlayed() == 11));
+        verify(userRepository).save(ArgumentMatchers.<UserEntity>argThat(u -> u.getUsername().equals(PLAYER_A_ID) && u.getMmr() == 1032 && u.getRankedMatchesPlayed() == 11));
+        verify(userRepository).save(ArgumentMatchers.<UserEntity>argThat(u -> u.getUsername().equals(PLAYER_B_ID) && u.getMmr() == 968 && u.getRankedMatchesPlayed() == 11));
 
         // Verify transient fields set on the session
         org.junit.jupiter.api.Assertions.assertEquals(32, rankedSession.getMmrChangeA());
