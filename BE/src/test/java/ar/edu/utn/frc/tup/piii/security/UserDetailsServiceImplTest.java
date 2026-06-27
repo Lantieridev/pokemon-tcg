@@ -22,7 +22,7 @@ class UserDetailsServiceImplTest {
                 .username("lucas")
                 .password("encoded_pass")
                 .build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(fakeEntity));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(fakeEntity));
 
         UserDetailsServiceImpl service = new UserDetailsServiceImpl(userRepository);
         UserDetails details = service.loadUserByUsername("lucas");
@@ -35,7 +35,7 @@ class UserDetailsServiceImplTest {
     @Test
     void shouldThrowWhenUserNotFound() {
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
 
         UserDetailsServiceImpl service = new UserDetailsServiceImpl(userRepository);
         assertThatThrownBy(() -> service.loadUserByUsername("unknown"))

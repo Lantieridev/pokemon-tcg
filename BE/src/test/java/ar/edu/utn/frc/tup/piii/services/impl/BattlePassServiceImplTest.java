@@ -37,7 +37,7 @@ public class BattlePassServiceImplTest {
 
     @Test
     public void testGetStatusUserNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> {
             battlePassService.getStatus("unknown");
         });
@@ -51,7 +51,7 @@ public class BattlePassServiceImplTest {
         BattlePassLevelEntity level1 = BattlePassLevelEntity.builder().level(1).requiredXp(100).freeRewardType("COINS").freeRewardAmount(100).build();
         BattlePassLevelEntity level2 = BattlePassLevelEntity.builder().level(2).requiredXp(200).freeRewardType("STARDUST").freeRewardAmount(50).build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
         when(battlePassLevelRepository.findAll(any(Sort.class))).thenReturn(List.of(level1, level2));
 
@@ -67,7 +67,7 @@ public class BattlePassServiceImplTest {
 
     @Test
     public void testClaimRewardUserNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> {
             battlePassService.claimReward("unknown", 1, false);
         });
@@ -78,7 +78,7 @@ public class BattlePassServiceImplTest {
         UserEntity user = UserEntity.builder().id(1L).username("lucas").build();
         UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(false).build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -91,7 +91,7 @@ public class BattlePassServiceImplTest {
         UserEntity user = UserEntity.builder().id(1L).username("lucas").build();
         UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(false).build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
         when(battlePassLevelRepository.findById(1)).thenReturn(Optional.empty());
 
@@ -106,7 +106,7 @@ public class BattlePassServiceImplTest {
         UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(false).build();
         BattlePassLevelEntity level = BattlePassLevelEntity.builder().level(1).requiredXp(100).build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
         when(battlePassLevelRepository.findById(1)).thenReturn(Optional.of(level));
 
@@ -121,7 +121,7 @@ public class BattlePassServiceImplTest {
         UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(false).claimedFreeLevel(1).build();
         BattlePassLevelEntity level = BattlePassLevelEntity.builder().level(1).requiredXp(100).build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
         when(battlePassLevelRepository.findById(1)).thenReturn(Optional.of(level));
 
@@ -149,7 +149,7 @@ public class BattlePassServiceImplTest {
                 .freeRewardAmount(150)
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
         when(battlePassLevelRepository.findById(1)).thenReturn(Optional.of(level));
 
@@ -164,7 +164,7 @@ public class BattlePassServiceImplTest {
     @Test
     public void testPurchasePremiumInsufficientCoins() {
         UserEntity user = UserEntity.builder().id(1L).username("lucas").pokecoins(500).build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -175,7 +175,7 @@ public class BattlePassServiceImplTest {
     @Test
     public void testPurchasePremiumSuccess() {
         UserEntity user = UserEntity.builder().id(1L).username("lucas").pokecoins(1200).build();
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
         battlePassService.purchasePremium("lucas");

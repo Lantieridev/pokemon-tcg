@@ -37,7 +37,7 @@ public class FriendshipServiceImplTest {
 
     @Test
     public void testSendFriendRequestSenderNotFound() {
-        when(userRepository.findByUsername("unknown")).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("unknown")).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> {
             friendshipService.sendFriendRequest("unknown", "lucas");
         });
@@ -48,8 +48,8 @@ public class FriendshipServiceImplTest {
         UserEntity sender = UserEntity.builder().id(1L).username("sender").build();
         UserEntity target = UserEntity.builder().id(2L).username("target").build();
 
-        when(userRepository.findByUsername("sender")).thenReturn(Optional.of(sender));
-        when(userRepository.findByUsername("target")).thenReturn(Optional.of(target));
+        when(userRepository.findFirstByUsername("sender")).thenReturn(Optional.of(sender));
+        when(userRepository.findFirstByUsername("target")).thenReturn(Optional.of(target));
         when(friendshipRepository.findByUsers(sender, target)).thenReturn(Optional.of(mock(FriendshipEntity.class)));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -62,8 +62,8 @@ public class FriendshipServiceImplTest {
         UserEntity sender = UserEntity.builder().id(1L).username("sender").build();
         UserEntity target = UserEntity.builder().id(2L).username("target").build();
 
-        when(userRepository.findByUsername("sender")).thenReturn(Optional.of(sender));
-        when(userRepository.findByUsername("target")).thenReturn(Optional.of(target));
+        when(userRepository.findFirstByUsername("sender")).thenReturn(Optional.of(sender));
+        when(userRepository.findFirstByUsername("target")).thenReturn(Optional.of(target));
         when(friendshipRepository.findByUsers(sender, target)).thenReturn(Optional.empty());
 
         friendshipService.sendFriendRequest("sender", "target");
@@ -184,7 +184,7 @@ public class FriendshipServiceImplTest {
         UserEntity friendUser = UserEntity.builder().id(2L).username("friend").avatarIcon("icon").activeTitle("Title").build();
         FriendshipEntity friendship = FriendshipEntity.builder().id(100L).user1(currentUser).user2(friendUser).status("ACCEPTED").build();
 
-        when(userRepository.findByUsername("sender")).thenReturn(Optional.of(currentUser));
+        when(userRepository.findFirstByUsername("sender")).thenReturn(Optional.of(currentUser));
         when(friendshipRepository.findByUserAndStatus(currentUser, "ACCEPTED")).thenReturn(List.of(friendship));
 
         List<FriendshipDTO> result = friendshipService.getActiveFriends("sender");
@@ -201,7 +201,7 @@ public class FriendshipServiceImplTest {
         UserEntity senderUser = UserEntity.builder().id(1L).username("sender").avatarIcon("icon").activeTitle("Title").build();
         FriendshipEntity friendship = FriendshipEntity.builder().id(100L).user1(senderUser).user2(currentUser).status("PENDING").build();
 
-        when(userRepository.findByUsername("target")).thenReturn(Optional.of(currentUser));
+        when(userRepository.findFirstByUsername("target")).thenReturn(Optional.of(currentUser));
         when(friendshipRepository.findPendingRequestsForUser(currentUser)).thenReturn(List.of(friendship));
 
         List<FriendshipDTO> result = friendshipService.getPendingRequests("target");
