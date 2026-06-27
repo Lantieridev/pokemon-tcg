@@ -1,11 +1,11 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AuthService } from './auth.service';
-import { DeckSummaryDTO } from '../models/game-state.models';
+import { DeckSummaryDTO, DeckResponseDTO } from '../models/game-state.models';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,34 @@ export class LobbyService {
   // ── Mazos del usuario ──────────────────────────────────────────────────────
 
   readonly decks = signal<DeckSummaryDTO[]>([]);
-  readonly selectedDeckId = signal<number | null>(null);
+  readonly selectedDeckId = signal<number | null>(
+    localStorage.getItem('selected_deck_id') ? Number(localStorage.getItem('selected_deck_id')) : null
+  );
+  readonly activeDeckDetails = signal<DeckResponseDTO | null>(null);
+
+  constructor() {
+    effect(() => {
+      const deckId = this.selectedDeckId();
+      if (deckId !== null) {
+        localStorage.setItem('selected_deck_id', String(deckId));
+        this.loadActiveDeckDetails(deckId);
+      } else {
+        localStorage.removeItem('selected_deck_id');
+        this.activeDeckDetails.set(null);
+      }
+    });
+  }
+
+  async loadActiveDeckDetails(deckId: number): Promise<void> {
+    try {
+      const details = await firstValueFrom(
+        this.http.get<DeckResponseDTO>(`http://localhost:8081/api/decks/${deckId}`)
+      );
+      this.activeDeckDetails.set(details);
+    } catch (e) {
+      console.warn('[LobbyService] No se pudieron cargar los detalles del mazo activo:', e);
+    }
+  }
 
   async loadDecks(): Promise<void> {
     try {
@@ -60,8 +87,15 @@ export class LobbyService {
         this.http.get<DeckSummaryDTO[]>('http://localhost:8081/api/decks')
       );
       this.decks.set(decks ?? []);
-      if (decks && decks.length > 0 && this.selectedDeckId() === null) {
-        this.selectedDeckId.set(decks[0].id);
+      
+      const currentSelected = this.selectedDeckId();
+      const stillExists = decks && decks.some(d => d.id === currentSelected);
+      if (!stillExists) {
+        if (decks && decks.length > 0) {
+          this.selectedDeckId.set(decks[0].id);
+        } else {
+          this.selectedDeckId.set(null);
+        }
       }
     } catch (e) {
       console.warn('[LobbyService] No se pudieron cargar los mazos:', e);

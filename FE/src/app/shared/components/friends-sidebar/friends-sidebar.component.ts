@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, ChangeDetectorRef, signal, inject } from '@angular/core';
+import { Component, OnInit, inject, signal, Output, EventEmitter, input, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
@@ -15,14 +15,18 @@ import { ToastService } from '../../../core/services/toast.service';
 })
 export class FriendsSidebarComponent implements OnInit {
   isOpen = signal(false);
-  activeTab: 'friends' | 'requests' = 'friends';
-  friends: FriendshipDTO[] = [];
-  requests: FriendshipDTO[] = [];
-  newFriendUsername = '';
+  activeTab = signal<'friends' | 'requests'>('friends');
+  friends = signal<FriendshipDTO[]>([]);
+  requests = signal<FriendshipDTO[]>([]);
+  newFriendUsername = signal('');
+  friendToDelete = signal<FriendshipDTO | null>(null);
+
+  unreadMessages = input<Record<string, number>>({});
 
   @Output() onOpenChat = new EventEmitter<FriendshipDTO>();
   @Output() onOpenProfile = new EventEmitter<string>();
   @Output() onSidebarClose = new EventEmitter<void>();
+  @Output() onRequestsUpdated = new EventEmitter<number>();
 
   private toastService = inject(ToastService);
 
@@ -47,16 +51,21 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   loadData() {
-    this.friendsApi.getActiveFriends().subscribe(res => { this.friends = res; this.cdr.markForCheck(); });
-    this.friendsApi.getPendingRequests().subscribe(res => { this.requests = res; this.cdr.markForCheck(); });
+    this.friendsApi.getActiveFriends().subscribe(res => { this.friends.set(res); this.cdr.markForCheck(); });
+    this.friendsApi.getPendingRequests().subscribe(res => { 
+      this.requests.set(res); 
+      this.onRequestsUpdated.emit(res.length);
+      this.cdr.markForCheck(); 
+    });
   }
 
   sendRequest() {
-    if (!this.newFriendUsername.trim()) return;
-    this.friendsApi.sendFriendRequest(this.newFriendUsername).subscribe({
+    const target = this.newFriendUsername().trim();
+    if (!target) return;
+    this.friendsApi.sendFriendRequest(target).subscribe({
       next: () => {
         this.toastService.success('Solicitud enviada correctamente');
-        this.newFriendUsername = '';
+        this.newFriendUsername.set('');
       },
       error: (err) => {
         const msg = err.error?.message || '';
@@ -65,12 +74,10 @@ export class FriendsSidebarComponent implements OnInit {
         } else {
           this.toastService.error(msg || 'Error al enviar la solicitud');
         }
-        this.newFriendUsername = '';
+        this.newFriendUsername.set('');
       }
     });
   }
-
-  friendToDelete: FriendshipDTO | null = null;
 
   acceptRequest(id: number) {
     this.friendsApi.acceptFriendRequest(id).subscribe({
@@ -87,18 +94,19 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   confirmRemoveFriend(friend: FriendshipDTO) {
-    this.friendToDelete = friend;
+    this.friendToDelete.set(friend);
   }
 
   cancelRemoveFriend() {
-    this.friendToDelete = null;
+    this.friendToDelete.set(null);
   }
 
   removeFriend() {
-    if (!this.friendToDelete) return;
-    this.friendsApi.removeFriend(this.friendToDelete.id).subscribe(() => {
+    const friend = this.friendToDelete();
+    if (!friend) return;
+    this.friendsApi.removeFriend(friend.id).subscribe(() => {
       this.toastService.success('Amigo eliminado correctamente');
-      this.friendToDelete = null;
+      this.friendToDelete.set(null);
       this.loadData();
     });
   }
@@ -112,16 +120,36 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    return !!av && av.startsWith('avatar_');
+    if (!av) return false;
+    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red', 'default_trainer'];
+    return !emojis.includes(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    return `assets/achievements/avatars/${av}.png`;
+    
+    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
+    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
+    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
+    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
+    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
+    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
+    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
+    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
+    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
+    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
+
+    const normalizedValue = av.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+      
+    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
+    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
   }
 
   getAvatarEmoji(icon: string | undefined): string {
-    if (!icon) return '👤';
+    if (!icon) return '🎒';
     switch (icon.toLowerCase()) {
       case 'ash': return '🧢';
       case 'misty': return '💧';
@@ -129,7 +157,7 @@ export class FriendsSidebarComponent implements OnInit {
       case 'gary': return '👑';
       case 'serena': return '🎀';
       case 'red': return '⚡';
-      default: return '👤';
+      default: return '🎒';
     }
   }
 }

@@ -1,0 +1,434 @@
+.store-container {
+  padding: 40px;
+  height: 100%;
+  background: radial-gradient(circle at top right, #1a1a2e, #16213e, #0f3460);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.category-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a0a0b8;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.category-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.category-tab.active {
+  background: linear-gradient(135deg, #f39c12, #d35400);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+}
+
+.title-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2c3e50, #3498db);
+  padding: 20px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+.title-preview span {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.store-header {
+  text-align: center;
+  margin-bottom: 50px;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.store-header h1 {
+  font-family: var(--display);
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 15px;
+  color: #ffcb05;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  -webkit-text-stroke: 2px #2a75bb;
+  text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+}
+
+.store-header p {
+  color: #ffffff;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: var(--chunky);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.balance-badge {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.store-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  overflow: hidden;
+  backdrop-filter: blur(15px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.store-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  border-color: rgba(241, 196, 15, 0.5);
+}
+
+.card-image-wrapper {
+  height: 220px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card-bg-gradient {
+  position: absolute;
+  inset: 15px;
+  border-radius: 18px;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  z-index: 0;
+}
+
+.card-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.5s;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+.card-image.avatar-style {
+  border-radius: 50%;
+  border: 4px solid rgba(255, 46, 62, 0.4);
+  box-shadow: 0 0 0 4px rgba(255, 46, 62, 0.1), 0 8px 20px rgba(0,0,0,0.4);
+  background: var(--surface);
+  object-fit: cover;
+  width: 140px;
+  height: 140px;
+}
+
+.store-card:hover .card-image {
+  transform: scale(1.1) translateY(-5px);
+}
+
+.card-content {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.card-text-area {
+  text-align: center;
+  flex: 1;
+}
+
+.card-text-area h3 {
+  font-size: 1.2rem;
+  margin: 15px 0 8px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.card-text-area p {
+  color: #a0a0b8;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.buy-button {
+  background: linear-gradient(135deg, #10b981, #059669); /* Green for positive action like buying */
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.buy-button:hover:not([disabled]) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.buy-button[disabled] {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.price-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #f39c12;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* FIFA PACK STORE STYLES */
+.fifa-pack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 40px 0;
+}
+
+.fifa-pack-carousel {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 1400px;
+}
+
+.fifa-pack-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 280px;
+}
+
+.fifa-pack-card {
+  width: 220px;
+  height: 320px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden; /* Clips the image to make it look like a physical card */
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6);
+}
+
+.fifa-pack-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 20px 30px rgba(255,203,5,0.4);
+}
+
+.pack-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+  position: relative;
+  transition: transform 0.3s;
+  filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4));
+}
+
+.pack-glare {
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  z-index: 3;
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.fifa-pack-card:hover .pack-glare {
+  left: 200%;
+}
+
+.pack-inventory-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, var(--p-yellow) 0%, #ff8c00 100%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  transition: all 0.2s;
+}
+
+.pack-inventory-badge:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 15px rgba(255, 203, 5, 0.6);
+}
+
+.badge-count {
+  color: #fff;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.pack-name-label {
+  margin-top: 15px;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+}
+
+.pack-price-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--chunky);
+  font-size: 1.2rem;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Pack Tearing Animation */
+.pack-tear-container {
+  animation: packShake 1.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.pack-top-half {
+  position: absolute;
+  top: 0; left: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 25%, 80% 30%, 60% 20%, 40% 30%, 20% 20%, 0 25%);
+  animation: tearTop 0.5s ease-in 1.4s forwards;
+}
+
+.pack-bottom-half {
+  position: absolute;
+  top: 0; left: 0;
+  clip-path: polygon(0 25%, 20% 20%, 40% 30%, 60% 20%, 80% 30%, 100% 25%, 100% 100%, 0 100%);
+  animation: tearBottom 0.5s ease-in 1.4s forwards;
+}
+
+@keyframes packShake {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.1); }
+  10%, 90% { transform: translate3d(-2px, 0, 0) scale(1.1) rotate(-1deg); }
+  20%, 80% { transform: translate3d(4px, 0, 0) scale(1.1) rotate(2deg); filter: brightness(1.2); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0) scale(1.1) rotate(-3deg); }
+  40%, 60% { transform: translate3d(6px, 0, 0) scale(1.1) rotate(3deg); filter: brightness(1.5); }
+}
+
+@keyframes tearTop {
+  0% { transform: translateY(0) rotate(0deg) scale(1.1); opacity: 1; filter: brightness(2); }
+  100% { transform: translateY(-150px) rotate(-15deg) scale(1.2); opacity: 0; filter: brightness(3); }
+}
+
+@keyframes tearBottom {
+  0% { transform: translateY(0) rotate(0deg) scale(1.1); opacity: 1; filter: brightness(2); }
+  100% { transform: translateY(150px) rotate(15deg) scale(1.2); opacity: 0; filter: brightness(3); }
+}

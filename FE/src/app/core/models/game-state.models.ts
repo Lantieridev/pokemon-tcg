@@ -103,6 +103,11 @@ export interface GameStateResponseDTO {
   opponent: OpponentView;
   lastCoinFlips?: boolean[] | null;
   mmrChange?: number | null;
+  coinsGained?: number | null;
+  xpGained?: number | null;
+  currentMmr?: number | null;
+  currentTier?: string | null;
+  rankUpTriggered?: boolean | null;
 }
 
 // ─── DTOs de acción (cliente → servidor) ─────────────────────────────────────
@@ -142,6 +147,7 @@ export interface DeckCardRequestDTO {
 export interface DeckRequestDTO {
   userId: number;
   name: string;
+  status: 'VALID' | 'DRAFT';
   cards: DeckCardRequestDTO[];
 }
 
@@ -149,6 +155,7 @@ export interface DeckRequestDTO {
 export interface DeckResponseDTO {
   id: number;
   name: string;
+  status: 'VALID' | 'DRAFT';
   createdAt: string;
   cards: { cardId: string; quantity: number }[];
 }
@@ -157,6 +164,7 @@ export interface DeckResponseDTO {
 export interface DeckSummaryDTO {
   id: number;
   name: string;
+  status: 'VALID' | 'DRAFT';
   createdAt: string;
   totalCards: number;
 }

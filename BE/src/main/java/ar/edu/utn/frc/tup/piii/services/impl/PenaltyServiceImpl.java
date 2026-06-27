@@ -61,7 +61,7 @@ public class PenaltyServiceImpl implements PenaltyService {
                     penalty.setIsActive(false);
                     userPenaltyRepository.save(penalty);
 
-                    userRepository.findByUsername(username).ifPresent(user -> {
+                    userRepository.findFirstByUsername(username).ifPresent(user -> {
                         user.setShowRecidivismWarning(true);
                         userRepository.save(user);
                     });
@@ -177,7 +177,7 @@ public class PenaltyServiceImpl implements PenaltyService {
         if (username == null) {
             return false;
         }
-        return userRepository.findByUsername(username)
+        return userRepository.findFirstByUsername(username)
                 .map(UserEntity::getShowRecidivismWarning)
                 .orElse(false);
     }
@@ -185,7 +185,7 @@ public class PenaltyServiceImpl implements PenaltyService {
     @Override
     public void clearRecidivismWarning(final String username) {
         if (username != null) {
-            userRepository.findByUsername(username).ifPresent(user -> {
+            userRepository.findFirstByUsername(username).ifPresent(user -> {
                 user.setShowRecidivismWarning(false);
                 userRepository.save(user);
             });
@@ -198,7 +198,7 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
-        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        final Optional<UserEntity> userOpt = userRepository.findFirstByUsername(username);
         if (userOpt.isEmpty()) {
             return;
         }
@@ -266,7 +266,7 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
-        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
+        final Optional<UserEntity> userOpt = userRepository.findFirstByUsername(username);
         if (userOpt.isEmpty()) {
             return;
         }
@@ -361,7 +361,7 @@ public class PenaltyServiceImpl implements PenaltyService {
             return;
         }
 
-        userRepository.findByUsername(username).ifPresent(user -> {
+        userRepository.findFirstByUsername(username).ifPresent(user -> {
             userPenaltyRepository.save(UserPenaltyEntity.builder()
                     .user(user)
                     .penaltyType("RANKED_BAN")

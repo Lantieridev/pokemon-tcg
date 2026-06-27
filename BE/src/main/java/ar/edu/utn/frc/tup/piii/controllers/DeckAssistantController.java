@@ -2,12 +2,12 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardResponseDTO;
+import ar.edu.utn.frc.tup.piii.dtos.deck.SmartDeckRequestDTO;
 import ar.edu.utn.frc.tup.piii.services.deck.DeckAssistantService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -31,8 +31,7 @@ public class DeckAssistantController {
     }
 
     @PostMapping("/wizard")
-    public ResponseEntity<List<DeckCardRequestDTO>> generateWizardDeck(@RequestBody Map<String, String> request) {
-        String theme = request.getOrDefault("theme", "grass");
-        return ResponseEntity.ok(assistantService.generateWizardDeck(theme));
+    public ResponseEntity<List<DeckCardRequestDTO>> generateWizardDeck(@RequestBody SmartDeckRequestDTO request) {
+        return ResponseEntity.ok(assistantService.generateWizardDeck(request));
     }
 }

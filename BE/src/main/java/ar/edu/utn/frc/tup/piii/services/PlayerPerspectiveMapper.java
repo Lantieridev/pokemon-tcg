@@ -116,7 +116,12 @@ public final class PlayerPerspectiveMapper {
                 mvpCardId,
                 mvpCardDamage,
                 session.getLastCoinFlips() != null ? session.getLastCoinFlips() : List.of(),
-                viewerIndex == 0 ? session.getMmrChangeA() : session.getMmrChangeB());
+                viewerIndex == 0 ? session.getMmrChangeA() : session.getMmrChangeB(),
+                viewerIndex == 0 ? session.getCoinsGainedA() : session.getCoinsGainedB(),
+                viewerIndex == 0 ? session.getXpGainedA() : session.getXpGainedB(),
+                viewerIndex == 0 ? session.getCurrentMmrA() : session.getCurrentMmrB(),
+                viewerIndex == 0 ? session.getCurrentTierA() : session.getCurrentTierB(),
+                viewerIndex == 0 ? session.getRankUpTriggeredA() : session.getRankUpTriggeredB());
     }
 
     private GameStateResponseDTO.PlayerView buildPlayerView(final MatchSession session, final int playerIndex) {

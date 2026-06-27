@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface UserCardStatRepository extends JpaRepository<UserCardStatEntity, Long> {
     List<UserCardStatEntity> findByUserId(Long userId);
-    UserCardStatEntity findByUserIdAndCardId(Long userId, String cardId);
+    List<UserCardStatEntity> findByUserIdAndCardId(Long userId, String cardId);
 }

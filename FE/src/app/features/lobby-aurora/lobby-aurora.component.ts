@@ -21,7 +21,7 @@ import {
   AmbientComponent,
   BattleCtaComponent,
 } from './ui/aurora-ui.components';
-import { HoloCardComponent, AuroraCardComponent } from './components/cards.components';
+import { HoloCardComponent, AuroraCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { DeckRailComponent } from './components/deck-rail.component';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -29,6 +29,8 @@ import { ProfileService, UserProfileResponseDTO } from '../../core/services/prof
 import { LobbyService } from '../../core/services/lobby.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { DeckSummaryDTO } from '../../core/models/game-state.models';
+import { TutorialService } from '../../core/services/tutorial.service';
+import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 
 type LobbyTab = 'public' | 'private';
 type PrivateMode = 'create' | 'join';
@@ -466,6 +468,27 @@ type PrivateMode = 'create' | 'join';
       margin-bottom: 24px;
       text-align: center;
     }
+
+    .help-trigger-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent2, #fbbf24);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+      margin-left: 2px;
+    }
+    .help-trigger-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent2, #fbbf24);
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+    }
   `],
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
@@ -486,9 +509,12 @@ type PrivateMode = 'create' | 'join';
 
         <!-- ── Left copy ─────────────────────────────────────────────── -->
         <div style="width: 560px; flex: 0 0 auto; z-index: 3;">
-          <div class="fu" style="display: flex; align-items: center; gap: 10px;">
+          <div class="fu" style="display: flex; align-items: center; gap: 12px;">
             <span class="live"></span>
             <span class="eyebrow">Temporada 7 · Liga Oro III</span>
+            <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
+              <aurora-icon n="help" [s]="13"></aurora-icon>
+            </button>
           </div>
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw"
               style="font-size: 76px; line-height: 0.98; letter-spacing: -0.015em; margin: 18px 0 0; animation-delay: .05s;">
@@ -502,6 +528,7 @@ type PrivateMode = 'create' | 'join';
           <!-- Original CTA Buttons -->
           <div class="fu" style="display: flex; align-items: center; gap: 16px; margin-top: 40px; animation-delay: .16s;">
             <aurora-battle-cta
+              id="btn-battle"
               title="BATALLAR"
               sub="Clasificatoria"
               [searching]="lobby.queueStatus() === 'waiting'"
@@ -511,15 +538,18 @@ type PrivateMode = 'create' | 'join';
             <button class="ghost-btn" (click)="openModal('casual')">
               <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
             </button>
+            <button class="ghost-btn" routerLink="/campaign" style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 16px; line-height: 1;">🗺️</span> Campaña
+            </button>
             <div class="bot-section">
-              <button class="action-btn bot" [disabled]="lobby.decks().length === 0" (click)="startBotMatch()">
+              <button class="action-btn bot" style="margin-top: 0; padding: 12px 18px;" [disabled]="lobby.decks().length === 0" (click)="openModal('bot')">
                 <span class="bot-icon">🤖</span> Jugar vs Bot
               </button>
             </div>
           </div>
 
           <!-- Rank strip -->
-          <div class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
+          <div id="rango-info" class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
             <aurora-rank-crest [size]="48" tier="III"></aurora-rank-crest>
             <div style="border-right: 1px solid var(--line); padding-right: 18px;">
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
@@ -559,7 +589,14 @@ type PrivateMode = 'create' | 'join';
       </div>
 
       <!-- active-deck dock -->
-      <aurora-deck-rail [deck]="deckRail" [display]="displayFont"></aurora-deck-rail>
+      <aurora-deck-rail 
+        [deck]="deckRail()" 
+        [deckName]="lobby.activeDeckDetails()?.name || ''"
+        [totalCards]="activeDeckTotalCards()"
+        [energyTypes]="activeDeckEnergyTypes()"
+        [deckId]="lobby.selectedDeckId()"
+        [display]="displayFont">
+      </aurora-deck-rail>
 
       <!-- ── Match Modal ──────────────────────────────────────────── -->
       @if (modalOpen()) {
@@ -570,12 +607,15 @@ type PrivateMode = 'create' | 'join';
             <h3 class="modal-title">
               @if (modalMode() === 'competitive') {
                 🏆 Clasificatoria
-              } @else {
+              } @else if (modalMode() === 'casual') {
                 ⚔️ Partida Casual
+              } @else {
+                🤖 Jugar vs Bot
               }
             </h3>
 
             <!-- Tabs: Pública / Privada -->
+            @if (modalMode() !== 'bot') {
             <div class="panel-tabs">
               <button class="panel-tab" [class.active]="activeTab() === 'public'" (click)="setTab('public')" id="tab-public">
                 🌐 Partida Pública
@@ -584,6 +624,7 @@ type PrivateMode = 'create' | 'join';
                 🔒 Sala Privada
               </button>
             </div>
+            }
 
             <!-- ── Deck selector ── -->
             @if (!isAnyMatchPending()) {
@@ -610,7 +651,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PÚBLICA ══════════════ -->
-            @if (activeTab() === 'public') {
+            @if (activeTab() === 'public' && modalMode() !== 'bot') {
 
               @if (lobby.queueStatus() === 'idle') {
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -645,7 +686,7 @@ type PrivateMode = 'create' | 'join';
             }
 
             <!-- ══════════════ TAB: PRIVADA ══════════════ -->
-            @if (activeTab() === 'private') {
+            @if (activeTab() === 'private' && modalMode() !== 'bot') {
 
               <!-- Sub-tabs: Crear / Unirse -->
               @if (!isAnyMatchPending()) {
@@ -713,6 +754,19 @@ type PrivateMode = 'create' | 'join';
 
             }
 
+            <!-- ══════════════ MODO BOT ══════════════ -->
+            @if (modalMode() === 'bot') {
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button
+                  class="action-btn bot"
+                  style="margin-top: 0; width: 100%;"
+                  [disabled]="lobby.decks().length === 0"
+                  (click)="startBotMatch()">
+                  <span class="bot-icon">🤖</span> Iniciar Partida
+                </button>
+              </div>
+            }
+
             <!-- Error message -->
             @if (lobby.lobbyError()) {
               <div class="error-msg">⚠️ {{ lobby.lobbyError() }}</div>
@@ -732,6 +786,8 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   private profileService = inject(ProfileService);
   private matchBackendService = inject(MatchBackendService);
   readonly lobby = inject(LobbyService);
+  private tutorialService = inject(TutorialService);
+  private tcgService = inject(PokemonTcgService);
 
   get username(): string {
     return this.authService.username ?? 'Invitado';
@@ -742,7 +798,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   readonly privateMode = signal<PrivateMode>('create');
   readonly copied = signal(false);
   readonly modalOpen = signal(false);
-  readonly modalMode = signal<'competitive' | 'casual'>('competitive');
+  readonly modalMode = signal<'competitive' | 'casual' | 'bot'>('competitive');
   joinCode = '';
 
   profileData: UserProfileResponseDTO | null = null;
@@ -776,21 +832,91 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     { name: 'Mewtwo EX', type: 'psychic', img: 'https://images.pokemontcg.io/xy8/62_hires.png' },
   ];
 
-  deckRail = [
-    { name: 'Charizard EX', img: 'https://images.pokemontcg.io/xy1/11.png' },
+  readonly DEFAULT_DECK = [
     { name: 'Pikachu', img: 'https://images.pokemontcg.io/xy1/42.png' },
-    { name: 'Arcanine', img: 'https://images.pokemontcg.io/sm1/22.png' },
-    { name: 'Ninetales', img: 'https://images.pokemontcg.io/sm1/15.png' },
-    { name: 'Magmar', img: 'https://images.pokemontcg.io/det1/2.png' },
-    { name: 'Charizard', img: 'https://images.pokemontcg.io/base1/4.png' },
+    { name: 'Mewtwo EX', img: 'https://images.pokemontcg.io/xy8/62.png' },
+    { name: 'Greninja EX', img: 'https://images.pokemontcg.io/xy9/40.png' },
+    { name: 'Simisage', img: 'https://images.pokemontcg.io/xy1/11.png' }
   ];
+
+  readonly deckRail = computed(() => {
+    const details = this.lobby.activeDeckDetails();
+    const catalog = this.tcgService.cards();
+    
+    const list: any[] = [];
+    const seenIds = new Set<string>();
+
+    if (details && catalog.length > 0) {
+      for (const item of details.cards) {
+        if (seenIds.has(item.cardId)) continue;
+        
+        const found = catalog.find(c => c.id === item.cardId);
+        if (found && found.images?.small) {
+          seenIds.add(item.cardId);
+          list.push({
+            name: found.name,
+            img: found.images.small
+          });
+        }
+      }
+    }
+
+    // Rellenar hasta 6 con las cartas por defecto verificadas
+    let defIdx = 0;
+    while (list.length < 6) {
+      const fallback = this.DEFAULT_DECK[defIdx % this.DEFAULT_DECK.length];
+      list.push({ ...fallback });
+      defIdx++;
+    }
+
+    return list.slice(0, 6);
+  });
+
+  readonly activeDeckTotalCards = computed(() => {
+    const details = this.lobby.activeDeckDetails();
+    if (!details) return 0;
+    return details.cards.reduce((acc, item) => acc + item.quantity, 0);
+  });
+
+  readonly activeDeckEnergyTypes = computed(() => {
+    const details = this.lobby.activeDeckDetails();
+    if (!details) return [];
+    
+    const catalog = this.tcgService.cards();
+    if (catalog.length === 0) return [];
+    
+    const typesSet = new Set<string>();
+    for (const item of details.cards) {
+      const found = catalog.find(c => c.id === item.cardId);
+      if (found) {
+        if (found.supertype === 'Pokémon' && found.types) {
+          for (const t of found.types) {
+            typesSet.add(t.toLowerCase());
+          }
+        }
+        if (found.supertype === 'Energy') {
+          const nameLower = found.name.toLowerCase();
+          if (nameLower.includes('fire')) typesSet.add('fire');
+          else if (nameLower.includes('water')) typesSet.add('water');
+          else if (nameLower.includes('lightning') || nameLower.includes('electric')) typesSet.add('lightning');
+          else typesSet.add('colorless');
+        }
+      }
+    }
+    
+    const allowed = ['fire', 'water', 'lightning', 'colorless'];
+    const result = Array.from(typesSet).filter(t => allowed.includes(t));
+    return result.length > 0 ? result : ['colorless'];
+  });
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    this.tcgService.loadCards();
     this.lobby.reset();
     this.lobby.loadDecks();
     this.lobby.connectLobbyWebSocket();
+    this.tutorialService.triggerTutorial('lobby');
 
     const username = this.authService.username;
     if (username) {
@@ -837,7 +963,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     }
   }
 
-  openModal(mode: 'competitive' | 'casual'): void {
+  openModal(mode: 'competitive' | 'casual' | 'bot'): void {
     this.modalMode.set(mode);
     this.modalOpen.set(true);
   }
@@ -878,5 +1004,9 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     this.lobby.roomStatus.set('idle');
     this.lobby.roomCode.set(null);
     this.lobby.lobbyError.set(null);
+  }
+
+  triggerHelp(): void {
+    this.tutorialService.triggerTutorial('lobby', true);
   }
 }

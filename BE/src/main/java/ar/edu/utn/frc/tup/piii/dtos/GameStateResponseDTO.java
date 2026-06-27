@@ -29,7 +29,31 @@ import java.util.List;
         String mvpCardId,
         Integer mvpCardDamage,
         List<Boolean> lastCoinFlips,
+        Integer mmrChange,
+        Integer coinsGained,
+        Integer xpGained,
+        Integer currentMmr,
+        String currentTier,
+        Boolean rankUpTriggered) {
+
+    public GameStateResponseDTO(
+        String matchId,
+        long version,
+        int turnNumber,
+        int activePlayerIndex,
+        String currentPhase,
+        PendingSelectionRequestDTO pendingSelectionRequest,
+        PlayerView self,
+        OpponentView opponent,
+        String activeStadiumCardId,
+        String winnerId,
+        String victoryReason,
+        String mvpCardId,
+        Integer mvpCardDamage,
+        List<Boolean> lastCoinFlips,
         Integer mmrChange) {
+        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, winnerId, victoryReason, mvpCardId, mvpCardDamage, lastCoinFlips, mmrChange, null, null, null, null, false);
+    }
 
     public GameStateResponseDTO(
         String matchId,
@@ -41,8 +65,9 @@ import java.util.List;
         PlayerView self,
         OpponentView opponent,
         String activeStadiumCardId) {
-        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, null, null, null, null, List.of(), null);
+        this(matchId, version, turnNumber, activePlayerIndex, currentPhase, pendingSelectionRequest, self, opponent, activeStadiumCardId, null, null, null, null, List.of(), null, null, null, null, null, false);
     }
+
 
     /**
      * Full view of the receiving player's state, including the complete hand.

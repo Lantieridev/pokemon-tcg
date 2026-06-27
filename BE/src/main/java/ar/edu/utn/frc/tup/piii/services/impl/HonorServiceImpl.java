@@ -40,8 +40,8 @@ public class HonorServiceImpl implements HonorService {
             return;
         }
 
-        final Optional<UserEntity> giverOpt = userRepository.findByUsername(username);
-        final Optional<UserEntity> receiverOpt = userRepository.findByUsername(targetUsername);
+        final Optional<UserEntity> giverOpt = userRepository.findFirstByUsername(username);
+        final Optional<UserEntity> receiverOpt = userRepository.findFirstByUsername(targetUsername);
 
         if (giverOpt.isPresent() && receiverOpt.isPresent()) {
             userHonorRepository.save(UserHonorEntity.builder()

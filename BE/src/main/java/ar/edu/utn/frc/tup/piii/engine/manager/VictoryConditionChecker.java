@@ -244,7 +244,7 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
         switch (event) {
             case PhaseEvent.TurnStarted s  -> activePlayerIndex = s.playerIndex();
             case PhaseEvent.PhaseEntered p -> handlePhaseEntered(p);
-            case PhaseEvent.PhaseExited e  -> { /* no-op */ }
+            case PhaseEvent.PhaseExited e  -> handlePhaseExited(e);
             case PhaseEvent.TurnEnded e    -> { /* no-op */ }
         }
     }
@@ -260,6 +260,21 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
             case MainPhase m        -> { /* no-op */ }
             case AttackPhase a      -> { /* no-op */ }
             case BetweenTurnsPhase b -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
+        }
+    }
+
+    /**
+     * Handles a PhaseExited event; checks field victory after AttackPhase and BetweenTurnsPhase.
+     *
+     * @param event the PhaseExited event
+     */
+    private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
+        switch (event.phase()) {
+            case AttackPhase a -> checkFieldVictory();
+            case BetweenTurnsPhase b -> checkFieldVictory();
+            case DrawPhase d -> { /* no-op */ }
+            case MainPhase m -> { /* no-op */ }
             case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
         }
     }

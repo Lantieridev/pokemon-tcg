@@ -53,6 +53,16 @@ public final class MatchSession {
     private final boolean isRanked;
     private Integer mmrChangeA;
     private Integer mmrChangeB;
+    private Integer coinsGainedA;
+    private Integer coinsGainedB;
+    private Integer xpGainedA;
+    private Integer xpGainedB;
+    private Integer currentMmrA;
+    private Integer currentMmrB;
+    private String currentTierA;
+    private String currentTierB;
+    private Boolean rankUpTriggeredA = false;
+    private Boolean rankUpTriggeredB = false;
 
     /**
      * Set when a player's Active Pokémon has been knocked out and they must promote
@@ -621,5 +631,85 @@ public final class MatchSession {
 
     public void setMmrChangeB(Integer mmrChangeB) {
         this.mmrChangeB = mmrChangeB;
+    }
+
+    public Integer getCoinsGainedA() {
+        return coinsGainedA;
+    }
+
+    public void setCoinsGainedA(Integer coinsGainedA) {
+        this.coinsGainedA = coinsGainedA;
+    }
+
+    public Integer getCoinsGainedB() {
+        return coinsGainedB;
+    }
+
+    public void setCoinsGainedB(Integer coinsGainedB) {
+        this.coinsGainedB = coinsGainedB;
+    }
+
+    public Integer getXpGainedA() {
+        return xpGainedA;
+    }
+
+    public void setXpGainedA(Integer xpGainedA) {
+        this.xpGainedA = xpGainedA;
+    }
+
+    public Integer getXpGainedB() {
+        return xpGainedB;
+    }
+
+    public void setXpGainedB(Integer xpGainedB) {
+        this.xpGainedB = xpGainedB;
+    }
+
+    public Integer getCurrentMmrA() {
+        return currentMmrA;
+    }
+
+    public void setCurrentMmrA(Integer currentMmrA) {
+        this.currentMmrA = currentMmrA;
+    }
+
+    public Integer getCurrentMmrB() {
+        return currentMmrB;
+    }
+
+    public void setCurrentMmrB(Integer currentMmrB) {
+        this.currentMmrB = currentMmrB;
+    }
+
+    public String getCurrentTierA() {
+        return currentTierA;
+    }
+
+    public void setCurrentTierA(String currentTierA) {
+        this.currentTierA = currentTierA;
+    }
+
+    public String getCurrentTierB() {
+        return currentTierB;
+    }
+
+    public void setCurrentTierB(String currentTierB) {
+        this.currentTierB = currentTierB;
+    }
+
+    public Boolean getRankUpTriggeredA() {
+        return rankUpTriggeredA;
+    }
+
+    public void setRankUpTriggeredA(Boolean rankUpTriggeredA) {
+        this.rankUpTriggeredA = rankUpTriggeredA;
+    }
+
+    public Boolean getRankUpTriggeredB() {
+        return rankUpTriggeredB;
+    }
+
+    public void setRankUpTriggeredB(Boolean rankUpTriggeredB) {
+        this.rankUpTriggeredB = rankUpTriggeredB;
     }
 }

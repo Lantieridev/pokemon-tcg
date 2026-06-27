@@ -56,6 +56,7 @@ class MatchServiceAbandonTest {
     private UserRepository userRepository;
     private BotDecisionService botDecisionService;
     private MmrCalculationService mmrCalculationService;
+    private CampaignService campaignService;
 
     private MatchService matchService;
     private MatchSession session;
@@ -74,6 +75,7 @@ class MatchServiceAbandonTest {
         userRepository = mock(UserRepository.class);
         botDecisionService = mock(BotDecisionService.class);
         mmrCalculationService = mock(MmrCalculationService.class);
+        campaignService = mock(CampaignService.class);
 
         final FakeBattlePokemonState active = new FakeBattlePokemonState(
                 100, PokemonType.FIRE, null, null, false);
@@ -87,24 +89,19 @@ class MatchServiceAbandonTest {
         // Wire the per-session RuleValidator (MatchService reads it from the session, not from its constructor)
         session.setRuleValidator(ruleValidator);
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
-        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
+        when(userRepository.findFirstByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
 
         final GameStateResponseDTO fakeView = new GameStateResponseDTO(
                 MATCH_ID, 1L, 1, 0, "ACTIVE", null,
                 new GameStateResponseDTO.PlayerView(PLAYER_A_ID, null, List.of(), List.of(), 45, 6),
                 new GameStateResponseDTO.OpponentView(PLAYER_B_ID, null, List.of(), 0, 45, 6),
-                null,
-                null,
-                null,
-                null,
-                null,
-                List.of(),
                 null);
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
 
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
+                campaignService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

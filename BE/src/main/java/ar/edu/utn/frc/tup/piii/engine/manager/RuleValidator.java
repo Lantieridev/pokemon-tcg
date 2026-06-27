@@ -169,7 +169,7 @@ public final class RuleValidator {
             case DeclareAttackAction a      -> validateDeclareAttack(a, playerIndex);
             case PlaceBasicPokemonAction a  -> validatePlaceBasicPokemon(a, playerIndex);
             case UseAbilityAction a         -> validateUseAbility(a, playerIndex);
-            case EndTurnAction a            -> new ValidationResult.Valid();
+            case EndTurnAction a            -> validateEndTurn(a, playerIndex);
             case PromoteActiveAction a      -> validatePromoteActive(a, playerIndex);
             case ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction a -> validateSelectCards(a, playerIndex);
         };
@@ -432,7 +432,17 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
+    private ValidationResult validateEndTurn(final EndTurnAction action, final int playerIndex) {
+        if (battlefieldProvider != null && battlefieldProvider.getActivePokemon(playerIndex) == null) {
+            return new ValidationResult.Invalid("Debes colocar un Pokémon Activo antes de pasar de turno.");
+        }
+        return new ValidationResult.Valid();
+    }
+
     private ValidationResult validateDeclareAttack(final DeclareAttackAction action, final int playerIndex) {
+        if (battlefieldProvider != null && battlefieldProvider.getActivePokemon(playerIndex) == null) {
+            return new ValidationResult.Invalid("No tienes un Pokémon Activo para atacar.");
+        }
         if (turnManager.getStartingPlayerIndex() == playerIndex && turnManager.isFirstTurnOfPlayer(playerIndex)) {
             return new ValidationResult.Invalid(CANNOT_ATTACK_FIRST_TURN);
         }

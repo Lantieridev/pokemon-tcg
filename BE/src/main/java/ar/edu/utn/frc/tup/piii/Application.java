@@ -33,4 +33,13 @@ public class Application {
     public RestClient.Builder restClientBuilder() {
         return RestClient.builder();
     }
+
+    @Bean
+    @org.springframework.context.annotation.Profile("dev")
+    public org.springframework.boot.ApplicationRunner devDataInjector(
+            ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository userRepository) {
+        return args -> {
+            // Elimino el hack de inyección de XP y Monedas para el merge final
+        };
+    }
 }

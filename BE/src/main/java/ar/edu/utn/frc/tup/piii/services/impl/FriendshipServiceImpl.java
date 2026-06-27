@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.services.impl;
 import ar.edu.utn.frc.tup.piii.dtos.friends.FriendshipDTO;
 import ar.edu.utn.frc.tup.piii.persistence.entity.FriendshipEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.Tier;
 import ar.edu.utn.frc.tup.piii.persistence.repository.FriendshipRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.FriendshipService;
@@ -26,9 +27,9 @@ public class FriendshipServiceImpl implements FriendshipService {
             throw new IllegalArgumentException("Cannot send a friend request to yourself");
         }
 
-        UserEntity sender = userRepository.findByUsername(senderUsername)
+        UserEntity sender = userRepository.findFirstByUsername(senderUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
-        UserEntity target = userRepository.findByUsername(targetUsername)
+        UserEntity target = userRepository.findFirstByUsername(targetUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
 
         Optional<FriendshipEntity> existing = friendshipRepository.findByUsers(sender, target);
@@ -47,7 +48,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public List<FriendshipDTO> getActiveFriends(String username) {
-        UserEntity user = userRepository.findByUsername(username)
+        UserEntity user = userRepository.findFirstByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return friendshipRepository.findByUserAndStatus(user, "ACCEPTED").stream()
@@ -57,7 +58,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public List<FriendshipDTO> getPendingRequests(String username) {
-        UserEntity user = userRepository.findByUsername(username)
+        UserEntity user = userRepository.findFirstByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return friendshipRepository.findPendingRequestsForUser(user).stream()
@@ -68,6 +69,8 @@ public class FriendshipServiceImpl implements FriendshipService {
     private FriendshipDTO mapToDTO(FriendshipEntity entity, UserEntity currentUser) {
         UserEntity friend = entity.getUser1().getId().equals(currentUser.getId()) ? entity.getUser2() : entity.getUser1();
         
+        String friendTier = Tier.fromMmrAndMatches(friend.getMmr(), friend.getRankedMatchesPlayed()).getName();
+        
         return FriendshipDTO.builder()
                 .id(entity.getId())
                 .friendId(friend.getId())
@@ -76,6 +79,8 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .activeTitle(friend.getActiveTitle())
                 .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
+                .mmr(friend.getMmr() != null ? friend.getMmr() : 1000)
+                .tier(friendTier)
                 .build();
     }
 

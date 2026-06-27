@@ -32,7 +32,7 @@ import { RouterModule } from '@angular/router';
           [style.border]="toastType === 'success' ? '1px solid #4caf5088' : '1px solid #f4433688'"
           [style.color]="toastType === 'success' ? '#81c784' : '#ef9a9a'"
           style="
-            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
             z-index: 99999; padding: 14px 28px; border-radius: 12px; font-size: 14px;
             font-weight: 600; letter-spacing: 0.01em; white-space: nowrap;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: toastIn 0.25s ease;">
@@ -50,7 +50,7 @@ import { RouterModule } from '@angular/router';
         <div class="fu" style="display: flex; align-items: center; gap: 30px;">
           <div class="avatar" style="width: 100px; height: 100px; font-size: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px var(--bg), 0 0 0 10px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0;">
             @if (isCustomAvatar(profileData?.avatarIcon)) {
-              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img [src]="getAvatarUrl(profileData?.avatarIcon)" style="width: 100%; height: 100%; object-fit: contain; transform: scale(1.15);" />
             } @else {
               {{ getAvatarEmoji(profileData?.avatarIcon) }}
             }
@@ -95,6 +95,7 @@ import { RouterModule } from '@angular/router';
             <!-- Tabs Header -->
             <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 12px;">
               <button (click)="activeTab = 'showcase'" [class.active-tab]="activeTab === 'showcase'" class="tab-btn">Vitrina y Mazo</button>
+              <button (click)="activeTab = 'collection'" [class.active-tab]="activeTab === 'collection'" class="tab-btn">Mi Colección</button>
               <button (click)="activeTab = 'achievements'" [class.active-tab]="activeTab === 'achievements'" class="tab-btn">Logros y Títulos</button>
               <button (click)="activeTab = 'stats'" [class.active-tab]="activeTab === 'stats'" class="tab-btn">Estadísticas</button>
               <button (click)="activeTab = 'history'" [class.active-tab]="activeTab === 'history'" class="tab-btn">Historial de Partidas</button>
@@ -168,6 +169,57 @@ import { RouterModule } from '@angular/router';
                     </div>
                   </div>
                 </div>
+              </div>
+            }
+
+            <!-- Tab content: Collection -->
+            @if (activeTab === 'collection') {
+              <div style="display: flex; flex-direction: column; gap: 30px;">
+                <div class="eyebrow" style="color: var(--accent2);">Mi Colección</div>
+                
+                @if (!profileData?.packCollection || profileData!.packCollection.length === 0) {
+                  <div style="background: var(--surface); border: 1px dashed var(--line); border-radius: 20px; padding: 40px; text-align: center; color: var(--mut); backdrop-filter: blur(10px);">
+                    Aún no tienes cartas obtenidas de sobres. ¡Abre sobres en la tienda para empezar tu colección!
+                  </div>
+                } @else {
+                  <div>
+                    <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 12px; overflow-x: auto;">
+                       <button (click)="setCollectionFilter('LEGENDARIA')" [class.active-tab]="collectionFilter === 'LEGENDARIA'" class="tab-btn" style="color: #ffce32;">Legendarias ({{ getCollectionCountByRarity('LEGENDARIA') }})</button>
+                       <button (click)="setCollectionFilter('EPICA')" [class.active-tab]="collectionFilter === 'EPICA'" class="tab-btn" style="color: #a855f7;">Épicas ({{ getCollectionCountByRarity('EPICA') }})</button>
+                       <button (click)="setCollectionFilter('RARA')" [class.active-tab]="collectionFilter === 'RARA'" class="tab-btn" style="color: #4aa3ff;">Raras ({{ getCollectionCountByRarity('RARA') }})</button>
+                       <button (click)="setCollectionFilter('COMUN')" [class.active-tab]="collectionFilter === 'COMUN'" class="tab-btn" style="color: #a1a1aa;">Comunes ({{ getCollectionCountByRarity('COMUN') }})</button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px;">
+                      @for (card of getPaginatedCollection(); track card.cardId + (card.isFoil || card.foil) + $index) {
+                        <div class="collection-card" [class.is-foil]="card.isFoil || card.foil" [attr.data-rarity]="card.rarity">
+                           <div class="collection-card-inner">
+                              <img [src]="getCardImageById(card.cardId)" [alt]="card.cardName" style="width: 100%; display: block; border-radius: 6px;" />
+                              @if (card.isFoil || card.foil) {
+                                <div class="foil-overlay" style="position: absolute; inset: 0; background: linear-gradient(125deg, transparent 20%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.4) 60%, transparent 80%); background-size: 200% 200%; mix-blend-mode: color-dodge; animation: foilShine 3s infinite linear; pointer-events: none; border-radius: 6px;"></div>
+                                <div style="position: absolute; top: 4px; right: 4px; background: linear-gradient(135deg, #ffce32, #ff9800); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">✨ FOIL</div>
+                              }
+                           </div>
+                           <div style="text-align: center; margin-top: 8px; font-size: 11.5px; font-weight: 700; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                              {{ card.cardName }}
+                           </div>
+                           <div style="text-align: center; font-size: 10px; margin-top: 2px; font-weight: 800; letter-spacing: 0.05em;"
+                                [style.color]="getCollectionRarityColor(card.rarity)">
+                              {{ card.rarity }}
+                           </div>
+                        </div>
+                      }
+                    </div>
+
+                    @if (getTotalCollectionPages() > 1) {
+                      <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px;">
+                        <button class="ghost-btn sm" [disabled]="collectionPage === 0" (click)="prevCollectionPage()" [style.opacity]="collectionPage === 0 ? '0.5' : '1'" style="border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0;">←</button>
+                        <div style="font-family: var(--num); font-size: 13px; color: var(--mut);">Página {{ collectionPage + 1 }} de {{ getTotalCollectionPages() }}</div>
+                        <button class="ghost-btn sm" [disabled]="collectionPage >= getTotalCollectionPages() - 1" (click)="nextCollectionPage()" [style.opacity]="collectionPage >= getTotalCollectionPages() - 1 ? '0.5' : '1'" style="border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; padding: 0;">→</button>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             }
 
@@ -625,11 +677,11 @@ import { RouterModule } from '@angular/router';
               <!-- XP Progress Bar -->
               <div style="margin-bottom: 0;">
                 <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                  <div [style.width]="((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
+                  <div [style.width]="Math.min(100, ((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) + '%'" style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px;"></div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--mut); font-weight: 700;">
                   <span>XP: {{ profileData?.xp || 0 }} / {{ profileData?.xpToNextLevel || 100 }}</span>
-                  <span>{{ Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100)) }}%</span>
+                  <span>{{ Math.min(100, Math.round(((profileData?.xp || 0) / (profileData?.xpToNextLevel || 100) * 100))) }}%</span>
                 </div>
               </div>
             </div>
@@ -722,7 +774,7 @@ import { RouterModule } from '@angular/router';
               <div class="edit-preview-card">
                 <div class="edit-avatar-preview">
                   @if (isCustomAvatar(editAvatarIcon)) {
-                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                    <img [src]="getAvatarUrl(editAvatarIcon)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;transform:scale(1.15);" />
                   } @else {
                     <span style="font-size:36px;">{{ getAvatarEmoji(editAvatarIcon) }}</span>
                   }
@@ -754,7 +806,7 @@ import { RouterModule } from '@angular/router';
                        [class.selected]="editAvatarIcon === av"
                        (click)="editAvatarIcon = av">
                     @if (isCustomAvatar(av)) {
-                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+                      <img [src]="getAvatarUrl(av)" style="width:100%;height:100%;object-fit:contain;border-radius:50%;transform:scale(1.15);" />
                     } @else {
                       <span>{{ getAvatarEmoji(av) }}</span>
                     }
@@ -1645,7 +1697,9 @@ export class ProfileAuroraComponent implements OnInit {
   achievements: UserAchievementProgressDTO[] = [];
   allAchievements: UserAchievementProgressDTO[] = [];
   userDecks: any[] = [];
-  activeTab: 'showcase' | 'achievements' | 'history' | 'stats' = 'showcase';
+  activeTab: 'showcase' | 'collection' | 'achievements' | 'history' | 'stats' = 'showcase';
+  collectionFilter: string = 'COMUN';
+  collectionPage: number = 0;
 
   // Edit Profile form state
   showEditModal = false;
@@ -1689,12 +1743,11 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   get unlockedTitlesList(): string[] {
-    if (!this.profileData?.unlockedTitles) return [];
-    return this.profileData.unlockedTitles.filter(title => {
-      if (title === 'Novato' || title === 'Entrenador') return true;
-      const ach = this.allAchievements.find(a => a.title === title);
-      return ach ? ach.rewardType === 'TITULO' : false;
-    });
+    if (!this.profileData?.unlockedTitles) return ['Novato', 'Entrenador'];
+    const titles = [...this.profileData.unlockedTitles];
+    if (!titles.includes('Novato')) titles.push('Novato');
+    if (!titles.includes('Entrenador')) titles.push('Entrenador');
+    return titles;
   }
 
   get filteredUnlockedTitles(): string[] {
@@ -1719,6 +1772,9 @@ export class ProfileAuroraComponent implements OnInit {
         set.add(ach.rewardValue);
       }
     });
+    if (this.profileData?.unlockedAvatars) {
+      this.profileData.unlockedAvatars.forEach(av => set.add(av));
+    }
     return Array.from(set);
   }
 
@@ -1735,12 +1791,35 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   isCustomAvatar(av: string | undefined): boolean {
-    return !!av && av.startsWith('avatar_');
+    if (!av) return false;
+    const emojis = ['ash', 'misty', 'brock', 'gary', 'serena', 'red', 'default_trainer'];
+    return !emojis.includes(av);
   }
 
   getAvatarUrl(av: string | undefined): string {
     if (!av) return '';
-    return `assets/achievements/avatars/${av}.png`;
+
+    // Nombres guardados en BD (por item.getName()) y por imageUrl
+    if (av === 'Bulbasaur Clásico' || av === 'bulbasaur_classic') return 'assets/store/avatar_bulbasaur.png';
+    if (av === 'Charmander Fuego' || av === 'charmander_fire') return 'assets/store/avatar_charmander.png';
+    if (av === 'Squirtle Agua' || av === 'squirtle_water') return 'assets/store/avatar_squirtle.png';
+    if (av === 'Ash Ketchum' || av === 'ash_avatar') return 'assets/store/avatar_ash.png';
+    if (av === 'Misty' || av === 'misty_avatar') return 'assets/store/avatar_misty.png';
+    if (av === 'Brock' || av === 'brock_avatar') return 'assets/store/avatar_brock.png';
+    if (av === 'Charizard 3D Premium' || av === 'charizard_3d') return 'assets/store/avatar_charizard_3d.png';
+    if (av === 'Mewtwo Legendario' || av === 'mewtwo_3d') return 'assets/store/avatar_mewtwo_3d.png';
+    if (av === 'Pikachu Chibi' || av === 'pikachu_cute') return 'assets/store/avatar_pikachu_cute.png';
+    if (av === 'collector_legend') return 'assets/store/avatar_collector.png';
+
+    // Normalizamos el nombre para que coincida con los archivos guardados
+    const normalizedValue = av.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Eliminar tildes
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '');
+
+    const prefix = normalizedValue.startsWith('avatar_') ? '' : 'avatar_';
+
+    return `assets/achievements/avatars/${prefix}${normalizedValue}.png`;
   }
 
   get selectedMedalsList(): string[] {
@@ -1764,6 +1843,55 @@ export class ProfileAuroraComponent implements OnInit {
         return;
       }
       this.editSelectedMedals.push(medalValue);
+    }
+  }
+
+  getCollectionCountByRarity(rarity: string): number {
+    if (!this.profileData?.packCollection) return 0;
+    return this.profileData.packCollection.filter(c => c.rarity === rarity).length;
+  }
+
+  setCollectionFilter(rarity: string) {
+    this.collectionFilter = rarity;
+    this.collectionPage = 0;
+  }
+
+  getFilteredCollection() {
+    if (!this.profileData?.packCollection) return [];
+    let filtered = this.profileData.packCollection.filter(c => c.rarity === this.collectionFilter);
+    return filtered.sort((a, b) => {
+      const aFoil = a.isFoil || a.foil;
+      const bFoil = b.isFoil || b.foil;
+      if (aFoil && !bFoil) return -1;
+      if (!aFoil && bFoil) return 1;
+      return 0;
+    });
+  }
+
+  getPaginatedCollection() {
+    const filtered = this.getFilteredCollection();
+    const start = this.collectionPage * 8;
+    return filtered.slice(start, start + 8);
+  }
+
+  getTotalCollectionPages(): number {
+    return Math.ceil(this.getFilteredCollection().length / 8);
+  }
+
+  prevCollectionPage() {
+    if (this.collectionPage > 0) this.collectionPage--;
+  }
+
+  nextCollectionPage() {
+    if (this.collectionPage < this.getTotalCollectionPages() - 1) this.collectionPage++;
+  }
+
+  getCollectionRarityColor(rarity: string): string {
+    switch (rarity) {
+      case 'LEGENDARIA': return '#ffce32';
+      case 'EPICA': return '#a855f7';
+      case 'RARA': return '#4aa3ff';
+      default: return '#a1a1aa';
     }
   }
 
@@ -1858,15 +1986,15 @@ export class ProfileAuroraComponent implements OnInit {
 
   // Lista espejo de palabras bloqueadas (misma que el backend) para validación en tiempo real
   private static readonly BLOCKED_WORDS = [
-    'tonto','idiota','estupido','estupido','imbecil','imbecil',
-    'bobo','burro','inutil','inutil','mierda','puta','perra',
-    'culo','pene','gilipollas','cono','cabron','cabron','pendejo',
-    'chinga','mamada','bastardo','hdp','hijodeputa','hijo de puta',
-    'malparido','marica','maricon','maricon','culero','tarado',
-    'mogolico','mogolico','subnormal','retrasado','mongolico','mongolico',
-    'loser','noob','cheat','cheater','idiot','stupid','moron',
-    'dumbass','asshole','bastard','bitch','shit','fuck','fucking',
-    'penis','dick','cock','cunt'
+    'tonto', 'idiota', 'estupido', 'estupido', 'imbecil', 'imbecil',
+    'bobo', 'burro', 'inutil', 'inutil', 'mierda', 'puta', 'perra',
+    'culo', 'pene', 'gilipollas', 'cono', 'cabron', 'cabron', 'pendejo',
+    'chinga', 'mamada', 'bastardo', 'hdp', 'hijodeputa', 'hijo de puta',
+    'malparido', 'marica', 'maricon', 'maricon', 'culero', 'tarado',
+    'mogolico', 'mogolico', 'subnormal', 'retrasado', 'mongolico', 'mongolico',
+    'loser', 'noob', 'cheat', 'cheater', 'idiot', 'stupid', 'moron',
+    'dumbass', 'asshole', 'bastard', 'bitch', 'shit', 'fuck', 'fucking',
+    'penis', 'dick', 'cock', 'cunt'
   ];
 
   validateDescription(): void {
@@ -1874,14 +2002,14 @@ export class ProfileAuroraComponent implements OnInit {
       // normalizar acentos
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       // leet speak basico
-      .replace(/4/g,'a').replace(/3/g,'e').replace(/1/g,'i')
-      .replace(/0/g,'o').replace(/5/g,'s').replace(/7/g,'t');
+      .replace(/4/g, 'a').replace(/3/g, 'e').replace(/1/g, 'i')
+      .replace(/0/g, 'o').replace(/5/g, 's').replace(/7/g, 't');
 
     const found = ProfileAuroraComponent.BLOCKED_WORDS.find(w => {
       const normalized = w.toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/4/g,'a').replace(/3/g,'e').replace(/1/g,'i')
-        .replace(/0/g,'o').replace(/5/g,'s').replace(/7/g,'t');
+        .replace(/4/g, 'a').replace(/3/g, 'e').replace(/1/g, 'i')
+        .replace(/0/g, 'o').replace(/5/g, 's').replace(/7/g, 't');
       const regex = new RegExp('\\b' + normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
       return regex.test(text);
     });
@@ -1893,7 +2021,10 @@ export class ProfileAuroraComponent implements OnInit {
     this.toastMessage = message;
     this.toastType = type;
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastMessage = ''; }, 3500);
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage = '';
+      this.cdr.detectChanges();
+    }, 3000);
   }
 
   saveProfile(): void {
@@ -1930,6 +2061,7 @@ export class ProfileAuroraComponent implements OnInit {
             avatarIcon: payload.avatarIcon,
             selectedMedals: payload.selectedMedals
           };
+          this.profileService.profile$.next(this.profileData);
         }
 
         // 2. Cerrar el modal y liberar el botón
@@ -1980,7 +2112,7 @@ export class ProfileAuroraComponent implements OnInit {
 
   selectCardForShowcase(cardId: string): void {
     if (this.selectedSlotPosition === null) return;
-    
+
     this.profileService.updateShowcase({
       slots: [{ slotPosition: this.selectedSlotPosition, cardId }]
     }).subscribe({
@@ -2163,7 +2295,7 @@ export class ProfileAuroraComponent implements OnInit {
       }
     }
     if (!maxDmgCardId) return null;
-    
+
     const card = this.tcgService.cards().find(c => c.id === maxDmgCardId);
     const name = card?.name || maxDmgCardId;
     const kos = stats.pokemonKOsMade?.[maxDmgCardId] || 0;
@@ -2247,3 +2379,4 @@ export class ProfileAuroraComponent implements OnInit {
 
   Math = Math;
 }
+

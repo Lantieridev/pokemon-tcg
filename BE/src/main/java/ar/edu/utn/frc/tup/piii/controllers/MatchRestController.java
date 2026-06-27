@@ -36,26 +36,27 @@ public final class MatchRestController {
     private final PlayerPerspectiveMapper perspectiveMapper;
     private final MatchCreationService matchCreationService;
     private final CardResolutionService cardResolutionService;
+    private final ar.edu.utn.frc.tup.piii.services.MatchService matchService;
 
     /**
-     * Constructs the controller with its required collaborators.
+     * Constructs the controller.
      *
-     * @param registry              holds all active sessions (never null)
-     * @param perspectiveMapper     builds war-fog-safe per-player responses (never null)
-     * @param matchCreationService  orchestrates match creation and setup (never null)
-     * @param cardResolutionService resolves deck IDs to card lists (never null)
+     * @param registry              the registry holding match sessions
+     * @param perspectiveMapper     maps state to a player's perspective
+     * @param matchCreationService  service to create matches
+     * @param cardResolutionService service to resolve card references
+     * @param matchService          service to surrender matches
      */
     public MatchRestController(final MatchSessionRegistry registry,
                                final PlayerPerspectiveMapper perspectiveMapper,
                                final MatchCreationService matchCreationService,
-                               final CardResolutionService cardResolutionService) {
-        this.registry = Objects.requireNonNull(registry, "registry must not be null");
-        this.perspectiveMapper = Objects.requireNonNull(perspectiveMapper,
-                "perspectiveMapper must not be null");
-        this.matchCreationService = Objects.requireNonNull(matchCreationService,
-                "matchCreationService must not be null");
-        this.cardResolutionService = Objects.requireNonNull(cardResolutionService,
-                "cardResolutionService must not be null");
+                               final CardResolutionService cardResolutionService,
+                               final ar.edu.utn.frc.tup.piii.services.MatchService matchService) {
+        this.registry = Objects.requireNonNull(registry, "Registry cannot be null");
+        this.perspectiveMapper = Objects.requireNonNull(perspectiveMapper, "Mapper cannot be null");
+        this.matchCreationService = Objects.requireNonNull(matchCreationService);
+        this.cardResolutionService = Objects.requireNonNull(cardResolutionService);
+        this.matchService = Objects.requireNonNull(matchService);
     }
 
     /**
@@ -123,5 +124,19 @@ public final class MatchRestController {
                 .orElseThrow(() -> new NoSuchElementException("Match not found: " + matchId));
         final int viewerIndex = session.indexOf(playerId);
         return perspectiveMapper.toResponse(session, viewerIndex);
+    }
+
+    /**
+     * Allows a player to explicitly surrender/abandon a match.
+     *
+     * @param matchId  path variable identifying the match
+     * @param playerId header identifying the requesting player
+     */
+    @PostMapping("/{matchId}/surrender")
+    @ResponseStatus(HttpStatus.OK)
+    public void surrender(@PathVariable final String matchId,
+                          @RequestHeader("X-Player-Id") final String playerId,
+                          final Principal principal) {
+        matchService.surrenderMatch(matchId, playerId);
     }
 }

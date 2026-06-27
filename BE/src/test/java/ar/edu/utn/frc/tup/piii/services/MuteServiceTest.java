@@ -38,8 +38,8 @@ class MuteServiceTest {
         final UserEntity user = UserEntity.builder().id(1L).username(username).build();
         final UserEntity targetUser = UserEntity.builder().id(2L).username(target).build();
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(userRepository.findByUsername(target)).thenReturn(Optional.of(targetUser));
+        when(userRepository.findFirstByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername(target)).thenReturn(Optional.of(targetUser));
         when(userMuteRepository.findByUserAndMutedUser(user, targetUser)).thenReturn(Optional.empty());
 
         // Al consultar silenciado, inicialmente no
@@ -80,6 +80,6 @@ class MuteServiceTest {
         muteService.muteUser(null, "gary");
         muteService.muteUser("ash", null);
 
-        verify(userRepository, never()).findByUsername(anyString());
+        verify(userRepository, never()).findFirstByUsername(anyString());
     }
 }

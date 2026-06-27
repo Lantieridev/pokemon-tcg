@@ -294,11 +294,1758 @@
 }
 
 .animate-scale-up {
-  animation: scaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes scaleUp {
   from { opacity: 0; transform: scale(0.85); }
   to { opacity: 1; transform: scale(1); }
 }
 
+/* 🏆 Campaign Victory Overlay Effects */
+@keyframes rotateRays {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.campaign-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250%;
+  height: 250%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.04) 0deg 12deg, transparent 12deg 24deg);
+  animation: rotateRays 45s linear infinite;
+  z-index: -2;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.campaign-glow-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  z-index: -3;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.85;
+}
+
+/* Laser beams background */
+.laser-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150vw;
+  height: 2px;
+  transform-origin: center;
+  opacity: 0.6;
+  filter: blur(1px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.beam-1 {
+  transform: translate(-50%, -50%) rotate(25deg);
+  background: linear-gradient(90deg, transparent, #ff2d81, #ff2d81, transparent);
+  animation: laserPulse1 3.5s ease-in-out infinite;
+}
+
+.beam-2 {
+  transform: translate(-50%, -50%) rotate(65deg);
+  background: linear-gradient(90deg, transparent, #00d2ff, #00d2ff, transparent);
+  animation: laserPulse2 4.5s ease-in-out infinite;
+}
+
+.beam-3 {
+  transform: translate(-50%, -50%) rotate(115deg);
+  background: linear-gradient(90deg, transparent, #ffcb05, #ffcb05, transparent);
+  animation: laserPulse3 4s ease-in-out infinite;
+}
+
+@keyframes laserPulse1 {
+  0%, 100% { height: 2px; opacity: 0.4; }
+  50% { height: 6px; opacity: 0.85; filter: blur(2px); }
+}
+
+@keyframes laserPulse2 {
+  0%, 100% { height: 1.5px; opacity: 0.3; }
+  50% { height: 5px; opacity: 0.75; filter: blur(2.5px); }
+}
+
+@keyframes laserPulse3 {
+  0%, 100% { height: 2px; opacity: 0.5; }
+  50% { height: 8px; opacity: 0.9; filter: blur(3px); }
+}
+
+/* ═══════════════════════════════════════════════════
+   GYM VICTORY — PROFESSIONAL CINEMATIC SYSTEM
+   ═══════════════════════════════════════════════════ */
+
+/* ── Backdrop ── */
+.gym-victory-backdrop {
+  background: linear-gradient(180deg, rgba(4, 2, 10, 0.97) 0%, rgba(8, 4, 18, 0.98) 100%);
+  backdrop-filter: blur(20px) saturate(1.2);
+}
+
+/* ── Scan Line ── */
+.gym-scanline {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: scanDown 6s linear infinite;
+}
+
+@keyframes scanDown {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ── Floating Particles ── */
+.gym-particles {
+  position: absolute;
+  inset: 0;
+}
+
+.gym-particle {
+  position: absolute;
+  bottom: -10px;
+  left: var(--x, 50%);
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  animation: particleRise var(--dur, 6s) ease-out var(--delay, 0s) infinite;
+  filter: blur(0.5px);
+}
+
+@keyframes particleRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.7; }
+  90%  { opacity: 0.1; }
+  100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+}
+
+/* ── Main Card ── */
+.campaign-victory-card {
+  position: relative;
+  width: 420px;
+  height: 300px;
+  transition: all 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  animation: cardEntrance 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.campaign-victory-card.step-2-active {
+  height: 560px;
+  width: 440px;
+}
+
+@keyframes cardEntrance {
+  from { transform: scale(0.65) translateY(60px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.gym-card-pro {
+  background: linear-gradient(145deg, rgba(12, 8, 24, 0.92), rgba(8, 4, 16, 0.96)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3) !important;
+  padding: 32px !important;
+  backdrop-filter: blur(30px) !important;
+}
+
+.gym-card-pro.step-2-active {
+  width: 440px !important;
+  height: auto !important;
+  min-height: 540px !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Card Edge Glow ── */
+.gym-card-edge-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    var(--glow-color, #38bdf8) 25%,
+    transparent 50%,
+    var(--glow-color, #38bdf8) 75%,
+    transparent
+  );
+  filter: blur(8px);
+}
+
+.step-2-active .gym-card-edge-glow {
+  opacity: 0.15;
+  animation: edgeRotate 8s linear infinite;
+}
+
+@keyframes edgeRotate {
+  to { filter: blur(8px) hue-rotate(360deg); }
+}
+
+/* ── Victory Title ── */
+.victory-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #ffffff;
+  margin-top: 15px;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  animation: victoryPulse 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes victoryPulse {
+  from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.15); }
+  to   { text-shadow: 0 0 40px rgba(255, 255, 255, 0.35); }
+}
+
+.victory-subtitle {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 10px;
+  max-width: 300px;
+  line-height: 1.6;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* ── Orbiting Medal Rings ── */
+.gym-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.gym-orbit-ring--outer {
+  width: 160px;
+  height: 160px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: orbitSpin 12s linear infinite;
+  /* Tick marks via dashed border */
+  border-style: dashed;
+  border-color: var(--ring-color, rgba(255, 255, 255, 0.1));
+  opacity: 0.4;
+}
+
+.gym-orbit-ring--inner {
+  width: 135px;
+  height: 135px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  animation: orbitSpin 18s linear infinite reverse;
+}
+
+.gym-orbit-ticks {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 1px dotted rgba(255, 255, 255, 0.06);
+  animation: orbitSpin 25s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes orbitSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Hexagonal Medal ── */
+.gym-medal-hex {
+  width: 100px;
+  height: 115px;
+  background: linear-gradient(160deg, rgba(15, 10, 30, 0.9), rgba(8, 5, 18, 0.95));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 0 25px var(--medal-color, rgba(255, 255, 255, 0.2));
+  animation: medalFloat 4s ease-in-out infinite;
+}
+
+.gym-medal-shine {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+  animation: shineSlide 3s ease-in-out infinite;
+}
+
+@keyframes medalFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes shineSlide {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.7; }
+}
+
+/* ── Reward Cards ── */
+.gym-reward-card {
+  position: relative;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gym-reward-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.gym-reward-indicator {
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
+  background: var(--indicator-color, #fff);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px var(--indicator-color, #fff);
+  opacity: 0.7;
+}
+
+/* ── Unlock Banner ── */
+.gym-unlock-banner {
+  position: relative;
+  padding: 8px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.gym-unlock-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+  animation: shimmerSlide 4s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes shimmerSlide {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── CTA Button ── */
+.gym-cta-btn {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gym-cta-btn:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.gym-cta-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.gym-cta-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.gym-cta-btn:hover .gym-cta-sweep {
+  transform: translateX(100%);
+}
+
+.gym-cta-border-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 8px;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.15), transparent);
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.gym-cta-btn:hover .gym-cta-border-glow {
+  opacity: 1;
+}
+
+/* ── Step content transitions (preserved) ── */
+
+/* ── Golden Sparks and Celebration Aesthetics ── */
+.gym-card-victory {
+  background: linear-gradient(145deg, rgba(18, 12, 28, 0.95), rgba(10, 6, 18, 0.98)) !important;
+  border: 1px solid rgba(255, 200, 50, 0.15) !important;
+  border-radius: 20px !important;
+  box-shadow: 
+    0 40px 100px rgba(0, 0, 0, 0.95),
+    0 0 40px rgba(255, 200, 50, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  padding: 36px !important;
+  backdrop-filter: blur(35px) !important;
+  transition: all 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.gym-card-victory.step-2-active {
+  width: 440px !important;
+  height: auto !important;
+  min-height: 560px !important;
+}
+
+/* Sparkles background animation */
+.gym-sparkle {
+  position: absolute;
+  left: var(--sx);
+  top: var(--sy);
+  width: 4px;
+  height: 4px;
+  background: #f59e0b;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #f59e0b, 0 0 20px #f59e0b;
+  animation: sparkleAnim 4s ease-in-out var(--sd) infinite;
+  opacity: 0;
+}
+
+@keyframes sparkleAnim {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+/* Gold particle override */
+.gym-particle--gold {
+  background: #f59e0b !important;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+/* Orbiting golden rings */
+.gym-golden-ring {
+  position: absolute;
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+  border: 2px dashed rgba(245, 158, 11, 0.15);
+  border-color: var(--ring-accent, rgba(245, 158, 11, 0.15));
+  animation: orbitSpin 15s linear infinite;
+  pointer-events: none;
+}
+
+.gym-golden-ring-inner {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 158, 11, 0.08);
+  animation: orbitSpin 20s linear infinite reverse;
+  pointer-events: none;
+}
+
+/* Golden Medal Box */
+.gym-medal {
+  width: 96px;
+  height: 110px;
+  background: linear-gradient(135deg, rgba(30, 20, 10, 0.95), rgba(15, 10, 5, 0.98));
+  border: 1.5px solid rgba(255, 200, 50, 0.35);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 200, 50, 0.15);
+  animation: medalFloat 4s ease-in-out infinite;
+}
+
+.gym-medal-inner-shine {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background: linear-gradient(135deg, transparent 30%, rgba(255,200,50,0.1) 50%, transparent 70%);
+  animation: shineSlide 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  from { opacity: 0.15; transform: scale(0.95); }
+  to { opacity: 0.35; transform: scale(1.05); }
+}
+
+/* Golden text gradient */
+.gym-gold-text {
+  background: linear-gradient(to bottom, #fffbeb, #fef3c7, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(245, 158, 11, 0.3));
+}
+
+/* Reward cards */
+.gym-reward-box {
+  position: relative;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.gym-reward-box:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.gym-reward-box-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, var(--rw-color) 0%, transparent 75%);
+  opacity: 0.04;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.gym-reward-box:hover .gym-reward-box-glow {
+  opacity: 0.08;
+}
+
+.gym-reward-box--gold {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+.gym-reward-box--gold:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.08);
+}
+
+.gym-reward-box--blue {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+.gym-reward-box--blue:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 25px rgba(56, 189, 248, 0.08);
+}
+
+/* Unlock Next Gym Banner */
+.gym-next-banner {
+  padding: 6px 20px;
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px dashed rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+}
+
+/* Gold CTA Button */
+.gym-btn-gold {
+  position: relative;
+  width: 100%;
+  max-width: 290px;
+  padding: 13px 24px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(245, 158, 11, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.gym-btn-gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 10px 25px rgba(245, 158, 11, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #fbbf24, #fbbf24, #f59e0b);
+}
+
+.gym-btn-gold:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.gym-btn-gold-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-25deg);
+  pointer-events: none;
+}
+
+.gym-btn-gold:hover .gym-btn-gold-shine {
+  animation: goldBtnShine 1.2s ease-out infinite;
+}
+
+@keyframes goldBtnShine {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+/* Card Outer Glow Ring */
+.card-glow-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 38px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+  transition: all 0.6s ease;
+}
+
+.step-2-active .card-glow-ring {
+  opacity: 0.75;
+}
+
+/* Step content transitions */
+.step-1-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.step-2-active .step-1-content {
+  opacity: 0;
+  transform: scale(0.7) translateY(-40px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.step-2-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+  transform: scale(0.8) translateY(60px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.step-2-active .step-2-content {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+  position: relative;
+}
+
+/* Trophy animation */
+.victory-trophy-wrapper {
+  font-size: 85px;
+  line-height: 1;
+  filter: drop-shadow(0 0 25px rgba(255, 203, 5, 0.65));
+  animation: trophyPulse 2s ease-in-out infinite;
+}
+
+@keyframes trophyPulse {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* (Victory title, subtitle, and gym-title styles moved to the Professional Cinematic System block above) */
+
+/* Premium Shield Hexagon */
+.shield-hexagon-premium {
+  width: 125px;
+  height: 145px;
+  background: rgba(20, 12, 34, 0.85);
+  border-width: 4px;
+  border-style: solid;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  position: relative;
+  z-index: 10;
+  background-clip: padding-box;
+}
+
+.badge-emoji {
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
+  animation: badgeFloating 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes badgeFloating {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+  100% { transform: translateY(0); }
+}
+
+.badge-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.3em;
+  color: #ffcb05;
+  text-shadow: 0 0 10px rgba(255, 203, 5, 0.2);
+}
+
+.gym-name-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+  margin: 2px 0;
+}
+
+.badge-name-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Reward Card / Box */
+.reward-box {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.reward-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 14px;
+  font-weight: 850;
+  font-size: 15px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+}
+
+.reward-coins {
+  background: rgba(241, 196, 15, 0.08);
+  border: 1px solid rgba(241, 196, 15, 0.15);
+  color: #f1c40f;
+  text-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+}
+
+.reward-xp {
+  background: rgba(52, 152, 219, 0.08);
+  border: 1px solid rgba(52, 152, 219, 0.15);
+  color: #3498db;
+  text-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+}
+
+/* Banner */
+.unlocked-badge-banner {
+  display: inline-flex;
+  padding: 8px 22px;
+  border-radius: 9999px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  color: #2ecc71;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  animation: bannerPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes bannerPulse {
+  from { transform: scale(1); box-shadow: 0 0 12px rgba(46, 204, 113, 0.15); }
+  to { transform: scale(1.04); box-shadow: 0 0 22px rgba(46, 204, 113, 0.4); }
+}
+
+/* Button styling */
+.continue-btn {
+  width: 100%;
+  padding: 13px 26px;
+  border-radius: 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13.5px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+  border: 3px solid #0f0817;
+  box-shadow: 0 5px 0 #0f0817;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #0f0817;
+  filter: brightness(1.15);
+}
+
+.continue-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #0f0817;
+}
+
+.shield-hexagon {
+  width: 140px;
+  height: 160px;
+  background: rgba(26, 21, 38, 0.8);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 70px;
+  position: relative;
+  animation: shieldEntrance 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 10;
+}
+
+@keyframes shieldEntrance {
+  0% { transform: scale(0.2) rotate(-180deg); opacity: 0; filter: blur(10px); }
+  60% { transform: scale(1.15) rotate(15deg); filter: none; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.shield-hexagon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.badge-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: skewX(-30deg) translateX(-150%);
+  animation: badgeShine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes badgeShine {
+  0% { transform: skewX(-30deg) translateX(-150%); }
+  50% { transform: skewX(-30deg) translateX(150%); }
+  100% { transform: skewX(-30deg) translateX(150%); }
+}
+
+.unlocked-banner {
+  animation: bannerEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s forwards;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+@keyframes bannerEntrance {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reward-card {
+  animation: rewardEntrance 0.5s ease-out 0.6s forwards;
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+@keyframes rewardEntrance {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* =============================================
+   3D PLAYMAT — Tablero con perspectiva de mesa
+   ============================================= */
+
+/* Fondo de mesa de madera para la escena de batalla */
+:host .scene {
+  background: url('/assets/wood_table_texture.png') repeat center center !important;
+  background-size: 450px !important;
+  overflow: hidden !important;
+}
+
+/* Contenedor de perspectiva (cámara del jugador) */
+.playmat-wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  perspective-origin: 50% 42%;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Superficie del tapete 3D */
+.playmat-3d {
+  position: relative;
+  width: calc(100% - 40px);
+  height: calc(100% - 80px);
+  max-width: 1100px;
+  transform: rotateX(18deg) translateZ(0);
+  transform-style: preserve-3d;
+  border-radius: 22px;
+  /* Tapete premium azul vibrante como en la referencia */
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 45%, rgba(24, 70, 140, 0.94) 0%, rgba(12, 30, 65, 0.97) 60%, rgba(6, 14, 36, 0.99) 100%);
+  border: 3px solid #ffce32;
+  box-shadow:
+    /* Glow dorado exterior */
+    0 0 40px rgba(255, 206, 50, 0.18),
+    0 0 80px rgba(255, 206, 50, 0.06),
+    /* Sombra de mesa profunda */
+    0 30px 80px -20px rgba(0, 0, 0, 0.75),
+    0 60px 120px -30px rgba(0, 0, 0, 0.55),
+    /* Borde interior sutil */
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  padding: 12px;
+  gap: 8px;
+}
+
+/* Textura noise encima del tapete */
+.playmat-3d::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+/* Columnas internas del tapete */
+.playmat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  transform-style: preserve-3d;
+}
+
+.playmat-col > div {
+  transform-style: preserve-3d;
+}
+
+.playmat-col--left,
+.playmat-col--right {
+  flex: 0 0 130px;
+  gap: 16px;
+}
+
+.playmat-col--center {
+  flex: 1;
+  gap: 6px;
+}
+
+/* ── Pokéball Divisor Central (Clásica) ─────────────────────── */
+.playmat-pokeball {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 2px auto;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.playmat-pokeball::before,
+.playmat-pokeball::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 40px;
+}
+
+.playmat-pokeball::before {
+  top: 0;
+  border-radius: 80px 80px 0 0;
+  background: linear-gradient(to bottom, #ef5350, #d32f2f);
+  border: 3px solid #1a1010;
+  border-bottom: none;
+}
+
+.playmat-pokeball::after {
+  bottom: 0;
+  border-radius: 0 0 80px 80px;
+  background: linear-gradient(to bottom, #ffffff, #e0e0e0);
+  border: 3px solid #1a1010;
+  border-top: none;
+}
+
+/* Centro de la Pokéball — botón negro con brillo blanco interior */
+.playmat-pokeball-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a1010;
+  border: 3px solid #1a1010;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+}
+
+/* Brillo interior del botón */
+.playmat-pokeball-center::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7), inset 0 0 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Banda horizontal negra de la Pokéball */
+.playmat-pokeball-line {
+  position: absolute;
+  top: 50%;
+  left: -80px;
+  right: -80px;
+  height: 6px;
+  background: #1a1010;
+  transform: translateY(-50%);
+  z-index: 4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Profundidad 3D en las cartas del campo ─────────────────── */
+
+/* Sombra de profundidad para las cartas en el campo (Pokémon, premios, mazos) */
+:host ::ng-deep app-field-pokemon {
+  transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.05), filter 0.25s ease;
+}
+
+:host ::ng-deep app-field-pokemon .bench-slot {
+  border-radius: 6px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 6px 12px rgba(0, 0, 0, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.05), box-shadow 0.25s ease;
+}
+
+/* Hover lift 3D — la carta se levanta del tapete */
+:host ::ng-deep app-field-pokemon:hover .bench-slot {
+  transform: translate3d(0, -4px, 12px) rotateX(-3deg);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.5),
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+/* Profundidad para las cartas de premio */
+.prize.card-back {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prize.card-back:not(.claimed):hover {
+  transform: translate3d(0, -2px, 8px);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+/* Profundidad del mazo (stack de cartas) */
+.playmat-3d .card-back {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Resplandor en slots vacíos */
+.playmat-3d .target-highlight::after {
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.5);
+}
+
+/* ── Pila de Cartas 3D (Mazo) ───────────────────────────────── */
+.deck-pile {
+  position: relative;
+  width: 70px;
+  height: 98px;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.deck-pile:hover {
+  transform: scale(1.05);
+}
+
+.deck-pile:active {
+  transform: scale(0.95);
+}
+
+.deck-card-layer {
+  position: absolute;
+  inset: 0;
+  width: 70px;
+  height: 98px;
+  border-radius: 4.5px;
+  background-size: cover;
+  transform-style: preserve-3d;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+  
+  /* Simulación del perfil de borde de las cartas (papel) y sombra inferior */
+  box-shadow: 
+    0 0.5px 0.5px rgba(0, 0, 0, 0.25),
+    -0.5px 0.5px 0px #eae7e2,
+    0.5px 0.5px 0px #eae7e2;
+}
+
+/* Distribución 3D física e imperfecta del taco */
+.deck-card-layer:nth-child(3n) {
+  transform: translate3d(0.6px, calc(var(--layer-index) * -0.9px), calc(var(--layer-index) * 1.3px)) rotateZ(0.4deg);
+}
+.deck-card-layer:nth-child(3n+1) {
+  transform: translate3d(-0.6px, calc(var(--layer-index) * -0.9px), calc(var(--layer-index) * 1.3px)) rotateZ(-0.5deg);
+}
+.deck-card-layer:nth-child(3n+2) {
+  transform: translate3d(0px, calc(var(--layer-index) * -0.9px), calc(var(--layer-index) * 1.3px)) rotateZ(0.2deg);
+}
+
+/* La última capa (carta superior) tiene mayor relieve y sombra proyectada */
+.deck-card-layer:last-of-type {
+  pointer-events: auto;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 12px 24px rgba(0, 0, 0, 0.25),
+    -0.5px 0.5px 0px #eae7e2,
+    0.5px 0.5px 0px #eae7e2;
+}
+
+/* Elevación 3D al pasar el cursor por la pila */
+.deck-pile:hover .deck-card-layer:nth-child(3n) {
+  transform: translate3d(0.6px, calc(var(--layer-index) * -1.2px - 3px), calc(var(--layer-index) * 1.6px + 4px)) rotateZ(0.4deg);
+}
+.deck-pile:hover .deck-card-layer:nth-child(3n+1) {
+  transform: translate3d(-0.6px, calc(var(--layer-index) * -1.2px - 3px), calc(var(--layer-index) * 1.6px + 4px)) rotateZ(-0.5deg);
+}
+.deck-pile:hover .deck-card-layer:nth-child(3n+2) {
+  transform: translate3d(0px, calc(var(--layer-index) * -1.2px - 3px), calc(var(--layer-index) * 1.6px + 4px)) rotateZ(0.2deg);
+}
+
+/* Rank Up Celebration Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOTION UI — PREMIUM VICTORY & RANK-UP ANIMATIONS
+   Inspired by Marvel Snap / Hearthstone reward celebrations
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Spinning Gold Rays (conic-gradient background) ────────────────── */
+.victory-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 203, 5, 0.06) 0deg 10deg,
+    transparent 10deg 20deg
+  );
+  animation: victory-spin-rays 25s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes victory-spin-rays {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* ── Bounce-In Title Entrance ──────────────────────────────────────── */
+@keyframes bounceInTitle {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(40px);
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12) translateY(-10px);
+    filter: blur(0);
+  }
+  70% {
+    transform: scale(0.95) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.anim-bounce-in {
+  animation: bounceInTitle 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Staggered Fade-In (for sequential reveals) ────────────────────── */
+@keyframes staggerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.anim-stagger {
+  opacity: 0;
+  animation: staggerFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-stagger--1 { animation-delay: 0.1s; }
+.anim-stagger--2 { animation-delay: 0.25s; }
+.anim-stagger--3 { animation-delay: 0.4s; }
+.anim-stagger--4 { animation-delay: 0.55s; }
+.anim-stagger--5 { animation-delay: 0.7s; }
+
+/* ── 3D Perspective MVP Card Container ─────────────────────────────── */
+.mvp-card-perspective {
+  perspective: 800px;
+  perspective-origin: 50% 50%;
+}
+
+.mvp-card-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: mvpFloat 3s ease-in-out infinite;
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.05);
+}
+
+.mvp-card-3d:hover {
+  transform: rotateY(8deg) rotateX(-5deg) scale(1.08);
+}
+
+@keyframes mvpFloat {
+  0% { transform: translateY(0) rotateY(0deg) rotateX(0deg); }
+  25% { transform: translateY(-6px) rotateY(2deg) rotateX(1deg); }
+  50% { transform: translateY(-10px) rotateY(0deg) rotateX(-1deg); }
+  75% { transform: translateY(-6px) rotateY(-2deg) rotateX(1deg); }
+  100% { transform: translateY(0) rotateY(0deg) rotateX(0deg); }
+}
+
+/* MVP card glow ring */
+.mvp-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  background: conic-gradient(
+    from 0deg,
+    #ffcb05, #ff8800, #ffcb05, #ffe88a, #ffcb05
+  );
+  opacity: 0.5;
+  filter: blur(12px);
+  z-index: -1;
+  animation: mvpGlowSpin 4s linear infinite;
+}
+
+@keyframes mvpGlowSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Animated MMR Counter Glow ─────────────────────────────────────── */
+.mmr-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 28px;
+  border-radius: 9999px;
+  font-family: 'Space Grotesk', var(--num), monospace;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  border: 2px solid;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+  animation: mmrPulseGlow 1.5s ease-out forwards;
+}
+
+.mmr-counter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: mmrSweep 1.5s ease-out 0.3s forwards;
+}
+
+@keyframes mmrPulseGlow {
+  0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50% { box-shadow: 0 0 30px rgba(255,203,5,0.4); }
+  100% { box-shadow: 0 0 15px rgba(255,203,5,0.15); }
+}
+
+@keyframes mmrSweep {
+  from { left: -60%; }
+  to { left: 120%; }
+}
+
+/* MMR change badge (+/- indicator) */
+.mmr-delta {
+  font-size: 16px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.3);
+  animation: mmrDeltaPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 1.2s both;
+}
+
+@keyframes mmrDeltaPop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Screen Shake for Rank-Up Impact ───────────────────────────────── */
+@keyframes screenShake {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-6px, 3px); }
+  20% { transform: translate(5px, -4px); }
+  30% { transform: translate(-4px, 5px); }
+  40% { transform: translate(6px, -2px); }
+  50% { transform: translate(-3px, 4px); }
+  60% { transform: translate(4px, -3px); }
+  70% { transform: translate(-2px, 2px); }
+  80% { transform: translate(1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.anim-screen-shake {
+  animation: screenShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+/* ── Rank-Up Emblema Drop & Impact ─────────────────────────────────── */
+@keyframes emblemaDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-200px) scale(0.5) rotate(-30deg);
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(10px) scale(1.15) rotate(5deg);
+    filter: blur(0);
+  }
+  75% {
+    transform: translateY(-5px) scale(0.95) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+.anim-emblema-drop {
+  animation: emblemaDrop 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Impact shockwave ring */
+@keyframes impactShockwave {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.5);
+    border-width: 4px;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.5);
+    border-width: 1px;
+  }
+}
+
+.impact-ring {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 203, 5, 0.6);
+  pointer-events: none;
+  animation: impactShockwave 0.8s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+.impact-ring--2 {
+  animation-delay: 0.75s;
+  border-color: rgba(255, 203, 5, 0.35);
+}
+
+/* Rank-up tier badge premium style */
+.rankup-badge {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid #ffcb05;
+  background: radial-gradient(circle at 30% 30%, rgba(40, 25, 60, 0.9), rgba(10, 5, 20, 0.95));
+  box-shadow:
+    0 0 40px rgba(255, 203, 5, 0.5),
+    0 0 80px rgba(255, 203, 5, 0.2),
+    inset 0 0 30px rgba(255, 203, 5, 0.08);
+}
+
+.rankup-badge::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 203, 5, 0.3);
+  animation: rankBadgeRingPulse 2s ease-in-out infinite;
+}
+
+@keyframes rankBadgeRingPulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+/* Floating particles around rank badge */
+.rankup-particles {
+  position: absolute;
+  inset: -30px;
+  pointer-events: none;
+}
+
+.rankup-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffcb05;
+  box-shadow: 0 0 6px #ffcb05;
+  animation: particleFloat 2s ease-in-out infinite;
+}
+
+.rankup-particle:nth-child(1) { top: 10%; left: 0; animation-delay: 0s; }
+.rankup-particle:nth-child(2) { top: 0; left: 50%; animation-delay: 0.3s; }
+.rankup-particle:nth-child(3) { top: 10%; right: 0; animation-delay: 0.6s; }
+.rankup-particle:nth-child(4) { bottom: 10%; left: 0; animation-delay: 0.9s; }
+.rankup-particle:nth-child(5) { bottom: 0; left: 50%; animation-delay: 1.2s; }
+.rankup-particle:nth-child(6) { bottom: 10%; right: 0; animation-delay: 1.5s; }
+
+@keyframes particleFloat {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-12px) scale(1.4); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 0.8; }
+}
+
+/* ── Victory overlay entrance ──────────────────────────────────────── */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.victory-overlay-enter {
+  animation: overlayFadeIn 0.5s ease-out forwards;
+}
+
+/* ── Flashbang Entrance Effect ─────────────────────────────────────── */
+@keyframes flashbangWhiteout {
+  0% { opacity: 1; background: #fff; }
+  15% { opacity: 1; background: #fff; }
+  100% { opacity: 0; background: #fff; }
+}
+
+.flashbang-overlay {
+  animation: flashbangWhiteout 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+/* ── Premium Button ────────────────────────────────────────────────── */
+.premium-btn {
+  background: #ffcb05;
+  color: #1a1010;
+  border: 3px solid #1a1010;
+  box-shadow: 0 4px 0 #1a1010;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.premium-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 0 #1a1010, 0 0 20px rgba(255, 203, 5, 0.4);
+}
+
+.premium-btn:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 2px 0 #1a1010;
+}
+
+.premium-btn-glow {
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
+  background-size: 200% 100%;
+  animation: shine-sweep 3s infinite linear;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.premium-btn:hover .premium-btn-glow {
+  opacity: 1;
+}
+
+@keyframes shine-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Victory card container premium */
+.victory-card-premium {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+  padding: 40px 32px;
+  margin: auto 16px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(
+    ellipse 100% 80% at 50% 20%,
+    rgba(30, 20, 50, 0.95),
+    rgba(10, 6, 20, 0.98)
+  );
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  overflow: visible;
+  z-index: 1;
+  flex-shrink: 0;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Subtle noise overlay on victory card */
+.victory-card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 32px;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── MMR Counter ─────────────────────────────────────────────────── */
+.mmr-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--num, 'Space Mono', monospace);
+  font-size: 32px;
+  font-weight: 900;
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.05em;
+}
+
+.mmr-delta {
+  font-size: 16px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* ── Green Victory Styles (matching Defeat layout) ── */
+.gym-victory-icon {
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  box-shadow: 0 0 50px rgba(46, 204, 113, 0.6), 0 0 100px rgba(46, 204, 113, 0.2) !important;
+  border: 4px solid rgba(255, 255, 255, 0.9) !important;
+}
+
+.gym-victory-text {
+  color: #2ecc71 !important;
+  text-shadow: 0 0 30px rgba(46, 204, 113, 0.4) !important;
+}
+
+.gym-victory-mvp-border {
+  border-color: rgba(46, 204, 113, 0.8) !important;
+}
+
+.gym-victory-damage-badge {
+  border-color: rgba(46, 204, 113, 0.2) !important;
+  background: rgba(46, 204, 113, 0.1) !important;
+  color: #2ecc71 !important;
+}
+
+.gym-btn-green {
+  position: relative;
+  width: 100%;
+  max-width: 290px;
+  padding: 13px 24px;
+  background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+  color: #1a1010 !important;
+  border: 3px solid #1a1010 !important;
+  box-shadow: 0 4px 0 #1a1010 !important;
+  border-radius: 12px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.gym-btn-green:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 0 #1a1010, 0 0 20px rgba(46, 204, 113, 0.4) !important;
+  background: linear-gradient(135deg, #2ecc71, #2ecc71, #27ae60) !important;
+}
+
+.gym-btn-green:active {
+  transform: translateY(2px) scale(0.98) !important;
+  box-shadow: 0 2px 0 #1a1010 !important;
+}
+
+.gym-btn-green-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-25deg);
+  pointer-events: none;
+}
+
+.gym-btn-green:hover .gym-btn-green-shine {
+  animation: greenBtnShine 1.2s ease-out infinite;
+}
+
+@keyframes greenBtnShine {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+.gym-reward-box--green {
+  border-color: rgba(46, 204, 113, 0.2) !important;
+}
+.gym-reward-box--green:hover {
+  border-color: rgba(46, 204, 113, 0.4) !important;
+  box-shadow: 0 10px 25px rgba(46, 204, 113, 0.08) !important;
+}
+
+/* ── Step 2 Transition Wrapper ── */
+.gym-victory-step-2-wrap {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: max-height 1s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.gym-victory-step-2-wrap.active {
+  max-height: 1000px;
+  opacity: 1;
+  transform: translateY(0);
+  overflow: visible;
+}
