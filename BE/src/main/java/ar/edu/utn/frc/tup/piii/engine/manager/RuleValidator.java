@@ -509,7 +509,7 @@ public final class RuleValidator {
 
         return switch (action.trainerType()) {
             case SUPPORTER    -> validateSupporter(mainPhase);
-            case STADIUM      -> validateStadium(mainPhase);
+            case STADIUM      -> validateStadium(mainPhase, action, playerIndex);
             case ITEM         -> new ValidationResult.Valid();
             case POKEMON_TOOL -> validatePokemonTool(action.target());
         };
@@ -522,9 +522,20 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
-    private ValidationResult validateStadium(final MainPhase mainPhase) {
+    private ValidationResult validateStadium(final MainPhase mainPhase, final PlayTrainerAction action, final int playerIndex) {
         if (mainPhase.isStadiumPlayed()) {
             return new ValidationResult.Invalid(STADIUM_ALREADY_PLAYED);
+        }
+        if (stadiumProvider != null && action.cardId() != null && handStateProvider != null) {
+            final TrainerCard activeStadium = stadiumProvider.getActiveStadium();
+            if (activeStadium != null) {
+                final java.util.Optional<Card> playedCardOpt = handStateProvider.getCardInHand(playerIndex, action.cardId());
+                if (playedCardOpt.isPresent() && playedCardOpt.get() instanceof TrainerCard playedStadium) {
+                    if (activeStadium.getName().equalsIgnoreCase(playedStadium.getName())) {
+                        return new ValidationResult.Invalid("stadium_same_name_in_play");
+                    }
+                }
+            }
         }
         return new ValidationResult.Valid();
     }
@@ -666,11 +677,6 @@ public final class RuleValidator {
             }
             if (source.getAttachedEnergyCards().isEmpty()) {
                 return new ValidationResult.Invalid("no_energy_attached");
-            }
-            final boolean hasFairyEnergy = source.getAttachedEnergyCards().stream()
-                    .anyMatch(ec -> ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY || ec.isProvidesAllTypes());
-            if (!hasFairyEnergy) {
-                return new ValidationResult.Invalid("no_fairy_energy_attached");
             }
             if (source.getDamageCounters() == 0) {
                 return new ValidationResult.Invalid("no_damage_to_heal");

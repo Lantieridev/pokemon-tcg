@@ -58,17 +58,6 @@ public final class DeckBuilderValidator {
     }
 
     private void validateMaxCopiesPerName(final List<DeckEntry> entries, final String username, final String deckName) {
-        if ("admin2".equalsIgnoreCase(username) || "benka".equalsIgnoreCase(username)) {
-            return;
-        }
-        if (deckName != null && (
-                deckName.toLowerCase().contains("especial") ||
-                deckName.toLowerCase().contains("special") ||
-                deckName.toLowerCase().contains("sin limite") ||
-                deckName.toLowerCase().contains("ilimitado")
-        )) {
-            return;
-        }
         final Map<String, Integer> countByName = entries.stream()
                 .filter(e -> !e.isBasicEnergy())
                 .collect(Collectors.toMap(

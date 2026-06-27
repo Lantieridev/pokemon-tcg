@@ -104,23 +104,16 @@ export class DeckStore {
       errors.push(`Tenés ${total - 60} carta${total - 60 !== 1 ? 's' : ''} de más (máximo 60).`);
     }
 
-    const isSpecialDeck = this.deckName().toLowerCase().includes('especial') ||
-                          this.deckName().toLowerCase().includes('special') ||
-                          this.deckName().toLowerCase().includes('sin limite') ||
-                          this.deckName().toLowerCase().includes('ilimitado');
-
-    if (!isSpecialDeck) {
-      // RF-04 Regla 2: Máximo 4 copias (excepto Energías Básicas)
-      const violations: string[] = [];
-      for (const [name, count] of counts) {
-        const card = this._deckCards().find((c) => c.name === name);
-        if (card && !isBasicEnergy(card) && count > 4) {
-          violations.push(`${name} (${count}/4)`);
-        }
+    // RF-04 Regla 2: Máximo 4 copias (excepto Energías Básicas)
+    const violations: string[] = [];
+    for (const [name, count] of counts) {
+      const card = this._deckCards().find((c) => c.name === name);
+      if (card && !isBasicEnergy(card) && count > 4) {
+        violations.push(`${name} (${count}/4)`);
       }
-      if (violations.length > 0) {
-        errors.push(`Demasiadas copias: ${violations.join(', ')}.`);
-      }
+    }
+    if (violations.length > 0) {
+      errors.push(`Demasiadas copias: ${violations.join(', ')}.`);
     }
 
     // RF-04 Regla 3: Al menos 1 Pokémon Básico
@@ -146,11 +139,7 @@ export class DeckStore {
     if (total >= 60) return;
 
     const count = this.cardCounts().get(card.name) ?? 0;
-    const isSpecialDeck = this.deckName().toLowerCase().includes('especial') ||
-                          this.deckName().toLowerCase().includes('special') ||
-                          this.deckName().toLowerCase().includes('sin limite') ||
-                          this.deckName().toLowerCase().includes('ilimitado');
-    if (!isBasicEnergy(card) && !isSpecialDeck && count >= 4) return;
+    if (!isBasicEnergy(card) && count >= 4) return;
 
     this._deckCards.update((d) => [...d, card]);
   }
