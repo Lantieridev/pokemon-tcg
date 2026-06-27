@@ -353,6 +353,7 @@ public class MatchService {
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.FANG_SNIPE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.REVIVAL
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PUSH_DOWN
+                        || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.BOUNCE
                         || session.getPendingSelectionRequest().sourceEffect() == TrainerEffectId.PARABOLIC_CHARGE);
 
                 facade.apply(session, action, turnManager);
