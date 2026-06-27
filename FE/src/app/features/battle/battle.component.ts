@@ -515,6 +515,18 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.closeMenu();
         return;
       }
+      if (conds.includes('POISONED') || conds.includes('ENVENENADO')) {
+        const opp = this.opp();
+        const opponentHasDragalge = opp && (
+          (opp.active && opp.active.name === 'Dragalge') ||
+          (opp.bench && opp.bench.some(p => p && p.name === 'Dragalge'))
+        );
+        if (opponentHasDragalge) {
+          this.toastService.error('No puedes retirar a este Pokémon porque está envenenado y el oponente posee a Dragalge (Poison Barrier).');
+          this.closeMenu();
+          return;
+        }
+      }
     }
 
     this.isRetreating.set(true);
