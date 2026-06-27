@@ -108,13 +108,14 @@ public final class PlayerPerspectiveMapper {
                     final java.util.List<String> list = new java.util.ArrayList<>();
                     final ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState active = session.getBoard().getActivePokemon(opponentIndex);
                     if (active != null) {
-                        list.add(active.getCardId());
+                        list.add("active:" + active.getCardId());
                     }
                     final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(opponentIndex);
                     if (benched != null) {
-                        for (var p : benched) {
+                        for (int i = 0; i < benched.size(); i++) {
+                            final var p = benched.get(i);
                             if (p != null) {
-                                list.add(p.getCardId());
+                                list.add("bench_" + i + ":" + p.getCardId());
                             }
                         }
                     }
@@ -123,9 +124,10 @@ public final class PlayerPerspectiveMapper {
                     final java.util.List<String> list = new java.util.ArrayList<>();
                     final java.util.List<ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState> benched = session.getBoard().getBenchedPokemon(viewerIndex);
                     if (benched != null) {
-                        for (var p : benched) {
+                        for (int i = 0; i < benched.size(); i++) {
+                            final var p = benched.get(i);
                             if (p != null) {
-                                list.add(p.getCardId());
+                                list.add("bench_" + i + ":" + p.getCardId());
                             }
                         }
                     }

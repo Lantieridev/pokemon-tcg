@@ -552,13 +552,17 @@ public final class GameFacade {
             if (!selectedIds.isEmpty()) {
                 final String selectedCardId = selectedIds.get(0);
                 int benchIndex = -1;
-                for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
-                    if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
-                        benchIndex = i;
-                        break;
+                if (selectedCardId.startsWith("bench_")) {
+                    benchIndex = Integer.parseInt(selectedCardId.split(":")[0].substring(6));
+                } else {
+                    for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
+                        if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
+                            benchIndex = i;
+                            break;
+                        }
                     }
                 }
-                if (benchIndex != -1) {
+                if (benchIndex != -1 && benchIndex < runtime.getBench().getAll().size()) {
                     final BattlePokemonState newActive = runtime.getBench().promote(benchIndex);
                     final BattlePokemonState oldActive = runtime.getActivePokemon();
                     runtime.setActivePokemon(newActive);
@@ -930,20 +934,11 @@ public final class GameFacade {
         } else if (effectId == TrainerEffectId.CURSED_DROP) {
             final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
             for (String id : selectedIds) {
-                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(id)) {
-                    opponent.getActivePokemon().addDamageCounters(1);
-                    if (opponent.getActivePokemon().getDamageCounters() * 10 >= opponent.getActivePokemon().getMaxHp()) {
-                        session.getKnockoutHandler().onKnockout(opponent.getActivePokemon(), opponent.getActivePokemon().isEx() ? 2 : 1);
-                    }
-                } else {
-                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
-                        if (benched.getCardId().equals(id)) {
-                            benched.addDamageCounters(1);
-                            if (benched.getDamageCounters() * 10 >= benched.getMaxHp()) {
-                                session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
-                            }
-                            break;
-                        }
+                final BattlePokemonState target = resolveSlotTarget(opponent, id);
+                if (target != null) {
+                    target.addDamageCounters(1);
+                    if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
                     }
                 }
             }
@@ -954,29 +949,8 @@ public final class GameFacade {
                 String srcId = selectedIds.get(i);
                 String destId = selectedIds.get(i + 1);
 
-                BattlePokemonState source = null;
-                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(srcId)) {
-                    source = opponent.getActivePokemon();
-                } else {
-                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
-                        if (benched.getCardId().equals(srcId)) {
-                            source = benched;
-                            break;
-                        }
-                    }
-                }
-
-                BattlePokemonState dest = null;
-                if (opponent.getActivePokemon() != null && opponent.getActivePokemon().getCardId().equals(destId)) {
-                    dest = opponent.getActivePokemon();
-                } else {
-                    for (BattlePokemonState benched : opponent.getBench().getAll()) {
-                        if (benched.getCardId().equals(destId)) {
-                            dest = benched;
-                            break;
-                        }
-                    }
-                }
+                BattlePokemonState source = resolveSlotTarget(opponent, srcId);
+                BattlePokemonState dest = resolveSlotTarget(opponent, destId);
 
                 if (source != null && dest != null && source != dest && source.getDamageCounters() > 0) {
                     source.addDamageCounters(-1);
@@ -1102,6 +1076,30 @@ public final class GameFacade {
             }
         }
         return target;
+    }
+
+    private BattlePokemonState resolveSlotTarget(final PlayerRuntime player, final String slotId) {
+        if (slotId == null) {
+            return null;
+        }
+        if (slotId.startsWith("active:")) {
+            return player.getActivePokemon();
+        } else if (slotId.startsWith("bench_")) {
+            final int index = Integer.parseInt(slotId.split(":")[0].substring(6));
+            if (index >= 0 && index < player.getBench().getAll().size()) {
+                return player.getBench().getAll().get(index);
+            }
+        } else {
+            if (player.getActivePokemon() != null && player.getActivePokemon().getCardId().equals(slotId)) {
+                return player.getActivePokemon();
+            }
+            for (var benched : player.getBench().getAll()) {
+                if (benched != null && benched.getCardId().equals(slotId)) {
+                    return benched;
+                }
+            }
+        }
+        return null;
     }
 
     private EnergyCard findEnergyInHand(final PlayerRuntime runtime, final PokemonType type) {
