@@ -1,14 +1,16 @@
-<div class="h-full w-full relative">
-  @if (!currentRoute().startsWith('/battle')) {
+<div class="h-full w-full relative" [class.overflow-hidden]="((currentRoute().startsWith('/battle') && !currentRoute().startsWith('/battle-pass')) || currentRoute().startsWith('/login'))">
+  @if ((!currentRoute().startsWith('/battle') && !currentRoute().startsWith('/login')) || currentRoute().startsWith('/battle-pass')) {
     <app-navbar></app-navbar>
   }
 
   <main
     class="absolute inset-x-0 bottom-0"
-    [style.top.px]="currentRoute().startsWith('/battle') ? 0 : 92"
+    [class.overflow-hidden]="((currentRoute().startsWith('/battle') && !currentRoute().startsWith('/battle-pass')) || currentRoute().startsWith('/login'))"
+    [style.top.px]="((currentRoute().startsWith('/battle') && !currentRoute().startsWith('/battle-pass')) || currentRoute().startsWith('/login')) ? 0 : 92"
   >
     <router-outlet></router-outlet>
   </main>
 
   <app-toast></app-toast>
+  <app-help-agent></app-help-agent>
 </div>

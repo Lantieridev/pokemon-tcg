@@ -34,8 +34,8 @@ public class MuteServiceImpl implements MuteService {
         if (username == null || targetUsername == null || username.equals(targetUsername)) {
             return;
         }
-        final Optional<UserEntity> userOpt = userRepository.findByUsername(username);
-        final Optional<UserEntity> targetOpt = userRepository.findByUsername(targetUsername);
+        final Optional<UserEntity> userOpt = userRepository.findFirstByUsername(username);
+        final Optional<UserEntity> targetOpt = userRepository.findFirstByUsername(targetUsername);
 
         if (userOpt.isPresent() && targetOpt.isPresent()) {
             final UserEntity user = userOpt.get();

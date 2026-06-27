@@ -18,7 +18,7 @@ class DeckAssistantServiceTest {
     @BeforeEach
     void setUp() {
         DeckTemplateService templateService = mock(DeckTemplateService.class);
-        service = new DeckAssistantService(templateService);
+        service = new DeckAssistantService(templateService, null, null);
     }
 
     @Test

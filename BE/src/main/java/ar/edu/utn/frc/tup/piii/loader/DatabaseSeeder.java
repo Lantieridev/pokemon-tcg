@@ -73,7 +73,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private UserEntity getOrCreateUser(final String username, final String email) {
-        return userRepository.findByUsername(username).orElseGet(() ->
+        return userRepository.findFirstByUsername(username).orElseGet(() ->
                 userRepository.save(UserEntity.builder()
                         .username(username)
                         .email(email)

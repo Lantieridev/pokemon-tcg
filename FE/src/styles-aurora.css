@@ -1,11 +1,11 @@
 /* =========================================================
    POKÉMON TCG — Premium lobby system (Aurora)
    ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 .scene{
   width:100%;height:100%;position:relative;overflow:hidden;
-  font-family:'Manrope',system-ui,sans-serif;
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;
   color:var(--txt);background:var(--bg);
   -webkit-font-smoothing:antialiased;
   letter-spacing:-0.01em;
@@ -17,7 +17,7 @@
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.16);
   --txt:#eaf0ff; --mut:#93a3c4; --dim:#5e6e90;
   --accent:#ff2e3e; --accent-dk:#cc2531; --accent-soft:rgba(255,46,62,.14);
-  --display:'Instrument Serif',serif; --num:'Space Mono',monospace;
+  --display:'Space Grotesk',sans-serif; --num:'Space Mono',monospace;
   --on-accent:#ffffff;
   --m1:#1f6f8c; --m2:#3a2e8c; --m3:#7a2e6b; --m4:#1fa89a;
   --accent2:#ffce32;
@@ -183,19 +183,265 @@
   transition:transform .25s cubic-bezier(.2,.8,.3,1);
   box-shadow:0 34px 60px -22px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.14) inset}
 .holo__img{display:block;width:100%}
-/* holofoil sheen — subtle rainbow that shifts with the pointer */
-.holo__foil{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  opacity:calc(var(--o,0)*.55);transition:opacity .3s;mix-blend-mode:color-dodge;
-  background:
-    repeating-linear-gradient(110deg,
-      rgba(255,0,132,.20) 0 8%, rgba(252,164,0,.20) 8% 16%, rgba(255,255,0,.20) 16% 24%,
-      rgba(0,255,140,.20) 24% 32%, rgba(0,207,255,.20) 32% 40%, rgba(204,76,250,.20) 40% 48%);
-  background-size:280% 280%;background-position:var(--bx,50%) var(--by,50%)}
-/* glare — soft spotlight at the cursor */
-.holo__glare{position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  opacity:var(--o,0);transition:opacity .3s;mix-blend-mode:overlay;
-  background:radial-gradient(circle at var(--mx,50%) var(--my,50%),
-    rgba(255,255,255,.6), rgba(255,255,255,.08) 30%, rgba(255,255,255,0) 50%)}
+/* ══════════════════════════════════════════════════════════════
+   HOLO CARD EFFECT SYSTEM — 4 tiers from pokemon-cards-151
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Shared variables ──────────────────────────────────────── */
+.holo__rot {
+  /* sunpillar rainbow colours (from the repo's base.css) */
+  --sunpillar-1: hsl(2, 100%, 73%);
+  --sunpillar-2: hsl(53, 100%, 69%);
+  --sunpillar-3: hsl(93, 100%, 69%);
+  --sunpillar-4: hsl(176, 100%, 76%);
+  --sunpillar-5: hsl(228, 100%, 74%);
+  --sunpillar-6: hsl(283, 100%, 73%);
+  --holo: var(--sunpillar-1), var(--sunpillar-2), var(--sunpillar-3),
+          var(--sunpillar-4), var(--sunpillar-5), var(--sunpillar-6),
+          var(--sunpillar-1);
+  --sunpillar: var(--sunpillar-1) 25%, var(--sunpillar-2), var(--sunpillar-3),
+               var(--sunpillar-4), var(--sunpillar-5), var(--sunpillar-6) 75%;
+}
+
+/* ── Shared layer reset ────────────────────────────────────── */
+.holo__shine,
+.holo__glitter,
+.holo__glare,
+.holo__glare2 {
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  will-change: transform, opacity, background-image, background-size, background-position, filter;
+}
+.holo__shine  { z-index: 3; }
+.holo__glitter { z-index: 2; display: none; }
+.holo__glare  { z-index: 4; }
+.holo__glare2 { z-index: 5; display: none; }
+
+/* ══════════════════════════════════════════════════════════════
+   TIER 1 — BASIC / Rare Holo (default)
+   Subtle rainbow colour bands that shift with the pointer
+   ══════════════════════════════════════════════════════════════ */
+.holo__shine {
+  background-image: repeating-linear-gradient(10deg, var(--holo));
+  background-position: calc(((50% - var(--background-x, 50%))) + 50%) calc(((50% - var(--background-y, 50%))) + 50%);
+  background-size: 400% 400%;
+  background-blend-mode: overlay;
+  filter: brightness(1.25) contrast(3) saturate(.75);
+  mix-blend-mode: overlay;
+  opacity: var(--card-opacity, 0);
+  transition: opacity .3s;
+}
+.holo__glare {
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    hsla(0, 0%, 100%, 0.8) 10%,
+    hsla(0, 0%, 100%, 0.65) 20%,
+    hsla(0, 0%, 0%, .5) 90%
+  );
+  opacity: calc(var(--card-opacity, 0) * .8);
+  mix-blend-mode: overlay;
+  transition: opacity .3s;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TIER 2 — EX / Double Rare
+   Sunpillar gradient bands + grain texture, dual glare layers
+   ══════════════════════════════════════════════════════════════ */
+
+/* Shine: smooth shimmer with soft rainbow (no harsh lines) */
+.holo--ex .holo__shine {
+  background-image:
+    url('/assets/holo/grain.webp'),
+    repeating-linear-gradient( 10deg, var(--holo) ),
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      hsla(0, 0%, 100%, 0.08) 10%,
+      hsla(0, 0%, 0%, 0.05) 50%,
+      hsla(0, 0%, 0%, 0.1) 120%
+    );
+  background-blend-mode: overlay, hue, soft-light;
+  background-size: 180px 180px, 350% 350%, 200% 200%;
+  background-position:
+    center,
+    calc(((50% - var(--background-x, 50%))) + 50%) calc(((50% - var(--background-y, 50%))) + 50%),
+    var(--pointer-x, 50%) var(--pointer-y, 50%);
+  filter: brightness(1) contrast(1) saturate(.5);
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--card-opacity, 0) * 0.65);
+}
+
+/* Glitter: rainbow radial behind the shine */
+.holo--ex .holo__glitter {
+  display: block;
+  background-image:
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      hsl(295, 100%, 10%) 20%, hsla(183, 84%, 85%, 0.15) 100%
+    ),
+    linear-gradient( 133deg, var(--sunpillar) );
+  background-size: cover, 500% 500%;
+  background-position: center center, var(--pointer-x, 50%) var(--pointer-y, 50%);
+  background-blend-mode: darken, hue;
+  mix-blend-mode: hard-light;
+  filter: brightness(2) contrast(.5) saturate(.75);
+  opacity: var(--card-opacity, 0);
+}
+
+/* Glare: soft bright spotlight */
+.holo--ex .holo__glare {
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    hsla(0, 0%, 100%, 0.7) 5%,
+    hsla(0, 0%, 100%, 0.3) 30%,
+    hsla(0, 0%, 0%, 0) 70%
+  );
+  filter: none;
+  mix-blend-mode: overlay;
+  opacity: calc(var(--card-opacity, 0) * 0.5);
+}
+
+/* Glare2: bright lighten pop */
+.holo--ex .holo__glare2 {
+  display: block;
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    hsl(0, 0%, 90%) 10%, hsla(0, 0%, 20%, 0) 60%
+  );
+  filter: brightness(1) contrast(1.4);
+  mix-blend-mode: lighten;
+  opacity: calc(var(--card-opacity, 0) * var(--pointer-from-center, 0) * .66);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TIER 3 — FULL ART / Ultra Rare / Illustration Rare
+   Metallic foil texture (illusion.png) with prismatic bands
+   ══════════════════════════════════════════════════════════════ */
+
+.holo--fullart .holo__shine {
+  background-image:
+    url('/assets/holo/illusion.png'),
+    repeating-linear-gradient( 0deg,
+      var(--sunpillar-5) calc(5%*1), var(--sunpillar-6) calc(5%*2),
+      var(--sunpillar-1) calc(5%*3), var(--sunpillar-2) calc(5%*4),
+      var(--sunpillar-3) calc(5%*5), var(--sunpillar-4) calc(5%*6),
+      var(--sunpillar-5) calc(5%*7)
+    ),
+    repeating-linear-gradient( 128.5deg,
+      #0e152e 0%, hsl(180, 10%, 60%) 3.8%,
+      hsl(180, 29%, 66%) 4.5%, hsl(180, 10%, 60%) 5.2%,
+      #0e152e 14%, #0e152e 16%
+    ),
+    radial-gradient(
+      farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      hsla(0, 0%, 0%, 0.1) 12%, hsla(0, 0%, 0%, 0.15) 20%,
+      hsla(0, 0%, 0%, 0.25) 120%
+    );
+  background-position:
+    center center,
+    0% var(--background-y, 50%),
+    calc(var(--background-x, 50%) + (var(--background-y, 50%) * 0.2)) var(--background-y, 50%),
+    var(--background-x, 50%) var(--background-y, 50%);
+  background-blend-mode: soft-light, soft-light, hue, hard-light;
+  background-size: 33%, 200% 700%, 300% 100%, 200% 100%;
+  filter: brightness(calc((var(--pointer-from-center, 0) * 0.3) + .35)) contrast(2) saturate(1.5);
+  mix-blend-mode: color-dodge;
+}
+
+/* Glare: warm hard-light */
+.holo--fullart .holo__glare {
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    hsl(0, 0%, 75%) 5%, hsl(200, 5%, 35%) 70%, hsl(320, 40%, 10%) 150%
+  );
+  background-size: 120% 150%;
+  background-position: center center;
+  mix-blend-mode: hard-light;
+  filter: brightness(.8) contrast(1) saturate(1);
+  opacity: var(--card-opacity, 0);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TIER 4 — SPECIAL ILLUSTRATION RARE / Hyper Rare / Secret Rare
+   Cross-light bars + holo rainbow + sparkle glitter
+   ══════════════════════════════════════════════════════════════ */
+
+/* Shine: subtle overall holo */
+.holo--sir .holo__shine {
+  filter: brightness(.6) contrast(1.5) saturate(1);
+}
+
+/* Shine ::before — holo rainbow overlay */
+.holo--sir .holo__shine::before {
+  content: "";
+  position: absolute; inset: 0; border-radius: inherit;
+  background-image: repeating-linear-gradient(15deg, var(--holo));
+  background-position: center center;
+  background-size: 240% 240%;
+  filter: brightness(1) contrast(.75) saturate(1);
+  mix-blend-mode: overlay;
+  z-index: 2;
+}
+
+/* Shine ::after — cross-light bars that follow rotation */
+.holo--sir .holo__shine::after {
+  content: "";
+  position: absolute; inset: 0; border-radius: inherit;
+  background-image:
+    linear-gradient( calc((var(--rotate-x, 0deg) * -1) * 0.25),
+      black 24%, #797979 30%, black 36%
+    ),
+    linear-gradient( calc(var(--rotate-x, 0deg) * 0.25),
+      black 24%, #797979 30%, black 36%
+    );
+  background-position:
+    50% calc(var(--background-y, 50%) * 1.7),
+    50% calc(var(--background-y, 50%) * -1.3);
+  background-size: 300% 300%;
+  background-blend-mode: exclusion;
+  filter: brightness(1) contrast(.75) saturate(1);
+  mix-blend-mode: hard-light;
+  z-index: 3;
+}
+
+/* Glitter: sparkling iridescent layer */
+.holo--sir .holo__glitter {
+  display: block;
+  background-image: url('/assets/holo/glitter.png');
+  background-size: 150px 150px;
+  background-position: center center;
+  background-repeat: repeat;
+  filter: brightness(1) contrast(2) saturate(1.2);
+  mix-blend-mode: plus-lighter;
+  opacity: calc(var(--card-opacity, 0) * (.2 + var(--pointer-from-center, 0) * .5));
+}
+
+/* Glare: soft multiply spotlight */
+.holo--sir .holo__glare {
+  background-image: radial-gradient(
+    farthest-corner circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    hsl(0, 0%, 80%) 10%, hsl(0, 0%, 50%) 70%
+  );
+  mix-blend-mode: multiply;
+  filter: contrast(1.5);
+  opacity: var(--card-opacity, 0);
+}
+
+/* Glare2: foil mask overlay */
+.holo--sir .holo__glare2 {
+  display: block;
+  background: white;
+  mask-image: url('/assets/holo/illusion.png');
+  -webkit-mask-image: url('/assets/holo/illusion.png');
+  mask-mode: luminance;
+  -webkit-mask-mode: luminance;
+  mask-size: cover;
+  -webkit-mask-size: cover;
+  mix-blend-mode: overlay;
+  filter: contrast(.8);
+  opacity: var(--card-opacity, 0);
+}
 
 /* deck dock as a fanned hand */
 .dock-card{transform:rotate(var(--r,0deg)) translateY(var(--ty,0px));transform-origin:bottom center}
@@ -232,3 +478,40 @@
 .streak-fire.hot{color:var(--accent2);filter:drop-shadow(0 2px 10px color-mix(in srgb,var(--accent2) 60%,transparent));animation:flicker-hot 1.5s infinite alternate;}
 @keyframes flicker{0%{opacity:.8;transform:scale(.95) rotate(-2deg)}100%{opacity:1;transform:scale(1.05) rotate(2deg)}}
 @keyframes flicker-hot{0%{opacity:.9;transform:scale(1.15) rotate(-4deg)}100%{opacity:1;transform:scale(1.3) rotate(4deg)}}
+
+/* ---------- Collection Tab Cards ---------- */
+.collection-card {
+  position: relative;
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.2s, filter 0.2s;
+  cursor: pointer;
+}
+.collection-card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.1);
+  z-index: 10;
+}
+.collection-card-inner {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  background: #000;
+}
+.collection-card[data-rarity="LEGENDARIA"] { border-color: rgba(255, 206, 50, 0.5); box-shadow: 0 0 10px rgba(255, 206, 50, 0.15); }
+.collection-card[data-rarity="EPICA"] { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 10px rgba(168, 85, 247, 0.15); }
+.collection-card[data-rarity="RARA"] { border-color: rgba(74, 163, 255, 0.5); box-shadow: 0 0 10px rgba(74, 163, 255, 0.15); }
+.collection-card[data-rarity="COMUN"] { border-color: rgba(161, 161, 170, 0.5); box-shadow: 0 0 10px rgba(161, 161, 170, 0.15); }
+
+.collection-card:hover[data-rarity="LEGENDARIA"] { box-shadow: 0 0 20px rgba(255, 206, 50, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #ffce32; }
+.collection-card:hover[data-rarity="EPICA"] { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #a855f7; }
+.collection-card:hover[data-rarity="RARA"] { box-shadow: 0 0 20px rgba(74, 163, 255, 0.4), 0 12px 24px -10px rgba(0, 0, 0, 0.8); border-color: #4aa3ff; }
+
+@keyframes foilShine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

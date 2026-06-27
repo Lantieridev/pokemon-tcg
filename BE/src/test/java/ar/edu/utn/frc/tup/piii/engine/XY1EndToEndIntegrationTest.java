@@ -92,7 +92,7 @@ class XY1EndToEndIntegrationTest {
             deckB.add(new EnergyCard("basic-grass-b-" + i, "Grass Energy", PokemonType.GRASS, true));
         }
 
-        matchId = matchCreationService.createMatch("playerA", "playerB", deckA, deckB);
+        matchId = matchCreationService.createMatch("playerA",  "playerB",  deckA,  deckB, false);
         session = sessionRegistry.find(matchId).orElseThrow();
         
         // We override the hands with specific setups so we can control the deterministic test

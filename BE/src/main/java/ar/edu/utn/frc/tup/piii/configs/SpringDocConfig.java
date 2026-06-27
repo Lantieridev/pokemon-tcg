@@ -6,6 +6,8 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -56,8 +58,17 @@ public class SpringDocConfig {
                 .url(url)
                 .description(appDescription);
 
+        SecurityScheme jwtScheme = new SecurityScheme()
+                .name("bearerAuth")
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Ingresá el token JWT obtenido del endpoint /api/auth/login");
+
         return new OpenAPI()
-                .components(new Components())
+                .components(new Components()
+                        .addSecuritySchemes("bearerAuth", jwtScheme))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .info(info)
                 .addServersItem(server);
     }

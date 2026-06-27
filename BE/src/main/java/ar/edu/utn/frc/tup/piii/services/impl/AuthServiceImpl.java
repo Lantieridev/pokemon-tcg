@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void register(AuthRegisterRequestDTO request) {
         // Simple check if user exists
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (userRepository.findFirstByUsername(request.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
         
@@ -61,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
         // Generate token
         String jwt = jwtUtil.generateToken(request.getUsername());
 
-        UserEntity user = userRepository.findByUsername(request.getUsername())
+        UserEntity user = userRepository.findFirstByUsername(request.getUsername())
                 .orElseThrow(() -> new java.util.NoSuchElementException("User not found: " + request.getUsername()));
 
         return AuthResponseDTO.builder()

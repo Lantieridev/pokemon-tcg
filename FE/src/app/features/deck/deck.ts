@@ -120,7 +120,7 @@ export class Deck implements OnInit {
     this.saveSuccess.set(false);
 
     const name = this.deckName();
-    this.deckApi.saveDeck(name).subscribe({
+    this.deckApi.saveDeck(name, 'VALID').subscribe({
       next: (res) => {
         this.saveLoading.set(false);
         this.saveSuccess.set(true);

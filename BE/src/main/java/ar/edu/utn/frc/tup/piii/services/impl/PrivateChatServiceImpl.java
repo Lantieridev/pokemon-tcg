@@ -21,9 +21,9 @@ public class PrivateChatServiceImpl implements PrivateChatService {
 
     @Override
     public ChatMessageDTO saveAndSendMessage(String senderUsername, String receiverUsername, String content) {
-        UserEntity sender = userRepository.findByUsername(senderUsername)
+        UserEntity sender = userRepository.findFirstByUsername(senderUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
-        UserEntity receiver = userRepository.findByUsername(receiverUsername)
+        UserEntity receiver = userRepository.findFirstByUsername(receiverUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
 
         ChatMessageEntity entity = ChatMessageEntity.builder()
@@ -44,9 +44,9 @@ public class PrivateChatServiceImpl implements PrivateChatService {
 
     @Override
     public List<ChatMessageDTO> getChatHistory(String user1Username, String user2Username) {
-        UserEntity user1 = userRepository.findByUsername(user1Username)
+        UserEntity user1 = userRepository.findFirstByUsername(user1Username)
                 .orElseThrow(() -> new IllegalArgumentException("User 1 not found"));
-        UserEntity user2 = userRepository.findByUsername(user2Username)
+        UserEntity user2 = userRepository.findFirstByUsername(user2Username)
                 .orElseThrow(() -> new IllegalArgumentException("User 2 not found"));
 
         return chatMessageRepository.findChatHistory(user1, user2).stream()
