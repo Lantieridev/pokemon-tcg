@@ -124,6 +124,12 @@ class MatchServiceTest {
                 registry, facade, persistence, mapper, messaging,
                 scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
                 campaignService, chatService, TIMEOUT_SECONDS);
+
+        // The turn timer system calls scheduler.schedule() at the end of processAction.
+        // Return a mock ScheduledFuture so setTurnTimeout's requireNonNull doesn't fail.
+        java.util.concurrent.ScheduledFuture<?> mockFuture = mock(java.util.concurrent.ScheduledFuture.class);
+        org.mockito.Mockito.doReturn(mockFuture)
+                .when(scheduler).schedule(any(Runnable.class), any(Long.class), any(java.util.concurrent.TimeUnit.class));
     }
 
     @Test

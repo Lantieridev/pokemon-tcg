@@ -137,11 +137,17 @@ public class MatchService {
         final ReentrantLock lock = session.getLock();
         lock.lock();
         try {
-            if (session.getState() == MatchSessionState.FINISHED) {
-                throw new InvalidActionException("match_already_finished");
+            if (session.getState() != MatchSessionState.ACTIVE) {
+                throw new IllegalStateException("Match is not active");
             }
             session.clearLastCoinFlips();
             final int playerIndex = session.indexOf(playerId);
+            
+            if (session.getTurnManager() != null) {
+                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                    session.resetMissedTurns(playerId);
+                }
+            }
 
             boolean isAuthorized = false;
 
@@ -250,9 +256,21 @@ public class MatchService {
                 // Legitimate match finish, counts for mute decrement for all penalized players in the match
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = participantId.equals(winnerId);
-                    final int kos = won ? (6 - board.getRemainingPrizes(loserIndex)) : (6 - board.getRemainingPrizes(winnerIndex));
+                    
+                    final int calculatedDamage;
+                    final int calculatedKos;
+                    if (session.hasPlayerRuntimes()) {
+                        final int participantIndex = session.indexOf(participantId);
+                        final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
+                        calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
+                        calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
+                    } else {
+                        calculatedDamage = 0;
+                        calculatedKos = 0;
+                    }
+
                     userRepository.findByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
+                        profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, calculatedKos, calculatedDamage);
                         final int xpGained = won ? 50 : 25;
                         final int coinsGained = won ? 50 : 10;
                         if (participantId.equals(session.getPlayerIdA())) {
@@ -274,6 +292,9 @@ public class MatchService {
                 // Handle campaign progress
                 handleCampaignCompletion(session);
             }
+            
+            updateTurnTimers(session);
+
         } finally {
             lock.unlock();
         }
@@ -310,40 +331,132 @@ public class MatchService {
 
     /**
      * Called when a player's WebSocket connection drops.
-     * Schedules an abandonment timer — if the player does not reconnect within
-     * {@code abandonTimeoutSeconds}, the match is forfeited.
+     * We no longer schedule an immediate abandonment timer here.
+     * The Turn Timer will naturally expire and handle their inactivity.
      *
      * @param matchId  the match identifier (never null)
      * @param playerId the disconnecting player (never null)
      */
     public void onPlayerDisconnect(final String matchId, final String playerId) {
-        registry.find(matchId).ifPresent(session -> {
-            if (session.getState() != MatchSessionState.ACTIVE) {
-                return;
-            }
-            final Runnable task = () -> abandonMatch(matchId, playerId);
-            final ScheduledFuture<?> future = abandonmentScheduler.schedule(
-                    task, abandonTimeoutSeconds, TimeUnit.SECONDS);
-            final ReentrantLock lock = session.getLock();
-            lock.lock();
-            try {
-                session.setDisconnectTimeout(playerId, future);
-            } finally {
-                lock.unlock();
-            }
-        });
+        // We do not stop the turn timer, but we might want to flag the session.
     }
 
     /**
      * Called when a player's WebSocket connection is restored.
-     * Atomically cancels any pending abandonment timer.
      *
      * @param matchId  the match identifier (never null)
      * @param playerId the reconnecting player (never null)
      */
     public void onPlayerReconnect(final String matchId, final String playerId) {
-        registry.find(matchId).ifPresent(session ->
-                session.cancelDisconnectTimeout(playerId));
+        // Intentionally left as a no-op. Turn timers handle AFK.
+    }
+
+    /**
+     * Starts the initial turn timers for the match.
+     * Called by MatchCreationService once the match is set up.
+     */
+    public void startTurnTimers(final String matchId) {
+        registry.find(matchId).ifPresent(session -> {
+            session.getLock().lock();
+            try {
+                updateTurnTimers(session);
+            } finally {
+                session.getLock().unlock();
+            }
+        });
+    }
+
+    private String getExpectedActor(final MatchSession session) {
+        if (session.isAwaitingPromotion()) {
+            for (int i = 0; i < 2; i++) {
+                final var runtime = session.getPlayerRuntime(i);
+                if (runtime.getActivePokemon() == null && !runtime.getBench().getAll().isEmpty()) {
+                    return session.getPlayerIds().get(i);
+                }
+            }
+        }
+        final int activeIdx = session.getTurnManager() != null ? session.getTurnManager().activePlayerIndex() : -1;
+        if (activeIdx != -1) {
+            return session.getPlayerIds().get(activeIdx);
+        }
+        return null;
+    }
+
+    private void updateTurnTimers(final MatchSession session) {
+        if (session.getState() != MatchSessionState.ACTIVE) {
+            session.cancelTurnTimeout(session.getPlayerIdA());
+            session.cancelTurnTimeout(session.getPlayerIdB());
+            return;
+        }
+
+        final String expectedActor = getExpectedActor(session);
+        for (final String pId : session.getPlayerIds()) {
+            if (pId == null) continue;
+            if (pId.equals(expectedActor)) {
+                if (session.getTimeoutFuture(pId) == null) {
+                    final Runnable task = () -> handleTurnTimeout(session.getMatchId(), pId);
+                    final ScheduledFuture<?> future = abandonmentScheduler.schedule(
+                            task, abandonTimeoutSeconds, TimeUnit.SECONDS);
+                    session.setTurnTimeout(pId, future);
+                }
+            } else {
+                session.cancelTurnTimeout(pId);
+            }
+        }
+    }
+
+    private void handleTurnTimeout(final String matchId, final String playerId) {
+        final MatchSession session = registry.find(matchId).orElse(null);
+        if (session == null || session.getState() != MatchSessionState.ACTIVE) return;
+
+        boolean shouldAbandon = false;
+        boolean shouldEndTurn = false;
+
+        session.getLock().lock();
+        try {
+            final String expectedActor = getExpectedActor(session);
+            if (!playerId.equals(expectedActor)) {
+                return; // Stale timeout
+            }
+
+            session.cancelTurnTimeout(playerId); // Clear it
+            session.incrementMissedTurns(playerId);
+
+            if (session.isAwaitingPromotion()) {
+                // Must abandon because a promotion cannot be skipped
+                shouldAbandon = true;
+            } else {
+                if (session.getMissedTurns(playerId) >= 2) {
+                    shouldAbandon = true;
+                } else {
+                    shouldEndTurn = true;
+                }
+            }
+        } finally {
+            session.getLock().unlock();
+        }
+
+        if (shouldAbandon) {
+            sendSystemMessage(matchId, "El jugador fue expulsado por inactividad.");
+            abandonMatch(matchId, playerId);
+        } else if (shouldEndTurn) {
+            sendSystemMessage(matchId, "El jugador se quedó sin tiempo. Turno omitido.");
+            try {
+                processAction(matchId, playerId, new ar.edu.utn.frc.tup.piii.dtos.ActionRequestDTO(
+                        ar.edu.utn.frc.tup.piii.dtos.ActionType.END_TURN, null, null, null, null, null, null, null, null, null));
+                
+                // processAction automatically resets missedTurns to 0 (assuming a valid player action).
+                // Since this was a system-injected timeout, we must restore the missed turn count.
+                session.getLock().lock();
+                try {
+                    session.incrementMissedTurns(playerId);
+                } finally {
+                    session.getLock().unlock();
+                }
+            } catch (final Exception e) {
+                abandonMatch(matchId, playerId);
+            }
+        }
     }
 
     /**
@@ -537,7 +650,19 @@ public class MatchService {
                     userRepository.findByUsername(participantId).ifPresent(user -> {
                         // To prevent farming, the forfeiting player gets NO rewards.
                         if (won) {
-                            profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
+                            final int calculatedDamage;
+                            final int calculatedKos;
+                            if (session.hasPlayerRuntimes()) {
+                                final int participantIndex = session.indexOf(participantId);
+                                final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
+                                calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
+                                calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
+                            } else {
+                                calculatedDamage = 0;
+                                calculatedKos = 0;
+                            }
+                            
+                            profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, calculatedKos, calculatedDamage);
                             if (participantId.equals(session.getPlayerIdA())) {
                                 session.setXpGainedA(50);
                                 session.setCoinsGainedA(50);

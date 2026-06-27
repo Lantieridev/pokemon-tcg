@@ -40,6 +40,8 @@ public final class MatchSession {
     private MatchSessionState state;
     private ScheduledFuture<?> playerATimeout;
     private ScheduledFuture<?> playerBTimeout;
+    private int missedTurnsA = 0;
+    private int missedTurnsB = 0;
     private int activePlayerIndex = UNSET_PLAYER_INDEX;
     private KnockoutHandler knockoutHandler = (knocked, prizes) -> { };
     private CoinFlipper coinFlipper;
@@ -276,6 +278,32 @@ public final class MatchSession {
         return board;
     }
 
+    public int getMissedTurns(final String playerId) {
+        Objects.requireNonNull(playerId, "playerId must not be null");
+        if (playerId.equals(getPlayerIdA())) {
+            return missedTurnsA;
+        }
+        return missedTurnsB;
+    }
+
+    public void incrementMissedTurns(final String playerId) {
+        Objects.requireNonNull(playerId, "playerId must not be null");
+        if (playerId.equals(getPlayerIdA())) {
+            missedTurnsA++;
+        } else {
+            missedTurnsB++;
+        }
+    }
+
+    public void resetMissedTurns(final String playerId) {
+        Objects.requireNonNull(playerId, "playerId must not be null");
+        if (playerId.equals(getPlayerIdA())) {
+            missedTurnsA = 0;
+        } else {
+            missedTurnsB = 0;
+        }
+    }
+
     /**
      * Returns the session's reentrant lock for callers that need to execute
      * compound operations atomically.
@@ -287,13 +315,13 @@ public final class MatchSession {
     }
 
     /**
-     * Stores a pending abandonment timeout future for the given player.
+     * Stores a pending turn timeout future for the given player.
      * The caller is responsible for lock discipline.
      *
-     * @param playerId the player whose disconnect timer is being set (never null)
-     * @param future   the scheduled task to cancel on reconnect (never null)
+     * @param playerId the player whose turn timer is being set (never null)
+     * @param future   the scheduled task to cancel (never null)
      */
-    public void setDisconnectTimeout(final String playerId, final ScheduledFuture<?> future) {
+    public void setTurnTimeout(final String playerId, final ScheduledFuture<?> future) {
         Objects.requireNonNull(playerId, "playerId must not be null");
         Objects.requireNonNull(future, "future must not be null");
         if (playerId.equals(getPlayerIdA())) {
@@ -333,12 +361,12 @@ public final class MatchSession {
     }
 
     /**
-     * Atomically cancels the abandonment timeout for the given player inside the session lock.
+     * Atomically cancels the turn timeout for the given player inside the session lock.
      * Safe to call even if no timeout is pending (no-op in that case).
      *
-     * @param playerId the reconnecting player's ID (never null)
+     * @param playerId the player's ID (never null)
      */
-    public void cancelDisconnectTimeout(final String playerId) {
+    public void cancelTurnTimeout(final String playerId) {
         lock.lock();
         try {
             final ScheduledFuture<?> future = getTimeoutFuture(playerId);
