@@ -6,6 +6,7 @@ import {
   OnDestroy,
   signal,
   computed,
+  effect,
   ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -28,8 +29,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
 import { LobbyService } from '../../core/services/lobby.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
-import { DeckSummaryDTO } from '../../core/models/game-state.models';
+import { DeckSummaryDTO, DeckResponseDTO } from '../../core/models/game-state.models';
 import { TutorialService } from '../../core/services/tutorial.service';
+
+import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 
 type LobbyTab = 'public' | 'private';
@@ -597,6 +600,7 @@ type PrivateMode = 'create' | 'join';
         [deckId]="lobby.selectedDeckId()"
         [display]="displayFont">
       </aurora-deck-rail>
+      <aurora-deck-rail [deckData]="deckRailData()" [display]="displayFont"></aurora-deck-rail>
 
       <!-- ── Match Modal ──────────────────────────────────────────── -->
       @if (modalOpen()) {
@@ -787,6 +791,8 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
   private matchBackendService = inject(MatchBackendService);
   readonly lobby = inject(LobbyService);
   private tutorialService = inject(TutorialService);
+
+  private deckApiService = inject(DeckApiService);
   private tcgService = inject(PokemonTcgService);
 
   get username(): string {
@@ -838,6 +844,72 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     { name: 'Greninja EX', img: 'https://images.pokemontcg.io/xy9/40.png' },
     { name: 'Simisage', img: 'https://images.pokemontcg.io/xy1/11.png' }
   ];
+  fullSelectedDeck = signal<DeckResponseDTO | null>(null);
+
+  constructor() {
+    effect(() => {
+      const deckId = this.lobby.selectedDeckId();
+      if (deckId) {
+        this.deckApiService.getDeckById(deckId).subscribe({
+          next: (deck) => this.fullSelectedDeck.set(deck),
+          error: (err) => console.warn('Error fetching full deck details', err),
+        });
+      } else {
+        this.fullSelectedDeck.set(null);
+      }
+    });
+  }
+
+  deckRailData = computed(() => {
+    const deck = this.fullSelectedDeck();
+    if (!deck) return null;
+
+    const tcgCards = this.tcgService.cards();
+    if (!tcgCards || tcgCards.length === 0) return null; // Wait for cards to load
+
+    let totalCards = 0;
+    const resolvedCards = [];
+    const energyTypes = new Set<string>();
+
+    for (const dCard of deck.cards) {
+      totalCards += dCard.quantity;
+      const tcgCard = tcgCards.find(c => c.id === dCard.cardId);
+      if (tcgCard) {
+        resolvedCards.push({
+          name: tcgCard.name,
+          img: tcgCard.images?.small ?? tcgCard.images?.large ?? '',
+          isEnergy: tcgCard.supertype === 'Energy',
+          types: tcgCard.types || []
+        });
+
+        // Determine energy types based ONLY on Energy cards
+        if (tcgCard.supertype === 'Energy') {
+          const nameLower = tcgCard.name.toLowerCase();
+          if (nameLower.includes('fire')) energyTypes.add('fire');
+          else if (nameLower.includes('water')) energyTypes.add('water');
+          else if (nameLower.includes('grass')) energyTypes.add('grass');
+          else if (nameLower.includes('lightning')) energyTypes.add('lightning');
+          else if (nameLower.includes('psychic')) energyTypes.add('psychic');
+          else if (nameLower.includes('fighting')) energyTypes.add('fighting');
+          else if (nameLower.includes('darkness')) energyTypes.add('darkness');
+          else if (nameLower.includes('metal')) energyTypes.add('metal');
+          else if (nameLower.includes('fairy')) energyTypes.add('fairy');
+          else if (nameLower.includes('dragon')) energyTypes.add('dragon');
+          else if (nameLower.includes('colorless')) energyTypes.add('colorless');
+        }
+      }
+    }
+    
+    // Sort resolved cards to show some prominent ones (like EXs or Pokémon) first
+    resolvedCards.sort((a, b) => (a.isEnergy === b.isEnergy ? 0 : a.isEnergy ? 1 : -1));
+
+    return {
+      name: deck.name,
+      totalCount: totalCards,
+      energyTypes: Array.from(energyTypes).slice(0, 3), // Max 3 types to show in UI
+      cards: resolvedCards.slice(0, 6)
+    };
+  });
 
   readonly deckRail = computed(() => {
     const details = this.lobby.activeDeckDetails();
@@ -913,6 +985,7 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.tcgService.loadCards();
+    this.tcgService.loadCards(); // ensure cards are loaded
     this.lobby.reset();
     this.lobby.loadDecks();
     this.lobby.connectLobbyWebSocket();

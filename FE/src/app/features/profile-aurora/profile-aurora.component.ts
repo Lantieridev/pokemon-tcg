@@ -8,11 +8,12 @@ import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
 import { RouterModule } from '@angular/router';
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 
 @Component({
   selector: 'app-profile-aurora',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent],
+  imports: [CommonModule, RouterModule, FormsModule, StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
@@ -192,7 +193,7 @@ import { RouterModule } from '@angular/router';
 
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px;">
                       @for (card of getPaginatedCollection(); track card.cardId + (card.isFoil || card.foil) + $index) {
-                        <div class="collection-card" [class.is-foil]="card.isFoil || card.foil" [attr.data-rarity]="card.rarity">
+                        <div class="collection-card" [class.is-foil]="card.isFoil || card.foil" [attr.data-rarity]="card.rarity" style="cursor: pointer;" (click)="zoomCard(card)">
                            <div class="collection-card-inner">
                               <img [src]="getCardImageById(card.cardId)" [alt]="card.cardName" style="width: 100%; display: block; border-radius: 6px;" />
                               @if (card.isFoil || card.foil) {
@@ -968,6 +969,17 @@ import { RouterModule } from '@angular/router';
       </div>
     }
 
+    <!-- Fullscreen Card Zoom Modal Overlay -->
+    @if (zoomedCard; as card) {
+      <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+           (click)="zoomedCard = null" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
+        <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+             (click)="$event.stopPropagation()">
+          <aurora-holo-card [card]="{ img: card.img, name: card.name, type: card.type, rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+        </div>
+      </div>
+    }
+
     <style>
       .match-row-hover:hover { background: rgba(255,255,255,0.03); cursor: pointer; }
       .tab-btn { background: transparent; border: none; color: var(--mut); font-family: 'Manrope'; font-weight: 700; font-size: 13.5px; padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
@@ -1693,6 +1705,8 @@ export class ProfileAuroraComponent implements OnInit {
   private tcgService = inject(PokemonTcgService);
   private cdr = inject(ChangeDetectorRef);
 
+  zoomedCard: any = null;
+
   profileData: UserProfileResponseDTO | null = null;
   achievements: UserAchievementProgressDTO[] = [];
   allAchievements: UserAchievementProgressDTO[] = [];
@@ -1893,6 +1907,17 @@ export class ProfileAuroraComponent implements OnInit {
       case 'RARA': return '#4aa3ff';
       default: return '#a1a1aa';
     }
+  }
+
+  zoomCard(card: any) {
+    const fullCard = this.tcgService.cards().find(c => c.id === card.cardId);
+    this.zoomedCard = {
+      img: fullCard?.images?.large ?? fullCard?.images?.small ?? this.getCardImageById(card.cardId),
+      name: card.cardName || fullCard?.name || 'Pokémon',
+      type: (fullCard?.types && fullCard?.types[0]?.toLowerCase()) || 'colorless',
+      rarity: (fullCard as any)?.rarity || card.rarity || 'Common',
+      subtypes: fullCard?.subtypes || []
+    };
   }
 
   ngOnInit(): void {

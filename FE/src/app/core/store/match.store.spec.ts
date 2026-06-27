@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+﻿import { TestBed } from '@angular/core/testing';
 import { MatchStore, GameStateDTO } from './match.store';
 
 describe('MatchStore', () => {
@@ -25,15 +25,15 @@ describe('MatchStore', () => {
       turnNumber: 5,
       activePlayerIndex: 0,
       currentPhase: 'MAIN',
-      pendingSelectionRequest: null,
       self: {
         playerId: 'AshRivero',
         active: {
           cardId: 'xy1-1',
           name: 'Ivysaur',
-          attachedEnergies: ['FIRE'],
+          attachedEnergies: ['Fire'],
+          attachedEnergyCardIds: ['xy1-131'],
           damageCounters: 3,
-          statusConditions: ['ASLEEP']
+          statusConditions: ['DORMIDO']
         } as any,
         bench: [],
         hand: ['xy1-2'],
@@ -53,10 +53,7 @@ describe('MatchStore', () => {
         handSize: 5,
         deckSize: 40,
         prizeCount: 6
-      },
-      discardPile: [],
-      opponentDiscardPile: [],
-      log: []
+      }
     };
 
     store.updateState(mockState);
@@ -72,6 +69,7 @@ describe('MatchStore', () => {
     expect(me!.active!.name).toBe('Ivysaur');
     expect(me!.active!.damage).toBe(30);
     expect(me!.active!.status).toBe('asleep');
+    expect(me!.active!.energyCardIds).toEqual(['xy1-131']);
     expect(me!.deckCount).toBe(45);
 
     const opp = store.opp();
