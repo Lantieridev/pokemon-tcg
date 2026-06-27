@@ -652,7 +652,6 @@ public final class RuleValidator {
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ENERGY_GRACE ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.BIG_JUMP ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.GOOEY_REGENERATION ||
             effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
             if (source.hasUsedAbilityThisTurn(effId.name())) {
                 return new ValidationResult.Invalid("ability_already_used_this_turn");

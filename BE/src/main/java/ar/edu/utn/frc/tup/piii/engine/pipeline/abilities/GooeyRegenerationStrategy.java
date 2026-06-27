@@ -20,11 +20,24 @@ public final class GooeyRegenerationStrategy implements AbilityEffect {
         final PlayerRuntime runtime = session.getPlayerRuntime(playerIndex);
         final BattlePokemonState source = action.source();
 
-        if (source == null || action.selectedEnergyIndices() == null || action.selectedEnergyIndices().isEmpty()) {
+        if (source == null) {
             return;
         }
 
-        final int energyIndex = action.selectedEnergyIndices().get(0);
+        final List<Integer> indices = action.selectedEnergyIndices();
+        int energyIndex = -1;
+        if (indices != null && !indices.isEmpty()) {
+            energyIndex = indices.get(0);
+        } else {
+            for (int i = 0; i < source.getAttachedEnergyCards().size(); i++) {
+                final EnergyCard ec = source.getAttachedEnergyCards().get(i);
+                if (ec.getEnergyType() == ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FAIRY || ec.isProvidesAllTypes()) {
+                    energyIndex = i;
+                    break;
+                }
+            }
+        }
+
         if (energyIndex >= 0 && energyIndex < source.getAttachedEnergyCards().size()) {
             final EnergyCard energy = source.getAttachedEnergyCards().get(energyIndex);
             
