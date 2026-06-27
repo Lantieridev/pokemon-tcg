@@ -101,16 +101,6 @@ export class DeckApiService {
     return this.http.post<{ cardId: string, quantity: number }[]>(`${this.API_URL}/assistant/autocomplete`, cards);
   }
 
-  /**
-   * GET /api/decks/{id}
-   */
-  getDeckById(id: number): Observable<DeckResponseDTO> {
-    return this.http.get<DeckResponseDTO>(`${this.API_URL}/${id}`);
-  }
-
-  cloneTemplate(userId: number, templateId: number): Observable<DeckResponseDTO> {
-    return this.http.post<DeckResponseDTO>(`${this.API_URL}/users/${userId}/clone/${templateId}`, {});
-  }
 
   generateWizardDeck(
     theme: string,
