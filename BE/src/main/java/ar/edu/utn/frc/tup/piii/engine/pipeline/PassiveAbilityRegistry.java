@@ -29,6 +29,11 @@ public final class PassiveAbilityRegistry {
                 damage = 20;
             }
         }
+        if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.INTIMIDATING_MANE)) {
+            if (ctx.getAttacker() != null && ctx.getAttacker().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                damage = 0;
+            }
+        }
         return damage;
     }
 

@@ -196,6 +196,15 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node.has("aceSpec")) {
                 builder.aceSpec(node.get("aceSpec").asBoolean());
             }
+            if (node.has("effectText")) {
+                builder.effectText(node.get("effectText").asText());
+            }
+            if (node.has("effectId") && !node.get("effectId").isNull()) {
+                builder.effectId(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.valueOf(node.get("effectId").asText()));
+            }
+            if (node.has("toolEffectId") && !node.get("toolEffectId").isNull()) {
+                builder.toolEffectId(ar.edu.utn.frc.tup.piii.engine.model.PokemonToolEffectId.valueOf(node.get("toolEffectId").asText()));
+            }
             return builder.build();
         }
     }
@@ -319,6 +328,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             } else {
                 gen.writeNullField("activeStadium");
             }
+            gen.writeNumberField("activeStadiumOwnerIndex", value.getActiveStadiumOwnerIndex());
             try {
                 java.lang.reflect.Field field = MatchBoard.class.getDeclaredField("players");
                 field.setAccessible(true);
@@ -345,6 +355,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             MatchBoard board = new MatchBoard(players);
             if (node.has("activeStadium") && !node.get("activeStadium").isNull()) {
                 board.replaceStadium(p.getCodec().treeToValue(node.get("activeStadium"), TrainerCard.class));
+            }
+            if (node.has("activeStadiumOwnerIndex")) {
+                board.setActiveStadiumOwnerIndex(node.get("activeStadiumOwnerIndex").asInt());
             }
             return board;
         }
@@ -390,6 +403,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
             }
             gen.writeEndObject();
+
+            gen.writeBooleanField("knockedOutLastTurn", value.isKnockedOutLastTurn());
+            gen.writeNumberField("startingPrizeCount", value.getStartingPrizeCount());
 
             gen.writeEndObject();
         }
@@ -439,7 +455,13 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
             }
 
-            return new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
+            boolean knockedOutLastTurn = node.has("knockedOutLastTurn") ? node.get("knockedOutLastTurn").asBoolean() : false;
+            int startingPrizeCount = node.has("startingPrizeCount") ? node.get("startingPrizeCount").asInt() : 6;
+
+            PlayerRuntime playerRuntime = new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
+            playerRuntime.setKnockedOutLastTurn(knockedOutLastTurn);
+            playerRuntime.setStartingPrizeCount(startingPrizeCount);
+            return playerRuntime;
         }
     }
 
@@ -727,6 +749,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("@type", "inPlay");
+            gen.writeStringField("uuid", value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
@@ -743,6 +766,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serializeWithType(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers, com.fasterxml.jackson.databind.jsontype.TypeSerializer typeSer) throws IOException {
             com.fasterxml.jackson.core.type.WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen,
                     typeSer.typeId(value, com.fasterxml.jackson.core.JsonToken.START_OBJECT));
+            gen.writeStringField("uuid", value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
             gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
@@ -792,7 +816,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node.has("attachedTool") && !node.get("attachedTool").isNull()) {
                 tool = p.getCodec().treeToValue(node.get("attachedTool"), TrainerCard.class);
             }
-            return new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
+            String uuidVal = node.has("uuid") ? node.get("uuid").asText() : UUID.randomUUID().toString();
+            final InPlayPokemon ip = new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
+            ip.setUuid(uuidVal);
+            return ip;
         }
     }
 

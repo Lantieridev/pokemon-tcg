@@ -479,19 +479,7 @@ public class ProfileServiceImpl implements ProfileService {
             titles = new HashSet<>();
         }
 
-        if (user.getUsername() != null && (user.getUsername().equalsIgnoreCase("admin") || user.getUsername().equalsIgnoreCase("model"))) {
-            boolean addedAny = false;
-            for (final String title : ALL_ACHIEVEMENT_TITLES) {
-                if (titles.add(title)) {
-                    addedAny = true;
-                }
-            }
-            if (addedAny) {
-                user.setUnlockedTitles(titles);
-                userRepository.save(user);
-            }
-            return;
-        }
+
 
         boolean changed = false;
 

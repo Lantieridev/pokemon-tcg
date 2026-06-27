@@ -110,7 +110,7 @@ public final class GameFacade {
                     turnManager.requireMainPhase().recordEnergyAttached();
                 }
             }
-            case EvolveAction evolve           -> applyEvolve(evolve, runtime);
+            case EvolveAction evolve           -> applyEvolve(evolve, runtime, session);
             case RetreatAction retreat         -> {
                 applyRetreat(retreat, runtime);
                 if (turnManager != null) {
@@ -196,10 +196,17 @@ public final class GameFacade {
         }
     }
 
-    private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime) {
+    private void applyEvolve(final EvolveAction action, final PlayerRuntime runtime, final MatchSession session) {
         if (action.evolution() != null) {
             PokemonCard newCard = (PokemonCard) runtime.getHand().removeCard(action.evolution().getCardId());
             action.target().evolveInto(newCard);
+            
+            if (newCard.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+                if (session != null) {
+                    session.setMegaEvolvedThisTurn(true);
+                }
+            }
+
             // XY1 §2: a Pokémon cannot evolve in the same turn it evolved. The
             // BattlePokemonState mutates in-place, so we must reset its turnsInPlay
             // counter to 0 so RuleValidator sees it as "just entered". Done HERE
@@ -210,6 +217,25 @@ public final class GameFacade {
             // Track stats!
             if (runtime.getStatisticsTracker() != null) {
                 runtime.getStatisticsTracker().incrementPokemonPlayed(newCard.getCardId());
+            }
+
+            // Thorn Tempest: put 1 damage counter on each of opponent's Pokémon.
+            if (action.target().getAbilities().stream().anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.THORN_TEMPEST)) {
+                if (session != null) {
+                    int playerIndex = session.getPlayerRuntime(0) == runtime ? 0 : 1;
+                    int opponentIndex = 1 - playerIndex;
+                    PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+                    if (opponent != null) {
+                        if (opponent.getActivePokemon() != null) {
+                            opponent.getActivePokemon().addDamageCounters(1);
+                        }
+                        for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                            if (benched != null) {
+                                benched.addDamageCounters(1);
+                            }
+                        }
+                    }
+                }
             }
         }
         
@@ -247,6 +273,12 @@ public final class GameFacade {
         final PlayerRuntime attacker = session.getPlayerRuntime(attackerIndex);
         final PlayerRuntime defender = session.getPlayerRuntime(defenderIndex);
 
+        final boolean hasFireEnergy = attacker.getActivePokemon() != null && attacker.getActivePokemon().getAttachedEnergyCards().stream()
+                .anyMatch(ec -> ec.getEnergyType() == PokemonType.FIRE || ec.isProvidesAllTypes());
+        boolean scorchingFangDiscarded = action.selectedCardIds() != null 
+                && action.selectedCardIds().contains("discard_fire_energy")
+                && hasFireEnergy;
+
         final AttackContext ctx = new AttackContext.Builder(
                 action.attacker(),
                 defender.getActivePokemon(),
@@ -263,7 +295,12 @@ public final class GameFacade {
         .stadiumProvider(session.getBoard())
         .attackerStats(attacker.getStatisticsTracker())
         .defenderStats(defender.getStatisticsTracker())
+        .matchSession(session)
         .build();
+
+        if (scorchingFangDiscarded) {
+            ctx.setScorchingFangDiscarded(true);
+        }
 
         attackPipeline.execute(ctx);
     }
@@ -285,9 +322,13 @@ public final class GameFacade {
             case STADIUM -> {
                 // Stadium replaces the current field stadium; previous one goes to discard.
                 if (trainerCard != null) {
+                    final int prevOwnerIdx = session.getBoard().getActiveStadiumOwnerIndex();
                     final TrainerCard previous = session.getBoard().replaceStadium(trainerCard);
+                    final int activePlayerIdx = session.getPlayerRuntime(0) == runtime ? 0 : 1;
+                    session.getBoard().setActiveStadiumOwnerIndex(activePlayerIdx);
                     if (previous != null) {
-                        runtime.getDiscardPile().add(previous);
+                        final PlayerRuntime prevOwner = prevOwnerIdx != -1 ? session.getPlayerRuntime(prevOwnerIdx) : runtime;
+                        prevOwner.getDiscardPile().add(previous);
                     }
                 }
             }
@@ -321,6 +362,45 @@ public final class GameFacade {
                         session.getTurnManager().interruptMainPhase();
                     } else if (effectId == TrainerEffectId.MAX_REVIVE) {
                         session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.LYSANDRE) {
+                        applyLysandre(session, action.target());
+                    } else if (effectId == TrainerEffectId.SACRED_ASH) {
+                        final long pokemonCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof PokemonCard)
+                                .count();
+                        final int selectCount = (int) Math.min(5, pokemonCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.POKEMON_FAN_CLUB) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 2, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.FIERY_TORCH) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.TRICK_SHOVEL) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, action.target(), 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.TOP_7_DECK));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.STARTLING_MEGAPHONE) {
+                        applyStartlingMegaphone(session);
+                    } else if (effectId == TrainerEffectId.PAL_PAD) {
+                        final long supporterCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)
+                                .count();
+                        final int selectCount = (int) Math.min(2, supporterCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.BLACKSMITH) {
+                        final long fireEnergyCount = runtime.getDiscardPile().getCards().stream()
+                                .filter(c -> c instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)
+                                .count();
+                        final int selectCount = (int) Math.min(2, fireEnergyCount);
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, action.target(), selectCount, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE));
+                        session.getTurnManager().interruptMainPhase();
+                    } else if (effectId == TrainerEffectId.POKEMON_CENTER_LADY) {
+                        applyPokemonCenterLady(runtime, action.target());
+                    } else if (effectId == TrainerEffectId.ULTRA_BALL) {
+                        session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 2, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND));
                         session.getTurnManager().interruptMainPhase();
                     } else {
                         TrainerEffect effect = trainerCard.getEffect();
@@ -391,6 +471,54 @@ public final class GameFacade {
         runtime.removePokemonFromPlay(target);
     }
 
+    private void applyLysandre(final MatchSession session, final BattlePokemonState target) {
+        if (target == null) {
+            return;
+        }
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        final BattlePokemonState oldActive = opponent.getActivePokemon();
+        final int targetIndex = opponent.getBench().getAll().indexOf(target);
+        if (targetIndex >= 0) {
+            final BattlePokemonState newActive = opponent.getBench().promote(targetIndex);
+            opponent.setActivePokemon(newActive);
+            if (oldActive != null) {
+                opponent.getBench().place(oldActive);
+                opponent.recordPokemonEntered(oldActive);
+            }
+            opponent.getStatusEffectManager().clearAll();
+        }
+    }
+
+    private void applyStartlingMegaphone(final MatchSession session) {
+        final int opponentIndex = 1 - session.getActivePlayerIndex();
+        final PlayerRuntime opponent = session.getPlayerRuntime(opponentIndex);
+        final BattlePokemonState opponentActive = opponent.getActivePokemon();
+        if (opponentActive != null && opponentActive.hasToolAttached()) {
+            opponentActive.getAttachedTool().ifPresent(tool -> {
+                opponent.getDiscardPile().add(tool);
+                opponentActive.detachTool();
+            });
+        }
+        for (final BattlePokemonState benched : opponent.getBench().getAll()) {
+            if (benched.hasToolAttached()) {
+                benched.getAttachedTool().ifPresent(tool -> {
+                    opponent.getDiscardPile().add(tool);
+                    benched.detachTool();
+                });
+            }
+        }
+    }
+
+    private void applyPokemonCenterLady(final PlayerRuntime runtime, final BattlePokemonState target) {
+        if (target != null) {
+            target.heal(60);
+            if (target.equals(runtime.getActivePokemon())) {
+                runtime.getStatusEffectManager().clearAll();
+            }
+        }
+    }
+
     /**
      * Resolves the pending interactive selection (e.g. from Evosoda, Great Ball, etc.).
      */
@@ -405,17 +533,44 @@ public final class GameFacade {
         
         if (effectId == TrainerEffectId.EVOSODA) {
             if (!selectedIds.isEmpty()) {
+                final BattlePokemonState target = resolveLivePokemon(session, request.target());
                 final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
                 if (!found.isEmpty()) {
                     Card selectedCard = found.get(0);
-                    if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(request.target().getName())) {
-                        request.target().evolveInto(pc);
+                    if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(target.getName())) {
+                        target.evolveInto(pc);
+                        if (pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+                            session.setMegaEvolvedThisTurn(true);
+                        }
                     } else {
                         throw new IllegalArgumentException("Selected card is not a valid evolution for the target");
                     }
                 }
             }
             runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.BOUNCE) {
+            if (!selectedIds.isEmpty()) {
+                final String selectedCardId = selectedIds.get(0);
+                int benchIndex = -1;
+                if (selectedCardId.startsWith("bench_")) {
+                    benchIndex = Integer.parseInt(selectedCardId.split(":")[0].substring(6));
+                } else {
+                    for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
+                        if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
+                            benchIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (benchIndex != -1 && benchIndex < runtime.getBench().getAll().size()) {
+                    final BattlePokemonState newActive = runtime.getBench().promote(benchIndex);
+                    final BattlePokemonState oldActive = runtime.getActivePokemon();
+                    runtime.setActivePokemon(newActive);
+                    runtime.getBench().place(oldActive);
+                    runtime.getStatusEffectManager().clearAll();
+                    runtime.recordPokemonEntered(oldActive);
+                }
+            }
         } else if (effectId == TrainerEffectId.GREAT_BALL) {
             if (!selectedIds.isEmpty()) {
                 final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));
@@ -467,6 +622,433 @@ public final class GameFacade {
                     runtime.getDeck().addToTop(found);
                 }
             }
+        } else if (effectId == TrainerEffectId.SACRED_ASH) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> toReturn = new ArrayList<>();
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard)) {
+                            throw new IllegalArgumentException("Sacred Ash can only select Pokemon cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        toReturn.add(card);
+                    }
+                }
+                if (!toReturn.isEmpty()) {
+                    runtime.getDeck().addCards(toReturn);
+                    runtime.getDeck().shuffle();
+                }
+            }
+        } else if (effectId == TrainerEffectId.POKEMON_FAN_CLUB) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC)) {
+                            throw new IllegalArgumentException("Pokemon Fan Club can only select Basic Pokemon cards");
+                        }
+                        runtime.getHand().addCard(card);
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.QUIVER_DANCE) {
+            boolean attached = false;
+            if (!selectedIds.isEmpty()) {
+                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+                if (!found.isEmpty()) {
+                    final Card card = found.get(0);
+                    if (!(card instanceof EnergyCard ec && ec.isBasic())) {
+                        throw new IllegalArgumentException("Quiver Dance can only select a Basic Energy card");
+                    }
+                    if (runtime.getActivePokemon() != null) {
+                        runtime.getActivePokemon().attachEnergy((EnergyCard) card);
+                        attached = true;
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+            if (attached && runtime.getActivePokemon() != null) {
+                runtime.getActivePokemon().heal(40);
+            }
+        } else if (effectId == TrainerEffectId.FIERY_TORCH) {
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                final Card card = runtime.getHand().removeCard(cardId);
+                if (card == null || !(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
+                    throw new IllegalArgumentException("Fiery Torch requires discarding a Fire Energy card from hand");
+                }
+                runtime.getDiscardPile().add(card);
+                final int drawCount = Math.min(2, runtime.getDeck().size());
+                if (drawCount > 0) {
+                    runtime.getHand().addCards(runtime.getDeck().drawMultiple(drawCount));
+                }
+            }
+        } else if (effectId == TrainerEffectId.TRICK_SHOVEL) {
+            final BattlePokemonState target = resolveLivePokemon(session, request.target());
+            final int targetPlayerIndex = (target != null && target.equals(runtime.getActivePokemon()))
+                    ? session.getActivePlayerIndex() : (1 - session.getActivePlayerIndex());
+            final PlayerRuntime targetRuntime = session.getPlayerRuntime(targetPlayerIndex);
+            if (!selectedIds.isEmpty()) {
+                final List<Card> topCardList = targetRuntime.getDeck().drawMultiple(1);
+                if (!topCardList.isEmpty()) {
+                    targetRuntime.getDiscardPile().add(topCardList.get(0));
+                }
+            }
+        } else if (effectId == TrainerEffectId.PAL_PAD) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> toReturn = new ArrayList<>();
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)) {
+                            throw new IllegalArgumentException("Pal Pad can only select Supporter cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        toReturn.add(card);
+                    }
+                }
+                if (!toReturn.isEmpty()) {
+                    runtime.getDeck().addCards(toReturn);
+                    runtime.getDeck().shuffle();
+                }
+            }
+        } else if (effectId == TrainerEffectId.BLACKSMITH) {
+            if (!selectedIds.isEmpty()) {
+                final BattlePokemonState target = resolveLivePokemon(session, request.target());
+                if (target == null) {
+                    throw new IllegalStateException("Blacksmith requires a target Pokemon");
+                }
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                            .filter(c -> c.getCardId().equals(id))
+                            .toList();
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
+                            throw new IllegalArgumentException("Blacksmith can only select Fire Energy cards");
+                        }
+                        runtime.getDiscardPile().remove(card);
+                        target.attachEnergy((EnergyCard) card);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.ULTRA_BALL) {
+            if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
+                if (selectedIds.size() != 2) {
+                    throw new IllegalArgumentException("Ultra Ball requires discarding exactly 2 cards");
+                }
+                for (String id : selectedIds) {
+                    final Card discarded = runtime.getHand().removeCard(id);
+                    if (discarded != null) {
+                        runtime.getDiscardPile().add(discarded);
+                    }
+                }
+                // Transition to deck search
+                session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(effectId, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+                return; // Do NOT resume the main phase yet
+            } else if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
+                if (!selectedIds.isEmpty()) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+                    if (!found.isEmpty()) {
+                        final Card card = found.get(0);
+                        if (!(card instanceof PokemonCard)) {
+                            throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
+                        }
+                        runtime.getHand().addCard(card);
+                    }
+                }
+                runtime.getDeck().shuffle();
+            }
+        } else if (effectId == TrainerEffectId.CLAIRVOYANT_EYE) {
+            if (!selectedIds.isEmpty()) {
+                final List<Card> topCards = runtime.getDeck().drawMultiple(selectedIds.size());
+                final List<Card> reordered = new ArrayList<>();
+                for (String id : selectedIds) {
+                    Card foundCard = null;
+                    for (Card c : topCards) {
+                        if (c.getCardId().equals(id)) {
+                            foundCard = c;
+                            break;
+                        }
+                    }
+                    if (foundCard != null) {
+                        topCards.remove(foundCard);
+                        reordered.add(foundCard);
+                    }
+                }
+                reordered.addAll(topCards);
+                for (int i = reordered.size() - 1; i >= 0; i--) {
+                    runtime.getDeck().addToTop(reordered.get(i));
+                }
+            }
+        } else if (effectId == TrainerEffectId.FLASH_CLAW) {
+            final PlayerRuntime opponentRuntime = session.getPlayerRuntime(1 - session.getTurnManager().activePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                final Card discarded = opponentRuntime.getHand().removeCard(cardId);
+                if (discarded != null) {
+                    opponentRuntime.getDiscardPile().add(discarded);
+                }
+            }
+        } else if (effectId == TrainerEffectId.ROCK_RUSH) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final Card discarded = runtime.getHand().removeCard(id);
+                    if (discarded != null) {
+                        runtime.getDiscardPile().add(discarded);
+                    }
+                }
+            }
+            session.setPendingSelectionRequest(null);
+            
+            final int defenderIndex = 1 - session.getActivePlayerIndex();
+            final PlayerRuntime defender = session.getPlayerRuntime(defenderIndex);
+            
+            final Attack attack = runtime.getActivePokemon().getAttacks().stream()
+                    .filter(a -> "Rock Rush".equalsIgnoreCase(a.name()))
+                    .findFirst()
+                    .orElseGet(() -> runtime.getActivePokemon().getAttacks().get(0));
+            
+            final AttackContext ctx = new AttackContext.Builder(
+                    runtime.getActivePokemon(),
+                    defender.getActivePokemon(),
+                    attack,
+                    runtime.getStatusEffectManager(),
+                    defender.getStatusEffectManager(),
+                    session.getKnockoutHandler(),
+                    session.getCoinFlipper()::flip
+            )
+            .attackerRuntime(runtime)
+            .defenderRuntime(defender)
+            .defenderBench(defender.getBench().getAll())
+            .effectText(attack.effectText())
+            .stadiumProvider(session.getBoard())
+            .attackerStats(runtime.getStatisticsTracker())
+            .defenderStats(defender.getStatisticsTracker())
+            .matchSession(session)
+            .build();
+            
+            ctx.setRockRushResolved(true);
+            ctx.setRockRushDiscardCount(selectedIds.size());
+            attackPipeline.execute(ctx);
+        } else if (effectId == TrainerEffectId.BRILLIANT_SEARCH) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        runtime.getHand().addCard(found.get(0));
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
+        } else if (effectId == TrainerEffectId.BURIED_TREASURE_HUNT) {
+            final List<Card> topCards = runtime.getDeck().drawMultiple(Math.min(4, runtime.getDeck().size()));
+            for (Card card : topCards) {
+                if (selectedIds.contains(card.getCardId())) {
+                    runtime.getHand().addCard(card);
+                } else {
+                    runtime.getDiscardPile().add(card);
+                }
+            }
+        } else if (effectId == TrainerEffectId.DUAL_BULLET) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            final BattlePokemonState attacker = runtime.getActivePokemon();
+            final List<BattlePokemonState> targets = new ArrayList<>();
+            if (opponent.getActivePokemon() != null && selectedIds.contains(opponent.getActivePokemon().getCardId())) {
+                targets.add(opponent.getActivePokemon());
+            }
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    targets.add(benched);
+                }
+            }
+            for (BattlePokemonState target : targets) {
+                if (target == opponent.getActivePokemon()) {
+                    final ar.edu.utn.frc.tup.piii.engine.model.DamageContext dmgCtx = new ar.edu.utn.frc.tup.piii.engine.model.DamageContext(
+                            attacker,
+                            target,
+                            new Attack("Dual Bullet", 50, List.of(), ""),
+                            List.of(),
+                            List.of()
+                    );
+                    final ar.edu.utn.frc.tup.piii.engine.model.DamageResult dmgResult = new DamageCalculator().calculate(dmgCtx, false, false);
+                    target.addDamageCounters(dmgResult.damageCountersToPlace());
+                } else {
+                    target.addDamageCounters(5);
+                }
+                if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                    session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+                }
+            }
+        } else if (effectId == TrainerEffectId.PAIN_PELLETS) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            final BattlePokemonState attacker = runtime.getActivePokemon();
+            final List<BattlePokemonState> targets = new ArrayList<>();
+            if (opponent.getActivePokemon() != null && selectedIds.contains(opponent.getActivePokemon().getCardId())) {
+                targets.add(opponent.getActivePokemon());
+            }
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    targets.add(benched);
+                }
+            }
+            if (!targets.isEmpty() && attacker != null) {
+                final BattlePokemonState target = targets.get(0);
+                final int countersToPlace = attacker.getDamageCounters();
+                target.addDamageCounters(countersToPlace);
+                if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                    session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+                }
+            }
+        } else if (effectId == TrainerEffectId.BENCH_DAMAGE_ONE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            int damageAmount = 20; // Default fallback
+            if (runtime.getActivePokemon() != null) {
+                for (ar.edu.utn.frc.tup.piii.engine.model.Attack attack : runtime.getActivePokemon().getAttacks()) {
+                    String eff = attack.effectText();
+                    if (eff != null && eff.startsWith("bench_damage_one:")) {
+                        try {
+                            damageAmount = Integer.parseInt(eff.substring("bench_damage_one:".length()));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+            final int counters = damageAmount / 10;
+            for (BattlePokemonState benched : opponent.getBench().getAll()) {
+                if (selectedIds.contains(benched.getCardId())) {
+                    benched.addDamageCounters(counters);
+                    if (benched.getDamageCounters() * 10 >= benched.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(benched, benched.isEx() ? 2 : 1);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.CURSED_DROP) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            for (String id : selectedIds) {
+                final BattlePokemonState target = resolveSlotTarget(opponent, id);
+                if (target != null) {
+                    target.addDamageCounters(1);
+                    if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.EAR_INFLUENCE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            for (int i = 0; i < selectedIds.size(); i += 2) {
+                if (i + 1 >= selectedIds.size()) break;
+                String srcId = selectedIds.get(i);
+                String destId = selectedIds.get(i + 1);
+
+                BattlePokemonState source = resolveSlotTarget(opponent, srcId);
+                BattlePokemonState dest = resolveSlotTarget(opponent, destId);
+
+                if (source != null && dest != null && source != dest && source.getDamageCounters() > 0) {
+                    source.addDamageCounters(-1);
+                    dest.addDamageCounters(1);
+                    if (dest.getDamageCounters() * 10 >= dest.getMaxHp()) {
+                        session.getKnockoutHandler().onKnockout(dest, dest.isEx() ? 2 : 1);
+                    }
+                }
+            }
+        } else if (effectId == TrainerEffectId.FANG_SNIPE) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                Card found = null;
+                for (Card c : opponent.getHand().getCards()) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        found = c;
+                        break;
+                    }
+                }
+                if (found instanceof TrainerCard) {
+                    opponent.getHand().removeCard(found.getCardId());
+                    opponent.getDiscardPile().add(found);
+                } else if (found != null) {
+                    throw new IllegalArgumentException("Can only discard a Trainer card");
+                }
+            }
+        } else if (effectId == TrainerEffectId.RESCUE) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    Card found = null;
+                    for (Card c : runtime.getDiscardPile().getCards()) {
+                        if (c.getCardId().equals(id)) {
+                            found = c;
+                            break;
+                        }
+                    }
+                    if (found instanceof PokemonCard pc) {
+                        runtime.getDiscardPile().remove(pc);
+                        runtime.getDeck().addCards(java.util.List.of(pc));
+                    } else if (found != null) {
+                        throw new IllegalArgumentException("Rescue can only select Pokemon cards from discard pile");
+                    }
+                }
+                runtime.getDeck().shuffle();
+            }
+        } else if (effectId == TrainerEffectId.REVIVAL) {
+            final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
+            if (!selectedIds.isEmpty() && opponent.getBench().getAll().size() < 5) {
+                Card found = null;
+                for (Card c : opponent.getDiscardPile().getCards()) {
+                    if (c.getCardId().equals(selectedIds.get(0))) {
+                        found = c;
+                        break;
+                    }
+                }
+                if (found instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                    opponent.getDiscardPile().remove(pc);
+                    ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(pc);
+                    state.setOwner(opponent);
+                    opponent.getBench().place(state);
+                } else if (found != null) {
+                    throw new IllegalArgumentException("Can only place basic Pokemon cards from opponent's discard pile");
+                }
+            }
+        } else if (effectId == TrainerEffectId.PUSH_DOWN) {
+            final PlayerRuntime opponentRuntime = session.getPlayerRuntime(1 - session.getTurnManager().activePlayerIndex());
+            if (!selectedIds.isEmpty()) {
+                final String cardId = selectedIds.get(0);
+                int index = -1;
+                final java.util.List<BattlePokemonState> benched = opponentRuntime.getBench().getAll();
+                for (int i = 0; i < benched.size(); i++) {
+                    if (benched.get(i).getCardId().equals(cardId)) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index != -1) {
+                    final BattlePokemonState oldActive = opponentRuntime.getActivePokemon();
+                    final BattlePokemonState newActive = opponentRuntime.getBench().promote(index);
+                    opponentRuntime.setActivePokemon(newActive);
+                    opponentRuntime.getBench().place(oldActive);
+                    opponentRuntime.getStatusEffectManager().clearAll();
+                    opponentRuntime.recordPokemonEntered(oldActive);
+                }
+            }
+        } else if (effectId == TrainerEffectId.PARABOLIC_CHARGE) {
+            if (!selectedIds.isEmpty()) {
+                for (String id : selectedIds) {
+                    final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+                    if (!found.isEmpty()) {
+                        if (!(found.get(0) instanceof EnergyCard ec)) {
+                            throw new IllegalArgumentException("Parabolic Charge can only select energy cards");
+                        }
+                        runtime.getHand().addCard(ec);
+                    }
+                }
+            }
+            runtime.getDeck().shuffle();
         }
         
         session.setPendingSelectionRequest(null);
@@ -474,6 +1056,51 @@ public final class GameFacade {
     }
 
     // --- helpers ---
+
+    private BattlePokemonState resolveLivePokemon(final MatchSession session, final BattlePokemonState target) {
+        if (target == null) {
+            return null;
+        }
+        for (int pIdx = 0; pIdx < 2; pIdx++) {
+            final var player = session.getPlayerRuntime(pIdx);
+            if (player == null) continue;
+            final var active = player.getActivePokemon();
+            if (active != null && active.equals(target)) {
+                return active;
+            }
+            final var benched = player.getBench().getAll();
+            for (var b : benched) {
+                if (b != null && b.equals(target)) {
+                    return b;
+                }
+            }
+        }
+        return target;
+    }
+
+    private BattlePokemonState resolveSlotTarget(final PlayerRuntime player, final String slotId) {
+        if (slotId == null) {
+            return null;
+        }
+        if (slotId.startsWith("active:")) {
+            return player.getActivePokemon();
+        } else if (slotId.startsWith("bench_")) {
+            final int index = Integer.parseInt(slotId.split(":")[0].substring(6));
+            if (index >= 0 && index < player.getBench().getAll().size()) {
+                return player.getBench().getAll().get(index);
+            }
+        } else {
+            if (player.getActivePokemon() != null && player.getActivePokemon().getCardId().equals(slotId)) {
+                return player.getActivePokemon();
+            }
+            for (var benched : player.getBench().getAll()) {
+                if (benched != null && benched.getCardId().equals(slotId)) {
+                    return benched;
+                }
+            }
+        }
+        return null;
+    }
 
     private EnergyCard findEnergyInHand(final PlayerRuntime runtime, final PokemonType type) {
         return runtime.getHand().getCards().stream()
@@ -530,8 +1157,11 @@ public final class GameFacade {
                         effectId = tc.getEffectId();
                     }
                 }
+                final BattlePokemonState target = (effectId == TrainerEffectId.LYSANDRE)
+                        ? resolveTarget(board, 1 - playerIndex, dto)
+                        : resolveTarget(board, playerIndex, dto);
                 yield new PlayTrainerAction(dto.trainerType(),
-                                            resolveTarget(board, playerIndex, dto),
+                                            target,
                                             dto.cardId(),
                                             effectId);
             }
@@ -577,7 +1207,11 @@ public final class GameFacade {
         if (attackIndex < 0 || attackIndex >= attacks.size()) {
             throw new IllegalArgumentException("Invalid attack index");
         }
-        return new DeclareAttackAction(active, attacks.get(attackIndex));
+        return new DeclareAttackAction(
+                active,
+                attacks.get(attackIndex),
+                dto.selectedCardIds() != null ? dto.selectedCardIds() : java.util.Collections.emptyList()
+        );
     }
 
     private BattlePokemonState resolveEvolveTarget(final MatchBoard board,

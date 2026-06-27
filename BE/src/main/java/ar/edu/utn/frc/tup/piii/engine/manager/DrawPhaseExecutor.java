@@ -68,6 +68,12 @@ public final class DrawPhaseExecutor implements PhaseListener {
     private void executeDraw(final int playerIndex) {
         final PlayerRuntime runtime = playerRuntimes.get(playerIndex);
 
+        if (runtime.getStatusEffectManager().isDrawStepBlocked()) {
+            runtime.getStatusEffectManager().setDrawStepBlocked(false);
+            turnManager.endDraw();
+            return;
+        }
+
         if (runtime.getDeck().isEmpty()) {
             final int opponentIndex = 1 - playerIndex;
             victoryHandler.onVictory(new VictoryResult.DeckOutVictory(opponentIndex));

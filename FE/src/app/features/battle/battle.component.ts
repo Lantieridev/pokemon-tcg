@@ -134,7 +134,12 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly activeStadiumCardId = this.store.activeStadiumCardId;
   readonly pendingSelection = computed(() => {
     const sel = this.store.pendingSelection();
-    return sel && this.isMyTurn() ? sel : null;
+    if (!sel) return null;
+    const isOpponentChoosing = sel.sourceEffect === 'FLASH_CLAW' || sel.sourceEffect === 'PUSH_DOWN';
+    if (isOpponentChoosing) {
+      return !this.isMyTurn() ? sel : null;
+    }
+    return this.isMyTurn() ? sel : null;
   });
   readonly isFinished = computed(() => {
     const phase = this.store.phase();
@@ -233,6 +238,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly draggedCardIndex = signal<number | null>(null);
   readonly isRetreating = signal<boolean>(false);
   readonly targetingAbility = signal<{ name: string; sourceIndex: number | null } | null>(null);
+  readonly scorchingFangPrompt = signal<{ attackIndex: number } | null>(null);
 
   readonly quickChat = QUICK_CHAT;
   Math = Math;
@@ -249,6 +255,8 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly attackCoinFlips = signal<boolean[]>([]);
   readonly currentAttackFlipIndex = signal<number>(-1);
   readonly currentAttackFlipResult = signal<'heads' | 'tails' | null>(null);
+  readonly coinFlipSubText = signal<string>('');
+  readonly isSmokescreenFlip = signal<boolean>(false);
 
   // ── Computed helpers ──────────────────────────────────────────────────────
   readonly myEmptyBench = computed(() =>
@@ -666,8 +674,28 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
       return;
     }
+    const active = this.me()?.active;
+    const atk = active?.attacks?.[attackIndex];
+    if (active?.cardId === 'xy2-20' && atk?.name === 'Scorching Fang') {
+      const hasFireEnergy = active.energies?.some((e: string) => e.toUpperCase() === 'FIRE');
+      const hasThreeOrMoreEnergies = active.energies && active.energies.length >= 3;
+      if (hasFireEnergy && hasThreeOrMoreEnergies) {
+        this.scorchingFangPrompt.set({ attackIndex });
+        this.closeMenu();
+        return;
+      }
+    }
     this.sendAction({ type: 'DECLARE_ATTACK', attackIndex });
     this.closeMenu();
+  }
+
+  resolveScorchingFang(attackIndex: number, wantsDiscard: boolean): void {
+    this.sendAction({
+      type: 'DECLARE_ATTACK',
+      attackIndex,
+      selectedCardIds: wantsDiscard ? ['discard_fire_energy'] : []
+    });
+    this.scorchingFangPrompt.set(null);
   }
 
   retreat(targetIndex: number, energyIndices: number[]): void {
@@ -696,6 +724,39 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
       return;
     }
+    
+    const active = this.me()?.active;
+    if (active && active.statusConditions) {
+      const conds = active.statusConditions.map(c => String(c).toUpperCase());
+      if (conds.includes('ASLEEP') || conds.includes('DORMIDO')) {
+        this.toastService.error('No puedes retirar a un Pokémon Dormido.');
+        this.closeMenu();
+        return;
+      }
+      if (conds.includes('PARALYZED') || conds.includes('PARALIZADO')) {
+        this.toastService.error('No puedes retirar a un Pokémon Paralizado.');
+        this.closeMenu();
+        return;
+      }
+      if (conds.includes('RETREAT_BLOCKED') || conds.includes('BLOQUEO_RETIRADA')) {
+        this.toastService.error('No puedes retirar a este Pokémon porque su retirada está bloqueada por el ataque del oponente.');
+        this.closeMenu();
+        return;
+      }
+      if (conds.includes('POISONED') || conds.includes('ENVENENADO')) {
+        const opp = this.opp();
+        const opponentHasDragalge = opp && (
+          (opp.active && opp.active.name === 'Dragalge') ||
+          (opp.bench && opp.bench.some(p => p && p.name === 'Dragalge'))
+        );
+        if (opponentHasDragalge) {
+          this.toastService.error('No puedes retirar a este Pokémon porque está envenenado y el oponente posee a Dragalge (Poison Barrier).');
+          this.closeMenu();
+          return;
+        }
+      }
+    }
+
     this.isRetreating.set(true);
     this.closeMenu();
   }
@@ -747,7 +808,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   triggerAbility(abilityName: string, sourceIndex: number | null): void {
     this.closeMenu();
-    if (abilityName === 'Water Shuriken') {
+    if (abilityName === 'Water Shuriken' || abilityName === 'Energy Grace' || abilityName === 'Shadow Void') {
       this.targetingAbility.set({ name: abilityName, sourceIndex });
     } else if (abilityName === 'Fairy Transfer') {
       const targetIndex = sourceIndex === -1 ? 0 : -1;
@@ -776,7 +837,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   isActiveAbility(name: string): boolean {
-    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off'];
+    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off', 'Leaf Draw', 'Energy Grace', 'Shadow Void', 'Gooey Regeneration', 'Big Jump'];
     return activeAbilities.includes(name);
   }
 
@@ -801,6 +862,39 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (name.includes('evosoda')) return true;
     if (name.includes('potion')) return true;
     if (name.includes('cassius')) return true;
+    if (name.includes('lysandre')) return true;
+    if (name.includes('blacksmith')) return true;
+    if (name.includes('trick shovel')) return true;
+    return false;
+  }
+
+  isValidTarget(side: 'me' | 'opponent', targetType: 'active' | 'bench', targetIndex: number | null): boolean {
+    const card = this.selectedHandCard() || this.draggedCard();
+    if (!card) return false;
+
+    // Lysandre targets opponent's bench only
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('lysandre')) {
+      return side === 'opponent' && targetType === 'bench';
+    }
+
+    // Blacksmith targets my own Fire Pokémon (active or benched)
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('blacksmith')) {
+      if (side !== 'me') return false;
+      const targetPk = targetType === 'active' ? this.me()?.active : this.me()?.bench[targetIndex!];
+      if (!targetPk) return false;
+      return targetPk.pokemonType === 'FIRE';
+    }
+
+    // Trick Shovel can target either Active Pokémon to choose the deck to look at
+    if (card.supertype === 'Trainer' && card.name.toLowerCase().includes('trick shovel')) {
+      return targetType === 'active';
+    }
+
+    // For other trainers/tools/energy/evolution: they target my own board
+    if (card.supertype === 'Energy' || card.supertype === 'Pokémon' || (card.supertype === 'Trainer' && this.isTargetingTrainer(card))) {
+      return side === 'me';
+    }
+
     return false;
   }
 
@@ -1262,12 +1356,47 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    const isSmokescreen = this.store.hadPrecisionBaja() && index === 0;
+    this.isSmokescreenFlip.set(isSmokescreen);
     this.currentAttackFlipIndex.set(index);
     this.currentAttackFlipResult.set(null);
 
+    if (isSmokescreen) {
+      this.coinFlipSubText.set('Chequeo de Humo (Precisión Baja): Cruz falla el ataque');
+    } else {
+      this.coinFlipSubText.set(
+        this.store.hadPrecisionBaja()
+          ? `Lanzando moneda para el ataque/entrenador (Moneda #${index})...`
+          : `Lanzando moneda para el ataque/entrenador (Moneda #${index + 1})...`
+      );
+    }
+
     setTimeout(() => {
-      this.currentAttackFlipResult.set(flips[index] ? 'heads' : 'tails');
+      const result = flips[index] ? 'heads' : 'tails';
+      this.currentAttackFlipResult.set(result);
+      
+      if (isSmokescreen) {
+        if (result === 'heads') {
+          this.coinFlipSubText.set('¡Cara! Evitaste el humo. El ataque procede...');
+        } else {
+          this.coinFlipSubText.set('¡Cruz! El ataque ha fallado por el humo.');
+        }
+      } else {
+        const flipNum = this.store.hadPrecisionBaja() ? index : index + 1;
+        this.coinFlipSubText.set(
+          flips[index] 
+            ? `¡Cara! (Moneda #${flipNum} exitosa)` 
+            : `¡Cruz! (Moneda #${flipNum} fallida)`
+        );
+      }
+
       setTimeout(() => {
+        if (isSmokescreen && result === 'tails') {
+          this.isAttackCoinFlipping.set(false);
+          this.currentAttackFlipIndex.set(-1);
+          this.currentAttackFlipResult.set(null);
+          return;
+        }
         this.animateFlip(index + 1);
       }, 2000);
     }, 50);

@@ -82,7 +82,7 @@ public class DeckServiceImpl implements DeckService {
                 .map(c -> toEntry(cardMap.get(c.cardId()), c.quantity()))
                 .toList();
 
-        validator.validate(entries, request.status());
+        validator.validate(entries, request.status(), user.getUsername(), request.name());
 
         final DeckEntity deck = deckRepository.save(DeckEntity.builder()
                 .user(user)

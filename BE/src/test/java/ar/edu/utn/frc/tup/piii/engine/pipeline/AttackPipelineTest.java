@@ -289,6 +289,42 @@ class AttackPipelineTest {
         assertEquals(6, fireDefender.getDamageCounters()); // 30 * 2 = 60 / 10 = 6
     }
 
+    @Test
+    void shouldSuppressResistanceWhenMagneticStormIsActive() {
+        // defender is GRASS type, resistant to FIRE, attacker is FIRE type
+        final FakeBattlePokemonState grassDefender =
+                new FakeBattlePokemonState(100, PokemonType.GRASS, null, PokemonType.FIRE, false);
+        final ar.edu.utn.frc.tup.piii.engine.model.TrainerCard magneticStorm =
+                new ar.edu.utn.frc.tup.piii.engine.model.TrainerCard.Builder("xy2-91", "Magnetic Storm", ar.edu.utn.frc.tup.piii.engine.model.TrainerType.STADIUM)
+                .build();
+        final Attack attack = new Attack("Ember", 30, List.of());
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, grassDefender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .stadiumProvider(() -> magneticStorm)
+                .build();
+        pipeline.execute(ctx);
+
+        // Without Magnetic Storm: 30 - 20 (resistance) = 10 (1 counter)
+        // With Magnetic Storm: 30 - 0 = 30 (3 counters)
+        assertEquals(3, grassDefender.getDamageCounters());
+    }
+
+    @Test
+    void shouldSuppressResistanceWhenIgnoreResistanceEffectTextIsActive() {
+        final FakeBattlePokemonState grassDefender =
+                new FakeBattlePokemonState(100, PokemonType.GRASS, null, PokemonType.FIRE, false);
+        final Attack attack = new Attack("Smash Uppercut", 30, List.of());
+
+        final AttackContext ctx = new AttackContext.Builder(attacker, grassDefender, attack,
+                attackerSM, defenderSM, knockoutHandler, () -> true)
+                .effectText("ignore_resistance")
+                .build();
+        pipeline.execute(ctx);
+
+        assertEquals(3, grassDefender.getDamageCounters());
+    }
+
     // --- helpers ---
 
     private AttackContext buildCtx(final Attack attack, final String effectText) {

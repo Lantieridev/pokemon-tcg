@@ -74,6 +74,14 @@ public final class MatchSession {
     private int promotingPlayerIndex = UNSET_PLAYER_INDEX;
 
     /**
+     * Flag indicating whether status effects between turns have already been processed
+     * for the current transition.
+     */
+    private boolean betweenTurnsProcessed = false;
+    private boolean megaEvolvedThisTurn = false;
+
+
+    /**
      * Set when an interactive action (like Evosoda) pauses the MainPhase to wait for
      * the player to select cards from their deck/discard.
      */
@@ -435,6 +443,13 @@ public final class MatchSession {
                 return result;
             }
         };
+        if (playerRuntimes != null) {
+            for (final var runtime : playerRuntimes) {
+                if (runtime.getStatusEffectManager() != null) {
+                    runtime.getStatusEffectManager().setCoinFlipper(this.coinFlipper);
+                }
+            }
+        }
     }
 
     public VictoryConditionChecker getVictoryConditionChecker() {
@@ -531,6 +546,15 @@ public final class MatchSession {
         this.awaitingPromotion = false;
         this.promotingPlayerIndex = UNSET_PLAYER_INDEX;
     }
+
+    public boolean isBetweenTurnsProcessed() {
+        return betweenTurnsProcessed;
+    }
+
+    public void setBetweenTurnsProcessed(final boolean processed) {
+        this.betweenTurnsProcessed = processed;
+    }
+
 
     /**
      * Returns the zero-based index of the given player within this session.
@@ -633,6 +657,7 @@ public final class MatchSession {
         this.mmrChangeB = mmrChangeB;
     }
 
+<<<<<<< HEAD
     public Integer getCoinsGainedA() {
         return coinsGainedA;
     }
@@ -711,5 +736,13 @@ public final class MatchSession {
 
     public void setRankUpTriggeredB(Boolean rankUpTriggeredB) {
         this.rankUpTriggeredB = rankUpTriggeredB;
+    }
+
+    public boolean isMegaEvolvedThisTurn() {
+        return megaEvolvedThisTurn;
+    }
+
+    public void setMegaEvolvedThisTurn(boolean megaEvolvedThisTurn) {
+        this.megaEvolvedThisTurn = megaEvolvedThisTurn;
     }
 }

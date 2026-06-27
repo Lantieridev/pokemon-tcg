@@ -186,4 +186,23 @@ class AbilityStrategiesTest {
         verify(source, times(1)).evolveInto(malamarCard);
         assertTrue(deck.getCards().isEmpty());
     }
+
+    @Test
+    void testGooeyRegenerationStrategy() {
+        GooeyRegenerationStrategy strategy = new GooeyRegenerationStrategy();
+
+        BattlePokemonState source = mock(BattlePokemonState.class);
+        EnergyCard fairyEnergy = new EnergyCard("fairy-1", "Fairy Energy", PokemonType.FAIRY, true);
+        when(source.getAttachedEnergyCards()).thenReturn(List.of(fairyEnergy));
+
+        DiscardPile discardPile = new DiscardPile();
+        when(activeRuntime.getDiscardPile()).thenReturn(discardPile);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Gooey Regeneration", -1, -1, List.of(0));
+        strategy.apply(session, action);
+
+        verify(source, times(1)).removeEnergies(List.of(0));
+        verify(source, times(1)).heal(60);
+        assertTrue(discardPile.getCards().contains(fairyEnergy));
+    }
 }

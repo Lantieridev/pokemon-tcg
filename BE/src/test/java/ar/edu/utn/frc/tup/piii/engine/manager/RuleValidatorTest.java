@@ -131,6 +131,29 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldReturnValidWhenTargetPokemonHasAdaptiveEvolutionOnFirstTurnOrTurnEntered() {
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        target.setAbilities(List.of(new ar.edu.utn.frc.tup.piii.engine.model.Ability(
+            "Adaptive Evolution", "", ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION
+        )));
+        ar.edu.utn.frc.tup.piii.engine.model.PokemonCard evolution = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
+            "evo-id", "Evo", HP, ar.edu.utn.frc.tup.piii.engine.model.PokemonType.FIRE)
+            .evolutionStage(EvolutionStage.STAGE_1).evolvesFrom("Caterpie").build();
+        target.setName("Caterpie");
+        
+        turnInPlayProvider.set(target, 0);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(true);
+        
+        ValidationResult result1 = validator.validate(new EvolveAction(target, evolution));
+        assertInstanceOf(ValidationResult.Valid.class, result1);
+
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(false);
+        ValidationResult result2 = validator.validate(new EvolveAction(target, evolution));
+        assertInstanceOf(ValidationResult.Valid.class, result2);
+    }
+
+    @Test
     void shouldReturnValidWhenEvolvingBasicToStageOne() {
         FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
         ar.edu.utn.frc.tup.piii.engine.model.PokemonCard evolution = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder(
@@ -358,6 +381,27 @@ class RuleValidatorTest {
 
         assertInstanceOf(ValidationResult.Invalid.class, result);
         assertInvalidReason(result, "stadium_already_played");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenStadiumSameNameIsActive() {
+        final TrainerCard activeStadium = new TrainerCard.Builder("xy2-91", "Magnetic Storm", TrainerType.STADIUM).build();
+        final RuleValidator sameNameValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider,
+                () -> activeStadium);
+
+        final TrainerCard playedStadium = new TrainerCard.Builder("xy2-91-copy", "Magnetic Storm", TrainerType.STADIUM).build();
+        handProvider.addCard(0, playedStadium);
+
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+
+        ValidationResult result = sameNameValidator.validate(
+                new PlayTrainerAction(TrainerType.STADIUM, null, "xy2-91-copy", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAGNETIC_STORM), 0);
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "stadium_same_name_in_play");
     }
 
     @Test
@@ -831,6 +875,29 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldAllowEvosodaOnFirstTurnIfTargetHasAdaptiveEvolution() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.GRASS, null, null, false);
+        target.setName("Caterpie");
+        target.setEvolutionStage(EvolutionStage.BASIC);
+        target.setAbilities(List.of(new ar.edu.utn.frc.tup.piii.engine.model.Ability(
+                "Adaptive Evolution", "", ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION)));
+        turnInPlayProvider.set(target, 0);
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.isFirstTurnOfPlayer(0)).thenReturn(true);
+        
+        final BattlefieldStateProvider bfp = Mockito.mock(BattlefieldStateProvider.class);
+        when(bfp.getActivePokemon(0)).thenReturn(target);
+        
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider, null, bfp);
+        
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, target, "evosoda-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA));
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
     void shouldReturnInvalidWhenMaxReviveHasNoBasicPokemonInDiscard() {
         when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
         
@@ -897,6 +964,208 @@ class RuleValidatorTest {
                 TrainerType.ITEM, null, "red-card-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RED_CARD));
         assertInstanceOf(ValidationResult.Invalid.class, result);
         assertInvalidReason(result, "opponent_hand_is_empty");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenLysandreOpponentBenchIsEmpty() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(0);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "opponent_bench_empty");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenLysandreTargetIsNull() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(2);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenLysandreTargetNotOnOpponentBench() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class);
+        when(mockBench.getBenchSize(1)).thenReturn(1);
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        when(mockBench.getBenchedPokemon(1)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "lysandre-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_must_be_on_opponent_bench");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenSacredAshNoPokemonInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider) mockBench).getDiscardPile(0)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "sacred-ash-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_pokemon_in_discard_pile");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenFieryTorchNoFireEnergyInHand() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DeckStateProvider) mockBench).getDeckSize(0)).thenReturn(10);
+        final HandStateProvider mockHand = Mockito.mock(HandStateProvider.class);
+        when(mockHand.getHandCards(0)).thenReturn(List.of(new ar.edu.utn.frc.tup.piii.engine.model.EnergyCard(
+                "water-energy-id", "Water Energy", ar.edu.utn.frc.tup.piii.engine.model.PokemonType.WATER, false)));
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, mockHand);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "fiery-torch-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "fire_energy_required_in_hand");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPalPadNoSupporterInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final BenchStateProvider mockBench = Mockito.mock(BenchStateProvider.class, Mockito.withSettings().extraInterfaces(
+                ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider.class));
+        when(((ar.edu.utn.frc.tup.piii.engine.listener.DiscardPileStateProvider) mockBench).getDiscardPile(0)).thenReturn(List.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, mockBench, handProvider);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "pal-pad-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_supporter_in_discard_pile");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenBlacksmithNoTarget() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "blacksmith-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenBlacksmithTargetNotFire() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(HP, PokemonType.WATER, null, null, false);
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "blacksmith-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_must_be_fire_pokemon");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPokemonCenterLadyNoTarget() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, null, "pcl-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenPokemonCenterLadyNoDamageOrStatus() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final FakeBattlePokemonState target = new FakeBattlePokemonState(0, PokemonType.FIRE, null, null, false);
+        final BattlefieldStateProvider bfp = Mockito.mock(BattlefieldStateProvider.class);
+        when(bfp.getActivePokemon(0)).thenReturn(target);
+        when(statusEffectManager.activeEffects()).thenReturn(java.util.Set.of());
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider, null, bfp);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.SUPPORTER, target, "pcl-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_has_no_damage_or_status");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenUltraBallHandLessThan3() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        final HandStateProvider mockHand = Mockito.mock(HandStateProvider.class);
+        when(mockHand.getHandSize(0)).thenReturn(2);
+        final RuleValidator localValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, mockHand);
+        ValidationResult result = localValidator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "ultra-ball-id", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "insufficient_cards_in_hand");
+    }
+
+    @Test
+    void shouldValidateSelectCardsExactCountEnforcement() {
+        when(turnManager.currentPhase()).thenReturn(Mockito.mock(ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase.class));
+
+        // Sacred Ash: requires exactly maxSelections (e.g. 5)
+        ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest sacredAshRequest =
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH, null, 5,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE);
+        
+        // Under-selection
+        ValidationResult result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "must_select_exact_amount");
+
+        // Exact selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3", "c4", "c5"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Valid.class, result);
+
+        // Over-selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2", "c3", "c4", "c5", "c6"), sacredAshRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "too_many_cards_selected");
+
+        // Ultra Ball (Hand): requires exactly 2 cards
+        ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest ultraBallRequest =
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL, null, 2,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND);
+
+        // Under-selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1"), ultraBallRequest), 0);
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "must_select_exact_amount");
+
+        // Exact selection
+        result = validator.validate(
+                new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("c1", "c2"), ultraBallRequest), 0);
+        assertInstanceOf(ValidationResult.Valid.class, result);
+    }
+
+    @Test
+    void testRuleValidatorBlocksAttackWhenSelfDisabledNextTurn() {
+        FakeBattlePokemonState activeAttacker = new FakeBattlePokemonState(HP, PokemonType.FIRE, null, null, false);
+        Attack attack = new Attack("Slash", 20, List.of(PokemonType.COLORLESS));
+        when(statusEffectManager.isSelfDisabledNextTurn()).thenReturn(true);
+        when(statusEffectManager.canAttack()).thenReturn(true);
+
+        ValidationResult result = validator.validate(new DeclareAttackAction(activeAttacker, attack));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "attack_disabled_by_effect");
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────

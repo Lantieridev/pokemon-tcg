@@ -6,5 +6,8 @@ package ar.edu.utn.frc.tup.piii.engine.model;
 public enum SelectionSource {
     DECK,
     DISCARD_PILE,
-    TOP_7_DECK
+    TOP_7_DECK,
+    HAND,
+    OPPONENT_FIELD,
+    BENCH
 }

@@ -765,4 +765,19 @@ class TurnManagerTest {
         assertEquals(0, turnManager.getTurnCount(0));
         assertEquals(0, turnManager.getTurnCount(1));
     }
+
+    @Test
+    void shouldAllowInterruptDuringAttackPhase() {
+        turnManager.startTurn(1);
+        turnManager.endDraw();
+        turnManager.declareAttack();
+
+        assertInstanceOf(AttackPhase.class, turnManager.currentPhase());
+
+        assertDoesNotThrow(() -> turnManager.interruptMainPhase());
+        assertInstanceOf(ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase.class, turnManager.currentPhase());
+
+        assertDoesNotThrow(() -> turnManager.resumeMainPhase());
+        assertInstanceOf(AttackPhase.class, turnManager.currentPhase());
+    }
 }

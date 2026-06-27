@@ -11,6 +11,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.DamageResult;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerCard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker;
+import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,10 +42,14 @@ public final class AttackContext {
     private final MatchStatisticsTracker defenderStats;
     private final PlayerRuntime attackerRuntime;
     private final PlayerRuntime defenderRuntime;
+    private final MatchSession matchSession;
 
     // --- Mutable pipeline state ---
     private boolean attackBlocked;
+    private boolean scorchingFangDiscarded;
     private boolean weaknessSuppressed;
+    private int rockRushDiscardCount;
+    private boolean rockRushResolved;
     private final List<DamageModifier> attackerModifiers = new ArrayList<>();
     private final List<DamageModifier> defenderModifiers = new ArrayList<>();
     private DamageResult damageResult;
@@ -64,6 +69,7 @@ public final class AttackContext {
         this.defenderStats = b.defenderStats;
         this.attackerRuntime = b.attackerRuntime;
         this.defenderRuntime = b.defenderRuntime;
+        this.matchSession = b.matchSession;
     }
 
     // --- Immutable getters ---
@@ -118,6 +124,10 @@ public final class AttackContext {
         return defenderRuntime;
     }
 
+    public MatchSession getMatchSession() {
+        return matchSession;
+    }
+
     /**
      * Returns the currently active Stadium card, or {@code null} if no Stadium is in play
      * or no provider was set when building the context.
@@ -129,6 +139,30 @@ public final class AttackContext {
     }
 
     // --- Mutable state ---
+
+    public boolean isScorchingFangDiscarded() {
+        return scorchingFangDiscarded;
+    }
+
+    public void setScorchingFangDiscarded(final boolean scorchingFangDiscarded) {
+        this.scorchingFangDiscarded = scorchingFangDiscarded;
+    }
+
+    public int getRockRushDiscardCount() {
+        return rockRushDiscardCount;
+    }
+
+    public void setRockRushDiscardCount(final int rockRushDiscardCount) {
+        this.rockRushDiscardCount = rockRushDiscardCount;
+    }
+
+    public boolean isRockRushResolved() {
+        return rockRushResolved;
+    }
+
+    public void setRockRushResolved(final boolean rockRushResolved) {
+        this.rockRushResolved = rockRushResolved;
+    }
 
     public boolean isAttackBlocked() {
         return attackBlocked;
@@ -208,6 +242,7 @@ public final class AttackContext {
         private MatchStatisticsTracker defenderStats = new MatchStatisticsTracker();
         private PlayerRuntime attackerRuntime;
         private PlayerRuntime defenderRuntime;
+        private MatchSession matchSession;
 
         /**
          * @param attacker              the attacking Pokémon (never null)
@@ -294,6 +329,11 @@ public final class AttackContext {
 
         public Builder defenderRuntime(final PlayerRuntime defenderRuntime) {
             this.defenderRuntime = defenderRuntime;
+            return this;
+        }
+
+        public Builder matchSession(final MatchSession matchSession) {
+            this.matchSession = matchSession;
             return this;
         }
 

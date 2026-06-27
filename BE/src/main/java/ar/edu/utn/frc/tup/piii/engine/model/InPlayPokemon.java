@@ -23,6 +23,17 @@ public final class InPlayPokemon implements BattlePokemonState {
     private final List<PokemonType> attachedEnergies = new ArrayList<>();
     private final java.util.Set<String> usedAbilitiesThisTurn = new java.util.HashSet<>();
     private TrainerCard attachedTool;
+    private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime owner;
+
+    @Override
+    public ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime getOwner() {
+        return owner;
+    }
+
+    @Override
+    public void setOwner(final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime owner) {
+        this.owner = owner;
+    }
 
     /**
      * @param card the source card data (never null)
@@ -104,7 +115,13 @@ public final class InPlayPokemon implements BattlePokemonState {
 
     @Override
     public int getMaxHp() {
-        return card.getHp();
+        int hp = card.getHp();
+        if (owner != null && card.getPokemonType() == PokemonType.GRASS) {
+            if (owner.hasAbility(AbilityEffectId.FLOWER_VEIL)) {
+                hp += 20;
+            }
+        }
+        return hp;
     }
 
     @Override
@@ -317,5 +334,28 @@ public final class InPlayPokemon implements BattlePokemonState {
     @Override
     public void detachTool() {
         this.attachedTool = null;
+    }
+
+    private String uuid = java.util.UUID.randomUUID().toString();
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InPlayPokemon that = (InPlayPokemon) o;
+        return Objects.equals(uuid, that.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
     }
 }

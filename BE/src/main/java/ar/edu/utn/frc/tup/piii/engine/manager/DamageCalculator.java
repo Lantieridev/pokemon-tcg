@@ -54,6 +54,10 @@ public final class DamageCalculator {
      * @throws NullPointerException if {@code ctx} is null
      */
     public DamageResult calculate(final DamageContext ctx, final boolean suppressWeakness) {
+        return calculate(ctx, suppressWeakness, false);
+    }
+
+    public DamageResult calculate(final DamageContext ctx, final boolean suppressWeakness, final boolean suppressResistance) {
         Objects.requireNonNull(ctx, "DamageContext must not be null");
 
         int dmg = ctx.attack().baseDamage();
@@ -61,7 +65,9 @@ public final class DamageCalculator {
         if (!suppressWeakness) {
             dmg = applyWeakness(dmg, ctx);
         }
-        dmg = applyResistance(dmg, ctx);
+        if (!suppressResistance) {
+            dmg = applyResistance(dmg, ctx);
+        }
         dmg = applyDefenderModifiers(dmg, ctx.defenderModifiers());
         int floored = Math.max(dmg, MINIMUM_DAMAGE);
         return new DamageResult(floored, floored / DAMAGE_PER_COUNTER);

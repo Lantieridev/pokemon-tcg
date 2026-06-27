@@ -17,6 +17,7 @@ interface Filters {
   search: string;
   supertype: 'all' | 'Pokémon' | 'Trainer' | 'Energy';
   subtype: string;
+  set: 'all' | 'xy1' | 'xy2';
 }
 
 @Component({
@@ -167,20 +168,29 @@ interface Filters {
         @if (currentView() === 'builder') {
           <!-- Left: Collection & Filters -->
           <div style="flex: 1; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(10px); overflow: hidden;">
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center;">
-              <button class="ghost-btn sm" (click)="currentView.set('list')">← Volver</button>
-              <div style="position: relative; flex: 1; max-width: 300px;">
-                <input type="text" [ngModel]="filters().search" (ngModelChange)="setFilter('search', $event)" placeholder="Buscar carta..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 10px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+              <div style="display: flex; gap: 16px; align-items: center; flex: 1;">
+                <button class="ghost-btn sm" (click)="currentView.set('list')">← Volver</button>
+                <div style="position: relative; flex: 1; max-width: 300px;">
+                  <input type="text" [ngModel]="filters().search" (ngModelChange)="setFilter('search', $event)" placeholder="Buscar carta..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 10px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
+                </div>
+                
+                <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line); align-items: center;">
+                  <button [class.active-tab]="filters().supertype === 'all'" (click)="setSupertype('all')" class="tab-btn">Todos</button>
+                  <button [class.active-tab]="filters().supertype === 'Pokémon'" (click)="setSupertype('Pokémon')" class="tab-btn">Pokémon</button>
+                  <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
+                  <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
+                  <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
+                    <aurora-icon n="help" [s]="13"></aurora-icon>
+                  </button>
+                </div>
               </div>
-              
-              <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line); align-items: center;">
-                <button [class.active-tab]="filters().supertype === 'all'" (click)="setSupertype('all')" class="tab-btn">Todos</button>
-                <button [class.active-tab]="filters().supertype === 'Pokémon'" (click)="setSupertype('Pokémon')" class="tab-btn">Pokémon</button>
-                <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
-                <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
-                <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-                  <aurora-icon n="help" [s]="13"></aurora-icon>
-                </button>
+
+              <!-- Set filters -->
+              <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
+                <button [class.active-tab]="filters().set === 'all'" (click)="setSet('all')" class="tab-btn">Todos los Sets</button>
+                <button [class.active-tab]="filters().set === 'xy1'" (click)="setSet('xy1')" class="tab-btn">XY Base</button>
+                <button [class.active-tab]="filters().set === 'xy2'" (click)="setSet('xy2')" class="tab-btn">Flashfire</button>
               </div>
             </div>
 
@@ -388,7 +398,7 @@ export class DeckAuroraComponent implements OnInit {
     { id: 'colorless', label: 'Incoloro', color: '#cfd6e4', emoji: '⚪' }
   ];
 
-  readonly filters = signal<Filters>({ search: '', supertype: 'all', subtype: '' });
+  readonly filters = signal<Filters>({ search: '', supertype: 'all', subtype: '', set: 'all' });
   readonly saveLoading = signal(false);
   readonly saveSuccess = signal(false);
   readonly saveError = signal<string | null>(null);
@@ -412,6 +422,8 @@ export class DeckAuroraComponent implements OnInit {
       if (f.search && !card.name.toLowerCase().includes(f.search.toLowerCase())) return false;
       if (f.supertype !== 'all' && card.supertype !== f.supertype) return false;
       if (f.subtype && !card.subtypes.includes(f.subtype)) return false;
+      if (f.set === 'xy1' && !card.id.startsWith('xy1-')) return false;
+      if (f.set === 'xy2' && !card.id.startsWith('xy2-')) return false;
       return true;
     });
   });
@@ -647,6 +659,10 @@ export class DeckAuroraComponent implements OnInit {
     if (['all', 'Pokémon', 'Trainer', 'Energy'].includes(supertype)) {
       this.filters.update((f) => ({ ...f, supertype: supertype as any }));
     }
+  }
+
+  setSet(set: 'all' | 'xy1' | 'xy2'): void {
+    this.filters.update((f) => ({ ...f, set }));
   }
 
   handleDragStart(e: DragEvent, card: PokemonTcgCard): void {
