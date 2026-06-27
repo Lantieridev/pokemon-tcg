@@ -678,6 +678,7 @@
       [cardIds]="sel.options"
       [maxSelections]="sel.maxSelections"
       [sourceLabel]="sel.source || 'MAZO'"
+      [sourceEffect]="sel.sourceEffect"
       (confirm)="confirmSelection($event)"
       (cancel)="cancelSelection()">
     </app-card-selection-modal>

@@ -63,7 +63,7 @@ public final class CardMapper {
         final Map<String, EvolutionStage> es = new HashMap<>();
         es.put("Stage 2", EvolutionStage.STAGE_2);
         es.put("Stage 1", EvolutionStage.STAGE_1);
-        es.put("MEGA",    EvolutionStage.STAGE_1);
+        es.put("MEGA",    EvolutionStage.MEGA);
         es.put("Basic",   EvolutionStage.BASIC);
         EVOLUTION_STAGE_BY_SUBTYPE = Collections.unmodifiableMap(es);
 
@@ -326,6 +326,9 @@ public final class CardMapper {
         }
         if ("stomp off".equals(lowerName)) {
             return "discard_opponent_deck:1";
+        }
+        if ("wild blaze".equals(lowerName)) {
+            return "discard_deck_self:5";
         }
         if ("dual bullet".equals(lowerName)) {
             return "dual_bullet";
@@ -620,7 +623,7 @@ public final class CardMapper {
         }
 
         // --- Discard trainer from opponent hand (Fang Snipe) ---
-        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("choose a trainer") && lower.contains("discard")) {
+        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("trainer") && lower.contains("discard")) {
             return "discard_trainer_from_opponent_hand";
         }
 

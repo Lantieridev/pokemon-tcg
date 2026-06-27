@@ -68,6 +68,7 @@ public final class MatchSession {
      * for the current transition.
      */
     private boolean betweenTurnsProcessed = false;
+    private boolean megaEvolvedThisTurn = false;
 
 
     /**
@@ -644,5 +645,13 @@ public final class MatchSession {
 
     public void setMmrChangeB(Integer mmrChangeB) {
         this.mmrChangeB = mmrChangeB;
+    }
+
+    public boolean isMegaEvolvedThisTurn() {
+        return megaEvolvedThisTurn;
+    }
+
+    public void setMegaEvolvedThisTurn(boolean megaEvolvedThisTurn) {
+        this.megaEvolvedThisTurn = megaEvolvedThisTurn;
     }
 }

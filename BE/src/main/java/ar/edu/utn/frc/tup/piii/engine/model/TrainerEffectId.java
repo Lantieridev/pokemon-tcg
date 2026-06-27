@@ -67,5 +67,6 @@ public enum TrainerEffectId {
     PARABOLIC_CHARGE,
     REVIVAL,
     PUSH_DOWN,
+    BOUNCE,
     NONE
 }

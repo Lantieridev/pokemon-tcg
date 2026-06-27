@@ -587,7 +587,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   isActiveAbility(name: string): boolean {
-    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off', 'Leaf Draw', 'Energy Grace', 'Shadow Void'];
+    const activeAbilities = ['Fairy Transfer', 'Mystical Fire', 'Magnetic Draw', 'Water Shuriken', 'Upside-Down Evolution', 'Stance Change', 'Drive Off', 'Leaf Draw', 'Energy Grace', 'Shadow Void', 'Gooey Regeneration', 'Big Jump'];
     return activeAbilities.includes(name);
   }
 

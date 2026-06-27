@@ -105,6 +105,7 @@ class MatchServiceTest {
         session.setRuleValidator(ruleValidator);
         session.setTurnManager(turnManager);
         when(turnManager.activePlayerIndex()).thenReturn(0);
+        when(turnManager.currentPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.BetweenTurnsPhase());
         when(registry.find(MATCH_ID)).thenReturn(Optional.of(session));
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(UserEntity.builder().id(1L).username("test").build()));
 
@@ -425,5 +426,70 @@ class MatchServiceTest {
         org.junit.jupiter.api.Assertions.assertFalse(session.isAwaitingPromotion());
         org.junit.jupiter.api.Assertions.assertFalse(session.isBetweenTurnsProcessed());
         verify(turnManager).endBetweenTurns();
+    }
+
+    @Test
+    void shouldResumeMainPhaseWhenPromotionOccursDuringActionResolutionPhase() {
+        session.setAwaitingPromotion(0);
+        
+        final var benched = new FakeBattlePokemonState(100, PokemonType.FIRE, null, null, false);
+        session.getPlayerRuntime(0).getBench().place(benched);
+        
+        when(turnManager.currentPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase());
+        
+        final ActionRequestDTO dtoPromote = new ActionRequestDTO(
+                ActionType.PROMOTE_ACTIVE, null, null, 0, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.PromoteActiveAction(0));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dtoPromote);
+
+        org.junit.jupiter.api.Assertions.assertFalse(session.isAwaitingPromotion());
+        verify(turnManager).resumeMainPhase();
+        verify(turnManager, never()).endBetweenTurns();
+    }
+
+    @Test
+    void shouldPassTurnAndEndBetweenTurnsWhenMegaEvolutionOccurs() {
+        final var targetPokemon = mock(ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState.class);
+        final var megaEvolutionCard = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("mega-card", "Mega Charizard", 230, PokemonType.FIRE)
+                .evolutionStage(ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA)
+                .build();
+
+        final ActionRequestDTO dtoEvolve = new ActionRequestDTO(
+                ActionType.EVOLVE, "mega-card", null, 0, null, null);
+        final var evolveAction = new ar.edu.utn.frc.tup.piii.engine.model.EvolveAction(targetPokemon, megaEvolutionCard);
+
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(evolveAction);
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+        session.setMegaEvolvedThisTurn(true);
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dtoEvolve);
+
+        verify(turnManager).passTurn();
+        verify(turnManager).endBetweenTurns();
+    }
+
+    @Test
+    void shouldResolveBounceInteractiveSelection() {
+        final ActionRequestDTO dtoSelect = new ActionRequestDTO(
+                ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, List.of("benched-id"));
+        final var request = new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
+                null,
+                1,
+                ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+        );
+        session.setPendingSelectionRequest(request);
+
+        final var selectAction = new ar.edu.utn.frc.tup.piii.engine.model.SelectCardsAction(List.of("benched-id"), request);
+
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(selectAction);
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dtoSelect);
+
+        verify(facade).apply(session, selectAction, turnManager);
     }
 }
