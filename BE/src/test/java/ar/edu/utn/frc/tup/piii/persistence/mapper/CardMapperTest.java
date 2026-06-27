@@ -323,6 +323,15 @@ class CardMapperTest {
         assertEquals("discard_trainer_from_opponent_hand", card.getAttacks().get(0).effectText());
     }
 
+    @Test
+    void shouldMapWildBlazeCorrectly() {
+        final CardEntity entity = pokemonEntity("xy2-69", "M Charizard-EX", "MEGA, EX", 230,
+                "[{\"name\":\"Wild Blaze\",\"cost\":[\"Fire\",\"Fire\",\"Darkness\",\"Colorless\",\"Colorless\"],\"convertedEnergyCost\":5,\"damage\":\"300\",\"text\":\"Discard the top 5 cards of your deck.\"}]",
+                "[]", "[]", "[\"Colorless\"]");
+        final PokemonCard card = (PokemonCard) mapper.map(entity);
+        assertEquals("discard_deck_self:5", card.getAttacks().get(0).effectText());
+    }
+
     // --- helpers ---
 
     private static CardEntity pokemonEntity(final String id, final String name,

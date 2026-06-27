@@ -39,137 +39,50 @@ interface Filters {
       <!-- Main Deck Builder Area -->
       <div class="fu" style="flex: 1; display: flex; gap: 24px; padding: 0 44px 44px; z-index: 5; height: calc(100vh - 92px);">
         
-        <!-- Left: Collection, Decks & Filters -->
+        <!-- Left: Collection & Filters -->
         <div style="flex: 1; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(10px); overflow: hidden;">
           
-          <!-- Tabs Selector -->
-          <div style="padding: 16px 24px 0; display: flex; gap: 16px; border-bottom: 1px solid rgba(255,255,255,0.07); background: rgba(0,0,0,0.15);">
-            <button [class.active-panel-tab]="currentLeftTab() === 'catalog'" (click)="setLeftTab('catalog')" class="panel-tab-btn">◆ Catálogo de Cartas</button>
-            <button [class.active-panel-tab]="currentLeftTab() === 'decks'" (click)="setLeftTab('decks')" class="panel-tab-btn">◆ Mis Mazos & Plantillas</button>
+          <div style="padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.07); background: rgba(0,0,0,0.15); font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--txt);">
+            ◆ Catálogo de Cartas
           </div>
 
-          @if (currentLeftTab() === 'catalog') {
-            <!-- Filters Header -->
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-              <div style="display: flex; gap: 16px; align-items: center; flex: 1; min-width: 300px;">
-                <div style="position: relative; flex: 1; max-width: 300px;">
-                  <input type="text" [ngModel]="filters().search" (ngModelChange)="setFilter('search', $event)" placeholder="Buscar carta..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 10px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
-                </div>
-                
-                <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
-                  <button [class.active-tab]="filters().supertype === 'all'" (click)="setSupertype('all')" class="tab-btn">Todos</button>
-                  <button [class.active-tab]="filters().supertype === 'Pokémon'" (click)="setSupertype('Pokémon')" class="tab-btn">Pokémon</button>
-                  <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
-                  <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
-                </div>
+          <!-- Filters Header -->
+          <div style="padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; gap: 16px; align-items: center; flex: 1; min-width: 300px;">
+              <div style="position: relative; flex: 1; max-width: 300px;">
+                <input type="text" [ngModel]="filters().search" (ngModelChange)="setFilter('search', $event)" placeholder="Buscar carta..." style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--txt); padding: 10px 16px; border-radius: 12px; outline: none; font-family: 'Manrope'; font-size: 14px;" />
               </div>
-
-              <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
-                <button [class.active-tab]="filters().set === 'all'" (click)="setSet('all')" class="tab-btn">Todos los Sets</button>
-                <button [class.active-tab]="filters().set === 'xy1'" (click)="setSet('xy1')" class="tab-btn">XY Base</button>
-                <button [class.active-tab]="filters().set === 'xy2'" (click)="setSet('xy2')" class="tab-btn">Flashfire</button>
-              </div>
-            </div>
-
-            <!-- Cards Grid -->
-            <div class="scroll" style="flex: 1; overflow-y: auto; padding: 24px;">
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px;">
-                @for (card of filteredCards(); track card.id) {
-                  <div class="card-item" [class.disabled]="!canAdd(card)" draggable="true" (dragstart)="handleDragStart($event, card)" (click)="addCard(card)">
-                    <div style="position: relative; aspect-ratio: 5/7; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);">
-                      <img [ngSrc]="getCardImage(card)" [alt]="card.name" fill style="object-fit: contain;" />
-                      @if (getCardCount(card.id) > 0) {
-                        <div class="count-badge num">{{ getCardCount(card.id) }}</div>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          } @else {
-            <!-- Decks & Templates Manager -->
-            <div class="scroll" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
               
-              <!-- Action Bar -->
-              <div style="display: flex; justify-content: flex-end;">
-                <button (click)="createNewDeck()" class="cta" style="height: 48px; padding: 0 20px; font-size: 14px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; gap: 8px;">
-                  <span>+ Crear Nuevo Mazo</span>
-                </button>
+              <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
+                <button [class.active-tab]="filters().supertype === 'all'" (click)="setSupertype('all')" class="tab-btn">Todos</button>
+                <button [class.active-tab]="filters().supertype === 'Pokémon'" (click)="setSupertype('Pokémon')" class="tab-btn">Pokémon</button>
+                <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
+                <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
               </div>
-
-              <!-- Two Column Layout -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-                
-                <!-- Column 1: Tus Mazos -->
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                  <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--accent2); display: flex; align-items: center; gap: 8px; margin: 0 0 8px;">
-                    <aurora-icon n="decks" [s]="18"></aurora-icon> Tus Mazos Guardados
-                  </h3>
-                  
-                  @if (userDecks().length === 0) {
-                    <div style="background: rgba(255,255,255,0.02); border: 1px dashed var(--line); border-radius: 16px; padding: 32px; text-align: center; color: var(--mut);">
-                      No tenés mazos guardados aún. ¡Crea uno nuevo o clona una plantilla!
-                    </div>
-                  } @else {
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                      @for (deck of userDecks(); track deck.id) {
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" class="deck-list-item">
-                          <div>
-                            <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ deck.name }}</div>
-                            <div class="num" style="font-size: 12px; color: var(--mut); margin-top: 4px;">
-                              {{ deck.totalCards }} cartas • Creado el {{ deck.createdAt | date:'short' }}
-                            </div>
-                          </div>
-                          <button (click)="loadUserDeck(deck.id)" class="ghost-btn sm" style="height: 36px; padding: 0 16px; font-size: 13px; font-weight: 700; border-radius: 10px;">
-                            Editar
-                          </button>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-
-                <!-- Column 2: Plantillas Preconstruidas -->
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                  <h3 style="font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--accent2); display: flex; align-items: center; gap: 8px; margin: 0 0 8px;">
-                    <aurora-icon n="decks" [s]="18"></aurora-icon> Plantillas Preconstruidas
-                  </h3>
-
-                  @if (templates().length === 0) {
-                    <div style="background: rgba(255,255,255,0.02); border: 1px dashed var(--line); border-radius: 16px; padding: 32px; text-align: center; color: var(--mut);">
-                      Cargando plantillas...
-                    </div>
-                  } @else {
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                      @for (temp of templates(); track temp.id) {
-                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" class="deck-list-item">
-                          <div>
-                            <div style="font-weight: 700; font-size: 16px; color: var(--txt); display: flex; align-items: center; gap: 8px;">
-                              {{ temp.name }}
-                              @if (temp.name.toLowerCase().includes('especial')) {
-                                <span style="font-size: 10px; background: rgba(255, 46, 62, 0.2); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase;">Beta</span>
-                              }
-                            </div>
-                            <div class="num" style="font-size: 12px; color: var(--mut); margin-top: 4px;">
-                              {{ temp.totalCards }} cartas
-                              @if (temp.name.toLowerCase().includes('especial')) {
-                                • ¡Sin límite de 4 copias!
-                              }
-                            </div>
-                          </div>
-                          <button (click)="cloneAndLoadTemplate(temp.id)" class="ghost-btn sm" style="height: 36px; padding: 0 16px; font-size: 13px; font-weight: 700; border-radius: 10px; border-color: rgba(255,255,255,0.15);">
-                            Clonar
-                          </button>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-
-              </div>
-
             </div>
-          }
+
+            <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 14px; border: 1px solid var(--line);">
+              <button [class.active-tab]="filters().set === 'all'" (click)="setSet('all')" class="tab-btn">Todos los Sets</button>
+              <button [class.active-tab]="filters().set === 'xy1'" (click)="setSet('xy1')" class="tab-btn">XY Base</button>
+              <button [class.active-tab]="filters().set === 'xy2'" (click)="setSet('xy2')" class="tab-btn">Flashfire</button>
+            </div>
+          </div>
+
+          <!-- Cards Grid -->
+          <div class="scroll" style="flex: 1; overflow-y: auto; padding: 24px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px;">
+              @for (card of filteredCards(); track card.id) {
+                <div class="card-item" [class.disabled]="!canAdd(card)" draggable="true" (dragstart)="handleDragStart($event, card)" (click)="addCard(card)">
+                  <div style="position: relative; aspect-ratio: 5/7; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);">
+                    <img [ngSrc]="getCardImage(card)" [alt]="card.name" fill style="object-fit: contain;" />
+                    @if (getCardCount(card.id) > 0) {
+                      <div class="count-badge num">{{ getCardCount(card.id) }}</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
 
         </div>
 
@@ -281,10 +194,6 @@ export class DeckAuroraComponent implements OnInit {
   readonly cardCountById = this.deckStore.cardCountById;
   readonly deckName = this.deckStore.deckName;
 
-  readonly currentLeftTab = signal<'catalog' | 'decks'>('catalog');
-  readonly userDecks = signal<DeckSummaryDTO[]>([]);
-  readonly templates = signal<DeckSummaryDTO[]>([]);
-
   get username(): string {
     return this.authService.username ?? 'Invitado';
   }
@@ -321,8 +230,6 @@ export class DeckAuroraComponent implements OnInit {
 
   ngOnInit(): void {
     this.tcgService.loadCards();
-    this.refreshUserDecks();
-    this.loadTemplates();
     if (this.username !== 'Invitado') {
       this.profileService.getProfile(this.username).subscribe({
         next: (data) => {
@@ -334,101 +241,12 @@ export class DeckAuroraComponent implements OnInit {
     }
   }
 
-  refreshUserDecks(): void {
-    const userId = this.authService.userId;
-    if (userId) {
-      this.deckApi.getDecksByUserId(userId).subscribe({
-        next: (decks) => {
-          this.userDecks.set(decks);
-          this.cdr.detectChanges();
-        },
-        error: (err) => console.error('Error fetching user decks', err)
-      });
-    }
-  }
-
-  loadTemplates(): void {
-    this.deckApi.getTemplates().subscribe({
-      next: (temps) => {
-        this.templates.set(temps);
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error fetching templates', err)
-    });
-  }
-
-  setLeftTab(tab: 'catalog' | 'decks'): void {
-    this.currentLeftTab.set(tab);
-    if (tab === 'decks') {
-      this.refreshUserDecks();
-    }
-  }
-
-  loadUserDeck(deckId: number): void {
-    this.saveLoading.set(true);
-    this.deckApi.getDeckById(deckId).subscribe({
-      next: (deck) => {
-        const cardsList: PokemonTcgCard[] = [];
-        for (const deckCard of deck.cards) {
-          const fullCard = this.tcgService.cards().find(c => c.id === deckCard.cardId);
-          if (fullCard) {
-            for (let i = 0; i < deckCard.quantity; i++) {
-              cardsList.push(fullCard);
-            }
-          }
-        }
-        this.deckStore.loadDeck(cardsList, deck.name);
-        this.saveLoading.set(false);
-        this.currentLeftTab.set('catalog');
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.saveLoading.set(false);
-        this.saveError.set(err.error?.message ?? 'Error al cargar el mazo.');
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  cloneAndLoadTemplate(templateId: number): void {
-    const userId = this.authService.userId;
-    if (!userId) {
-      alert('Debe iniciar sesión para clonar plantillas.');
-      return;
-    }
-    this.saveLoading.set(true);
-    this.deckApi.cloneTemplate(userId, templateId).subscribe({
-      next: (clonedDeck) => {
-        const cardsList: PokemonTcgCard[] = [];
-        for (const deckCard of clonedDeck.cards) {
-          const fullCard = this.tcgService.cards().find(c => c.id === deckCard.cardId);
-          if (fullCard) {
-            for (let i = 0; i < deckCard.quantity; i++) {
-              cardsList.push(fullCard);
-            }
-          }
-        }
-        this.deckStore.loadDeck(cardsList, clonedDeck.name);
-        this.saveLoading.set(false);
-        this.refreshUserDecks();
-        this.currentLeftTab.set('catalog');
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.saveLoading.set(false);
-        this.saveError.set(err.error?.message ?? 'Error al clonar la plantilla.');
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  createNewDeck(): void {
-    if (this.totalCount() > 0 && !confirm('¿Estás seguro de que querés vaciar el constructor para crear un mazo nuevo?')) {
+  clearDeck(): void {
+    if (this.totalCount() > 0 && !confirm('¿Estás seguro de que querés vaciar el mazo?')) {
       return;
     }
     this.deckStore.clearDeck();
     this.deckStore.deckName.set('Mazo Nuevo');
-    this.currentLeftTab.set('catalog');
     this.cdr.detectChanges();
   }
 
@@ -444,11 +262,7 @@ export class DeckAuroraComponent implements OnInit {
     this.deckStore.removeAllCopies(cardId);
   }
 
-  clearDeck(): void {
-    if (confirm('¿Querés vaciar el mazo?')) {
-      this.deckStore.clearDeck();
-    }
-  }
+
 
   getCardCount(cardId: string): number {
     return this.cardCountById().get(cardId) ?? 0;
@@ -458,11 +272,7 @@ export class DeckAuroraComponent implements OnInit {
     if (this.totalCount() >= 60) return false;
     const count = this.cardCountById().get(card.id) ?? 0;
     const isBasicEnergy = card.supertype === 'Energy' && (card.subtypes.includes('Basic Energy') || card.subtypes.includes('Basic'));
-    const isSpecialDeck = this.deckName().toLowerCase().includes('especial') ||
-                          this.deckName().toLowerCase().includes('special') ||
-                          this.deckName().toLowerCase().includes('sin limite') ||
-                          this.deckName().toLowerCase().includes('ilimitado');
-    return isBasicEnergy || isSpecialDeck || count < 4;
+    return isBasicEnergy || count < 4;
   }
 
   saveDeck(): void {
@@ -476,7 +286,6 @@ export class DeckAuroraComponent implements OnInit {
       next: (res) => {
         this.saveLoading.set(false);
         this.saveSuccess.set(true);
-        this.refreshUserDecks();
         setTimeout(() => this.saveSuccess.set(false), 3000);
       },
       error: (err) => {

@@ -384,6 +384,27 @@ class RuleValidatorTest {
     }
 
     @Test
+    void shouldReturnInvalidWhenStadiumSameNameIsActive() {
+        final TrainerCard activeStadium = new TrainerCard.Builder("xy2-91", "Magnetic Storm", TrainerType.STADIUM).build();
+        final RuleValidator sameNameValidator = new RuleValidator(
+                turnManager, List.of(statusEffectManager), turnInPlayProvider, benchProvider, handProvider,
+                () -> activeStadium);
+
+        final TrainerCard playedStadium = new TrainerCard.Builder("xy2-91-copy", "Magnetic Storm", TrainerType.STADIUM).build();
+        handProvider.addCard(0, playedStadium);
+
+        ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
+                new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();
+        when(turnManager.requireMainPhase()).thenReturn(mainPhase);
+
+        ValidationResult result = sameNameValidator.validate(
+                new PlayTrainerAction(TrainerType.STADIUM, null, "xy2-91-copy", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAGNETIC_STORM), 0);
+
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "stadium_same_name_in_play");
+    }
+
+    @Test
     void shouldReturnValidWhenItemIsPlayed() {
         ar.edu.utn.frc.tup.piii.engine.model.MainPhase mainPhase =
                 new ar.edu.utn.frc.tup.piii.engine.model.MainPhase();

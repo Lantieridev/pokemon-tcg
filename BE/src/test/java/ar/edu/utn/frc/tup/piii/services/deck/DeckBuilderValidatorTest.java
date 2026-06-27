@@ -297,17 +297,6 @@ class DeckBuilderValidatorTest {
     }
 
     @Test
-    void shouldAllowBypassingMaxCopiesLimitForAdmin2AndBenka() {
-        final List<DeckEntry> deck = new ArrayList<>();
-        deck.add(pokemon("Bulbasaur", "Basic", 4));
-        deck.add(trainer("Potion", 10)); // 10 copies of Potion (> 4)
-        deck.add(basicEnergy("Grass Energy", 46));
-        // total = 4+10+46 = 60
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "admin2"));
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "benka"));
-    }
-
-    @Test
     void shouldRejectMoreThan4CopiesForOtherUsers() {
         final List<DeckEntry> deck = new ArrayList<>();
         deck.add(pokemon("Bulbasaur", "Basic", 4));
@@ -315,28 +304,7 @@ class DeckBuilderValidatorTest {
         deck.add(basicEnergy("Grass Energy", 46));
         // total = 4+10+46 = 60
         assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "other-user"));
-    }
-
-    @Test
-    void shouldAllowBypassingMaxCopiesLimitForSpecialDeckNames() {
-        final List<DeckEntry> deck = new ArrayList<>();
-        deck.add(pokemon("Bulbasaur", "Basic", 4));
-        deck.add(trainer("Potion", 10));
-        deck.add(basicEnergy("Grass Energy", 46));
-
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "Mazo Especial"));
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "Special Deck"));
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "sin limite de cartas"));
-        assertDoesNotThrow(() -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "ilimitado"));
-    }
-
-    @Test
-    void shouldRejectMoreThan4CopiesForNormalDeckNames() {
-        final List<DeckEntry> deck = new ArrayList<>();
-        deck.add(pokemon("Bulbasaur", "Basic", 4));
-        deck.add(trainer("Potion", 10));
-        deck.add(basicEnergy("Grass Energy", 46));
-
-        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "Mi Mazo Normal"));
+        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "admin2"));
+        assertThrows(InvalidDeckException.class, () -> validator.validate(deck, ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, "some-user", "Mazo Especial"));
     }
 }
