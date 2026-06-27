@@ -19,4 +19,6 @@ public class FriendshipDTO {
     private String activeTitle;
     private String status;
     private LocalDateTime createdAt;
+    private Integer mmr;
+    private String tier;
 }

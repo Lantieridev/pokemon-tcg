@@ -95,7 +95,7 @@ public final class LobbyService {
         queueLock.lock();
         try {
             if (ranked) {
-                UserEntity user = userRepository.findByUsername(playerId)
+                UserEntity user = userRepository.findFirstByUsername(playerId)
                         .orElseThrow(() -> new NoSuchElementException("User not found"));
                 int mmr = user.getMmr();
 

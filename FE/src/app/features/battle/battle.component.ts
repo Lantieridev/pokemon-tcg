@@ -21,7 +21,7 @@ import { CardSelectionModalComponent } from '../../shared/ui/card-selection-moda
 import { SparksComponent, AmbientComponent, BallIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
 
 import { WebSocketService } from '../../core/services/websocket.service';
-import { MatchStore } from '../../core/store/match.store';
+import { MatchStore, DamageEvent } from '../../core/store/match.store';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
@@ -51,10 +51,61 @@ interface ChatEntry {
   t: string;
 }
 
+const ERROR_TRANSLATIONS: Record<string, string> = {
+  'insufficient_energy_for_attack': 'Tu Pokémon activo no tiene la energía suficiente/correcta para usar este ataque.',
+  'cannot_attack_first_turn': 'No puedes atacar en el primer turno de la partida.',
+  'not_your_turn': 'No es tu turno de juego.',
+  'retreat_already_used': 'Ya retiraste un Pokémon en este turno (límite: 1 retirada por turno).',
+  'insufficient_energy_for_retreat': 'Tu Pokémon activo no tiene suficiente energía unida para pagar el coste de retirada.',
+  'empty_bench_for_retreat': 'No tienes Pokémon en la banca para promover como activo.',
+  'retreat_blocked_by_status': 'No puedes retirar a tu Pokémon activo porque está Dormido o Paralizado.',
+  'energy_already_attached': 'Ya uniste una energía a un Pokémon en este turno (límite: 1 por turno).',
+  'supporter_already_played': 'Ya jugaste una carta de Partidario (Supporter) en este turno.',
+  'stadium_already_played': 'Ya jugaste una carta de Estadio en este turno.',
+  'pokemon_tool_already_attached': 'Este Pokémon ya tiene un Objeto Pokémon (Tool) equipado.',
+  'pokemon_tool_requires_target': 'Debes seleccionar un Pokémon en juego para equipar el Objeto Pokémon.',
+  'bench_full': 'Tu banca está llena (límite: 5 Pokémon en banca).',
+  'card_not_basic_pokemon': 'La carta seleccionada no es un Pokémon Básico.',
+  'card_not_in_hand': 'La carta seleccionada ya no está en tu mano.',
+  'target_pokemon_required': 'Debes seleccionar un Pokémon objetivo en juego.',
+  'ability_already_used_this_turn': 'Esta habilidad ya fue utilizada en este turno.',
+  'invalid_evolution_stage': 'Esta evolución no es la etapa siguiente de tu Pokémon.',
+  'wrong_evolution_target': 'Este Pokémon no evoluciona a partir de la carta seleccionada.',
+  'pokemon_entered_this_turn': 'Este Pokémon ingresó al juego en este turno y no puede evolucionar todavía.',
+  'cannot_evolve_first_turn': 'No puedes evolucionar Pokémon en tu primer turno de juego.',
+  'opponent_has_no_active_pokemon': 'El oponente no tiene Pokémon activo.',
+  'target_has_no_damage': 'El Pokémon seleccionado no tiene daño acumulado.',
+  'target_has_no_energy': 'El Pokémon seleccionado no tiene energías unidas.',
+  'cannot_evolve_further': 'Este Pokémon ya está en su etapa evolutiva máxima.',
+  'deck_is_empty': 'Tu mazo está vacío, no quedan cartas para robar.',
+  'no_active_pokemon': 'No tienes un Pokémon activo en juego.',
+  'attack_blocked_by_status': 'Tu Pokémon activo no puede atacar debido a un estado especial (Dormido, Paralizado o Confundido).',
+  'attack_disabled_by_effect': 'Este ataque ha sido deshabilitado por un efecto.',
+  'opponent_forests_curse_active': 'No puedes jugar cartas de Objeto debido a la habilidad Forest\'s Curse de Trevenant.',
+  'target_pokemon_not_in_play': 'El Pokémon objetivo no está en juego.',
+  'no_basic_pokemon_in_discard_pile': 'No hay ningún Pokémon Básico en tu pila de descarte.',
+  'opponent_active_has_no_energy': 'El Pokémon activo de tu oponente no tiene energías unidas.',
+  'opponent_hand_is_empty': 'La mano de tu oponente está vacía.',
+  'ability_not_found': 'Habilidad no encontrada.',
+  'pokemon_must_be_active': 'Este Pokémon debe estar en la posición activa para usar esta habilidad.',
+  'opponent_bench_empty': 'La banca del oponente está vacía.',
+  'water_energy_required_in_hand': 'Necesitas una carta de Energía Agua en tu mano.',
+  'aegislash_required_in_hand': 'Necesitas una carta de Aegislash en tu mano.',
+  'pokemon_must_be_confused': 'Tu Pokémon activo debe estar Confundido para usar esta habilidad.',
+  'invalid_bench_index': 'Posición de banca inválida.',
+  'bench_index_out_of_bounds': 'Posición de banca fuera de los límites.',
+  'wrong_phase_for_selection': 'Fase incorrecta para la selección de cartas.',
+  'too_many_cards_selected': 'Has seleccionado demasiadas cartas.',
+  'must_promote_before_continuing': 'Debes promover un Pokémon de tu banca a la posición activa antes de continuar.',
+  'not_your_promotion': 'No es tu turno de promover un Pokémon activo.'
+};
+
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+
 @Component({
   selector: 'app-battle',
   standalone: true,
-  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, CardSelectionModalComponent, SparksComponent, AmbientComponent, BallIconComponent],
+  imports: [FieldPokemonComponent, EnergyPipComponent, IconComponent, CardSelectionModalComponent, SparksComponent, AmbientComponent, BallIconComponent, HoloCardComponent],
   templateUrl: './battle.html',
   styleUrl: './battle.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,6 +148,29 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return winnerId === this.me()?.name ? 'VICTORIA' : 'DERROTA';
   });
 
+  readonly campaignVictoryStep = signal<number>(1);
+
+  readonly isCampaignMatch = computed(() => {
+    const oppUsername = this.opp()?.name;
+    return oppUsername ? oppUsername.startsWith('Bot-') && oppUsername !== 'Bot-001' : false;
+  });
+
+  readonly campaignNodeInfo = computed(() => {
+    if (!this.isCampaignMatch()) return null;
+    const oppUsername = this.opp()?.name;
+    const map: Record<string, { id: number, name: string, badge: string, color: string, coins: number, xp: number, nextGym: string, badgeIcon: string }> = {
+      'Bot-Brock': { id: 1, name: 'Gimnasio Plateada', badge: 'Medalla Roca', color: '#8e8e8e', coins: 50, xp: 100, nextGym: 'Celeste', badgeIcon: '⛰️' },
+      'Bot-Misty': { id: 2, name: 'Gimnasio Celeste', badge: 'Medalla Cascada', color: '#3498db', coins: 100, xp: 150, nextGym: 'Carmín', badgeIcon: '💧' },
+      'Bot-LtSurge': { id: 3, name: 'Gimnasio Carmín', badge: 'Medalla Trueno', color: '#f1c40f', coins: 150, xp: 200, nextGym: 'Azuliza', badgeIcon: '⚡' },
+      'Bot-Erika': { id: 4, name: 'Gimnasio Azuliza', badge: 'Medalla Arcoiris', color: '#2ecc71', coins: 200, xp: 250, nextGym: 'Fucsia', badgeIcon: '🌈' },
+      'Bot-Koga': { id: 5, name: 'Gimnasio Fucsia', badge: 'Medalla Alma', color: '#9b59b6', coins: 250, xp: 300, nextGym: 'Azafrán', badgeIcon: '💜' },
+      'Bot-Sabrina': { id: 6, name: 'Gimnasio Azafrán', badge: 'Medalla Pantano', color: '#e056fd', coins: 300, xp: 350, nextGym: 'Canela', badgeIcon: '👁️' },
+      'Bot-Blaine': { id: 7, name: 'Gimnasio Canela', badge: 'Medalla Volcán', color: '#e74c3c', coins: 350, xp: 400, nextGym: 'Verde', badgeIcon: '🔥' },
+      'Bot-Giovanni': { id: 8, name: 'Gimnasio Verde', badge: 'Medalla Tierra', color: '#27ae60', coins: 500, xp: 500, nextGym: 'Liga Pokémon', badgeIcon: '🌲' }
+    };
+    return map[oppUsername!] || null;
+  });
+
   readonly victoryReasonText = computed(() => {
     if (!this.isFinished()) return '';
     const reason = this.store.victoryReason();
@@ -134,6 +208,17 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly mvpCardId = this.store.mvpCardId;
   readonly mvpCardDamage = this.store.mvpCardDamage;
   readonly mmrChange = this.store.mmrChange;
+  readonly coinsGained = this.store.coinsGained;
+  readonly xpGained = this.store.xpGained;
+  readonly currentMmr = this.store.currentMmr;
+  readonly currentTier = this.store.currentTier;
+  readonly rankUpTriggered = this.store.rankUpTriggered;
+  readonly showRankUpAnimation = signal(false);
+
+  // ── Motion UI: Animated MMR Counter & Victory Stages ─────────────────────
+  readonly displayMmr = signal<number | null>(null);
+  readonly victoryStage = signal<0 | 1 | 2 | 3>(0);
+  private mmrAnimationId: number | null = null;
 
   // ── Estado UI local ────────────────────────────────────────────────────────
   readonly log = signal<LogEntry[]>([]);
@@ -141,7 +226,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly menu = signal<any>(null);
   readonly isConnecting = signal(true);
   readonly connectionError = signal<string | null>(null);
-  readonly zoomedCardUrl = signal<string | null>(null);
+  readonly zoomedCard = signal<any | null>(null);
   readonly selectedHandCard = signal<PokemonTcgCard | null>(null);
   readonly selectedHandIndex = signal<number | null>(null);
   readonly draggedCard = signal<PokemonTcgCard | null>(null);
@@ -196,24 +281,26 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       
       const localCard = (LOCAL_CARDS_DB as any)[id];
       if (localCard) {
+        const number = id.includes('-') ? id.split('-')[1] : id;
         return {
           id: id,
           name: localCard.name,
           supertype: localCard.supertype,
           subtypes: localCard.subtypes || [],
-          images: { small: '', large: '' },
+          images: { small: `https://images.pokemontcg.io/xy1/${number}.png`, large: `https://images.pokemontcg.io/xy1/${number}_hires.png` },
           set: { id: 'xy1' }
         } as PokemonTcgCard;
       }
       console.warn(`Card not found in TCG Service: ${id}`);
-      return {
-        id,
-        name: 'Carta',
-        supertype: 'Pokémon',
-        subtypes: ['Basic'],
-        images: { small: '', large: '' },
-        set: { id: 'xy1' }
-      } as PokemonTcgCard;
+        const fallbackNumber = id.includes('-') ? id.split('-')[1] : id;
+        return {
+          id,
+          name: 'Carta',
+          supertype: 'Pokémon',
+          subtypes: ['Basic'],
+          images: { small: `https://images.pokemontcg.io/xy1/${fallbackNumber}.png`, large: `https://images.pokemontcg.io/xy1/${fallbackNumber}_hires.png` },
+          set: { id: 'xy1' }
+        } as PokemonTcgCard;
     });
   });
 
@@ -257,6 +344,19 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return base + handRemaining + prizeRemaining;
   });
 
+  // ── Pila 3D del mazo (capas dinámicas según cantidad de cartas) ────────────
+  readonly myDeckPile = computed(() => {
+    const count = this.myDeckCountAnimated();
+    const layers = Math.max(0, Math.min(15, Math.ceil(count / 4)));
+    return Array.from({ length: layers }, (_, i) => i);
+  });
+
+  readonly oppDeckPile = computed(() => {
+    const count = this.oppDeckCountAnimated();
+    const layers = Math.max(0, Math.min(15, Math.ceil(count / 4)));
+    return Array.from({ length: layers }, (_, i) => i);
+  });
+
   // ── Condiciones especiales para CSS ───────────────────────────────────────
   readonly myActiveIsAsleep = computed(() =>
     this.myActiveConditions().includes('ASLEEP')
@@ -285,6 +385,26 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   readonly oppActiveIsPoisoned = computed(() =>
     this.oppActiveConditions().includes('POISONED')
   );
+
+  // ── Damage Events per position ──────────────────────────────────────────
+  private readonly damageEvents = this.store.lastDamageEvents;
+
+  private getDamageAmount(target: string): number | null {
+    const events = this.damageEvents();
+    const ev = events.find(e => e.target === target);
+    return ev ? ev.amount : null;
+  }
+
+  readonly myActiveDamageEvent = computed(() => this.getDamageAmount('my-active'));
+  readonly oppActiveDamageEvent = computed(() => this.getDamageAmount('opp-active'));
+
+  myBenchDamageEvent(index: number): number | null {
+    return this.getDamageAmount(`my-bench-${index}`);
+  }
+
+  oppBenchDamageEvent(index: number): number | null {
+    return this.getDamageAmount(`opp-bench-${index}`);
+  }
 
   private matchId!: string;
   private wsSub?: Subscription;
@@ -329,6 +449,45 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.selectedHandCard.set(null);
       }
     });
+
+    // Campaign Victory Screen Auto-Transition from Step 1 to Step 2
+    effect((onCleanup) => {
+      if (this.isFinished() && this.gameResult() === 'VICTORIA' && this.isCampaignMatch()) {
+        this.campaignVictoryStep.set(1);
+        const timer = setTimeout(() => {
+          this.campaignVictoryStep.set(2);
+        }, 2200);
+        onCleanup(() => clearTimeout(timer));
+      }
+    });
+
+    // Orchestrate victory animation sequence when match finishes
+    effect((onCleanup) => {
+      const isCampaignVictory = this.isCampaignMatch() && this.gameResult() === 'VICTORIA';
+      if (this.isFinished() && !isCampaignVictory) {
+        // Stage 1: Title entrance (immediate)
+        this.victoryStage.set(1);
+        // Stage 2: Details reveal after title lands
+        const t2 = setTimeout(() => {
+          this.victoryStage.set(2);
+        }, 800);
+        // Stage 3: Full reveal
+        const t3 = setTimeout(() => {
+          this.victoryStage.set(3);
+          // Start MMR counter after stage 3 is visible
+          this.startMmrCounter();
+        }, 1800);
+        onCleanup(() => { clearTimeout(t2); clearTimeout(t3); });
+      }
+    });
+
+    effect((onCleanup) => {
+      if (this.rankUpTriggered()) {
+        // Show rank-up after victory screen has settled
+        const t = setTimeout(() => this.showRankUpAnimation.set(true), 2400);
+        onCleanup(() => clearTimeout(t));
+      }
+    });
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -344,6 +503,44 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.initializeMatch();
   }
 
+  closeRankUp(): void {
+    this.showRankUpAnimation.set(false);
+  }
+
+  /** Animate MMR counter from (currentMmr - mmrChange) → currentMmr over 1.5s */
+  private startMmrCounter(): void {
+    const finalMmr = this.currentMmr();
+    const change = this.mmrChange();
+    if (finalMmr === null || change === null) {
+      this.displayMmr.set(finalMmr);
+      return;
+    }
+    const startMmr = finalMmr - change;
+    this.displayMmr.set(startMmr);
+
+    const duration = 1500; // 1.5 seconds
+    let startTime: number | null = null;
+
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic for a satisfying deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startMmr + change * eased);
+      this.displayMmr.set(current);
+
+      if (progress < 1) {
+        this.mmrAnimationId = requestAnimationFrame(step);
+      } else {
+        this.displayMmr.set(finalMmr);
+        this.mmrAnimationId = null;
+      }
+    };
+
+    this.mmrAnimationId = requestAnimationFrame(step);
+  }
+
   ngAfterViewChecked(): void {
     if (this.scrollRef?.nativeElement)
       this.scrollRef.nativeElement.scrollTop = 0;
@@ -355,6 +552,9 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   ngOnDestroy(): void {
     this.wsSub?.unsubscribe();
     this.wsService.disconnect();
+    if (this.mmrAnimationId) {
+      cancelAnimationFrame(this.mmrAnimationId);
+    }
   }
 
   // ── Inicialización ────────────────────────────────────────────────────────
@@ -440,8 +640,15 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.runAttackCoinFlips(state.lastCoinFlips);
         }
       });
+
+      const errorSub = this.wsService.error$.subscribe(err => {
+        const friendlyMsg = ERROR_TRANSLATIONS[err] || err || 'Acción no permitida';
+        this.toastService.error(friendlyMsg);
+      });
+
       this.wsSub.add(stateSub);
       this.wsSub.add(chatSub);
+      this.wsSub.add(errorSub);
     } catch (err) {
       this.connectionError.set('No se pudo conectar. ¿Estás autenticado?');
       this.isConnecting.set(false);
@@ -451,13 +658,27 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   // ── Acciones del jugador ──────────────────────────────────────────────────
 
   attack(attackIndex: number): void {
-    if (!this.canAttack()) return;
+    if (!this.canAttack()) {
+      if (!this.isMyTurn()) {
+        this.toastService.error('No es tu turno de juego.');
+      } else {
+        this.toastService.error('No puedes realizar ataques en esta fase del turno.');
+      }
+      return;
+    }
     this.sendAction({ type: 'DECLARE_ATTACK', attackIndex });
     this.closeMenu();
   }
 
   retreat(targetIndex: number, energyIndices: number[]): void {
-    if (!this.canRetreat()) return;
+    if (!this.canRetreat()) {
+      if (!this.isMyTurn()) {
+        this.toastService.error('No es tu turno de juego.');
+      } else {
+        this.toastService.error('No puedes retirar a tu Pokémon en este momento.');
+      }
+      return;
+    }
     this.sendAction({
       type: 'RETREAT',
       targetIndex,
@@ -467,7 +688,14 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   startRetreat(): void {
-    if (!this.canRetreat()) return;
+    if (!this.canRetreat()) {
+      if (!this.isMyTurn()) {
+        this.toastService.error('No es tu turno de juego.');
+      } else {
+        this.toastService.error('No puedes retirar a tu Pokémon en este momento.');
+      }
+      return;
+    }
     this.isRetreating.set(true);
     this.closeMenu();
   }
@@ -493,12 +721,22 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   endTurn(): void {
-    if (!this.canEndTurn()) return;
+    if (!this.canEndTurn()) {
+      if (!this.isMyTurn()) {
+        this.toastService.error('No es tu turno de juego.');
+      } else {
+        this.toastService.error('No puedes finalizar el turno en este momento.');
+      }
+      return;
+    }
     this.sendAction({ type: 'END_TURN' });
   }
 
   useAbility(abilityName: string, sourceIndex: number | null): void {
-    if (!this.isMyTurn()) return;
+    if (!this.isMyTurn()) {
+      this.toastService.error('No es tu turno de juego.');
+      return;
+    }
     this.sendAction({
       type: 'USE_ABILITY',
       cardId: abilityName,
@@ -552,6 +790,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private sendAction(action: ActionRequestDTO): void {
+    if (!this.matchId) return;
     this.wsService.sendAction(this.matchId, action);
   }
 
@@ -566,7 +805,10 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   playCard(card: PokemonTcgCard, index: number): void {
-    if (!this.isMyTurn()) return;
+    if (!this.isMyTurn() && this.me()?.active) {
+      this.toastService.error('No es tu turno de juego.');
+      return;
+    }
     
     // Si es Pokémon Básico, bajar a la banca directamente
     if (card.supertype === 'Pokémon' && card.subtypes.includes('Basic')) {
@@ -606,7 +848,24 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   selectTarget(targetType: 'active' | 'bench', targetIndex: number | null): void {
     const card = this.selectedHandCard();
-    if (!card || !this.isMyTurn()) return;
+    if (!card) return;
+    if (!this.isMyTurn()) {
+      this.toastService.error('No es tu turno de juego.');
+      return;
+    }
+
+    if (targetType === 'bench' && targetIndex === null) {
+      if (card.supertype === 'Energy') {
+        this.toastService.error('Las cartas de Energía deben unirse a un Pokémon en juego.');
+      } else if (card.supertype === 'Pokémon') {
+        this.toastService.error('Los Pokémon de Evolución (Fase 1, Fase 2, Mega) deben colocarse sobre su etapa previa.');
+      } else {
+        this.toastService.error('No puedes jugar esta carta en una posición vacía de la banca.');
+      }
+      this.selectedHandIndex.set(null);
+      this.selectedHandCard.set(null);
+      return;
+    }
 
     if (card.supertype === 'Energy') {
       const energyType = this.getEnergyType(card);
@@ -654,6 +913,27 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return 'COLORLESS';
   }
 
+  getCardDetailsForHolo(cardId: string): any {
+    if (!cardId) return null;
+    const allCards = this.tcgService.cards();
+    const found = allCards.find(c => c.id === cardId);
+    if (!found) return null;
+    // Transform to the shape aurora-holo-card expects (card.img, card.name, card.rarity, card.subtypes, card.type)
+    return {
+      img: found.images?.large || found.images?.small || this.getCardImageUrl(cardId),
+      name: found.name,
+      rarity: (found as any).rarity || '',
+      subtypes: found.subtypes || [],
+      type: found.types?.[0]?.toLowerCase() || 'colorless',
+    };
+  }
+
+  getCardDetails(cardId: string): PokemonTcgCard | null {
+    if (!cardId) return null;
+    const allCards = this.tcgService.cards();
+    return allCards.find(c => c.id === cardId) || null;
+  }
+
   getCardImageUrl(cardId: string): string {
     if (!cardId) return 'https://images.pokemontcg.io/xy1/130.png';
     const allCards = this.tcgService.cards();
@@ -678,13 +958,29 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     return this.getCardImageUrl(card.id);
   }
 
-  zoomCard(url: string): void {
-    if (!url) return;
-    this.zoomedCardUrl.set(url);
+  zoomCard(cardIdOrObj: string | any): void {
+    if (!cardIdOrObj) return;
+    if (typeof cardIdOrObj === 'string') {
+       if (cardIdOrObj.startsWith('http')) {
+           // It's a raw URL
+           this.zoomedCard.set({ img: cardIdOrObj, name: 'Card' });
+           return;
+       }
+       const allCards = this.tcgService.cards();
+       let found = allCards.find(c => c.id === cardIdOrObj);
+       if (found) {
+         this.zoomedCard.set(found);
+         return;
+       }
+       // Fallbacks if not found by id but it might be a mock or URL
+       this.zoomedCard.set({ img: this.getCardImageUrl(cardIdOrObj), name: 'Card' });
+    } else {
+       this.zoomedCard.set(cardIdOrObj);
+    }
   }
 
   closeZoom(): void {
-    this.zoomedCardUrl.set(null);
+    this.zoomedCard.set(null);
   }
 
   isSelected(index: number): boolean {
@@ -724,6 +1020,13 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const card = this.draggedCard();
     if (!card) return;
 
+    if (!this.isMyTurn() && this.me()?.active) {
+      this.toastService.error('No es tu turno de juego.');
+      this.draggedCard.set(null);
+      this.draggedCardIndex.set(null);
+      return;
+    }
+
     if (card.supertype === 'Trainer') {
       const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
                  : card.subtypes.includes('Stadium') ? 'STADIUM' 
@@ -736,6 +1039,14 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
     } else if (card.supertype === 'Pokémon' && card.subtypes.includes('Basic')) {
       this.sendAction({ type: 'PLACE_BASIC_POKEMON', cardId: card.id });
+    } else {
+      if (card.supertype === 'Energy') {
+        this.toastService.error('Las cartas de Energía deben unirse a un Pokémon en juego.');
+      } else if (card.supertype === 'Pokémon') {
+        this.toastService.error('Los Pokémon de Evolución (Fase 1, Fase 2, Mega) deben colocarse sobre su etapa previa.');
+      } else {
+        this.toastService.error('Esta carta no se puede jugar en un espacio vacío.');
+      }
     }
     
     this.draggedCard.set(null);
@@ -748,6 +1059,26 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     
     const card = this.draggedCard();
     if (!card) return;
+
+    if (!this.isMyTurn() && this.me()?.active) {
+      this.toastService.error('No es tu turno de juego.');
+      this.draggedCard.set(null);
+      this.draggedCardIndex.set(null);
+      return;
+    }
+
+    if (targetType === 'bench' && targetIndex === null) {
+      if (card.supertype === 'Energy') {
+        this.toastService.error('Las cartas de Energía deben unirse a un Pokémon en juego.');
+      } else if (card.supertype === 'Pokémon') {
+        this.toastService.error('Los Pokémon de Evolución (Fase 1, Fase 2, Mega) deben colocarse sobre su etapa previa.');
+      } else {
+        this.toastService.error('No puedes jugar esta carta en una posición vacía de la banca.');
+      }
+      this.draggedCard.set(null);
+      this.draggedCardIndex.set(null);
+      return;
+    }
 
     if (card.supertype === 'Trainer' && !card.subtypes.includes('Stadium')) {
       const type = card.subtypes.includes('Supporter') ? 'SUPPORTER' 
@@ -811,8 +1142,16 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onLeave(): void {
-    this.wsService.disconnect();
-    this.router.navigate(['/lobby']);
+    this.matchBackend.surrenderMatch(this.matchId).subscribe({
+      next: () => {
+        this.wsService.disconnect();
+        this.router.navigate(['/lobby']);
+      },
+      error: () => {
+        this.wsService.disconnect();
+        this.router.navigate(['/lobby']);
+      }
+    });
   }
 
   getKindStyles(kind: string): { color: string; label: string } {

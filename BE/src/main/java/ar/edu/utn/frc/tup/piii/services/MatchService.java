@@ -20,6 +20,7 @@ import ar.edu.utn.frc.tup.piii.services.persistence.GameStateSnapshot;
 import ar.edu.utn.frc.tup.piii.services.PenaltyService;
 import ar.edu.utn.frc.tup.piii.services.ProfileService;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.persistence.entity.Tier;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,6 +69,7 @@ public class MatchService {
     private final UserRepository userRepository;
     private final BotDecisionService botDecisionService;
     private final MmrCalculationService mmrCalculationService;
+    private final CampaignService campaignService;
 
     /**
      * Constructs a MatchService with all required collaborators.
@@ -95,6 +97,7 @@ public class MatchService {
                         final UserRepository userRepository,
                         @Lazy final BotDecisionService botDecisionService,
                         final MmrCalculationService pMmrCalculationService,
+                        @Lazy final CampaignService campaignService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.facade = Objects.requireNonNull(facade, "facade must not be null");
@@ -108,6 +111,7 @@ public class MatchService {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.botDecisionService = botDecisionService;
         this.mmrCalculationService = Objects.requireNonNull(pMmrCalculationService, "mmrCalculationService must not be null");
+        this.campaignService = Objects.requireNonNull(campaignService, "campaignService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
 
@@ -128,6 +132,9 @@ public class MatchService {
         final ReentrantLock lock = session.getLock();
         lock.lock();
         try {
+            if (session.getState() == MatchSessionState.FINISHED) {
+                throw new InvalidActionException("match_already_finished");
+            }
             session.clearLastCoinFlips();
             final int playerIndex = session.indexOf(playerId);
 
@@ -145,6 +152,8 @@ public class MatchService {
                 isAuthorized = true;
             } else {
                 if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                    isAuthorized = true;
+                } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
                     isAuthorized = true;
                 }
             }
@@ -201,8 +210,17 @@ public class MatchService {
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = participantId.equals(winnerId);
                     final int kos = won ? (6 - board.getRemainingPrizes(loserIndex)) : (6 - board.getRemainingPrizes(winnerIndex));
-                    userRepository.findByUsername(participantId).ifPresent(user -> {
+                    userRepository.findFirstByUsername(participantId).ifPresent(user -> {
                         profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, kos);
+                        final int xpGained = won ? 50 : 25;
+                        final int coinsGained = won ? 50 : 10;
+                        if (participantId.equals(session.getPlayerIdA())) {
+                            session.setXpGainedA(xpGained);
+                            session.setCoinsGainedA(coinsGained);
+                        } else {
+                            session.setXpGainedB(xpGained);
+                            session.setCoinsGainedB(coinsGained);
+                        }
                     });
                     penaltyService.registerMatchFinished(participantId, true);
                 }
@@ -211,6 +229,9 @@ public class MatchService {
                 if (session.isRanked()) {
                     updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
                 }
+
+                // Handle campaign progress
+                handleCampaignCompletion(session);
             }
         } finally {
             lock.unlock();
@@ -218,15 +239,30 @@ public class MatchService {
 
         broadcastState(matchId, session);
 
-        // Check for bot turn
+        // Check for bot turn or bot promotion
         final MatchSession currentSession = registry.find(matchId).orElse(null);
-        if (currentSession != null && currentSession.getTurnManager() != null) {
-            int activeIndex = currentSession.getTurnManager().activePlayerIndex();
-            if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
-                String activeId = currentSession.getPlayerIds().get(activeIndex);
-                if ("Bot-001".equals(activeId)) {
-                    botDecisionService.evaluateAndPlay(matchId);
+        if (currentSession != null) {
+            boolean triggerBot = false;
+            if (currentSession.getTurnManager() != null) {
+                int activeIndex = currentSession.getTurnManager().activePlayerIndex();
+                if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
+                    String activeId = currentSession.getPlayerIds().get(activeIndex);
+                    if (activeId != null && activeId.startsWith("Bot-")) {
+                        triggerBot = true;
+                    }
                 }
+            }
+            if (currentSession.isAwaitingPromotion()) {
+                int promotingIndex = currentSession.getPromotingPlayerIndex();
+                if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
+                    String promotingId = currentSession.getPlayerIds().get(promotingIndex);
+                    if (promotingId != null && promotingId.startsWith("Bot-")) {
+                        triggerBot = true;
+                    }
+                }
+            }
+            if (triggerBot) {
+                botDecisionService.evaluateAndPlay(matchId);
             }
         }
     }
@@ -269,6 +305,13 @@ public class MatchService {
                 session.cancelDisconnectTimeout(playerId));
     }
 
+    /**
+     * Explicitly surrenders a match.
+     */
+    public void surrenderMatch(final String matchId, final String playerId) {
+        abandonMatch(matchId, playerId);
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
@@ -301,17 +344,26 @@ public class MatchService {
                 facade.apply(session, action, turnManager);
                 // PhaseExited(AttackPhase) fires here → KnockoutManager checks for KOs
                 turnManager.endAttack();
+                if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                    return;
+                }
                 // If defender's active was just KO'd and bench has Pokémon, pause
                 if (checkForPendingPromotion(session)) {
                     return; // between-turns will run once PROMOTE_ACTIVE is received
                 }
                 processBetweenTurns(session, turnManager);
                 turnManager.endBetweenTurns();
+                if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                    return;
+                }
             }
             case EndTurnAction ignored -> {
                 turnManager.passTurn();
                 processBetweenTurns(session, turnManager);
                 turnManager.endBetweenTurns();
+                if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                    return;
+                }
             }
             case PromoteActiveAction ignored -> {
                 final boolean wasAwaiting = session.isAwaitingPromotion();
@@ -321,6 +373,9 @@ public class MatchService {
                     // Resume the deferred between-turns phase that was paused for this promotion
                     processBetweenTurns(session, turnManager);
                     turnManager.endBetweenTurns();
+                    if (session.getState() == ar.edu.utn.frc.tup.piii.engine.session.MatchSessionState.FINISHED) {
+                        return;
+                    }
                 }
             }
             default -> {
@@ -402,6 +457,9 @@ public class MatchService {
             final ReentrantLock lock = session.getLock();
             lock.lock();
             try {
+                if (session.getState() == MatchSessionState.FINISHED) {
+                    return;
+                }
                 session.finish();
                 session.incrementVersion();
                 // Determine the winner (the other player)
@@ -436,18 +494,40 @@ public class MatchService {
                 // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
                 for (final String participantId : session.getPlayerIds()) {
                     final boolean won = !participantId.equals(forfeitingPlayerId);
-                    userRepository.findByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
-                    });
-
+                    
                     if (participantId.equals(forfeitingPlayerId)) {
                         // The penalized user who forfeited does NOT get a decrement
                         completedLegitimately = false;
                     } else {
-                        // The user who did not forfeit gets a decrement ONLY if both players had at least 5 turns
-                        completedLegitimately = (turnsA >= 5 && turnsB >= 5);
+                        // The user who did not forfeit gets a decrement ONLY if both players had at least 15 turns
+                        completedLegitimately = (turnsA >= 15 && turnsB >= 15);
                     }
-                    penaltyService.registerMatchFinished(participantId, completedLegitimately);
+                    
+                    final boolean finalCompletedLegitimately = completedLegitimately;
+
+                    userRepository.findFirstByUsername(participantId).ifPresent(user -> {
+                        // To prevent farming, the forfeiting player gets NO rewards.
+                        if (won) {
+                            profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, 0);
+                            if (participantId.equals(session.getPlayerIdA())) {
+                                session.setXpGainedA(50);
+                                session.setCoinsGainedA(50);
+                            } else {
+                                session.setXpGainedB(50);
+                                session.setCoinsGainedB(50);
+                            }
+                        } else {
+                            if (participantId.equals(session.getPlayerIdA())) {
+                                session.setXpGainedA(0);
+                                session.setCoinsGainedA(0);
+                            } else {
+                                session.setXpGainedB(0);
+                                session.setCoinsGainedB(0);
+                            }
+                        }
+                    });
+
+                    penaltyService.registerMatchFinished(participantId, finalCompletedLegitimately);
                 }
 
                 // Apply ranked abandonment penalties
@@ -459,6 +539,9 @@ public class MatchService {
                     // Apply 15 minute ranked ban for abandoning
                     penaltyService.applyRankedBan(forfeitingPlayerId, 15);
                 }
+
+                // Handle campaign progress
+                handleCampaignCompletion(session);
             } finally {
                 lock.unlock();
             }
@@ -477,8 +560,8 @@ public class MatchService {
     }
 
     private void updateMmr(MatchSession session, String winnerId, String loserId) {
-        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity winner = userRepository.findByUsername(winnerId).orElse(null);
-        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity loser = userRepository.findByUsername(loserId).orElse(null);
+        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity winner = userRepository.findFirstByUsername(winnerId).orElse(null);
+        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity loser = userRepository.findFirstByUsername(loserId).orElse(null);
 
         if (winner != null && loser != null) {
             int winnerMmr = winner.getMmr() != null ? winner.getMmr() : 1000;
@@ -486,6 +569,9 @@ public class MatchService {
 
             int winnerRankedMatches = winner.getRankedMatchesPlayed() != null ? winner.getRankedMatchesPlayed() : 0;
             int loserRankedMatches = loser.getRankedMatchesPlayed() != null ? loser.getRankedMatchesPlayed() : 0;
+
+            Tier winnerTierBefore = Tier.fromMmrAndMatches(winnerMmr, winnerRankedMatches);
+            Tier loserTierBefore = Tier.fromMmrAndMatches(loserMmr, loserRankedMatches);
 
             int newWinnerMmr = mmrCalculationService.calculateNewMmr(winnerMmr, loserMmr, true, winnerRankedMatches);
             int newLoserMmr = mmrCalculationService.calculateNewMmr(loserMmr, winnerMmr, false, loserRankedMatches);
@@ -497,13 +583,31 @@ public class MatchService {
 
             userRepository.save(winner);
             userRepository.save(loser);
-            
+
+            Tier winnerTierAfter = Tier.fromMmrAndMatches(newWinnerMmr, winnerRankedMatches + 1);
+            Tier loserTierAfter = Tier.fromMmrAndMatches(newLoserMmr, loserRankedMatches + 1);
+
+            boolean winnerRankedUp = winnerTierAfter.isHigherThan(winnerTierBefore);
+            boolean loserRankedUp = loserTierAfter.isHigherThan(loserTierBefore);
+
             if (winnerId.equals(session.getPlayerIdA())) {
                 session.setMmrChangeA(newWinnerMmr - winnerMmr);
                 session.setMmrChangeB(newLoserMmr - loserMmr);
+                session.setCurrentMmrA(newWinnerMmr);
+                session.setCurrentMmrB(newLoserMmr);
+                session.setCurrentTierA(winnerTierAfter.getName());
+                session.setCurrentTierB(loserTierAfter.getName());
+                session.setRankUpTriggeredA(winnerRankedUp);
+                session.setRankUpTriggeredB(loserRankedUp);
             } else {
                 session.setMmrChangeB(newWinnerMmr - winnerMmr);
                 session.setMmrChangeA(newLoserMmr - loserMmr);
+                session.setCurrentMmrB(newWinnerMmr);
+                session.setCurrentMmrA(newLoserMmr);
+                session.setCurrentTierB(winnerTierAfter.getName());
+                session.setCurrentTierA(loserTierAfter.getName());
+                session.setRankUpTriggeredB(winnerRankedUp);
+                session.setRankUpTriggeredA(loserRankedUp);
             }
         }
     }
@@ -551,5 +655,28 @@ public class MatchService {
 
         // Fallback
         return playerA;
+    }
+
+    private void handleCampaignCompletion(final MatchSession session) {
+        if (session.getState() != MatchSessionState.FINISHED) {
+            return;
+        }
+        final String winnerId = session.getWinnerId();
+        if (winnerId == null) {
+            return;
+        }
+
+        final String playerA = session.getPlayerIdA();
+        final String playerB = session.getPlayerIdB();
+
+        for (final CampaignService.CampaignNodeInfo node : CampaignService.NODES) {
+            if (node.botId().equals(playerA) || node.botId().equals(playerB)) {
+                final String humanPlayer = node.botId().equals(playerA) ? playerB : playerA;
+                if (winnerId.equals(humanPlayer)) {
+                    campaignService.completeNode(humanPlayer, node.id(), session.getMatchId());
+                }
+                break;
+            }
+        }
     }
 }

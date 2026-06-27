@@ -31,6 +31,11 @@
   --ink-faint:  #5b6885;
   --ink-night:  #0d1521;  /* dark text on light bg */
 
+  /* Global theme fallbacks for navbar/shared elements */
+  --txt:        #eaf0ff;
+  --mut:        #93a3c4;
+  --dim:        #5e6e90;
+
   --line:        rgba(255,248,232,.08);
   --line-strong: rgba(255,248,232,.16);
 
@@ -43,7 +48,7 @@
   --card-radius: 6px;
 }
 
-html, body, #root { height: 100%; }
+html, body, #root { height: 100%; overflow: hidden; }
 body{
   margin:0;
   font-family:'Nunito',system-ui,sans-serif;

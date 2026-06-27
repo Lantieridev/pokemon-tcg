@@ -45,6 +45,7 @@ public class ProfileServiceTest {
     private ProfanityFilterService profanityFilterService;
     private ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository userCardStatRepository;
     private ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository userEnergyStatRepository;
+    private ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository userShowcaseInventoryRepository;
     private ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper cardMapper;
     private ProfileService profileService;
 
@@ -59,6 +60,7 @@ public class ProfileServiceTest {
         profanityFilterService = mock(ProfanityFilterService.class);
         userCardStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository.class);
         userEnergyStatRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository.class);
+        userShowcaseInventoryRepository = mock(ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository.class);
         cardMapper = mock(ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper.class);
 
         profileService = new ProfileServiceImpl(
@@ -71,6 +73,7 @@ public class ProfileServiceTest {
                 profanityFilterService,
                 userCardStatRepository,
                 userEnergyStatRepository,
+                userShowcaseInventoryRepository,
                 cardMapper
         );
     }
@@ -88,7 +91,7 @@ public class ProfileServiceTest {
                 .unlockedTitles(new HashSet<>(List.of("Novato", "Entrenador")))
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(userShowcaseRepository.findByUserUsernameOrderBySlotPositionAsc("lucas")).thenReturn(Collections.emptyList());
 
@@ -106,7 +109,7 @@ public class ProfileServiceTest {
         assertEquals(1, profile.getLevel());
         assertEquals(20, profile.getXp());
         assertEquals(100, profile.getXpToNextLevel());
-        assertEquals(3, profile.getHonors().get(HonorType.GOOD_SPORTSMAN));
+        assertEquals(3, profile.getHonors().get(HonorType.GOOD_SPORTSMAN.name()));
     }
 
     @Test
@@ -120,7 +123,7 @@ public class ProfileServiceTest {
                 .activeTitle("Novato")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
 
         final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
                 .avatarIcon("charizard_icon")
@@ -150,12 +153,13 @@ public class ProfileServiceTest {
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
-        // Gana partida (+50 XP) -> Total 130 XP -> Nivel 2 y queda con 30 XP
+        // Gana partida (+50 XP, +50 Pokecoins) -> Total 130 XP -> Nivel 2 y queda con 30 XP
         profileService.awardXpAndCheckAchievements(1L, true, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(2, user.getLevel());
         assertEquals(30, user.getXp());
+        assertEquals(50, user.getPokecoins());
     }
 
     @Test
@@ -172,12 +176,13 @@ public class ProfileServiceTest {
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
 
-        // Pierde partida (+25 XP) -> Total 35 XP -> Sigue nivel 1
+        // Pierde partida (+25 XP, +10 Pokecoins) -> Total 35 XP -> Sigue nivel 1
         profileService.awardXpAndCheckAchievements(1L, false, false, false, 0);
 
         verify(userRepository, times(1)).save(user);
         assertEquals(1, user.getLevel());
         assertEquals(35, user.getXp());
+        assertEquals(10, user.getPokecoins());
     }
 
     @Test
@@ -191,7 +196,7 @@ public class ProfileServiceTest {
                 .activeTitle("Novato")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(profanityFilterService.getProfaneWords("Valid bio")).thenReturn(Collections.emptyList());
 
         final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
@@ -215,7 +220,7 @@ public class ProfileServiceTest {
                 .activeTitle("Novato")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
 
         final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
                 .activeTitle("")
@@ -234,7 +239,7 @@ public class ProfileServiceTest {
                 .username("lucas")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
 
         final String longDesc = "a".repeat(151);
         final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
@@ -253,7 +258,7 @@ public class ProfileServiceTest {
                 .username("lucas")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(profanityFilterService.getProfaneWords("you loser")).thenReturn(List.of("loser"));
 
         final UpdateProfileRequestDTO request = UpdateProfileRequestDTO.builder()
@@ -272,7 +277,7 @@ public class ProfileServiceTest {
                 .username("lucas")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.existsById("XY1_001")).thenReturn(true);
         when(userShowcaseRepository.findByUserAndSlotPosition(user, 1)).thenReturn(Optional.empty());
 
@@ -295,7 +300,7 @@ public class ProfileServiceTest {
                 .username("lucas")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(cardRepository.existsById("XY1_001")).thenReturn(false);
 
         final UpdateShowcaseRequestDTO request = UpdateShowcaseRequestDTO.builder()
@@ -324,7 +329,7 @@ public class ProfileServiceTest {
                 .name("My Fire Deck")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(deckRepository.findById(100L)).thenReturn(Optional.of(deck));
 
         profileService.updateShowcaseDeck("lucas", 100L);
@@ -341,7 +346,7 @@ public class ProfileServiceTest {
                 .showcasedDeck(DeckEntity.builder().id(100L).build())
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
 
         profileService.updateShowcaseDeck("lucas", null);
 
@@ -365,7 +370,7 @@ public class ProfileServiceTest {
                 .name("Other's Deck")
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(deckRepository.findById(100L)).thenReturn(Optional.of(deck));
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
@@ -395,7 +400,7 @@ public class ProfileServiceTest {
             ));
         }
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(matches);
         when(userShowcaseRepository.findByUserUsernameOrderBySlotPositionAsc("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());
@@ -403,8 +408,7 @@ public class ProfileServiceTest {
 
         final UserProfileResponseDTO response = profileService.getProfile("lucas");
 
-        assertNotNull(response);
-        final Set<String> titles = response.getUnlockedTitles();
+        final List<String> titles = response.getUnlockedTitles();
         assertNotNull(titles);
 
         org.junit.jupiter.api.Assertions.assertTrue(titles.contains("Novato"));
@@ -444,7 +448,7 @@ public class ProfileServiceTest {
                 .unlockedTitles(new HashSet<>(List.of("Novato", "Entrenador")))
                 .build();
 
-        when(userRepository.findByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(matchRepository.findMatchesByUsername("lucas")).thenReturn(Collections.emptyList());
         when(honorService.getHonors("lucas")).thenReturn(Collections.emptyMap());

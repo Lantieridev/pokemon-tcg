@@ -1,5 +1,5 @@
 @if (me() && opp()) {
-<div class="scene v-aurora absolute inset-0 flex" (click)="closeMenu()">
+<div class="scene v-aurora absolute inset-0 flex overflow-hidden" (click)="closeMenu()">
   <!-- aurora mesh -->
   <div class="mesh absolute inset-0 opacity-40 pointer-events-none">
     <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
@@ -72,276 +72,291 @@
       }
     </div>
 
-    <!-- LEFT COLUMN — both players' prize cards stacked -->
-    <div class="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-4 items-center">
-      <!-- Opponent Prizes -->
-      <div class="flex flex-col items-center gap-2">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
-        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
-             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of oppPrizesAnimated(); track $index) {
-            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
-              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
-            </div>
-          }
-        </div>
-      </div>
+    <!-- ═══ 3D PLAYMAT ═══════════════════════════════════════════════════ -->
+    <div class="playmat-wrapper">
+      <div class="playmat-3d" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
 
-      <!-- ESTADIO -->
-      <div class="flex flex-col items-center gap-1.5">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
-        @if (activeStadiumCardId(); as stadiumId) {
-          <div class="relative w-[80px] h-[112px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-               (click)="zoomCard(getCardImageUrl(stadiumId))">
-            <img [src]="getCardImageUrl(stadiumId)" alt="Stadium" class="w-full h-full object-cover rounded-lg border-2 border-[rgba(255,203,5,.6)]" />
-          </div>
-        } @else {
-          <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
-            <div class="text-center">
-              <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- My Prizes -->
-      <div class="flex flex-col items-center gap-2">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
-        <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
-             style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
-          @for (alive of myPrizesAnimated(); track $index) {
-            <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
-              <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN — both players' deck + discard -->
-    <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-6">
-      <!-- Opponent Deck/Discard -->
-      <div class="flex flex-col items-center gap-3">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
-             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
-          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
-          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
-          <div class="card-back relative" style="width:70px; height:98px"></div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
-        </div>
-        <div class="relative">
-          <div class="rounded-md flex items-center justify-center"
-               style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
-            <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
-          </div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.discardCount }}</div>
-          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
-               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
-        </div>
-      </div>
-      <!-- My Deck/Discard -->
-      <div class="flex flex-col items-center gap-3">
-        <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150"
-             (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
-          <div class="absolute card-back" style="width:70px; height:98px; top:4px; left:4px; opacity:.55"></div>
-          <div class="absolute card-back" style="width:70px; height:98px; top:2px; left:2px; opacity:.78"></div>
-          <div class="card-back relative" style="width:70px; height:98px"></div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
-        </div>
-        <div class="relative">
-          @if (me()! && me()!.discard && me()!.discard.length > 0) {
-            <!-- Muestra la última carta del descarte como imagen placeholder -->
-            <div class="rounded-md" style="width:70px; height:98px; background:rgba(255,203,5,.15); border:1px solid rgba(255,203,5,.4);"></div>
-          } @else {
-            <div class="rounded-md flex items-center justify-center shadow-inner"
-                 style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
-              <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
-            </div>
-          }
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
-               style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.discard?.length || 0 }}</div>
-          <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
-               style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CENTER COLUMN - Bench Rows + Active + Stadium -->
-    <div class="absolute left-0 right-0 top-[135px] bottom-[135px] z-20 flex flex-col items-center justify-center gap-8 px-[180px]" (dragover)="onDragOver($event)" (drop)="onDropField($event)">
-      
-      <!-- OPPONENT BENCH -->
-      <div class="flex items-end gap-3" style="transform: rotate(180deg)">
-        @for (b of oppEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 70px; height: 98px;">
-            <div class="w-full h-full rounded-md flex items-center justify-center"
-                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
-              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
-            </div>
-          </div>
-        }
-        @for (b of opp()!.bench; track $index) {
-          <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(getCardImageUrl(b.cardId))" class="cursor-pointer">
-            <app-field-pokemon
-              [cardId]="b.cardId"
-              [energies]="b.energies"
-              [damage]="b.damage"
-              [maxHp]="b.maxHp"
-              [status]="b.status"
-              [attachedToolCardId]="b.attachedToolCardId"
-              [width]="70"
-              direction="up"
-              (toolClick)="zoomCard(getCardImageUrl($event))">
-            </app-field-pokemon>
-          </div>
-        }
-      </div>
-
-      <!-- OPPONENT ACTIVE -->
-      @if (opp()!.active; as activeOpp) {
-        <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
-             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(getCardImageUrl(activeOpp.cardId))">
-          @if (oppActiveIsBurned()) {
-            <div class="token-burned" title="Oponente Quemado">🔥</div>
-          }
-          @if (oppActiveIsPoisoned()) {
-            <div class="token-poisoned" title="Oponente Envenenado">☠</div>
-          }
-          <app-field-pokemon
-            [cardId]="activeOpp.cardId"
-            [energies]="activeOpp.energies"
-            [damage]="activeOpp.damage"
-            [maxHp]="activeOpp.maxHp"
-            [status]="activeOpp.status"
-            [attachedToolCardId]="activeOpp.attachedToolCardId"
-            [width]="110"
-            [glow]="true"
-            direction="up"
-            (toolClick)="zoomCard(getCardImageUrl($event))">
-          </app-field-pokemon>
-        </div>
-      } @else {
-        <!-- Empty active slot placeholder -->
-        <div class="active-pokemon-wrapper opacity-35" style="transform: rotate(180deg); border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 110px; height: 154px; display: flex; align-items: center; justify-content: center;">
-          <div class="text-center">
-            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
-            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-          </div>
-        </div>
-      }
-
-      <!-- Floating cancel retreat or targeting banner -->
-      @if (isRetreating() || targetingAbility()) {
-        <div class="absolute top-[30px] left-1/2 -translate-x-1/2 z-[45] flex items-center gap-4 px-6 py-3 rounded-2xl border transition-all duration-300"
-             style="background: rgba(13, 21, 33, 0.95); backdrop-filter: blur(12px); border-color: var(--accent2); box-shadow: 0 0 20px rgba(255, 206, 50, 0.3);">
-          <div class="flex items-center gap-2.5">
-            <span class="animate-ping w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-            <span class="text-sm font-chunky tracking-wide text-white uppercase">
-              @if (isRetreating()) {
-                Selecciona un Pokémon de la banca para retirar
-              } @else {
-                Selecciona el objetivo para {{ targetingAbility()?.name }}
+        <!-- ── LEFT COLUMN — Premios + Estadio ─────────────────────────── -->
+        <div class="playmat-col playmat-col--left">
+          <!-- Opponent Prizes -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Premios Rival</div>
+            <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+                 style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+              @for (alive of oppPrizesAnimated(); track $index) {
+                <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+                  <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+                </div>
               }
-            </span>
+            </div>
           </div>
-          <button class="px-3.5 py-1.5 rounded-xl text-xs font-chunky uppercase cursor-pointer transition-all border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95"
-                  (click)="isRetreating() ? cancelRetreat() : targetingAbility.set(null)">
-            Cancelar
-          </button>
-        </div>
-      }
 
-      <!-- TURNO INDICATOR -->
-      <div class="flex flex-col items-center gap-2 my-1 relative z-30">
-        <div class="px-4 py-1 rounded-full"
-             style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
-          <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
-        </div>
-      </div>
+          <!-- ESTADIO -->
+          <div class="flex flex-col items-center gap-1.5">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Estadio</div>
+            @if (activeStadiumCardId(); as stadiumId) {
+              <div class="relative w-[80px] h-[112px] rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                   (click)="zoomCard(stadiumId)">
+                <img [src]="getCardImageUrl(stadiumId)" alt="Stadium" class="w-full h-full object-cover rounded-lg border-2 border-[rgba(255,203,5,.6)]" />
+              </div>
+            } @else {
+              <div class="flex items-center justify-center relative w-[80px] h-[112px] rounded-lg border-2 border-dashed border-[rgba(255,203,5,.45)] bg-[rgba(255,203,5,.04)]">
+                <div class="text-center">
+                  <span class="font-chunky text-[8px] uppercase" style="color:rgba(255,203,5,.4)">vacío</span>
+                </div>
+              </div>
+            }
+          </div>
 
-      <!-- MY ACTIVE -->
-      @if (me()!.active; as activeMe) {
-        <div class="active-pokemon-wrapper cursor-pointer" 
-             [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
-             (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
-             (dblclick)="zoomCard(getCardImageUrl(activeMe.cardId))"
-             (contextmenu)="zoomCard(getCardImageUrl(activeMe.cardId)); $event.preventDefault()"
-             (dragover)="onDragOver($event)"
-             (drop)="onDropPokemon($event, 'active', null)">
-          <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
-          @if (myActiveIsBurned()) {
-            <div class="token-burned" title="Quemado">🔥</div>
+          <!-- My Prizes -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tus Premios</div>
+            <div class="grid grid-cols-2 gap-1.5 p-2.5 rounded-xl"
+                 style="background:rgba(0,0,0,.4); border:2px solid rgba(255,203,5,.25); box-shadow:inset 0 0 16px rgba(0,0,0,.5);">
+              @for (alive of myPrizesAnimated(); track $index) {
+                <div class="prize card-back animate-deal-prize" [class.claimed]="!alive" style="width: 50px; height: 70px;">
+                  <span class="absolute font-mono text-[8px] text-white/30 bottom-1 right-1.5">{{ $index + 1 }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CENTER COLUMN — Bench + Active + Pokéball ────────────────── -->
+        <div class="playmat-col playmat-col--center">
+
+          <!-- OPPONENT BENCH -->
+          <div class="flex items-end justify-center gap-3" style="transform: rotate(180deg)">
+            @for (b of oppEmptyBench(); track $index) {
+              <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 70px; height: 98px;">
+                <div class="w-full h-full rounded-md flex items-center justify-center"
+                     style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+                  <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+                </div>
+              </div>
+            }
+            @for (b of opp()!.bench; track $index) {
+              <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : zoomCard(b.cardId)" class="cursor-pointer">
+                <app-field-pokemon
+                  [cardId]="b.cardId"
+                  [energies]="b.energies"
+                  [damage]="b.damage"
+                  [maxHp]="b.maxHp"
+                  [status]="b.status"
+                  [attachedToolCardId]="b.attachedToolCardId"
+                  [damageEvent]="oppBenchDamageEvent($index)"
+                  [width]="70"
+                  direction="up"
+                  (toolClick)="zoomCard($event)">
+                </app-field-pokemon>
+              </div>
+            }
+          </div>
+
+          <!-- OPPONENT ACTIVE -->
+          @if (opp()!.active; as activeOpp) {
+            <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : zoomCard(activeOpp.cardId)">
+              @if (oppActiveIsBurned()) {
+                <div class="token-burned" title="Oponente Quemado">🔥</div>
+              }
+              @if (oppActiveIsPoisoned()) {
+                <div class="token-poisoned" title="Oponente Envenenado">☠</div>
+              }
+              <app-field-pokemon
+                [cardId]="activeOpp.cardId"
+                [energies]="activeOpp.energies"
+                [damage]="activeOpp.damage"
+                [maxHp]="activeOpp.maxHp"
+                [status]="activeOpp.status"
+                [attachedToolCardId]="activeOpp.attachedToolCardId"
+                [damageEvent]="oppActiveDamageEvent()"
+                [width]="100"
+                [glow]="true"
+                direction="up"
+                (toolClick)="zoomCard($event)">
+              </app-field-pokemon>
+            </div>
+          } @else {
+            <!-- Empty active slot placeholder -->
+            <div class="active-pokemon-wrapper opacity-35" style="transform: rotate(180deg); border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 100px; height: 140px; display: flex; align-items: center; justify-content: center;">
+              <div class="text-center">
+                <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+                <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+              </div>
+            </div>
           }
-          @if (myActiveIsPoisoned()) {
-            <div class="token-poisoned" title="Envenenado">☠</div>
+
+          <!-- Floating cancel retreat or targeting banner -->
+          @if (isRetreating() || targetingAbility()) {
+            <div class="absolute top-[30px] left-1/2 -translate-x-1/2 z-[45] flex items-center gap-4 px-6 py-3 rounded-2xl border transition-all duration-300"
+                 style="background: rgba(13, 21, 33, 0.95); backdrop-filter: blur(12px); border-color: var(--accent2); box-shadow: 0 0 20px rgba(255, 206, 50, 0.3);">
+              <div class="flex items-center gap-2.5">
+                <span class="animate-ping w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                <span class="text-sm font-chunky tracking-wide text-white uppercase">
+                  @if (isRetreating()) {
+                    Selecciona un Pokémon de la banca para retirar
+                  } @else {
+                    Selecciona el objetivo para {{ targetingAbility()?.name }}
+                  }
+                </span>
+              </div>
+              <button class="px-3.5 py-1.5 rounded-xl text-xs font-chunky uppercase cursor-pointer transition-all border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 active:scale-95"
+                      (click)="isRetreating() ? cancelRetreat() : targetingAbility.set(null)">
+                Cancelar
+              </button>
+            </div>
           }
-          <app-field-pokemon
-            [cardId]="activeMe.cardId"
-            [energies]="activeMe.energies"
-            [damage]="activeMe.damage"
-            [maxHp]="activeMe.maxHp"
-            [status]="activeMe.status"
-            [attachedToolCardId]="activeMe.attachedToolCardId"
-            [width]="120"
-            [glow]="true"
-            direction="up"
-            (toolClick)="zoomCard(getCardImageUrl($event))">
-          </app-field-pokemon>
-        </div>
-      } @else {
-        <!-- Empty active slot placeholder -->
-        <div class="active-pokemon-wrapper opacity-35" style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 120px; height: 168px; display: flex; align-items: center; justify-content: center;">
-          <div class="text-center">
-            <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
-            <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
-          </div>
-        </div>
-      }
 
-
-      <!-- MY BENCH -->
-      <div class="flex items-start gap-3"
-           (dragover)="onDragOver($event)"
-           (drop)="onDropField($event)">
-        @for (b of me()!.bench; track $index) {
-          <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
-               [class.pulse-promote]="!me()!.active"
-               (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
-               (dblclick)="zoomCard(getCardImageUrl(b.cardId))"
-               (contextmenu)="zoomCard(getCardImageUrl(b.cardId)); $event.preventDefault()"
-               (dragover)="onDragOver($event)"
-               (drop)="onDropPokemon($event, 'bench', $index)">
-            <app-field-pokemon
-              [cardId]="b.cardId"
-              [energies]="b.energies"
-              [damage]="b.damage"
-              [maxHp]="b.maxHp"
-              [attachedToolCardId]="b.attachedToolCardId"
-              [width]="80"
-              direction="up"
-              (toolClick)="zoomCard(getCardImageUrl($event))">
-            </app-field-pokemon>
+          <!-- POKÉBALL DIVIDER + TURNO INDICATOR -->
+          <div class="flex flex-col items-center gap-1 my-1 relative z-30">
+            <div class="playmat-pokeball">
+              <div class="playmat-pokeball-line"></div>
+              <div class="playmat-pokeball-center"></div>
+            </div>
+            <div class="px-4 py-1 rounded-full"
+                 style="background:var(--p-yellow); border:2.5px solid #1a1010; box-shadow:0 3px 0 #1a1010; color:#1a1010;">
+              <span class="font-display text-[12px] tracking-[.16em]">TURNO {{ turn().number.toString().padStart(2, '0') }}</span>
+            </div>
           </div>
-        }
-        @for (b of myEmptyBench(); track $index) {
-          <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 80px; height: 112px;"
-               [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
-               (click)="selectTarget('bench', null)"
+
+          <!-- MY ACTIVE -->
+          @if (me()!.active; as activeMe) {
+            <div class="active-pokemon-wrapper cursor-pointer"
+                 [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
+                 (dblclick)="zoomCard(activeMe.cardId)"
+                 (contextmenu)="zoomCard(activeMe.cardId); $event.preventDefault()"
+                 (dragover)="onDragOver($event)"
+                 (drop)="onDropPokemon($event, 'active', null)">
+              <!-- Tokens de condición especial (BURNED y POISONED pueden coexistir) -->
+              @if (myActiveIsBurned()) {
+                <div class="token-burned" title="Quemado">🔥</div>
+              }
+              @if (myActiveIsPoisoned()) {
+                <div class="token-poisoned" title="Envenenado">☠</div>
+              }
+              <app-field-pokemon
+                [cardId]="activeMe.cardId"
+                [energies]="activeMe.energies"
+                [damage]="activeMe.damage"
+                [maxHp]="activeMe.maxHp"
+                [status]="activeMe.status"
+                [attachedToolCardId]="activeMe.attachedToolCardId"
+                [damageEvent]="myActiveDamageEvent()"
+                [width]="110"
+                [glow]="true"
+                direction="up"
+                (toolClick)="zoomCard($event)">
+              </app-field-pokemon>
+            </div>
+          } @else {
+            <!-- Empty active slot placeholder -->
+            <div class="active-pokemon-wrapper opacity-35" style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04); border-radius: 8px; width: 110px; height: 154px; display: flex; align-items: center; justify-content: center;">
+              <div class="text-center">
+                <div class="font-chunky text-[10px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.6)">Activo</div>
+                <div class="font-mono text-[8px] mt-0.5" style="color:rgba(255,203,5,.4)">vacío</div>
+              </div>
+            </div>
+          }
+
+          <!-- MY BENCH -->
+          <div class="flex items-start justify-center gap-3"
                (dragover)="onDragOver($event)"
                (drop)="onDropField($event)">
-            <div class="w-full h-full rounded-md flex items-center justify-center"
-                 style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
-              <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+            @for (b of me()!.bench; track $index) {
+              <div class="cursor-pointer" [class.target-highlight]="selectedHandCard() !== null || draggedCard() !== null"
+                   [class.pulse-promote]="!me()!.active"
+                   (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
+                   (dblclick)="zoomCard(b.cardId)"
+                   (contextmenu)="zoomCard(b.cardId); $event.preventDefault()"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDropPokemon($event, 'bench', $index)">
+                <app-field-pokemon
+                  [cardId]="b.cardId"
+                  [energies]="b.energies"
+                  [damage]="b.damage"
+                  [maxHp]="b.maxHp"
+                  [attachedToolCardId]="b.attachedToolCardId"
+                  [damageEvent]="myBenchDamageEvent($index)"
+                  [width]="75"
+                  direction="up"
+                  (toolClick)="zoomCard($event)">
+                </app-field-pokemon>
+              </div>
+            }
+            @for (b of myEmptyBench(); track $index) {
+              <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 75px; height: 105px;"
+                   [class.target-highlight]="draggedCard() !== null || selectedHandIndex() !== null"
+                   (click)="selectTarget('bench', null)"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDropField($event)">
+                <div class="w-full h-full rounded-md flex items-center justify-center"
+                     style="border: 2px dashed rgba(255,203,5,.4); background: rgba(255,203,5,.04);">
+                  <span class="font-chunky text-[8px] tracking-[.2em] uppercase" style="color:rgba(255,203,5,.5)">Banca</span>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- ── RIGHT COLUMN — Mazo + Descarte ──────────────────────────── -->
+        <div class="playmat-col playmat-col--right">
+          <!-- Opponent Deck/Discard -->
+          <div class="flex flex-col items-center gap-3">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Mazo Rival</div>
+            <div class="deck-pile"
+                 (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
+              @for (idx of oppDeckPile(); track idx) {
+                <div class="deck-card-layer card-back" [style.--layer-index]="idx"></div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum z-[100]"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ oppDeckCountAnimated() }}</div>
+            </div>
+            <div class="relative">
+              <div class="rounded-md flex items-center justify-center"
+                   style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+                <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+              </div>
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ opp()?.discardCount }}</div>
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+                   style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
             </div>
           </div>
-        }
+          <!-- My Deck/Discard -->
+          <div class="flex flex-col items-center gap-3">
+            <div class="font-chunky text-[9px] tracking-[.22em] uppercase" style="color:var(--p-yellow)">Tu Mazo</div>
+            <div class="deck-pile"
+                 (click)="zoomCard('https://upload.wikimedia.org/wikipedia/en/3/3b/Pokemon_Trading_Card_Game_cardback.jpg')">
+              @for (idx of myDeckPile(); track idx) {
+                <div class="deck-card-layer card-back" [style.--layer-index]="idx"></div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum z-[100]"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ myDeckCountAnimated() }}</div>
+            </div>
+            <div class="relative">
+              @if (me()! && me()!.discard && me()!.discard.length > 0) {
+                <!-- Muestra la última carta del descarte como imagen placeholder -->
+                <div class="rounded-md" style="width:70px; height:98px; background:rgba(255,203,5,.15); border:1px solid rgba(255,203,5,.4);"></div>
+              } @else {
+                <div class="rounded-md flex items-center justify-center shadow-inner"
+                     style="width:70px; height:98px; border:2px dashed rgba(255,203,5,.35); background:rgba(0,0,0,.3)">
+                  <app-icon name="flag" svgClass="w-5 h-5" style="color:rgba(255,203,5,.5)"></app-icon>
+                </div>
+              }
+              <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md font-chunky text-[10px] tnum"
+                   style="background:#1a1010; border:2px solid #fff; color:#fff">{{ me()?.discard?.length || 0 }}</div>
+              <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded font-chunky text-[8px] tracking-widest"
+                   style="background:#1a1010; color:var(--p-yellow)">DESCARTE</div>
+            </div>
+          </div>
+        </div>
+
       </div>
-      
     </div>
+    <!-- ═══ END 3D PLAYMAT ══════════════════════════════════════════════ -->
 
     <!-- ── BOTTOM STRIP — player HUD + end turn + hand fan ─────────────── -->
     <div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
@@ -395,8 +410,8 @@
                [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
                (click)="playCard(c, $index)"
-               (dblclick)="zoomCard(getCardImage(c))"
-               (contextmenu)="zoomCard(getCardImage(c)); $event.preventDefault()"
+               (dblclick)="zoomCard(c.id)"
+               (contextmenu)="zoomCard(c.id); $event.preventDefault()"
                draggable="true"
                (dragstart)="onDragStart($event, c, $index)">
             <div class="card-deal-wrapper w-full h-full">
@@ -616,17 +631,16 @@
   </aside>
 
   <!-- Fullscreen Card Zoom Modal Overlay -->
-  @if (zoomedCardUrl(); as url) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
-         (click)="closeZoom()">
-      <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
-           (click)="closeZoom()">
-        <img [src]="url" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10"
-             style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.6)); pointer-events: none;" />
+    @if (zoomedCard(); as card) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
+           (click)="closeZoom()"
+           style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
+        <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
+             (click)="$event.stopPropagation()">
+          <aurora-holo-card [card]="{ img: card.images?.large || card.images?.small || card.img, name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+        </div>
       </div>
-    </div>
-  }
-
+    }
   <!-- Card Selection Modal (PendingSelectionRequest) -->
   @if (pendingSelection(); as sel) {
     <app-card-selection-modal
@@ -712,87 +726,329 @@
 
   <!-- Game Over Overlay -->
   @if (isFinished() && me() && opp()) {
-    <div class="fixed inset-0 z-[60] flex items-center justify-center" style="background: rgba(8, 6, 16, 0.93); backdrop-filter: blur(16px); animation: fadeIn 0.4s ease-out;">
-      <div class="flex flex-col items-center gap-5 text-center max-w-lg px-6 py-8 rounded-[32px] border border-white/10 bg-white/[0.03] shadow-[0_20px_50px_rgba(0,0,0,0.5)]" style="backdrop-filter: blur(20px);">
-        <!-- Result icon -->
-        <div class="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-             [style.background]="gameResult() === 'VICTORIA' ? 'linear-gradient(135deg, #ffcb05, #e6a700)' : 'linear-gradient(135deg, #ee1515, #8d1212)'"
-             [style.boxShadow]="gameResult() === 'VICTORIA' ? '0 0 40px rgba(255, 203, 5, 0.5)' : '0 0 40px rgba(238, 21, 21, 0.4)'"
-             style="border: 3px solid rgba(255,255,255,0.9);">
-          @if (gameResult() === 'VICTORIA') {
-            <app-icon name="trophy" svgClass="w-10 h-10" style="color:#1a1010"></app-icon>
-          } @else {
-            <app-icon name="close" svgClass="w-10 h-10" style="color:#fff"></app-icon>
-          }
-        </div>
+    @if (isCampaignMatch() && gameResult() === 'VICTORIA') {
+      <div class="gym-victory-backdrop fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-hidden py-4 victory-overlay-enter"
+           style="background: rgba(6, 4, 14, 0.95); backdrop-filter: blur(20px);">
+           
+        <!-- Flashbang effect -->
+        <div class="flashbang-overlay pointer-events-none absolute inset-0 z-[100]"></div>
 
-        <!-- Result text -->
-        <div>
-          <div class="font-display text-4xl font-black tracking-widest uppercase animate-pulse"
-               [style.color]="gameResult() === 'VICTORIA' ? '#ffcb05' : '#ee1515'"
-               style="text-shadow: 0 0 20px rgba(255,255,255,0.1);">
-            {{ gameResult() }}
+        <!-- Green sparks dynamic animation -->
+        <aurora-sparks [n]="30" color="#2ecc71" class="absolute inset-0 z-0 pointer-events-none opacity-60"></aurora-sparks>
+
+        <!-- Spinning rays background (reused) -->
+        <div class="victory-rays opacity-30 pointer-events-none" style="filter: hue-rotate(120deg);"></div>
+
+        <!-- Victory card matching defeat layout -->
+        <div class="victory-card-premium my-auto" style="gap: 12px; padding: 20px 24px; max-width: 460px;">
+
+          <!-- Result icon in green circle -->
+          <div class="anim-bounce-in">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto gym-victory-icon" style="box-shadow: 0 0 30px rgba(46, 204, 113, 0.6); border: 2px solid rgba(255,255,255,0.9);">
+              <app-icon name="trophy" svgClass="w-8 h-8" style="color:#1a1010"></app-icon>
+            </div>
           </div>
-          <!-- Victory/Defeat Description -->
-          <p class="mt-2 text-sm tracking-wide text-white/80 font-chunky max-w-sm mx-auto leading-relaxed">
+
+          <!-- Title "VICTORIA" in green -->
+          <div class="anim-bounce-in" style="animation-delay: 0.15s;">
+            <div class="font-display text-3xl font-black tracking-[0.12em] uppercase text-center gym-victory-text" style="line-height: 1.1;">
+              VICTORIA
+            </div>
+          </div>
+
+          <!-- Victory reason text -->
+          <p class="anim-stagger anim-stagger--2 text-xs tracking-wide text-white/80 font-chunky max-w-xs mx-auto leading-relaxed text-center" style="margin-top: 2px;">
             {{ victoryReasonText() }}
           </p>
 
-          <!-- MMR Change -->
-          @if (mmrChange() !== null) {
-            <div class="mt-4 px-4 py-2 rounded-full border bg-white/5 font-chunky text-lg shadow-inner"
-                 [style.borderColor]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')"
-                 [style.color]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')">
-              MMR: {{ (mmrChange() ?? 0) > 0 ? '+' : '' }}{{ mmrChange() }}
-            </div>
-          }
-        </div>
+          <!-- Gym information block -->
+          <div class="anim-stagger anim-stagger--2 flex flex-col items-center" style="margin-top: 2px;">
+            <span class="font-title text-base font-bold text-white tracking-wider uppercase">🏆 {{ campaignNodeInfo()?.name }} Completado</span>
+            <span class="font-body text-[10px] text-white/60 mt-0.5">
+              Medalla <span [style.color]="campaignNodeInfo()?.color" class="font-semibold">{{ campaignNodeInfo()?.badge }}</span> Obtenida
+            </span>
+          </div>
 
-        <!-- MVP Card Section -->
-        @if (mvpCardId()) {
-          <div class="w-full flex flex-col items-center gap-3 mt-2 px-4 py-4 rounded-2xl border border-white/5 bg-white/[0.02]">
-            <div class="font-display text-xs font-bold tracking-[0.25em] text-[#ffcb05]/90 uppercase">
-              🏆 CARTA MÁS VALIOSA (MVP) 🏆
-            </div>
-            
-            <div class="relative group mt-1">
-              <!-- Glowing shadow effect behind the card image -->
-              <div class="absolute -inset-1.5 rounded-xl blur-lg opacity-45 transition duration-500 group-hover:opacity-75"
-                   [style.background]="gameResult() === 'VICTORIA' ? 'linear-gradient(135deg, #ffcb05, #e6a700)' : 'linear-gradient(135deg, #ee1515, #8d1212)'">
+          <!-- STEP 2: MVP + Rewards + Next Destination + Button -->
+          <div class="gym-victory-step-2-wrap" [class.active]="campaignVictoryStep() >= 2">
+            <!-- MVP Card Section -->
+            @if (mvpCardId()) {
+              <div class="anim-stagger anim-stagger--1 w-full flex flex-col items-center gap-2 px-3 py-2.5 rounded-xl border border-white/5 bg-white/[0.02]">
+                <div class="font-display text-[10px] font-bold tracking-[0.2em] text-[#2ecc71] uppercase">
+                  🏆 CARTA MÁS VALIOSA (MVP) 🏆
+                </div>
+
+                <div class="mvp-card-perspective">
+                  <div class="mvp-card-3d">
+                    <!-- Spinning conic glow ring (green themed) scaled -->
+                    <div class="mvp-glow" style="background: conic-gradient(from 0deg, transparent, #2ecc71, transparent, #2ecc71, transparent); transform: scale(0.77);"></div>
+                    <aurora-holo-card
+                         [card]="getCardDetailsForHolo(mvpCardId()!)"
+                         [w]="115"
+                         [idleFloat]="true"
+                         class="relative block rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.7)] border-2 transition-transform duration-300 gym-victory-mvp-border">
+                    </aurora-holo-card>
+                  </div>
+                </div>
+
+                <!-- Damage Badge in green -->
+                <div class="anim-stagger anim-stagger--2 px-3 py-1 rounded-full border gym-victory-damage-badge font-chunky text-[10px] tracking-wider uppercase shadow-inner">
+                  ⚔️ Daño Infligido: <span class="font-display font-black text-xs text-white ml-1">{{ mvpCardDamage() }} HP</span>
+                </div>
               </div>
-              
-              <img [src]="getCardImageUrl(mvpCardId()!)"
-                   alt="Carta MVP"
-                   class="relative w-36 rounded-xl shadow-[0_12px_24px_rgba(0,0,0,0.6)] border-2 transition-transform duration-300 group-hover:scale-105"
-                   [style.borderColor]="gameResult() === 'VICTORIA' ? 'rgba(255,203,5,0.8)' : 'rgba(255,255,255,0.2)'" />
+            }
+
+            <!-- Campaign Rewards (Coins / XP) -->
+            @if ((coinsGained() !== null && coinsGained() !== 0) || (xpGained() !== null && xpGained() !== 0)) {
+              <div class="anim-stagger anim-stagger--2 w-full flex flex-col items-center gap-1.5" style="margin-top: 2px;">
+                <div class="font-body text-[9px] font-semibold tracking-[0.2em] text-white/40 uppercase">Recompensas Obtenidas</div>
+                <div class="flex items-center justify-center gap-3 w-full">
+                  @if (coinsGained() !== null && coinsGained() !== 0) {
+                    <div class="gym-reward-box gym-reward-box--green flex items-center gap-2.5 px-3 py-1 border rounded-lg bg-black/20">
+                      <span class="text-base">🪙</span>
+                      <div class="flex flex-col items-start leading-none">
+                        <span class="text-[8px] text-white/50 uppercase tracking-wider font-semibold">Coins</span>
+                        <span class="font-title text-base font-bold text-white mt-0.5">+{{ coinsGained() }}</span>
+                      </div>
+                    </div>
+                  }
+                  @if (xpGained() !== null && xpGained() !== 0) {
+                    <div class="gym-reward-box gym-reward-box--green flex items-center gap-2.5 px-3 py-1 border rounded-lg bg-black/20">
+                      <span class="text-base">✨</span>
+                      <div class="flex flex-col items-start leading-none">
+                        <span class="text-[8px] text-white/50 uppercase tracking-wider font-semibold">XP</span>
+                        <span class="font-title text-base font-bold text-white mt-0.5">+{{ xpGained() }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="anim-stagger anim-stagger--2 w-full flex flex-col items-center gap-1.5" style="margin-top: 2px;">
+                <div class="font-body text-[9px] font-semibold tracking-[0.2em] text-white/40 uppercase">Recompensas Obtenidas</div>
+                <div class="flex justify-center gap-3">
+                  <div class="gym-reward-box gym-reward-box--green flex items-center gap-2 px-3 py-1 border rounded-lg bg-black/20">
+                    <span class="text-xl">🪙</span>
+                    <span class="font-title font-bold text-white text-base">+{{ campaignNodeInfo()?.coins }}</span>
+                  </div>
+                  <div class="gym-reward-box gym-reward-box--green flex items-center gap-2 px-3 py-1 border rounded-lg bg-black/20">
+                    <span class="text-xl">✨</span>
+                    <span class="font-title font-bold text-white text-base">+{{ campaignNodeInfo()?.xp }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Next Gym Banner -->
+            <div class="anim-stagger anim-stagger--2 text-[10px] font-body text-white/60 tracking-wider" style="margin-top: 2px;">
+              Siguiente destino: <span class="text-white font-semibold">{{ campaignNodeInfo()?.nextGym }}</span>
             </div>
 
-            <!-- Damage Badge -->
-            <div class="px-4 py-1.5 rounded-full border border-red-500/20 bg-red-500/10 font-chunky text-xs tracking-wider text-red-400 uppercase shadow-inner">
-              ⚔️ Daño Infligido: <span class="font-display font-black text-sm text-red-300 ml-1">{{ mvpCardDamage() }} HP</span>
+            <!-- Actions Button (Green Theme) -->
+            <div class="anim-stagger anim-stagger--3 flex gap-4 w-full justify-center z-10" style="margin-top: 4px;">
+              <button class="gym-btn-green group" (click)="onLeave()" style="height: 40px; padding: 0 24px; font-size: 13px;">
+                <div class="gym-btn-green-shine"></div>
+                <span class="relative z-10">Volver a la Campaña</span>
+              </button>
             </div>
           </div>
-        }
 
-        <!-- Actions -->
-        <div class="flex gap-4 mt-3 w-full justify-center">
-          <button class="px-8 py-3 rounded-xl font-chunky text-sm tracking-wider uppercase transition-all duration-200 active:scale-95"
-                  style="background: #ffcb05; color: #1a1010; border: 3px solid #1a1010; box-shadow: 0 4px 0 #1a1010; cursor: pointer;"
-                  onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 0 #1a1010'"
-                  onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 0 #1a1010'"
-                  (click)="onLeave()">
-            Volver al Lobby
-          </button>
         </div>
       </div>
-    </div>
+    } @else {
+      <!-- ═══ PREMIUM GAME OVER OVERLAY (non-campaign) ═══ -->
+      <div class="fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-hidden py-4 victory-overlay-enter"
+           style="background: rgba(6, 4, 14, 0.95); backdrop-filter: blur(20px);">
+           
+        <!-- Flashbang effect -->
+        <div class="flashbang-overlay pointer-events-none absolute inset-0 z-[100]"></div>
+
+        <!-- Sparks Effect -->
+        @if (gameResult() === 'VICTORIA') {
+          <aurora-sparks [n]="30" color="#ffcb05" class="absolute inset-0 z-0 pointer-events-none opacity-60"></aurora-sparks>
+        }
+
+        <!-- Spinning gold rays background -->
+        @if (gameResult() === 'VICTORIA') {
+          <div class="victory-rays"></div>
+        }
+
+        <!-- Victory / Defeat card -->
+        <div class="victory-card-premium">
+
+          <!-- Result icon with bounce-in -->
+          @if (victoryStage() >= 1) {
+            <div class="anim-bounce-in">
+              <div class="w-24 h-24 rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-110"
+                   [style.background]="gameResult() === 'VICTORIA' ? 'linear-gradient(135deg, #ffcb05, #e6a700)' : 'linear-gradient(135deg, #ee1515, #8d1212)'"
+                   [style.boxShadow]="gameResult() === 'VICTORIA' ? '0 0 50px rgba(255, 203, 5, 0.6), 0 0 100px rgba(255, 203, 5, 0.2)' : '0 0 50px rgba(238, 21, 21, 0.5), 0 0 100px rgba(238, 21, 21, 0.15)'"
+                   style="border: 4px solid rgba(255,255,255,0.9);">
+                @if (gameResult() === 'VICTORIA') {
+                  <app-icon name="trophy" svgClass="w-12 h-12" style="color:#1a1010"></app-icon>
+                } @else {
+                  <app-icon name="close" svgClass="w-12 h-12" style="color:#fff"></app-icon>
+                }
+              </div>
+            </div>
+
+            <!-- Title with bounce-in -->
+            <div class="anim-bounce-in" style="animation-delay: 0.15s;">
+              <div class="font-display text-5xl font-black tracking-[0.15em] uppercase text-center"
+                   [style.color]="gameResult() === 'VICTORIA' ? '#ffcb05' : '#ee1515'"
+                   style="text-shadow: 0 0 30px rgba(255,255,255,0.15); line-height: 1.1;">
+                {{ gameResult() }}
+              </div>
+            </div>
+
+            <!-- Victory reason text -->
+            <p class="anim-stagger anim-stagger--2 text-sm tracking-wide text-white/80 font-chunky max-w-sm mx-auto leading-relaxed text-center">
+              {{ victoryReasonText() }}
+            </p>
+          }
+
+          <!-- Stage 2: MVP Card + Recompensas -->
+          @if (victoryStage() >= 2) {
+
+            <!-- MVP Card with 3D float -->
+            @if (mvpCardId()) {
+              <div class="anim-stagger anim-stagger--1 w-full flex flex-col items-center gap-3 px-4 py-4 rounded-2xl border border-white/5 bg-white/[0.02]">
+                <div class="font-display text-xs font-bold tracking-[0.25em] text-[#ffcb05]/90 uppercase">
+                  🏆 CARTA MÁS VALIOSA (MVP) 🏆
+                </div>
+
+                <div class="mvp-card-perspective mt-1">
+                  <div class="mvp-card-3d">
+                    <!-- Spinning conic glow ring -->
+                    <div class="mvp-glow"></div>
+                    <aurora-holo-card
+                         [card]="getCardDetailsForHolo(mvpCardId()!)"
+                         [w]="150"
+                         [idleFloat]="true"
+                         class="relative block rounded-xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] border-2 transition-transform duration-300"
+                         [style.borderColor]="gameResult() === 'VICTORIA' ? 'rgba(255,203,5,0.8)' : 'rgba(255,255,255,0.2)'">
+                    </aurora-holo-card>
+                  </div>
+                </div>
+
+                <!-- Damage Badge -->
+                <div class="anim-stagger anim-stagger--2 px-4 py-1.5 rounded-full border border-red-500/20 bg-red-500/10 font-chunky text-xs tracking-wider text-red-400 uppercase shadow-inner">
+                  ⚔️ Daño Infligido: <span class="font-display font-black text-sm text-red-300 ml-1">{{ mvpCardDamage() }} HP</span>
+                </div>
+              </div>
+            }
+          }
+
+          <!-- Stage 3: MMR Counter + Actions -->
+          @if (victoryStage() >= 3) {
+
+            <!-- Animated MMR Counter -->
+            @if (displayMmr() !== null) {
+              <div class="anim-stagger anim-stagger--2 flex flex-col items-center gap-2">
+                <div class="text-[10px] font-chunky tracking-[0.3em] text-white/40 uppercase">MMR Clasificatorio</div>
+                <div class="mmr-counter transition-all duration-700"
+                     [style.color]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')"
+                     [style.borderColor]="(mmrChange() ?? 0) > 0 ? 'rgba(46,204,113,0.4)' : ((mmrChange() ?? 0) < 0 ? 'rgba(231,76,60,0.4)' : 'rgba(189,195,199,0.3)')">
+                  {{ displayMmr() }}
+                  <span class="mmr-delta"
+                        [style.color]="(mmrChange() ?? 0) > 0 ? '#2ecc71' : ((mmrChange() ?? 0) < 0 ? '#e74c3c' : '#bdc3c7')">
+                    {{ (mmrChange() ?? 0) > 0 ? '+' : '' }}{{ mmrChange() }}
+                  </span>
+                </div>
+                @if (currentTier()) {
+                  <div class="text-xs text-white/50 font-chunky tracking-wider">
+                    {{ currentTier() }}
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Actions -->
+            <div class="anim-stagger anim-stagger--3 flex gap-4 mt-1 w-full justify-center z-10">
+              <button class="premium-btn px-8 py-3 rounded-xl font-chunky text-sm tracking-wider uppercase cursor-pointer relative"
+                      (click)="onLeave()">
+                <span class="relative z-10">{{ isCampaignMatch() ? 'Volver a la Campaña' : 'Volver al Lobby' }}</span>
+                <div class="premium-btn-glow absolute inset-0 rounded-xl"></div>
+              </button>
+            </div>
+          }
+
+        </div>
+      </div>
+    }
   }
+
 </div>
 } @else {
   <div class="absolute inset-0 flex items-center justify-center bg-[#0d0a1c] text-white">
     <div class="text-center animate-fade">
       <div class="w-10 h-10 rounded-full border-4 border-t-transparent border-yellow-500 animate-spin mx-auto mb-4"></div>
       <div class="font-display font-semibold text-sm tracking-wider text-white/50">CONECTANDO AL TABLERO...</div>
+    </div>
+  </div>
+}
+
+<!-- ═══ PREMIUM RANK-UP CELEBRATION OVERLAY ═══ -->
+@if (showRankUpAnimation()) {
+  <div class="fixed inset-0 z-[11000] flex flex-col items-center justify-center victory-overlay-enter anim-screen-shake"
+       style="background: rgba(4, 2, 10, 0.92); backdrop-filter: blur(16px); pointer-events: auto;">
+
+    <!-- Spinning gold rays -->
+    <div class="victory-rays"></div>
+
+    <!-- Main card -->
+    <div class="text-center max-w-md w-full p-10 rounded-3xl relative overflow-hidden z-10"
+         style="background: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(35, 20, 55, 0.95), rgba(8, 4, 16, 0.98)); border: 1px solid rgba(255, 203, 5, 0.2); box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 60px rgba(255,203,5,0.08), inset 0 1px 0 rgba(255,255,255,0.1);">
+
+      <!-- Title -->
+      <h3 class="anim-bounce-in font-display text-4xl font-black text-yellow-400 tracking-[0.12em] uppercase relative z-10"
+          style="text-shadow: 0 0 30px rgba(255,203,5,0.5), 0 4px 0 #855300;">
+        ¡Ascenso de Rango!
+      </h3>
+      <p class="anim-stagger anim-stagger--1 mt-2 text-white/70 font-chunky text-sm relative z-10 leading-relaxed">
+        Has demostrado tu habilidad y asciendes a una nueva liga
+      </p>
+
+      <!-- Emblema drop badge -->
+      <div class="my-8 flex justify-center relative z-10">
+        <!-- Impact shockwave rings -->
+        <div class="impact-ring"></div>
+        <div class="impact-ring impact-ring--2"></div>
+
+        <!-- The badge itself -->
+        <div class="anim-emblema-drop rankup-badge">
+          <!-- Floating particles -->
+          <div class="rankup-particles">
+            <div class="rankup-particle"></div>
+            <div class="rankup-particle"></div>
+            <div class="rankup-particle"></div>
+            <div class="rankup-particle"></div>
+            <div class="rankup-particle"></div>
+            <div class="rankup-particle"></div>
+          </div>
+          <span class="font-display font-black text-base text-yellow-400 tracking-[0.2em] uppercase text-center leading-tight px-2"
+                style="text-shadow: 0 0 12px rgba(255,203,5,0.4);">
+            {{ currentTier() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- MMR Display -->
+      <div class="anim-stagger anim-stagger--3 relative z-10 flex flex-col items-center gap-1">
+        <div class="text-[10px] font-chunky tracking-[0.3em] text-white/40 uppercase">Rating Actual</div>
+        <div class="text-3xl font-display font-black text-yellow-400"
+             style="text-shadow: 0 0 20px rgba(255,203,5,0.3);">
+          {{ currentMmr() }}
+        </div>
+      </div>
+
+      <!-- Continue button -->
+      <button (click)="closeRankUp()"
+              class="anim-stagger anim-stagger--4 mt-8 px-8 py-3 rounded-xl font-display font-black text-sm tracking-[0.15em] uppercase transition-all duration-200 relative z-10 cursor-pointer active:scale-95"
+              style="background: linear-gradient(135deg, #ffcb05, #e6a700); color: #1a1010; border: 3px solid #1a1010; box-shadow: 0 4px 0 #1a1010;"
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 0 #1a1010'"
+              onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 0 #1a1010'">
+        Continuar
+      </button>
     </div>
   </div>
 }

@@ -24,6 +24,8 @@ module.exports = {
       fontFamily: {
         display: ['"Bowlby One"','"Russo One"','sans-serif'],
         chunky:  ['"Russo One"','"Bowlby One"','sans-serif'],
+        title:   ['"Rajdhani"','sans-serif'],
+        body:    ['"Montserrat"','sans-serif'],
         sans:    ['Nunito','system-ui','sans-serif'],
         mono:    ['"JetBrains Mono"','monospace'],
       },

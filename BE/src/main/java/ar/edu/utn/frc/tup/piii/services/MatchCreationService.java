@@ -64,6 +64,7 @@ public final class MatchCreationService {
     private final SimpMessagingTemplate messaging;
     private final ChatService chatService;
     private final PlayerPerspectiveMapper perspectiveMapper;
+    private final BotDecisionService botDecisionService;
 
     /**
      * @param registry          stores active sessions (never null)
@@ -74,11 +75,13 @@ public final class MatchCreationService {
     public MatchCreationService(final MatchSessionRegistry registry,
                                  final SimpMessagingTemplate messaging,
                                  final ChatService chatService,
-                                 final PlayerPerspectiveMapper perspectiveMapper) {
+                                 final PlayerPerspectiveMapper perspectiveMapper,
+                                 @org.springframework.context.annotation.Lazy final BotDecisionService botDecisionService) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
         this.perspectiveMapper = Objects.requireNonNull(perspectiveMapper, "perspectiveMapper must not be null");
+        this.botDecisionService = Objects.requireNonNull(botDecisionService, "botDecisionService must not be null");
     }
 
     /**
@@ -220,6 +223,20 @@ public final class MatchCreationService {
         // --- Register and kick off first turn ---
         registry.register(session);
         turnManager.startTurn(firstPlayerIndex);
+
+        // Check for bot turn and trigger decision service
+        final String activePlayerId = session.getPlayerIds().get(firstPlayerIndex);
+        if (activePlayerId != null && activePlayerId.startsWith("Bot-")) {
+            new Thread(() -> {
+                try {
+                    // Esperar 6 segundos para que el frontend termine la animación de la moneda
+                    Thread.sleep(6000);
+                    botDecisionService.evaluateAndPlay(matchId);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        }
 
         return matchId;
     }

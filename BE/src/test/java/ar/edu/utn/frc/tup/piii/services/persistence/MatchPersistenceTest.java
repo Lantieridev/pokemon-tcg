@@ -271,9 +271,9 @@ class MatchPersistenceTest {
         String matchId = "winner-match-999";
         Long numericId = (long) Math.abs(matchId.hashCode());
 
-        UserEntity player1 = userRepository.findByUsername("user-x").orElseGet(() ->
+        UserEntity player1 = userRepository.findFirstByUsername("user-x").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
-        UserEntity player2 = userRepository.findByUsername("user-y").orElseGet(() ->
+        UserEntity player2 = userRepository.findFirstByUsername("user-y").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
 
         // Clean previous if any
@@ -324,11 +324,11 @@ class MatchPersistenceTest {
         matchLogRepository.deleteAll();
         matchRepository.deleteAll();
 
-        final UserEntity alice = userRepository.findByUsername("user-x").orElseGet(() ->
+        final UserEntity alice = userRepository.findFirstByUsername("user-x").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-x").email("x@x.com").password("pwd").build()));
-        final UserEntity bob = userRepository.findByUsername("user-y").orElseGet(() ->
+        final UserEntity bob = userRepository.findFirstByUsername("user-y").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-y").email("y@y.com").password("pwd").build()));
-        final UserEntity charlie = userRepository.findByUsername("user-z").orElseGet(() ->
+        final UserEntity charlie = userRepository.findFirstByUsername("user-z").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-z").email("z@z.com").password("pwd").build()));
 
         // Seed matches:

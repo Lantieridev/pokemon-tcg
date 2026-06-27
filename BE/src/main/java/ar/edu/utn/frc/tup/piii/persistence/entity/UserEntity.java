@@ -20,6 +20,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import jakarta.persistence.MapKeyColumn;
 
 @Entity
 @Table(name = "users")
@@ -40,6 +43,20 @@ public class UserEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "showcased_deck_id")
     private DeckEntity showcasedDeck;
+
+    @Column(name = "stardust")
+    private Integer stardust;
+
+    @Column(name = "packs", nullable = false)
+    @Builder.Default
+    private Integer packs = 0;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_packs", joinColumns = @JoinColumn(name = "user_id"))
+    @MapKeyColumn(name = "pack_type")
+    @Column(name = "quantity")
+    @Builder.Default
+    private Map<String, Integer> packsInventory = new HashMap<>();
 
     @Column(name = "avatar_icon")
     @Builder.Default
@@ -101,6 +118,18 @@ public class UserEntity {
     @Column(name = "title_name")
     @Builder.Default
     private Set<String> unlockedTitles = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_unlocked_avatars", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "avatar_name")
+    @Builder.Default
+    private Set<String> unlockedAvatars = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_cleared_story_nodes", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "node_id")
+    @Builder.Default
+    private Set<Integer> clearedStoryNodes = new HashSet<>();
 
     @Column(name = "ranked_matches_played")
     @Builder.Default

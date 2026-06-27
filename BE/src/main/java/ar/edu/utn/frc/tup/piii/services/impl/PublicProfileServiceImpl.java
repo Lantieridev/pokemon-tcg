@@ -26,7 +26,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                 .level(fullProfile.getLevel())
                 .mmr(fullProfile.getMmr())
                 .statistics(fullProfile.getStatistics())
-                .unlockedTitles(fullProfile.getUnlockedTitles())
+                .unlockedTitles(fullProfile.getUnlockedTitles() != null ? new java.util.HashSet<>(fullProfile.getUnlockedTitles()) : new java.util.HashSet<>())
                 .showcase(fullProfile.getShowcase())
                 .showcasedDeck(fullProfile.getShowcasedDeck())
                 .advancedStats(fullProfile.getAdvancedStats())
