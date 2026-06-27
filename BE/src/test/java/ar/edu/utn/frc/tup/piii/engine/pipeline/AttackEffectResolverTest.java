@@ -966,6 +966,7 @@ class AttackEffectResolverTest {
         final BattlePokemonState activeAttacker = mock(BattlePokemonState.class);
         final BattlePokemonState benchAttacker = mock(BattlePokemonState.class);
         final StatusEffectManager attackerSM = mock(StatusEffectManager.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.MatchSession session = mock(ar.edu.utn.frc.tup.piii.engine.session.MatchSession.class);
         
         org.mockito.Mockito.when(attackerRuntime.getBench()).thenReturn(attackerBench);
         org.mockito.Mockito.when(attackerBench.getAll()).thenReturn(List.of(benchAttacker));
@@ -978,12 +979,16 @@ class AttackEffectResolverTest {
                 mock(KnockoutHandler.class), () -> false) // even if tails
                 .effectText("switch_self")
                 .attackerRuntime(attackerRuntime)
+                .matchSession(session)
                 .build();
                 
         resolver.apply(ctx);
         
-        org.mockito.Mockito.verify(attackerRuntime).setActivePokemon(benchAttacker);
-        org.mockito.Mockito.verify(attackerBench).place(activeAttacker);
+        org.mockito.Mockito.verify(session).setPendingSelectionRequest(org.mockito.ArgumentMatchers.argThat(req ->
+                req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE
+                && req.maxSelections() == 1
+                && req.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+        ));
     }
 
     @Test

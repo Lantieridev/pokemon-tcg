@@ -705,16 +705,18 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime attacker = ctx.getAttackerRuntime();
                     if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
-                        ctx.getMatchSession().setPendingSelectionRequest(
-                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
-                                        null,
-                                        1,
-                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
-                                )
-                        );
-                        if (ctx.getMatchSession().getTurnManager() != null) {
-                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                        if (ctx.getMatchSession() != null) {
+                            ctx.getMatchSession().setPendingSelectionRequest(
+                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
+                                            null,
+                                            1,
+                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+                                    )
+                            );
+                            if (ctx.getMatchSession().getTurnManager() != null) {
+                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
+                            }
                         }
                     }
                 });
