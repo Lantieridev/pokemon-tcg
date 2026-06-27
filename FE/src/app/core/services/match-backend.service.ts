@@ -55,14 +55,6 @@ export class MatchBackendService {
   }
 
   /**
-   * GET /api/decks/templates
-   * Lista los mazos por defecto del sistema
-   */
-  getTemplates(): Observable<DeckSummaryDTO[]> {
-    return this.http.get<DeckSummaryDTO[]>(`${this.DECKS_URL}/templates`);
-  }
-
-  /**
    * GET /api/decks/{id}
    */
   getDeck(id: number): Observable<DeckResponseDTO> {
@@ -83,18 +75,5 @@ export class MatchBackendService {
       playerBId: 'Bot-001',
       deckBId: deckId // El backend usará deckAId internamente para el bot
     });
-  }
-
-  /**
-   * POST /api/matches/{matchId}/surrender
-   * Abandona explícitamente la partida.
-   */
-  surrenderMatch(matchId: string): Observable<void> {
-    const username = this.authService.username ?? '';
-    return this.http.post<void>(
-      `${this.MATCHES_URL}/${matchId}/surrender`,
-      {},
-      { headers: new HttpHeaders({ 'X-Player-Id': username }) }
-    );
   }
 }

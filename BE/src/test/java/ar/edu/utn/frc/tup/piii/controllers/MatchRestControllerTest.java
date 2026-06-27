@@ -40,15 +40,12 @@ class MatchRestControllerTest {
     @Mock
     private CardResolutionService cardResolutionService;
 
-    @Mock
-    private ar.edu.utn.frc.tup.piii.services.MatchService matchService;
-
     private MatchRestController controller;
 
     @BeforeEach
     void setUp() {
         controller = new MatchRestController(
-                registry, perspectiveMapper, matchCreationService, cardResolutionService, matchService);
+                registry, perspectiveMapper, matchCreationService, cardResolutionService);
     }
 
     @Test
@@ -95,7 +92,7 @@ class MatchRestControllerTest {
 
         when(cardResolutionService.resolveCards(deckAId)).thenReturn(deckA);
         when(cardResolutionService.resolveCards(deckBId)).thenReturn(deckB);
-        when(matchCreationService.createMatch(playerAId,  playerBId,  deckA,  deckB, false))
+        when(matchCreationService.createMatch(playerAId, playerBId, deckA, deckB))
                 .thenReturn(expectedMatchId);
 
         final Map<String, String> result = controller.createMatch(request);
@@ -107,13 +104,13 @@ class MatchRestControllerTest {
     void shouldThrowWhenNullRegistryIsPassedToConstructor() {
         assertThrows(NullPointerException.class,
                 () -> new MatchRestController(
-                        null, perspectiveMapper, matchCreationService, cardResolutionService, matchService));
+                        null, perspectiveMapper, matchCreationService, cardResolutionService));
     }
 
     @Test
     void shouldThrowWhenNullMatchCreationServiceIsPassedToConstructor() {
         assertThrows(NullPointerException.class,
                 () -> new MatchRestController(
-                        registry, perspectiveMapper, null, cardResolutionService, matchService));
+                        registry, perspectiveMapper, null, cardResolutionService));
     }
 }

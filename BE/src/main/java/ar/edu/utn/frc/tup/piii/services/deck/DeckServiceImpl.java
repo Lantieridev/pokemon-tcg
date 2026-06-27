@@ -107,55 +107,6 @@ public class DeckServiceImpl implements DeckService {
         return toResponseDTO(deckRepository.save(deck));
     }
 
-    @Override
-    @Transactional
-    public DeckResponseDTO update(final Long id, final DeckRequestDTO request) {
-        final DeckEntity deck = deckRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Deck not found: " + id));
-
-        // Validar que el usuario que actualiza sea el dueño
-        if (!deck.getUser().getId().equals(request.userId())) {
-            throw new IllegalArgumentException("User ID mismatch");
-        }
-
-        final Map<String, CardEntity> cardMap = request.cards().stream()
-                .map(c -> findOrFetchCard(c.cardId()))
-                .collect(Collectors.toMap(CardEntity::getId, Function.identity()));
-
-        final List<DeckEntry> entries = request.cards().stream()
-                .map(c -> toEntry(cardMap.get(c.cardId()), c.quantity()))
-                .toList();
-
-        validator.validate(entries, request.status());
-
-        deck.setName(request.name());
-        deck.setStatus(request.status());
-        deck.getCards().clear();
-
-        final List<DeckCardEntity> newDeckCards = request.cards().stream()
-                .map(c -> {
-                    final CardEntity card = cardMap.get(c.cardId());
-                    return DeckCardEntity.builder()
-                            .id(new DeckCardEntity.DeckCardId(deck.getId(), card.getId()))
-                            .deck(deck)
-                            .card(card)
-                            .quantity(c.quantity())
-                            .build();
-                })
-                .toList();
-
-        deck.getCards().addAll(newDeckCards);
-        return toResponseDTO(deckRepository.save(deck));
-    }
-
-    @Override
-    @Transactional
-    public void delete(final Long id) {
-        final DeckEntity deck = deckRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Deck not found: " + id));
-        deckRepository.delete(deck);
-    }
-
     private CardEntity findOrFetchCard(final String cardId) {
         return cardRepository.findById(cardId)
                 .orElseGet(() -> {

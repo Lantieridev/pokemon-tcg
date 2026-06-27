@@ -5,12 +5,11 @@ import { AmbientComponent } from './features/lobby-aurora/ui/aurora-ui.component
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs/operators';
 import { ToastComponent } from './shared/components/toast/toast.component';
-import { HelpAgentComponent } from './shared/components/help-agent/help-agent.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, AmbientComponent, ToastComponent, HelpAgentComponent],
+  imports: [RouterOutlet, NavbarComponent, AmbientComponent, ToastComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush

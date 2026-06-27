@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export interface CardStatDTO {
   cardId: string;
@@ -40,9 +40,6 @@ export interface UserProfileResponseDTO {
   mmr: number;
   pokecoins: number;
   battlePoints: number;
-  packs: number;
-  packsInventory?: { [key: string]: number };
-  stardust: number;
   statistics: {
     matchesPlayed: number;
     matchesWon: number;
@@ -57,18 +54,10 @@ export interface UserProfileResponseDTO {
   };
   honors: Record<string, number>;
   unlockedTitles: string[];
-  unlockedAvatars?: string[];
   showcase: {
     slotPosition: number;
     cardId: string;
     cardName: string;
-  }[];
-  packCollection: {
-    cardId: string;
-    cardName: string;
-    isFoil?: boolean;
-    foil?: boolean;
-    rarity: string;
   }[];
   showcasedDeck: {
     id: number;
@@ -111,13 +100,8 @@ export class ProfileService {
   private http = inject(HttpClient);
   private readonly API_URL = 'http://localhost:8081/api/users';
 
-  public profile$ = new BehaviorSubject<UserProfileResponseDTO | null>(null);
-  public readonly profileUpdated$ = new Subject<void>();
-
   getProfile(username: string): Observable<UserProfileResponseDTO> {
-    return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`).pipe(
-      tap(profile => this.profile$.next(profile))
-    );
+    return this.http.get<UserProfileResponseDTO>(`${this.API_URL}/${username}/profile`);
   }
 
   getAchievements(username: string): Observable<UserAchievementProgressDTO[]> {
@@ -125,9 +109,7 @@ export class ProfileService {
   }
 
   updateProfile(request: { avatarIcon: string; description: string; activeTitle: string; selectedMedals?: string; }): Observable<void> {
-    return this.http.put<void>(`${this.API_URL}/profile`, request).pipe(
-      tap(() => this.profileUpdated$.next())
-    );
+    return this.http.put<void>(`${this.API_URL}/profile`, request);
   }
 
   updateShowcase(request: { slots: { slotPosition: number; cardId: string; }[] }): Observable<void> {

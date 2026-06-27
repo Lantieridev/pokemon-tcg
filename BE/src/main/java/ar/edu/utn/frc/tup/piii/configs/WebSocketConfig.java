@@ -80,8 +80,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                     final String dest = accessor.getDestination();
                     if (dest != null && dest.contains("/player/")) {
-                        final String playerPath = "/player/" + principal.getName();
-                        if (!dest.contains(playerPath)) {
+                        final String subscribedPlayerId = dest.substring(dest.lastIndexOf('/') + 1);
+                        if (!principal.getName().equals(subscribedPlayerId)) {
                             throw new org.springframework.messaging.MessagingException("Cannot subscribe to another player's channel");
                         }
                     }

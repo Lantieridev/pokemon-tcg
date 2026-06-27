@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PingController {
 
+    /**
+     * The health check method.
+     * @return the word pong
+     */
     @Operation(
             summary = "Check healthy of the app",
             description = "If the app it's alive response pong")
@@ -34,7 +38,7 @@ public class PingController {
             )
     })
     @GetMapping("/ping")
-    public String ping() {
+    public String pong() {
         return "pong";
     }
 }

@@ -7,23 +7,12 @@
       <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
         <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
         <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
-        <a routerLink="/battle-pass" [style.color]="isActive('/battle-pass') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Pase de Batalla</a>
         <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
-        <a routerLink="/store" [style.color]="isActive('/store') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Tienda</a>
-        <a (click)="toggleFriendsSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; position: relative;" [style.color]="unreadMessagesCount() > 0 ? 'var(--txt)' : 'var(--mut)'">
-          Amigos
-          @if (pendingRequestsCount() > 0) {
-            <span style="position: absolute; top: -8px; right: -12px; background: #ff4757; color: white; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; line-height: 1;">{{ pendingRequestsCount() }}</span>
-          }
-          @if (unreadMessagesCount() > 0) {
-            <span style="position: absolute; top: -4px; right: -6px; background: #2ed573; width: 8px; height: 8px; border-radius: 50%;"></span>
-          }
-        </a>
+        <a (click)="friendsSidebar.toggleSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; color: var(--mut);">Amigos</a>
       </nav>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <div class="topcur" title="Experiencia"><span style="font-weight: 800; font-family: var(--display); color: #4aa3ff; font-size: 14px; letter-spacing: -0.5px;">XP</span> {{ profileData()?.xp ?? 0 }}</div>
-        <div class="topcur" title="Battle Points"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-        <div class="topcur" title="Pokécoins" [class.coin-pop]="animateCoins()"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <div class="topcur"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
+        <div class="topcur"><aurora-icon n="pokecoin" [s]="15"></aurora-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
       </div>
     }
     <div>
@@ -31,19 +20,7 @@
     </div>
   </div>
 </header>
-<app-friends-sidebar #friendsSidebar (onOpenProfile)="openProfileModal($event)" (onOpenChat)="openChatModal($event)" (onSidebarClose)="closeChatModal()" (onRequestsUpdated)="pendingRequestsCount.set($event)" [unreadMessages]="unreadMessagesPerUser()"></app-friends-sidebar>
-
-@if (customNotification()) {
-  <div class="chat-notification" (click)="openChatWithSender(customNotification()!.sender)">
-    <div class="bubble">
-      <div class="bubble-header">
-        <span class="sender">{{ customNotification()!.sender }}</span>
-        <span class="icon">💬</span>
-      </div>
-      <div class="bubble-body">{{ customNotification()!.message }}</div>
-    </div>
-  </div>
-}
+<app-friends-sidebar #friendsSidebar (onOpenProfile)="openProfileModal($event)" (onOpenChat)="openChatModal($event)" (onSidebarClose)="closeChatModal()"></app-friends-sidebar>
 
 @if (selectedProfile() && isProfileModalOpen()) {
   <app-public-profile-modal [profile]="selectedProfile()!" (close)="closeProfileModal()"></app-public-profile-modal>

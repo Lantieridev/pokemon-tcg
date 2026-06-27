@@ -40,8 +40,8 @@ public class RankingControllerTest {
     @Test
     void getGlobalRankingTest() throws Exception {
         final List<RankingDto> rankings = List.of(
-                new RankingDto("player-alice", null, "player-alice_tier", (int)10L),
-                new RankingDto("player-bob", null, "player-bob_tier", (int)5L)
+                new RankingDto("player-alice", 10L),
+                new RankingDto("player-bob", 5L)
         );
         final Slice<RankingDto> slice = new SliceImpl<>(rankings, PageRequest.of(0, 10), false);
 
@@ -53,9 +53,9 @@ public class RankingControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].username").value("player-alice"))
-                .andExpect(jsonPath("$.content[0].rankedMatchesPlayed").value(10))
+                .andExpect(jsonPath("$.content[0].wins").value(10))
                 .andExpect(jsonPath("$.content[1].username").value("player-bob"))
-                .andExpect(jsonPath("$.content[1].rankedMatchesPlayed").value(5))
+                .andExpect(jsonPath("$.content[1].wins").value(5))
                 .andExpect(jsonPath("$.last").value(true));
     }
 
@@ -79,7 +79,7 @@ public class RankingControllerTest {
     @Test
     void getGlobalRankingSizeCappingTest() throws Exception {
         final List<RankingDto> rankings = List.of(
-                new RankingDto("player-alice", null, "player-alice_tier", (int)10L)
+                new RankingDto("player-alice", 10L)
         );
         final Slice<RankingDto> slice = new SliceImpl<>(rankings, PageRequest.of(0, 50), false);
 
