@@ -599,6 +599,12 @@ public final class RuleValidator {
     }
 
     private ValidationResult validateDeclareAttack(final DeclareAttackAction action, final int playerIndex) {
+        if (action.attacker() == null) {
+            return new ValidationResult.Invalid("attacker_required");
+        }
+        if (action.attack() == null) {
+            return new ValidationResult.Invalid("attack_required");
+        }
         if (battlefieldProvider != null && battlefieldProvider.getActivePokemon(playerIndex) == null) {
             return new ValidationResult.Invalid("No tienes un Pokémon Activo para atacar.");
         }
