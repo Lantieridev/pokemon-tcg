@@ -88,6 +88,17 @@ public class UserProfileResponseDTO {
     public static class ShowcasedDeck {
         private Long id;
         private String name;
+        private List<ShowcasedDeckCard> cards;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ShowcasedDeckCard {
+        private String cardId;
+        private String cardName;
+        private Integer quantity;
     }
 
     @Data
