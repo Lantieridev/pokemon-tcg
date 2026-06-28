@@ -26,7 +26,7 @@ El sistema de logros se evalúa de manera **dinámica** sin requerir un estado p
 
 ## 2. Puntos de Entrada de Lógica (BE)
 
-Toda la lógica del sistema reside en [ProfileServiceImpl.java](file:///c:/Users/lucas/.gemini/antigravity/scratch/tpi-pokemon-2w1-15/BE/src/main/java/ar/edu/utn/frc/tup/piii/services/impl/ProfileServiceImpl.java):
+Toda la lógica del sistema reside en [ProfileServiceImpl.java](../BE/src/main/java/ar/edu/utn/frc/tup/piii/services/impl/ProfileServiceImpl.java):
 
 1.  `checkAndUnlockTitles(UserEntity user, ...)`: Se ejecuta al ganar XP tras finalizar una partida o al consultar el perfil. Evalúa los requisitos de los 88 logros y añade los títulos correspondientes al conjunto `unlockedTitles`.
 2.  `getAchievementsProgress(String username)`: Retorna el listado completo de logros con sus respectivos niveles de progreso actual y objetivos (`progress` y `target`) para el renderizado de la interfaz en el frontend.

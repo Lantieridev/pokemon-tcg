@@ -69,11 +69,11 @@ sequenceDiagram
 
 ### E. Bean Global de `RestClient.Builder`
 *   **Problema:** El backend no lograba iniciar debido a un error de cableado de dependencias (`NoSuchBeanDefinitionException`) en `RestClientPokemonTcgApiClient` al requerir un `RestClient.Builder` que no estaba expuesto en el contexto.
-*   **Solución:** Se declaró el bean `@Bean` de `RestClient.Builder` en la clase principal [Application.java](file:///c:/Users/Usuario/OneDrive/Documentos/GitHub/tpi-pokemon-2w1-15/BE/src/main/java/ar/edu/utn/frc/tup/piii/Application.java) para levantar el contexto del servidor sin dependencias fallidas.
+*   **Solución:** Se declaró el bean `@Bean` de `RestClient.Builder` en la clase principal [Application.java](../../BE/src/main/java/ar/edu/utn/frc/tup/piii/Application.java) para levantar el contexto del servidor sin dependencias fallidas.
 
 ### F. Cifrado de Contraseñas en el Seeder (Seguridad en Desarrollo)
 *   **Problema:** Al iniciar la aplicación en el perfil `dev`, los usuarios de prueba (`player-alice`, `player-bob`, etc.) se sembraban con la contraseña `"dummy"` en texto plano en la base de datos H2. Esto provocaba que el flujo de autenticación de Spring Security rechazara el login de autenticación al intentar comparar el hash de base de datos con la entrada de texto.
-*   **Solución:** Se inyectó `PasswordEncoder` en [DatabaseSeeder.java](file:///c:/Users/Usuario/OneDrive/Documentos/GitHub/tpi-pokemon-2w1-15/BE/src/main/java/ar/edu/utn/frc/tup/piii/loader/DatabaseSeeder.java) para codificar la contraseña `"dummy"` antes de persistirla en base de datos. De esta forma, el flujo de autenticación de JWT puede validar las credenciales con éxito en entornos de prueba locales.
+*   **Solución:** Se inyectó `PasswordEncoder` en [DatabaseSeeder.java](../../BE/src/main/java/ar/edu/utn/frc/tup/piii/loader/DatabaseSeeder.java) para codificar la contraseña `"dummy"` antes de persistirla en base de datos. De esta forma, el flujo de autenticación de JWT puede validar las credenciales con éxito en entornos de prueba locales.
 
 ---
 
@@ -82,7 +82,7 @@ sequenceDiagram
 ### A. Leaderboard (Ranking Global)
 *   **Path:** `GET /api/rankings?page=0&size=10`
 *   **Respuesta:** `Slice<RankingDto>`
-*   **Seguridad:** Configurado con **`.requestMatchers("/api/rankings").permitAll()`** en [SecurityConfig.java](file:///c:/Users/Usuario/OneDrive/Documentos/GitHub/tpi-pokemon-2w1-15/BE/src/main/java/ar/edu/utn/frc/tup/piii/configs/SecurityConfig.java) para permitir su consulta de forma pública y anónima. Valida parámetros negativos (page < 0, size < 1) y limita el tamaño máximo de página (`cappedSize = 50`) para evitar consultas excesivas de memoria.
+*   **Seguridad:** Configurado con **`.requestMatchers("/api/rankings").permitAll()`** en [SecurityConfig.java](../../BE/src/main/java/ar/edu/utn/frc/tup/piii/configs/SecurityConfig.java) para permitir su consulta de forma pública y anónima. Valida parámetros negativos (page < 0, size < 1) y limita el tamaño máximo de página (`cappedSize = 50`) para evitar consultas excesivas de memoria.
 *   **Estructura del DTO:**
     ```java
     public record RankingDto(String username, Long wins) {}
