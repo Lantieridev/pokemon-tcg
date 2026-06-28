@@ -979,11 +979,6 @@ public final class RuleValidator {
                     }
                 }
             }
-            if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PARABOLIC_CHARGE) {
-                if (action.cardIds().size() > req.maxSelections()) {
-                    return new ValidationResult.Invalid("must_select_exact_amount");
-                }
-            }
             if (req.sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE) {
                 if (action.cardIds().size() != 1) {
                     return new ValidationResult.Invalid("must_select_exact_amount");
