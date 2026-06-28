@@ -1174,4 +1174,43 @@ class RuleValidatorTest {
         org.junit.jupiter.api.Assertions.assertEquals(expectedReason,
                 ((ValidationResult.Invalid) result).reason());
     }
+
+    // --- Additional Trainer Effect Validation Tests ---
+    
+    @Test
+    void shouldReturnInvalidWhenEvosodaTargetIsNull() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "evosoda", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "target_pokemon_required");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenMaxReviveAndNoBasicInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "max-revive", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_basic_pokemon_in_discard_pile");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenRedCardAndOpponentHandEmpty() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "red-card", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RED_CARD));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "opponent_hand_is_empty");
+    }
+
+    @Test
+    void shouldReturnInvalidWhenSacredAshAndNoPokemonInDiscard() {
+        when(turnManager.requireMainPhase()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.MainPhase());
+        ValidationResult result = validator.validate(new PlayTrainerAction(
+                TrainerType.ITEM, null, "sacred-ash", ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH));
+        assertInstanceOf(ValidationResult.Invalid.class, result);
+        assertInvalidReason(result, "no_pokemon_in_discard_pile");
+    }
 }
