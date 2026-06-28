@@ -13,7 +13,7 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
 @Component({
   selector: 'app-profile-aurora',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent, HoloCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule, StatComponent, IconComponent, AmbientComponent, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">

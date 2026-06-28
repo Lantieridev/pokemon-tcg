@@ -12,7 +12,7 @@ import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 @Component({
   selector: 'app-store',
   standalone: true,
-  imports: [CommonModule, IconComponent, CoinIconComponent, HoloCardComponent],
+  imports: [CommonModule, CoinIconComponent, HoloCardComponent],
   templateUrl: './store.component.html',
   styleUrl: './store.component.css'
 })

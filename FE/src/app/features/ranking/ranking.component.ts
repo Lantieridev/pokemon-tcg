@@ -6,7 +6,7 @@ import { AmbientComponent, SparksComponent, IconComponent } from '../lobby-auror
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [CommonModule, AmbientComponent, SparksComponent, IconComponent],
+  imports: [CommonModule, AmbientComponent, SparksComponent],
   templateUrl: './ranking.component.html',
   styleUrl: './ranking.component.css'
 })

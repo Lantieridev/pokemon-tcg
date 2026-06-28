@@ -74,7 +74,7 @@
                   <div class="cell-content">
                     <img [src]="getRewardImage(level.freeRewardType, level.freeRewardValue)" 
                          class="cell-img" 
-                         [ngClass]="'img-' + (level.freeRewardType?.toLowerCase() || 'default')"
+                         [ngClass]="'img-' + (level.freeRewardType.toLowerCase() || 'default')"
                          (error)="onImageError($event, level.freeRewardType)" />
                     @if (level.freeRewardType === 'COINS' || level.freeRewardType === 'STARDUST') {
                       <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.freeRewardAmount || level.freeRewardValue }}</span>
@@ -118,7 +118,7 @@
                 <div class="cell-content">
                   <img [src]="getRewardImage(level.premiumRewardType, level.premiumRewardValue)" 
                        class="cell-img" 
-                       [ngClass]="'img-' + (level.premiumRewardType?.toLowerCase() || 'default')"
+                       [ngClass]="'img-' + (level.premiumRewardType.toLowerCase() || 'default')"
                        (error)="onImageError($event, level.premiumRewardType)" />
                   @if (level.premiumRewardType === 'COINS' || level.premiumRewardType === 'STARDUST') {
                     <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.premiumRewardAmount || level.premiumRewardValue }}</span>
