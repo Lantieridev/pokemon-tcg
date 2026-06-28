@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test", "cypress:open": "cypress open", "cypress:run": "cypress run"
+    "test": "ng test",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "prettier": {
     "printWidth": 100,
@@ -30,10 +32,7 @@
     "@angular/router": "^20.3.0",
     "@stomp/stompjs": "^7.3.0",
     "@types/sockjs-client": "^1.5.4",
-    "jimp": "^1.6.1",
-    "pg": "^8.21.0",
     "rxjs": "~7.8.0",
-    "sharp": "^0.35.2",
     "sockjs-client": "^1.6.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -46,12 +45,15 @@
     "autoprefixer": "^10.5.0",
     "cypress": "^15.18.0",
     "jasmine-core": "~5.9.0",
+    "jimp": "^1.6.1",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "pg": "^8.22.0",
     "postcss": "^8.5.15",
+    "sharp": "^0.35.2",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"
   }

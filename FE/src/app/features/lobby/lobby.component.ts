@@ -44,9 +44,6 @@ export class LobbyComponent {
     this.isSearching.set(true);
     this.startSearchTimer();
     try {
-      if (!this.authService.isAuthenticated()) {
-        await this.authService.ensureDevUserAuthenticated('AshRivero', 'password123');
-      }
       const currentUsername = this.authService.username ?? 'AshRivero';
 
       const res = await firstValueFrom(this.matchBackendService.createMatch(currentUsername, 'GarryBot', 1, 1));
