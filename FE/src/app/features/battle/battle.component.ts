@@ -510,7 +510,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.showFilledProgress.set(false);
           const sub = this.profileService.getAchievements(username).subscribe({
             next: (data) => {
-              const filtered = data.filter(a => a.category !== 'DEFECTO' && !a.unlocked && a.progress < a.target);
+              const filtered = data.filter(a => a.category !== 'DEFECTO' && !a.unlocked && a.progress > 0 && a.progress < a.target);
               this.achievements.set(filtered);
               
               // Brief delay before starting the progress bar animation
