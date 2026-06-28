@@ -57,3 +57,6 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+# Coverage
+*.exec
+jacoco.exec
