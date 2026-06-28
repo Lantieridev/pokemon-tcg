@@ -9,6 +9,7 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserShowcaseEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.DeckEntity;
+import ar.edu.utn.frc.tup.piii.persistence.entity.DeckCardEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseRepository;
@@ -197,9 +198,20 @@ public class ProfileServiceImpl implements ProfileService {
 
         UserProfileResponseDTO.ShowcasedDeck showcasedDeckDto = null;
         if (user.getShowcasedDeck() != null) {
+            List<UserProfileResponseDTO.ShowcasedDeckCard> cardsList = new ArrayList<>();
+            if (user.getShowcasedDeck().getCards() != null) {
+                for (DeckCardEntity dce : user.getShowcasedDeck().getCards()) {
+                    cardsList.add(UserProfileResponseDTO.ShowcasedDeckCard.builder()
+                            .cardId(dce.getCard().getId())
+                            .cardName(dce.getCard().getName())
+                            .quantity(dce.getQuantity())
+                            .build());
+                }
+            }
             showcasedDeckDto = UserProfileResponseDTO.ShowcasedDeck.builder()
                     .id(user.getShowcasedDeck().getId())
                     .name(user.getShowcasedDeck().getName())
+                    .cards(cardsList)
                     .build();
         }
 

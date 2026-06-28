@@ -73,6 +73,7 @@ export interface UserProfileResponseDTO {
   showcasedDeck: {
     id: number;
     name: string;
+    cards?: { cardId: string; cardName: string; quantity: number }[];
   } | null;
   advancedStats: AdvancedStatsDTO | null;
 }

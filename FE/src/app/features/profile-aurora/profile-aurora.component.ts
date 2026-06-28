@@ -140,17 +140,34 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
                   </div>
 
                   @if (profileData?.showcasedDeck) {
-                    <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 20px;">
-                      <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
-                        <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 16px;">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
+                          <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
+                        </div>
+                        <div>
+                          <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profileData?.showcasedDeck?.name }}</div>
+                          <div style="font-size: 11px; color: var(--mut);">ID: #{{ profileData?.showcasedDeck?.id }}</div>
+                        </div>
+                        <button (click)="removeShowcasedDeck()" style="margin-left: auto; background: transparent; border: 1px solid #ef444455; color: #ef4444; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.15s;" class="danger-btn-hover">
+                          Quitar
+                        </button>
                       </div>
-                      <div>
-                        <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profileData?.showcasedDeck?.name }}</div>
-                        <div style="font-size: 11px; color: var(--mut);">ID: #{{ profileData?.showcasedDeck?.id }}</div>
-                      </div>
-                      <button (click)="removeShowcasedDeck()" style="margin-left: auto; background: transparent; border: 1px solid #ef444455; color: #ef4444; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.15s;" class="danger-btn-hover">
-                        Quitar
-                      </button>
+
+                      @if (profileData?.showcasedDeck?.cards && profileData!.showcasedDeck!.cards!.length > 0) {
+                        <div class="scroll" style="max-height: 380px; overflow-y: auto; padding-right: 8px; margin-bottom: 20px;">
+                          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 16px;">
+                            @for (card of profileData?.showcasedDeck?.cards; track card.cardId) {
+                              <div style="position: relative; aspect-ratio: 5/7; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2);">
+                                <img [src]="getCardImageById(card.cardId)" [alt]="card.cardName" style="width: 100%; height: 100%; object-fit: contain;" />
+                                <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.75); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700; color: #fff; font-family: 'Space Grotesk', sans-serif;">
+                                  x{{ card.quantity }}
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
                     </div>
                   } @else {
                     <div style="padding: 24px; border: 1px dashed var(--line); border-radius: 14px; text-align: center; color: var(--mut); font-size: 13.5px; font-weight: 600; margin-bottom: 20px;">
