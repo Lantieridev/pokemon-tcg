@@ -9,7 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-battle-pass',
   standalone: true,
-  imports: [CommonModule, IconComponent, CoinIconComponent],
+  imports: [CommonModule, CoinIconComponent],
   templateUrl: './battle-pass.component.html',
   styleUrl: './battle-pass.component.css'
 })

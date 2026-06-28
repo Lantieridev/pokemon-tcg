@@ -8,7 +8,7 @@ import { StatComponent, IconComponent, TrainerChipComponent } from '../../../fea
 @Component({
   selector: 'app-public-profile-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatComponent, IconComponent, TrainerChipComponent],
+  imports: [CommonModule, FormsModule, StatComponent, IconComponent],
   templateUrl: './public-profile-modal.component.html',
   styleUrls: ['./public-profile-modal.component.css']
 })
