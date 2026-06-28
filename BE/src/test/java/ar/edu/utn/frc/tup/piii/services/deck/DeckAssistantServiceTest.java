@@ -68,4 +68,17 @@ class DeckAssistantServiceTest {
         assertTrue(suggestsFireEnergy, "Should suggest Fire Energy for Charmander");
         assertTrue(suggestsSycamore, "Should suggest Professor Sycamore");
     }
+
+    @Test
+    void generateWizardDeck_coversAllFallbackThemes() {
+        List<String> themes = List.of(
+                "fire", "water", "lightning", "psychic", "fighting",
+                "darkness", "metal", "fairy", "colorless", "grass"
+        );
+        for (String theme : themes) {
+            List<DeckCardRequestDTO> deck = service.generateWizardDeck(theme);
+            int total = deck.stream().mapToInt(DeckCardRequestDTO::quantity).sum();
+            assertEquals(60, total, "Deck for theme " + theme + " must have exactly 60 cards");
+        }
+    }
 }
