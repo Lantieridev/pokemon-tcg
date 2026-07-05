@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,5 +86,45 @@ class RestClientPokemonTcgApiClientTest {
         assertTrue(result.isPresent());
         assertEquals(1, result.get().subtypes().size());
         assertEquals("Basic", result.get().subtypes().get(0));
+    }
+
+    @Test
+    void findBySetIds_returnsCardsWithImagesAndTypes() {
+        server.expect(request -> {
+                    final String uri = request.getURI().toString();
+                    assertTrue(uri.contains("pageSize=350"));
+                    assertTrue(uri.contains("xy1"));
+                    assertTrue(uri.contains("xy2"));
+                })
+                .andRespond(withSuccess("""
+                        {
+                          "data": [
+                            {
+                              "id": "xy1-1",
+                              "name": "Venusaur-EX",
+                              "supertype": "Pokémon",
+                              "subtypes": ["Basic", "EX"],
+                              "types": ["Grass"],
+                              "hp": "180",
+                              "images": { "small": "https://images.pokemontcg.io/xy1/1.png", "large": "https://images.pokemontcg.io/xy1/1_hires.png" },
+                              "set": { "id": "xy1", "name": "XY" }
+                            }
+                          ]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        final List<PokemonTcgCardDTO> result = client.findBySetIds(List.of("xy1", "xy2"));
+
+        assertEquals(1, result.size());
+        assertEquals("xy1-1", result.get(0).id());
+        assertEquals(List.of("Grass"), result.get(0).types());
+        assertEquals("https://images.pokemontcg.io/xy1/1.png", result.get(0).images().small());
+    }
+
+    @Test
+    void findBySetIds_returnsEmptyListForEmptyInput() {
+        final List<PokemonTcgCardDTO> result = client.findBySetIds(List.of());
+
+        assertTrue(result.isEmpty());
     }
 }

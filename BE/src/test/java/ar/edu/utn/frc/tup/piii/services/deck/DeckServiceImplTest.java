@@ -145,8 +145,8 @@ class DeckServiceImplTest {
     void create_fetchesCardFromApiWhenNotInDb() {
         final UserEntity user = UserEntity.builder().id(1L).username("player").build();
         final PokemonTcgCardDTO apiCard = new PokemonTcgCardDTO(
-                "xy1-1", "Bulbasaur", "Pokémon", List.of("Basic"),
-                "60", null, null, null, null, null,
+                "xy1-1", "Bulbasaur", "Pokémon", List.of("Basic"), null,
+                "60", null, null, null, null, null, null,
                 new PokemonTcgSetDTO("xy1", "XY"));
         final CardEntity savedCard = buildCardEntity("xy1-1", "Bulbasaur", "Pokémon", "Basic");
 

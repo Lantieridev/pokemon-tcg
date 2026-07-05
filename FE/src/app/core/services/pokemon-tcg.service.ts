@@ -4,11 +4,11 @@ import { tap } from 'rxjs/operators';
 import { PokemonTcgCard } from '../models/game-state.models';
 
 const CACHE_KEY = 'xy1_xy2_cards_cache';
-const API_URL = 'https://api.pokemontcg.io/v2/cards?q=(set.id:xy1 OR set.id:xy2)&pageSize=350';
 
 @Injectable({ providedIn: 'root' })
 export class PokemonTcgService {
   private http = inject(HttpClient);
+  private readonly API_URL = 'http://localhost:8081/api/cards';
 
   /** Las 146 cartas del set XY1 */
   readonly cards = signal<PokemonTcgCard[]>([]);
@@ -38,15 +38,14 @@ export class PokemonTcgService {
       }
     }
 
-    // Fetch desde la API (solo si no hay caché)
+    // Fetch desde nuestro backend (nunca directo a la API externa)
     this.isLoading.set(true);
     this.loadError.set(null);
 
     this.http
-      .get<{ data: PokemonTcgCard[] }>(API_URL)
+      .get<PokemonTcgCard[]>(`${this.API_URL}/catalog?setIds=xy1,xy2`)
       .pipe(
-        tap((res) => {
-          const data = res.data || [];
+        tap((data) => {
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
           this.cards.set(data);
           this.isLoading.set(false);
