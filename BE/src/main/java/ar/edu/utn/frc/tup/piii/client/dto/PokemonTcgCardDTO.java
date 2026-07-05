@@ -9,11 +9,13 @@ public record PokemonTcgCardDTO(
         String name,
         String supertype,
         List<String> subtypes,
+        List<String> types,
         String hp,
         List<String> rules,
         Object attacks,
         Object weaknesses,
         Object resistances,
         @JsonProperty("retreatCost") List<String> retreatCost,
+        PokemonTcgImagesDTO images,
         PokemonTcgSetDTO set
 ) {}
