@@ -319,7 +319,7 @@ class MatchPersistenceTest {
 
 
     @Test
-    void testGetUserMatchHistoryIntegration() {
+    void testGetUserMatchHistoryIntegration() throws InterruptedException {
         // Clear all matches to have controlled database state
         matchLogRepository.deleteAll();
         matchRepository.deleteAll();
@@ -331,13 +331,17 @@ class MatchPersistenceTest {
         final UserEntity charlie = userRepository.findFirstByUsername("user-z").orElseGet(() ->
                 userRepository.save(UserEntity.builder().username("user-z").email("z@z.com").password("pwd").build()));
 
-        // Seed matches:
+        // Seed matches. `createdAt` is stamped by Hibernate's @CreationTimestamp at save time
+        // (any value set here would be silently overwritten), so saves are spaced out with a
+        // real delay to guarantee a distinguishable, deterministic creation order to sort by.
         // Match 1: Alice vs Bob, finished, Alice wins
-        matchRepository.save(MatchEntity.builder().id(3001L).status("FINISHED").player1(alice).player2(bob).winner(alice).createdAt(java.time.LocalDateTime.now().minusMinutes(10)).build());
+        matchRepository.saveAndFlush(MatchEntity.builder().id(3001L).status("FINISHED").player1(alice).player2(bob).winner(alice).build());
+        sleepToAdvanceClock();
         // Match 2: Bob vs Charlie, finished, Bob wins
-        matchRepository.save(MatchEntity.builder().id(3002L).status("FINISHED").player1(bob).player2(charlie).winner(bob).createdAt(java.time.LocalDateTime.now().minusMinutes(5)).build());
+        matchRepository.saveAndFlush(MatchEntity.builder().id(3002L).status("FINISHED").player1(bob).player2(charlie).winner(bob).build());
+        sleepToAdvanceClock();
         // Match 3: Alice vs Charlie, ACTIVE (in progress), winner null
-        matchRepository.save(MatchEntity.builder().id(3003L).status("ACTIVE").player1(alice).player2(charlie).winner(null).createdAt(java.time.LocalDateTime.now()).build());
+        matchRepository.saveAndFlush(MatchEntity.builder().id(3003L).status("ACTIVE").player1(alice).player2(charlie).winner(null).build());
 
         // Get history for Alice: should contain Match 1 and Match 3, but NOT Match 2
         final Slice<MatchHistoryProjectionDto> rawHistoryAlice = matchRepository.findUserMatchHistory("user-x", PageRequest.of(0, 10));
@@ -606,6 +610,15 @@ class MatchPersistenceTest {
         assertNotNull(restoredRuntimeB);
         assertFalse(restoredRuntimeB.isKnockedOutLastTurn());
         assertEquals(5, restoredRuntimeB.getStartingPrizeCount());
+    }
+
+    /**
+     * @CreationTimestamp resolution can be coarser than back-to-back saves in a test
+     * (observed on Windows clocks with ~15ms tick resolution). Sleeping past that
+     * guarantees each save gets a strictly later, distinguishable createdAt.
+     */
+    private static void sleepToAdvanceClock() throws InterruptedException {
+        Thread.sleep(20);
     }
 }
 
