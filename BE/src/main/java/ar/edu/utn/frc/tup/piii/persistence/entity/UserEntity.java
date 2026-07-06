@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,9 +44,6 @@ public class UserEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "showcased_deck_id")
     private DeckEntity showcasedDeck;
-
-    @Column(name = "stardust")
-    private Integer stardust;
 
     @Column(name = "packs", nullable = false)
     @Builder.Default
@@ -137,4 +135,14 @@ public class UserEntity {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    /**
+     * Optimistic lock for currency-mutating operations (buyItem, openPack, purchasePremium,
+     * claimReward). Without this, two concurrent requests for the same user can both read the
+     * same pre-deduction balance and both pass their "can afford this" check before either
+     * commits — a double-spend. Hibernate now rejects the losing concurrent write instead.
+     */
+    @Version
+    @Column(name = "version")
+    private Long version;
 }

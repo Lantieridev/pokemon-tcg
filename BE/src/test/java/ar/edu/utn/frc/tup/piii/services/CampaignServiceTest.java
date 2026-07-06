@@ -7,6 +7,8 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
+import ar.edu.utn.frc.tup.piii.dtos.deck.DeckResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +28,7 @@ class CampaignServiceTest {
     private CardMapper cardMapper;
     private MatchCreationService matchCreationService;
     private CardResolutionService cardResolutionService;
+    private DeckService deckService;
 
     private CampaignService campaignService;
 
@@ -36,9 +39,10 @@ class CampaignServiceTest {
         cardMapper = mock(CardMapper.class);
         matchCreationService = mock(MatchCreationService.class);
         cardResolutionService = mock(CardResolutionService.class);
+        deckService = mock(DeckService.class);
 
         campaignService = new CampaignService(
-                userRepository, cardRepository, cardMapper, matchCreationService, cardResolutionService
+                userRepository, cardRepository, cardMapper, matchCreationService, cardResolutionService, deckService
         );
     }
 
@@ -113,11 +117,28 @@ class CampaignServiceTest {
                 .clearedStoryNodes(new HashSet<>()) // node 1 is unlocked by default
                 .build();
         when(userRepository.findFirstByUsername("testUser")).thenReturn(Optional.of(user));
+        when(deckService.getById(10L, "testUser")).thenReturn(mock(DeckResponseDTO.class));
         when(cardResolutionService.resolveCards(10L)).thenReturn(List.of()); // Empty deck
 
         assertThatThrownBy(() -> campaignService.iniciarDesafioPvE("testUser", 1, 10L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("El mazo seleccionado está vacío o no es válido.");
+    }
+
+    @Test
+    void iniciarDesafioPvE_whenDeckNotOwnedByPlayer_throwsAccessDenied() {
+        UserEntity user = UserEntity.builder()
+                .username("testUser")
+                .clearedStoryNodes(new HashSet<>())
+                .build();
+        when(userRepository.findFirstByUsername("testUser")).thenReturn(Optional.of(user));
+        when(deckService.getById(10L, "testUser"))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("not your deck"));
+
+        assertThatThrownBy(() -> campaignService.iniciarDesafioPvE("testUser", 1, 10L))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+
+        verify(cardResolutionService, never()).resolveCards(any());
     }
 
     @Test
@@ -127,6 +148,7 @@ class CampaignServiceTest {
                 .clearedStoryNodes(new HashSet<>())
                 .build();
         when(userRepository.findFirstByUsername("testUser")).thenReturn(Optional.of(user));
+        when(deckService.getById(10L, "testUser")).thenReturn(mock(DeckResponseDTO.class));
 
         // Player deck of 60 cards
         List<Card> playerDeck = new ArrayList<>();

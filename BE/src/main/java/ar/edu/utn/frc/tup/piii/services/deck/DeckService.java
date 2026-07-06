@@ -9,15 +9,13 @@ import java.util.List;
 
 public interface DeckService {
 
-    List<DeckSummaryDTO> getAll();
+    List<DeckSummaryDTO> getByUsername(String username);
 
-    List<DeckSummaryDTO> getByUserId(Long userId);
+    DeckResponseDTO getById(Long id, String requestingUsername);
 
-    DeckResponseDTO getById(Long id);
+    DeckResponseDTO create(DeckRequestDTO request, String requestingUsername);
 
-    DeckResponseDTO create(DeckRequestDTO request);
+    DeckResponseDTO update(Long id, DeckRequestDTO request, String requestingUsername);
 
-    DeckResponseDTO update(Long id, DeckRequestDTO request);
-
-    void delete(Long id);
+    void delete(Long id, String requestingUsername);
 }

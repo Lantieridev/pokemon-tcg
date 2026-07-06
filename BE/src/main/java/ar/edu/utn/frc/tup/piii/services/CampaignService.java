@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class CampaignService {
     private final CardMapper cardMapper;
     private final MatchCreationService matchCreationService;
     private final CardResolutionService cardResolutionService;
+    private final DeckService deckService;
 
     // Configuración estática de los gimnasios
     public static final List<CampaignNodeInfo> NODES = List.of(
@@ -97,6 +99,9 @@ public class CampaignService {
         if (!isUnlocked) {
             throw new IllegalArgumentException("Este nodo de la campaña se encuentra bloqueado.");
         }
+
+        // Verificar que el mazo pertenezca al jugador antes de usarlo (lanza si no coincide el dueño)
+        deckService.getById(deckId, username);
 
         // Resolver mazo del jugador
         List<Card> deckA = cardResolutionService.resolveCards(deckId);

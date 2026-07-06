@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
 
 /**
  * Orchestrates public matchmaking (queue) and private room matching.
@@ -36,6 +37,7 @@ public final class LobbyService {
     private final SimpMessagingTemplate messaging;
     private final PenaltyService penaltyService;
     private final UserRepository userRepository;
+    private final DeckService deckService;
 
     /** Guards the "poll + enqueue" section to avoid pairing a player with themselves
      * or creating duplicate matches when two requests arrive concurrently. */
@@ -54,7 +56,8 @@ public final class LobbyService {
                         final CardResolutionService cardResolutionService,
                         final SimpMessagingTemplate messaging,
                         final PenaltyService penaltyService,
-                        final UserRepository userRepository) {
+                        final UserRepository userRepository,
+                        final DeckService deckService) {
         this.lobbyQueue = Objects.requireNonNull(lobbyQueue, "lobbyQueue must not be null");
         this.matchCreationService = Objects.requireNonNull(matchCreationService,
                 "matchCreationService must not be null");
@@ -63,6 +66,7 @@ public final class LobbyService {
         this.messaging = Objects.requireNonNull(messaging, "messaging must not be null");
         this.penaltyService = Objects.requireNonNull(penaltyService, "penaltyService must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
+        this.deckService = Objects.requireNonNull(deckService, "deckService must not be null");
     }
 
     // ── Public matchmaking ────────────────────────────────────────────────────
@@ -85,6 +89,7 @@ public final class LobbyService {
     public LobbyResponseDTO joinQueue(final String playerId, final Long deckId, final Boolean isRanked) {
         Objects.requireNonNull(playerId, "playerId must not be null");
         Objects.requireNonNull(deckId, "deckId must not be null");
+        deckService.getById(deckId, playerId);
 
         final boolean ranked = Boolean.TRUE.equals(isRanked);
 
@@ -172,6 +177,7 @@ public final class LobbyService {
     public LobbyResponseDTO createRoom(final String playerId, final Long deckId) {
         Objects.requireNonNull(playerId, "playerId must not be null");
         Objects.requireNonNull(deckId, "deckId must not be null");
+        deckService.getById(deckId, playerId);
 
         final String roomCode = lobbyQueue.createRoom(playerId, deckId);
         return LobbyResponseDTO.waiting(roomCode);
@@ -196,6 +202,7 @@ public final class LobbyService {
         Objects.requireNonNull(roomCode, "roomCode must not be null");
         Objects.requireNonNull(joiningPlayerId, "joiningPlayerId must not be null");
         Objects.requireNonNull(deckId, "deckId must not be null");
+        deckService.getById(deckId, joiningPlayerId);
 
         final LobbyQueue.RoomEntry room = lobbyQueue.consumeRoom(roomCode)
                 .orElseThrow(() -> new NoSuchElementException("Room not found: " + roomCode));

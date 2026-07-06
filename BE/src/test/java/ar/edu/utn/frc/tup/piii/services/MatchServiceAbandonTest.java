@@ -191,4 +191,49 @@ class MatchServiceAbandonTest {
         verify(persistence).declareWinner(MATCH_ID, PLAYER_B_ID);
         verify(registry).remove(MATCH_ID);
     }
+
+    @Test
+    void shouldAwardBattlePointsToWinnerWhenRankedMatchIsSurrendered() {
+        final String rankedMatchId = "match-ranked-surrender";
+
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(
+                100, PokemonType.FIRE, null, null, false);
+        final PlayerState player0 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final PlayerState player1 = new PlayerState(active, List.of(), 45, 6, Map.of());
+        final MatchBoard board = new MatchBoard(List.of(player0, player1));
+
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime rankedRuntime0 =
+                mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime rankedRuntime1 =
+                mock(ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime.class);
+        when(rankedRuntime0.getActivePokemon()).thenReturn(active);
+        when(rankedRuntime1.getActivePokemon()).thenReturn(active);
+        when(rankedRuntime0.getBench()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.Bench());
+        when(rankedRuntime1.getBench()).thenReturn(new ar.edu.utn.frc.tup.piii.engine.model.Bench());
+        when(rankedRuntime0.getStatisticsTracker())
+                .thenReturn(new ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker());
+        when(rankedRuntime1.getStatisticsTracker())
+                .thenReturn(new ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker());
+
+        final MatchSession rankedSession = new MatchSession(
+                rankedMatchId, List.of(PLAYER_A_ID, PLAYER_B_ID), board,
+                List.of(rankedRuntime0, rankedRuntime1), true);
+        rankedSession.setup();
+        rankedSession.start();
+
+        when(registry.find(rankedMatchId)).thenReturn(Optional.of(rankedSession));
+
+        final UserEntity winner = UserEntity.builder().id(2L).username(PLAYER_B_ID).mmr(1000).battlePoints(5).build();
+        final UserEntity forfeiter = UserEntity.builder().id(1L).username(PLAYER_A_ID).mmr(1000).battlePoints(0).build();
+        when(userRepository.findFirstByUsername(PLAYER_A_ID)).thenReturn(Optional.of(forfeiter));
+        when(userRepository.findFirstByUsername(PLAYER_B_ID)).thenReturn(Optional.of(winner));
+        when(mmrCalculationService.calculateNewMmr(1000, 1000, true, 0)).thenReturn(1025);
+        when(mmrCalculationService.calculateNewMmr(1000, 1000, false, 0)).thenReturn(975);
+
+        matchService.surrenderMatch(rankedMatchId, PLAYER_A_ID);
+
+        assertEquals(15, winner.getBattlePoints()); // 5 already earned + 10 for this ranked win
+        verify(userRepository).save(winner);
+        verify(penaltyService).applyRankedBan(PLAYER_A_ID, 15);
+    }
 }

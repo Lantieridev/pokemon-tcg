@@ -153,4 +153,27 @@ class WebSocketConfigTest {
             interceptor.preSend(stompMessage, messageChannel);
         });
     }
+
+    @Test
+    void shouldRejectSubscribeWhenOwnUsernameIsOnlyATextualPrefixOfTheChannelOwner() {
+        final ArgumentCaptor<ChannelInterceptor> captor = ArgumentCaptor.forClass(ChannelInterceptor.class);
+        webSocketConfig.configureClientInboundChannel(channelRegistration);
+        verify(channelRegistration).interceptors(captor.capture());
+        final ChannelInterceptor interceptor = captor.getValue();
+
+        // Destination belongs to "john_doe2024" — "john_doe" is a textual prefix of it,
+        // which used to fool a contains()-based check.
+        final StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        accessor.setDestination("/topic/match/match-123/player/john_doe2024");
+        final UsernamePasswordAuthenticationToken auth = mock(UsernamePasswordAuthenticationToken.class);
+        when(auth.getName()).thenReturn("john_doe");
+        accessor.setUser(auth);
+        accessor.setLeaveMutable(true);
+        final Message<byte[]> stompMessage = org.springframework.messaging.support.MessageBuilder
+                .createMessage(new byte[0], accessor.getMessageHeaders());
+
+        assertThrows(org.springframework.messaging.MessagingException.class, () -> {
+            interceptor.preSend(stompMessage, messageChannel);
+        });
+    }
 }

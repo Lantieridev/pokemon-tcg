@@ -323,7 +323,6 @@ public class ProfileServiceImpl implements ProfileService {
                 .battlePoints(user.getBattlePoints() != null ? user.getBattlePoints() : 0)
                 .packs(totalPacks)
                 .packsInventory(pInv)
-                .stardust(user.getStardust() != null ? user.getStardust() : 0)
                 .statistics(stats)
                 .honors(honors.entrySet().stream()
                         .collect(java.util.stream.Collectors.toMap(e -> e.getKey().name(), java.util.Map.Entry::getValue)))
