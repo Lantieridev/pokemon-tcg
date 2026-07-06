@@ -33,7 +33,7 @@ public class PackServiceImplTest {
         userRepository = mock(UserRepository.class);
         cardRepository = mock(CardRepository.class);
         inventoryRepository = mock(UserShowcaseInventoryRepository.class);
-        packService = new PackServiceImpl(userRepository, cardRepository, inventoryRepository);
+        packService = new PackServiceImpl(userRepository, cardRepository, inventoryRepository, 5, 10, 50);
     }
 
     @Test

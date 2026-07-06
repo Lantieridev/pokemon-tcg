@@ -14,22 +14,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class DeckControllerTest {
+
+    private static final Principal PLAYER = () -> "player";
 
     private MockMvc mockMvc;
     private DeckService deckService;
@@ -41,7 +48,7 @@ class DeckControllerTest {
     void setUp() {
         deckService = mock(DeckService.class);
         ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService templateService = mock(ar.edu.utn.frc.tup.piii.services.deck.DeckTemplateService.class);
-        
+
         final DeckResponseDTO template = new DeckResponseDTO(
                 -1L, "Template", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.PRECONSTRUCTED, LocalDateTime.now(), List.of());
         when(templateService.getTemplateById(any(Long.class))).thenReturn(template);
@@ -54,38 +61,26 @@ class DeckControllerTest {
     }
 
     @Test
-    void getAll_returns200WithEmptyList() throws Exception {
-        when(deckService.getAll()).thenReturn(List.of());
-
-        mockMvc.perform(get("/api/decks"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
-    void getAll_returns200WithDeckList() throws Exception {
-        when(deckService.getAll()).thenReturn(List.of(
-                new DeckSummaryDTO(1L, "Fire Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), 60),
-                new DeckSummaryDTO(2L, "Water Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), 60)
+    void getMine_returns200WithOnlyTheCallersDeck() throws Exception {
+        when(deckService.getByUsername("player")).thenReturn(List.of(
+                new DeckSummaryDTO(1L, "Fire Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), 60)
         ));
 
-        mockMvc.perform(get("/api/decks"))
+        mockMvc.perform(get("/api/decks/mine").principal(PLAYER))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Fire Deck"))
-                .andExpect(jsonPath("$[1].name").value("Water Deck"));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Fire Deck"));
     }
 
     @Test
-    void getById_returns200WithDeck() throws Exception {
+    void getById_returns200WithDeckWhenOwnerMatches() throws Exception {
         final DeckResponseDTO response = new DeckResponseDTO(
                 42L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(),
                 List.of(new DeckCardResponseDTO("xy1-1", "Bulbasaur", "Pokémon", "Basic", 4)));
 
-        when(deckService.getById(42L)).thenReturn(response);
+        when(deckService.getById(42L, "player")).thenReturn(response);
 
-        mockMvc.perform(get("/api/decks/42"))
+        mockMvc.perform(get("/api/decks/42").principal(PLAYER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(42))
                 .andExpect(jsonPath("$.name").value("My Deck"))
@@ -95,10 +90,18 @@ class DeckControllerTest {
 
     @Test
     void getById_returns404WhenNotFound() throws Exception {
-        when(deckService.getById(99L)).thenThrow(new NoSuchElementException("Deck not found: 99"));
+        when(deckService.getById(99L, "player")).thenThrow(new NoSuchElementException("Deck not found: 99"));
 
-        mockMvc.perform(get("/api/decks/99"))
+        mockMvc.perform(get("/api/decks/99").principal(PLAYER))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getById_returns403WhenRequesterIsNotOwner() throws Exception {
+        when(deckService.getById(42L, "attacker")).thenThrow(new AccessDeniedException("Deck 42 does not belong to attacker"));
+
+        mockMvc.perform(get("/api/decks/42").principal((Principal) () -> "attacker"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -106,12 +109,13 @@ class DeckControllerTest {
         final DeckResponseDTO response = new DeckResponseDTO(
                 7L, "New Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), List.of());
 
-        when(deckService.create(any(DeckRequestDTO.class))).thenReturn(response);
+        when(deckService.create(any(DeckRequestDTO.class), eq("player"))).thenReturn(response);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "New Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("New Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
         mockMvc.perform(post("/api/decks")
+                        .principal(PLAYER)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -121,40 +125,72 @@ class DeckControllerTest {
 
     @Test
     void create_returns400WhenValidationFails() throws Exception {
-        when(deckService.create(any(DeckRequestDTO.class)))
+        when(deckService.create(any(DeckRequestDTO.class), eq("player")))
                 .thenThrow(new InvalidDeckException("Deck must contain exactly 60 cards, but has 59"));
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "Bad Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("Bad Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 59)));
 
         mockMvc.perform(post("/api/decks")
+                        .principal(PLAYER)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void create_returns404WhenUserNotFound() throws Exception {
-        when(deckService.create(any(DeckRequestDTO.class)))
-                .thenThrow(new NoSuchElementException("User not found: 999"));
+    void update_returns200WithUpdatedDeckWhenOwnerMatches() throws Exception {
+        final DeckResponseDTO response = new DeckResponseDTO(
+                42L, "Renamed Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), List.of());
+        when(deckService.update(eq(42L), any(DeckRequestDTO.class), eq("player"))).thenReturn(response);
 
-        final DeckRequestDTO request = new DeckRequestDTO(999L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
-                List.of(new DeckCardRequestDTO("xy1-1", 60)));
+        final DeckRequestDTO request = new DeckRequestDTO("Renamed Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
 
-        mockMvc.perform(post("/api/decks")
+        mockMvc.perform(put("/api/decks/42")
+                        .principal(PLAYER)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Renamed Deck"));
     }
 
     @Test
-    void cloneTemplate_returns201WithCreatedDeck() throws Exception {
+    void update_returns403WhenRequesterIsNotOwner() throws Exception {
+        when(deckService.update(eq(42L), any(DeckRequestDTO.class), eq("attacker")))
+                .thenThrow(new AccessDeniedException("Deck 42 does not belong to attacker"));
+
+        final DeckRequestDTO request = new DeckRequestDTO("Renamed Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
+
+        mockMvc.perform(put("/api/decks/42")
+                        .principal((Principal) () -> "attacker")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void delete_returns204WhenOwnerMatches() throws Exception {
+        mockMvc.perform(delete("/api/decks/42").principal(PLAYER))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void delete_returns403WhenRequesterIsNotOwner() throws Exception {
+        org.mockito.Mockito.doThrow(new AccessDeniedException("Deck 42 does not belong to attacker"))
+                .when(deckService).delete(42L, "attacker");
+
+        mockMvc.perform(delete("/api/decks/42").principal((Principal) () -> "attacker"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cloneTemplate_returns201WithCreatedDeckOwnedByCaller() throws Exception {
         final DeckResponseDTO response = new DeckResponseDTO(
                 10L, "Template (Copia)", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, LocalDateTime.now(), List.of());
 
-        when(deckService.create(any(DeckRequestDTO.class))).thenReturn(response);
+        when(deckService.create(any(DeckRequestDTO.class), eq("player"))).thenReturn(response);
 
-        mockMvc.perform(post("/api/decks/users/1/clone/-1"))
+        mockMvc.perform(post("/api/decks/clone/-1").principal(PLAYER))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.name").value("Template (Copia)"));

@@ -32,7 +32,7 @@ public class BattlePassServiceImplTest {
         userRepository = mock(UserRepository.class);
         userBattlePassRepository = mock(UserBattlePassRepository.class);
         battlePassLevelRepository = mock(BattlePassLevelRepository.class);
-        battlePassService = new BattlePassServiceImpl(userRepository, userBattlePassRepository, battlePassLevelRepository);
+        battlePassService = new BattlePassServiceImpl(userRepository, userBattlePassRepository, battlePassLevelRepository, 1000);
     }
 
     @Test
@@ -49,7 +49,7 @@ public class BattlePassServiceImplTest {
         UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(true).claimedFreeLevel(1).claimedPremiumLevel(0).build();
 
         BattlePassLevelEntity level1 = BattlePassLevelEntity.builder().level(1).requiredXp(100).freeRewardType("COINS").freeRewardAmount(100).build();
-        BattlePassLevelEntity level2 = BattlePassLevelEntity.builder().level(2).requiredXp(200).freeRewardType("STARDUST").freeRewardAmount(50).build();
+        BattlePassLevelEntity level2 = BattlePassLevelEntity.builder().level(2).requiredXp(200).freeRewardType("PACK").freeRewardAmount(1).build();
 
         when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
         when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
@@ -159,6 +159,45 @@ public class BattlePassServiceImplTest {
         assertEquals(1, userPass.getClaimedFreeLevel());
         verify(userRepository, times(1)).save(user);
         verify(userBattlePassRepository, times(1)).saveAndFlush(userPass);
+    }
+
+    /**
+     * Regression guard: BattlePassServiceImpl.grantReward normalizes the PACK reward's
+     * free-text value (e.g. "Alola Sol/Luna") into an inventory key (e.g. "pack_alola_solluna"),
+     * and PackServiceImpl.getPackTier maps that exact key to a rarity tier. The two are only
+     * connected by this string convention, with nothing enforcing it at compile time — this
+     * pins the highest-tier, trickiest-to-normalize case (a "/" in the name) so a future change
+     * to either side breaks a test instead of silently degrading everyone's top-tier pack reward.
+     */
+    @Test
+    public void testClaimRewardPackNormalizesSlashInValueToMatchPackServiceTierKey() {
+        UserEntity user = UserEntity.builder()
+                .id(1L)
+                .username("lucas")
+                .xp(50000)
+                .packs(0)
+                .unlockedTitles(new HashSet<>())
+                .unlockedAvatars(new HashSet<>())
+                .packsInventory(new java.util.HashMap<>())
+                .build();
+        UserBattlePassEntity userPass = UserBattlePassEntity.builder().userId(1L).isPremium(true).claimedPremiumLevel(0).build();
+        BattlePassLevelEntity level = BattlePassLevelEntity.builder()
+                .level(1)
+                .requiredXp(100)
+                .premiumRewardType("PACK")
+                .premiumRewardAmount(1)
+                .premiumRewardValue("Alola Sol/Luna")
+                .build();
+
+        when(userRepository.findFirstByUsername("lucas")).thenReturn(Optional.of(user));
+        when(userBattlePassRepository.findByUserId(1L)).thenReturn(Optional.of(userPass));
+        when(battlePassLevelRepository.findById(1)).thenReturn(Optional.of(level));
+
+        battlePassService.claimReward("lucas", 1, true);
+
+        // Must match the "pack_alola_solluna" case (tier 7) in PackServiceImpl.getPackTier —
+        // any other key would silently fall through to its default (tier 1, common pack).
+        assertEquals(1, user.getPacksInventory().get("pack_alola_solluna"));
     }
 
     @Test

@@ -16,6 +16,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,26 +57,30 @@ class DeckServiceImplTest {
         service = new DeckServiceImpl(deckRepository, cardRepository, userRepository, apiClient, validator);
     }
 
-    // --- getAll ---
+    // --- getByUsername ---
 
     @Test
-    void getAll_returnsEmptyListWhenNoDecks() {
-        when(deckRepository.findAll()).thenReturn(List.of());
+    void getByUsername_returnsEmptyListWhenNoDecks() {
+        final UserEntity user = UserEntity.builder().id(1L).username("player").build();
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
+        when(deckRepository.findByUserId(1L)).thenReturn(List.of());
 
-        final List<DeckSummaryDTO> result = service.getAll();
+        final List<DeckSummaryDTO> result = service.getByUsername("player");
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void getAll_returnsMappedSummaries() {
+    void getByUsername_returnsMappedSummariesForThatUserOnly() {
+        final UserEntity user = UserEntity.builder().id(1L).username("player").build();
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         final DeckEntity deck = buildDeckEntity(1L, "Test Deck", List.of(
                 buildDeckCard("xy1-1", "Bulbasaur", 4),
                 buildDeckCard("xy1-2", "Ivysaur", 4)
         ));
-        when(deckRepository.findAll()).thenReturn(List.of(deck));
+        when(deckRepository.findByUserId(1L)).thenReturn(List.of(deck));
 
-        final List<DeckSummaryDTO> result = service.getAll();
+        final List<DeckSummaryDTO> result = service.getByUsername("player");
 
         assertEquals(1, result.size());
         assertEquals(1L, result.get(0).id());
@@ -83,16 +88,23 @@ class DeckServiceImplTest {
         assertEquals(8, result.get(0).totalCards());
     }
 
+    @Test
+    void getByUsername_throwsWhenUserNotFound() {
+        when(userRepository.findFirstByUsername("ghost")).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () -> service.getByUsername("ghost"));
+    }
+
     // --- getById ---
 
     @Test
-    void getById_returnsDtoWhenFound() {
-        final DeckEntity deck = buildDeckEntity(42L, "My Deck", List.of(
+    void getById_returnsDtoWhenOwnerMatches() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "My Deck", "player", List.of(
                 buildDeckCard("xy1-1", "Bulbasaur", 4)
         ));
         when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
 
-        final DeckResponseDTO result = service.getById(42L);
+        final DeckResponseDTO result = service.getById(42L, "player");
 
         assertEquals(42L, result.id());
         assertEquals("My Deck", result.name());
@@ -105,37 +117,48 @@ class DeckServiceImplTest {
     void getById_throwsNoSuchElementWhenNotFound() {
         when(deckRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> service.getById(99L));
+        assertThrows(NoSuchElementException.class, () -> service.getById(99L, "player"));
+    }
+
+    @Test
+    void getById_throwsAccessDeniedWhenRequesterIsNotOwner() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "My Deck", "player", List.of());
+        when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
+
+        assertThrows(AccessDeniedException.class, () -> service.getById(42L, "attacker"));
     }
 
     // --- create ---
 
     @Test
     void create_throwsWhenUserNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findFirstByUsername("ghost")).thenReturn(Optional.empty());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
 
-        assertThrows(NoSuchElementException.class, () -> service.create(request));
+        assertThrows(NoSuchElementException.class, () -> service.create(request, "ghost"));
         verify(validator, never()).validate(anyList(), any(), any(), any());
     }
 
     @Test
-    void create_usesExistingCardFromDb() {
+    void create_derivesOwnerFromRequestingUsername_ignoringAnyClientSuppliedId() {
         final UserEntity user = UserEntity.builder().id(1L).username("player").build();
         final CardEntity card = buildCardEntity("xy1-1", "Bulbasaur", "Pokémon", "Basic");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.of(card));
 
         final DeckEntity savedDeck = buildDeckEntity(10L, "My Deck", new ArrayList<>());
         when(deckRepository.save(any())).thenReturn(savedDeck);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
-        service.create(request);
+        service.create(request, "player");
 
+        // Only the requesting user's identity is ever looked up — there is no
+        // client-controlled owner field on DeckRequestDTO to trust or ignore.
+        verify(userRepository).findFirstByUsername("player");
         verify(apiClient, never()).findById(anyString());
         verify(cardRepository, never()).save(any(CardEntity.class));
         verify(validator).validate(anyList(), any(), any(), any());
@@ -150,7 +173,7 @@ class DeckServiceImplTest {
                 new PokemonTcgSetDTO("xy1", "XY"));
         final CardEntity savedCard = buildCardEntity("xy1-1", "Bulbasaur", "Pokémon", "Basic");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.empty());
         when(apiClient.findById("xy1-1")).thenReturn(Optional.of(apiCard));
         when(cardRepository.save(any(CardEntity.class))).thenReturn(savedCard);
@@ -158,10 +181,10 @@ class DeckServiceImplTest {
         final DeckEntity savedDeck = buildDeckEntity(10L, "My Deck", new ArrayList<>());
         when(deckRepository.save(any(DeckEntity.class))).thenReturn(savedDeck);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
-        service.create(request);
+        service.create(request, "player");
 
         verify(apiClient).findById("xy1-1");
         verify(cardRepository).save(any(CardEntity.class));
@@ -171,14 +194,14 @@ class DeckServiceImplTest {
     void create_throwsWhenCardNotFoundInApi() {
         final UserEntity user = UserEntity.builder().id(1L).username("player").build();
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         when(cardRepository.findById("unknown-1")).thenReturn(Optional.empty());
         when(apiClient.findById("unknown-1")).thenReturn(Optional.empty());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("unknown-1", 60)));
 
-        assertThrows(NoSuchElementException.class, () -> service.create(request));
+        assertThrows(NoSuchElementException.class, () -> service.create(request, "player"));
     }
 
     @Test
@@ -186,15 +209,15 @@ class DeckServiceImplTest {
         final UserEntity user = UserEntity.builder().id(1L).username("player").build();
         final CardEntity card = buildCardEntity("xy1-1", "Bulbasaur", "Pokémon", "Basic");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.of(card));
         doThrow(new InvalidDeckException("deck has 59 cards, expected 60"))
                 .when(validator).validate(anyList(), any(), any(), any());
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 59)));
 
-        assertThrows(InvalidDeckException.class, () -> service.create(request));
+        assertThrows(InvalidDeckException.class, () -> service.create(request, "player"));
         verify(deckRepository, never()).save(any());
     }
 
@@ -203,7 +226,7 @@ class DeckServiceImplTest {
         final UserEntity user = UserEntity.builder().id(1L).username("player").build();
         final CardEntity card = buildCardEntity("xy1-1", "Bulbasaur", "Pokémon", "Basic");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findFirstByUsername("player")).thenReturn(Optional.of(user));
         when(cardRepository.findById("xy1-1")).thenReturn(Optional.of(card));
 
         final DeckEntity firstSave = buildDeckEntity(7L, "My Deck", new ArrayList<>());
@@ -218,10 +241,10 @@ class DeckServiceImplTest {
                 .thenReturn(firstSave)
                 .thenReturn(secondSave);
 
-        final DeckRequestDTO request = new DeckRequestDTO(1L, "My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 List.of(new DeckCardRequestDTO("xy1-1", 60)));
 
-        final DeckResponseDTO result = service.create(request);
+        final DeckResponseDTO result = service.create(request, "player");
 
         assertNotNull(result);
         assertEquals(7L, result.id());
@@ -229,12 +252,89 @@ class DeckServiceImplTest {
         verify(deckRepository, times(2)).save(any());
     }
 
+    // --- update ---
+
+    @Test
+    void update_throwsAccessDeniedWhenRequesterIsNotOwner() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "My Deck", "player", List.of());
+        when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
+
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
+
+        assertThrows(AccessDeniedException.class, () -> service.update(42L, request, "attacker"));
+        verify(deckRepository, never()).save(any());
+    }
+
+    @Test
+    void update_throwsNoSuchElementWhenNotFound() {
+        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+
+        final DeckRequestDTO request = new DeckRequestDTO("My Deck", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID, List.of());
+
+        assertThrows(NoSuchElementException.class, () -> service.update(99L, request, "player"));
+    }
+
+    @Test
+    void update_replacesCardsAndReturnsMappedDtoWhenOwnerMatches() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "Old Name", "player", new ArrayList<>(List.of(
+                buildDeckCard("xy1-1", "Bulbasaur", 60))));
+        when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
+
+        final CardEntity newCard = buildCardEntity("xy1-2", "Ivysaur", "Pokémon", "Stage1");
+        when(cardRepository.findById("xy1-2")).thenReturn(Optional.of(newCard));
+        when(deckRepository.save(any(DeckEntity.class))).thenReturn(deck);
+
+        final DeckRequestDTO request = new DeckRequestDTO("New Name", ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
+                List.of(new DeckCardRequestDTO("xy1-2", 60)));
+
+        final DeckResponseDTO result = service.update(42L, request, "player");
+
+        assertEquals("New Name", result.name());
+        assertEquals(1, deck.getCards().size());
+        assertEquals("xy1-2", deck.getCards().get(0).getCard().getId());
+        verify(deckRepository).save(deck);
+    }
+
+    // --- delete ---
+
+    @Test
+    void delete_throwsAccessDeniedWhenRequesterIsNotOwner() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "My Deck", "player", List.of());
+        when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
+
+        assertThrows(AccessDeniedException.class, () -> service.delete(42L, "attacker"));
+        verify(deckRepository, never()).delete(any());
+    }
+
+    @Test
+    void delete_throwsNoSuchElementWhenNotFound() {
+        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchElementException.class, () -> service.delete(99L, "player"));
+    }
+
+    @Test
+    void delete_removesDeckWhenOwnerMatches() {
+        final DeckEntity deck = buildOwnedDeckEntity(42L, "My Deck", "player", List.of());
+        when(deckRepository.findById(42L)).thenReturn(Optional.of(deck));
+
+        service.delete(42L, "player");
+
+        verify(deckRepository).delete(deck);
+    }
+
     // --- helpers ---
 
     private static DeckEntity buildDeckEntity(final Long id, final String name,
                                                final List<DeckCardEntity> cards) {
+        return buildOwnedDeckEntity(id, name, "player", cards);
+    }
+
+    private static DeckEntity buildOwnedDeckEntity(final Long id, final String name, final String ownerUsername,
+                                                    final List<DeckCardEntity> cards) {
         return DeckEntity.builder()
                 .id(id)
+                .user(UserEntity.builder().id(1L).username(ownerUsername).build())
                 .name(name)
                 .status(ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID)
                 .createdAt(LocalDateTime.now())

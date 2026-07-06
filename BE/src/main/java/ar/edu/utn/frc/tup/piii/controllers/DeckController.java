@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,19 +31,14 @@ public final class DeckController {
         this.templateService = Objects.requireNonNull(templateService);
     }
 
-    @GetMapping
-    public ResponseEntity<List<DeckSummaryDTO>> getAll() {
-        return ResponseEntity.ok(deckService.getAll());
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<DeckSummaryDTO>> getByUserId(@PathVariable final Long userId) {
-        return ResponseEntity.ok(deckService.getByUserId(userId));
+    @GetMapping("/mine")
+    public ResponseEntity<List<DeckSummaryDTO>> getMine(final Principal principal) {
+        return ResponseEntity.ok(deckService.getByUsername(principal.getName()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DeckResponseDTO> getById(@PathVariable final Long id) {
-        return ResponseEntity.ok(deckService.getById(id));
+    public ResponseEntity<DeckResponseDTO> getById(@PathVariable final Long id, final Principal principal) {
+        return ResponseEntity.ok(deckService.getById(id, principal.getName()));
     }
 
     @GetMapping("/templates")
@@ -50,38 +46,36 @@ public final class DeckController {
         return ResponseEntity.ok(templateService.getTemplates());
     }
 
-    @PostMapping("/users/{userId}/clone/{templateId}")
-    public ResponseEntity<DeckResponseDTO> cloneTemplate(
-            @PathVariable final Long userId,
-            @PathVariable final Long templateId) {
+    @PostMapping("/clone/{templateId}")
+    public ResponseEntity<DeckResponseDTO> cloneTemplate(@PathVariable final Long templateId, final Principal principal) {
         final DeckResponseDTO template = templateService.getTemplateById(templateId);
         final List<ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO> cards = template.cards().stream()
                 .map(c -> new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO(c.cardId(), c.quantity()))
                 .toList();
 
         final DeckRequestDTO request = new DeckRequestDTO(
-                userId,
                 template.name() + " (Copia)",
                 ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                 cards
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request, principal.getName()));
     }
 
     @PostMapping
-    public ResponseEntity<DeckResponseDTO> create(@RequestBody final DeckRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request));
+    public ResponseEntity<DeckResponseDTO> create(@RequestBody final DeckRequestDTO request, final Principal principal) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(deckService.create(request, principal.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DeckResponseDTO> update(@PathVariable final Long id, @RequestBody final DeckRequestDTO request) {
-        return ResponseEntity.ok(deckService.update(id, request));
+    public ResponseEntity<DeckResponseDTO> update(@PathVariable final Long id, @RequestBody final DeckRequestDTO request,
+                                                   final Principal principal) {
+        return ResponseEntity.ok(deckService.update(id, request, principal.getName()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable final Long id) {
-        deckService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable final Long id, final Principal principal) {
+        deckService.delete(id, principal.getName());
         return ResponseEntity.noContent().build();
     }
 }

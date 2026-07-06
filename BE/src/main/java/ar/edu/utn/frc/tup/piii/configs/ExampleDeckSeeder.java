@@ -51,7 +51,6 @@ public class ExampleDeckSeeder implements CommandLineRunner {
             try {
                 if (!hasWater) {
                     ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO waterDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
-                            user.getId(),
                             "Mazo Agua Dev",
                             ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                             List.of(
@@ -68,12 +67,11 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-132", 22)
                              )
                     );
-                    deckService.create(waterDeck);
+                    deckService.create(waterDeck, user.getUsername());
                 }
 
                 if (!hasFire) {
                     ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO fireDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
-                            user.getId(),
                             "Mazo Fuego Dev",
                             ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                             List.of(
@@ -90,12 +88,11 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 22)
                             )
                     );
-                    deckService.create(fireDeck);
+                    deckService.create(fireDeck, user.getUsername());
                 }
 
                 if (!hasCharizard) {
                     ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO charizardDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
-                            user.getId(),
                             "Mazo Charizard EX Flashfire",
                             ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                             List.of(
@@ -117,12 +114,11 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 18) // Fire Energy
                             )
                     );
-                    deckService.create(charizardDeck);
+                    deckService.create(charizardDeck, user.getUsername());
                 }
 
                 if (!hasFireGrass) {
                     ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO fireGrassDeck = new ar.edu.utn.frc.tup.piii.dtos.deck.DeckRequestDTO(
-                            user.getId(),
                             "Mazo Fuego & Planta Flashfire",
                             ar.edu.utn.frc.tup.piii.engine.model.DeckStatus.VALID,
                             List.of(
@@ -143,7 +139,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                                     new ar.edu.utn.frc.tup.piii.dtos.deck.DeckCardRequestDTO("xy1-133", 10) // Fire Energy
                             )
                     );
-                    deckService.create(fireGrassDeck);
+                    deckService.create(fireGrassDeck, user.getUsername());
                 }
                 System.out.println(">>> SEEDED DECKS FOR USER: " + user.getUsername() + " <<<");
             } catch (Exception e) {

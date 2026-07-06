@@ -9,6 +9,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.BattlePassLevelRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserBattlePassRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.BattlePassService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +23,15 @@ public class BattlePassServiceImpl implements BattlePassService {
     private final UserRepository userRepository;
     private final UserBattlePassRepository userBattlePassRepository;
     private final BattlePassLevelRepository battlePassLevelRepository;
+    private final int premiumPrice;
 
-    public BattlePassServiceImpl(UserRepository userRepository, UserBattlePassRepository userBattlePassRepository, BattlePassLevelRepository battlePassLevelRepository) {
+    public BattlePassServiceImpl(UserRepository userRepository, UserBattlePassRepository userBattlePassRepository,
+                                  BattlePassLevelRepository battlePassLevelRepository,
+                                  @Value("${economy.battle-pass.premium-price:1000}") int premiumPrice) {
         this.userRepository = userRepository;
         this.userBattlePassRepository = userBattlePassRepository;
         this.battlePassLevelRepository = battlePassLevelRepository;
+        this.premiumPrice = premiumPrice;
     }
 
     @Override
@@ -130,11 +135,11 @@ public class BattlePassServiceImpl implements BattlePassService {
         }
 
         int balance = user.getPokecoins() != null ? user.getPokecoins() : 0;
-        if (balance < 1000) {
-            throw new IllegalArgumentException("No tienes suficientes Pokecoins (1000) para comprar el pase premium");
+        if (balance < premiumPrice) {
+            throw new IllegalArgumentException("No tienes suficientes Pokecoins (" + premiumPrice + ") para comprar el pase premium");
         }
 
-        user.setPokecoins(balance - 1000);
+        user.setPokecoins(balance - premiumPrice);
         userPass.setIsPremium(true);
 
         userRepository.save(user);
@@ -168,10 +173,6 @@ public class BattlePassServiceImpl implements BattlePassService {
             }
             case "AVATAR" -> {
                 if (value != null) user.getUnlockedAvatars().add(value);
-            }
-            case "STARDUST" -> {
-                int stardust = user.getStardust() != null ? user.getStardust() : 0;
-                user.setStardust(stardust + (amount != null ? amount : 0));
             }
         }
     }

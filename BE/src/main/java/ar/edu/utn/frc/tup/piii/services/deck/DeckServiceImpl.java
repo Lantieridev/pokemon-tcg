@@ -14,6 +14,7 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,31 +49,23 @@ public class DeckServiceImpl implements DeckService {
     }
 
     @Override
-    public List<DeckSummaryDTO> getAll() {
-        return deckRepository.findAll().stream()
+    public List<DeckSummaryDTO> getByUsername(final String username) {
+        final UserEntity user = requireUser(username);
+        return deckRepository.findByUserId(user.getId()).stream()
                 .map(this::toSummaryDTO)
                 .toList();
     }
 
     @Override
-    public List<DeckSummaryDTO> getByUserId(final Long userId) {
-        return deckRepository.findByUserId(userId).stream()
-                .map(this::toSummaryDTO)
-                .toList();
-    }
-
-    @Override
-    public DeckResponseDTO getById(final Long id) {
-        return deckRepository.findById(id)
-                .map(this::toResponseDTO)
-                .orElseThrow(() -> new NoSuchElementException("Deck not found: " + id));
+    public DeckResponseDTO getById(final Long id, final String requestingUsername) {
+        final DeckEntity deck = requireOwnedDeck(id, requestingUsername);
+        return toResponseDTO(deck);
     }
 
     @Override
     @Transactional
-    public DeckResponseDTO create(final DeckRequestDTO request) {
-        final UserEntity user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new NoSuchElementException("User not found: " + request.userId()));
+    public DeckResponseDTO create(final DeckRequestDTO request, final String requestingUsername) {
+        final UserEntity user = requireUser(requestingUsername);
 
         final Map<String, CardEntity> cardMap = request.cards().stream()
                 .map(c -> findOrFetchCard(c.cardId()))
@@ -109,14 +102,8 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     @Transactional
-    public DeckResponseDTO update(final Long id, final DeckRequestDTO request) {
-        final DeckEntity deck = deckRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Deck not found: " + id));
-
-        // Validar que el usuario que actualiza sea el dueño
-        if (!deck.getUser().getId().equals(request.userId())) {
-            throw new IllegalArgumentException("User ID mismatch");
-        }
+    public DeckResponseDTO update(final Long id, final DeckRequestDTO request, final String requestingUsername) {
+        final DeckEntity deck = requireOwnedDeck(id, requestingUsername);
 
         final Map<String, CardEntity> cardMap = request.cards().stream()
                 .map(c -> findOrFetchCard(c.cardId()))
@@ -150,10 +137,27 @@ public class DeckServiceImpl implements DeckService {
 
     @Override
     @Transactional
-    public void delete(final Long id) {
+    public void delete(final Long id, final String requestingUsername) {
+        final DeckEntity deck = requireOwnedDeck(id, requestingUsername);
+        deckRepository.delete(deck);
+    }
+
+    private UserEntity requireUser(final String username) {
+        return userRepository.findFirstByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("User not found: " + username));
+    }
+
+    /**
+     * Fetches a deck and verifies the requesting user owns it. Ownership is always
+     * checked against the authenticated principal, never a client-supplied id.
+     */
+    private DeckEntity requireOwnedDeck(final Long id, final String requestingUsername) {
         final DeckEntity deck = deckRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Deck not found: " + id));
-        deckRepository.delete(deck);
+        if (!deck.getUser().getUsername().equals(requestingUsername)) {
+            throw new AccessDeniedException("Deck " + id + " does not belong to " + requestingUsername);
+        }
+        return deck;
     }
 
     private CardEntity findOrFetchCard(final String cardId) {

@@ -64,6 +64,7 @@ public class MatchService {
     private static final int FIRST_ROUND = 0;
     private static final String MATCH_TOPIC_BASE = "/topic/match/";
     private static final String PLAYER_SUB_PATH = "/player/";
+    private static final int RANKED_WIN_BATTLE_POINTS = 10;
 
     private final MatchSessionRegistry registry;
     private final GameFacade facade;
@@ -912,6 +913,7 @@ public class MatchService {
 
             winner.setMmr(newWinnerMmr);
             winner.setRankedMatchesPlayed(winnerRankedMatches + 1);
+            winner.setBattlePoints((winner.getBattlePoints() != null ? winner.getBattlePoints() : 0) + RANKED_WIN_BATTLE_POINTS);
             loser.setMmr(newLoserMmr);
             loser.setRankedMatchesPlayed(loserRankedMatches + 1);
 

@@ -80,8 +80,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                     final String dest = accessor.getDestination();
                     if (dest != null && dest.contains("/player/")) {
+                        // endsWith (not contains): the username is always the last path segment
+                        // (".../player/{username}"), so a substring match would let "alice" subscribe
+                        // to "alice2024"'s channel just because her name is a textual prefix of it.
                         final String playerPath = "/player/" + principal.getName();
-                        if (!dest.contains(playerPath)) {
+                        if (!dest.endsWith(playerPath)) {
                             throw new org.springframework.messaging.MessagingException("Cannot subscribe to another player's channel");
                         }
                     }

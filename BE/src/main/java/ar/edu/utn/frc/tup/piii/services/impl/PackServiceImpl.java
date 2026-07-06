@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserShowcaseInventoryRepository;
 import ar.edu.utn.frc.tup.piii.services.PackService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +23,21 @@ public class PackServiceImpl implements PackService {
     private final CardRepository cardRepository;
     private final UserShowcaseInventoryRepository inventoryRepository;
     private final Random random = new Random();
+    private final int cardsPerOpen;
+    private final int duplicateRefundNormal;
+    private final int duplicateRefundFoil;
 
-    public PackServiceImpl(UserRepository userRepository, CardRepository cardRepository, UserShowcaseInventoryRepository inventoryRepository) {
+    public PackServiceImpl(UserRepository userRepository, CardRepository cardRepository,
+                            UserShowcaseInventoryRepository inventoryRepository,
+                            @Value("${economy.pack.cards-per-open:5}") int cardsPerOpen,
+                            @Value("${economy.pack.duplicate-refund-normal:10}") int duplicateRefundNormal,
+                            @Value("${economy.pack.duplicate-refund-foil:50}") int duplicateRefundFoil) {
         this.userRepository = userRepository;
         this.cardRepository = cardRepository;
         this.inventoryRepository = inventoryRepository;
+        this.cardsPerOpen = cardsPerOpen;
+        this.duplicateRefundNormal = duplicateRefundNormal;
+        this.duplicateRefundFoil = duplicateRefundFoil;
     }
 
     private int getPackTier(String packType) {
@@ -142,7 +153,7 @@ public class PackServiceImpl implements PackService {
         List<PackOpeningResultDTO.PulledCardDTO> pulledCards = new ArrayList<>();
         int coinsRefunded = 0;
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < cardsPerOpen; i++) {
             CardEntity pulledCard;
             boolean isFoil = random.nextDouble() < baseFoilChance;
             
@@ -181,7 +192,7 @@ public class PackServiceImpl implements PackService {
 
             if (isDuplicate) {
                 // High rarities give more coins if duplicated (optional scaling, but we keep standard 50 for foil, 10 for normal to be safe)
-                coinsRefunded += finalIsFoil ? 50 : 10;
+                coinsRefunded += finalIsFoil ? duplicateRefundFoil : duplicateRefundNormal;
             } else {
                 UserShowcaseInventoryEntity newEntry = UserShowcaseInventoryEntity.builder()
                         .user(user)

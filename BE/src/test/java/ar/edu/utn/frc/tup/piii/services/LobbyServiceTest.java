@@ -4,6 +4,8 @@ import ar.edu.utn.frc.tup.piii.dtos.LobbyResponseDTO;
 import ar.edu.utn.frc.tup.piii.engine.model.Card;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
+import ar.edu.utn.frc.tup.piii.dtos.deck.DeckResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -24,6 +26,7 @@ public class LobbyServiceTest {
     private SimpMessagingTemplate messaging;
     private PenaltyService penaltyService;
     private UserRepository userRepository;
+    private DeckService deckService;
     private LobbyService lobbyService;
 
     @BeforeEach
@@ -34,13 +37,15 @@ public class LobbyServiceTest {
         messaging = mock(SimpMessagingTemplate.class);
         penaltyService = mock(PenaltyService.class);
         userRepository = mock(UserRepository.class);
+        deckService = mock(DeckService.class);
         lobbyService = new LobbyService(
                 lobbyQueue,
                 matchCreationService,
                 cardResolutionService,
                 messaging,
                 penaltyService,
-                userRepository
+                userRepository,
+                deckService
         );
     }
 
@@ -217,5 +222,36 @@ public class LobbyServiceTest {
         assertEquals("creator1", joinResp.opponentId());
 
         verify(messaging).convertAndSend(eq("/topic/lobby/creator1"), any(LobbyResponseDTO.class));
+    }
+
+    @Test
+    public void testJoinQueueRejectsDeckNotOwnedByPlayer() {
+        when(deckService.getById(10L, "player1"))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("not your deck"));
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> lobbyService.joinQueue("player1", 10L, false));
+        assertFalse(lobbyService.isInQueue("player1"));
+    }
+
+    @Test
+    public void testCreateRoomRejectsDeckNotOwnedByPlayer() {
+        when(deckService.getById(10L, "creator1"))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("not your deck"));
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> lobbyService.createRoom("creator1", 10L));
+    }
+
+    @Test
+    public void testJoinRoomRejectsDeckNotOwnedByJoiningPlayer() {
+        LobbyResponseDTO createResp = lobbyService.createRoom("creator1", 10L);
+        String code = createResp.roomCode();
+
+        when(deckService.getById(20L, "player2"))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("not your deck"));
+
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> lobbyService.joinRoom(code, "player2", 20L));
     }
 }

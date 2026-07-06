@@ -37,6 +37,7 @@ public final class MatchRestController {
     private final MatchCreationService matchCreationService;
     private final CardResolutionService cardResolutionService;
     private final ar.edu.utn.frc.tup.piii.services.MatchService matchService;
+    private final ar.edu.utn.frc.tup.piii.services.deck.DeckService deckService;
 
     /**
      * Constructs the controller.
@@ -46,17 +47,20 @@ public final class MatchRestController {
      * @param matchCreationService  service to create matches
      * @param cardResolutionService service to resolve card references
      * @param matchService          service to surrender matches
+     * @param deckService           service to verify deck ownership before a match uses it
      */
     public MatchRestController(final MatchSessionRegistry registry,
                                final PlayerPerspectiveMapper perspectiveMapper,
                                final MatchCreationService matchCreationService,
                                final CardResolutionService cardResolutionService,
-                               final ar.edu.utn.frc.tup.piii.services.MatchService matchService) {
+                               final ar.edu.utn.frc.tup.piii.services.MatchService matchService,
+                               final ar.edu.utn.frc.tup.piii.services.deck.DeckService deckService) {
         this.registry = Objects.requireNonNull(registry, "Registry cannot be null");
         this.perspectiveMapper = Objects.requireNonNull(perspectiveMapper, "Mapper cannot be null");
         this.matchCreationService = Objects.requireNonNull(matchCreationService);
         this.cardResolutionService = Objects.requireNonNull(cardResolutionService);
         this.matchService = Objects.requireNonNull(matchService);
+        this.deckService = Objects.requireNonNull(deckService);
     }
 
     /**
@@ -69,7 +73,15 @@ public final class MatchRestController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, String> createMatch(@RequestBody final CreateMatchRequestDTO request) {
+    public Map<String, String> createMatch(@RequestBody final CreateMatchRequestDTO request, final Principal principal) {
+        if (principal == null || !principal.getName().equals(request.playerAId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot create a match on behalf of another player");
+        }
+        // Ownership-checked reads — thrown away, only kept for the AccessDeniedException
+        // side effect so neither deck can belong to someone other than its declared player.
+        deckService.getById(request.deckAId(), request.playerAId());
+        deckService.getById(request.deckBId(), request.playerBId());
+
         final List<Card> deckA = cardResolutionService.resolveCards(request.deckAId());
         final List<Card> deckB = cardResolutionService.resolveCards(request.deckBId());
         final String matchId = matchCreationService.createMatch(
@@ -90,7 +102,8 @@ public final class MatchRestController {
         if (principal == null || !principal.getName().equals(request.playerAId())) {
             throw new org.springframework.security.access.AccessDeniedException("Cannot create bot match for another player");
         }
-        
+        deckService.getById(request.deckAId(), request.playerAId());
+
         final List<Card> deckA = cardResolutionService.resolveCards(request.deckAId());
         
         // For the bot, just use the same deck as player A for simplicity, or hardcode a deck ID if preferred.
@@ -137,6 +150,9 @@ public final class MatchRestController {
     public void surrender(@PathVariable final String matchId,
                           @RequestHeader("X-Player-Id") final String playerId,
                           final Principal principal) {
+        if (principal == null || !principal.getName().equals(playerId)) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot surrender on behalf of another player");
+        }
         matchService.surrenderMatch(matchId, playerId);
     }
 }

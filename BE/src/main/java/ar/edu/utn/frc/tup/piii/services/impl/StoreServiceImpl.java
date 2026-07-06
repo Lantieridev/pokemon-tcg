@@ -71,9 +71,6 @@ public class StoreServiceImpl implements StoreService {
                 String packType = item.getImageUrl() != null ? item.getImageUrl() : "pack_base";
                 user.getPacksInventory().put(packType, user.getPacksInventory().getOrDefault(packType, 0) + 1);
             }
-            case COSMETIC -> {
-                // Future expansion: cosmetic logic
-            }
         }
 
         userRepository.save(user);
