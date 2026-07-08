@@ -1,4 +1,4 @@
-@import './styles-aurora.css';
+@import './styles-theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,6 +13,9 @@
   --p-red-dk:   #b91d1d;
   --p-blue:     #3b5ba7;
   --p-blue-dk:  #25408f;
+  /* Lighter than --p-blue specifically for small text set directly on the dark
+     battle log background — #3b5ba7 fails WCAG AA (~3.2:1) at that size/weight. */
+  --p-blue-text: #6b8bd7;
   --p-yellow:   #ffcb05;
   --p-yellow-dk:#e6a700;
   --p-cream:    #fff8e8;

@@ -16,13 +16,13 @@ import {
   TrainerChipComponent,
   RankCrestComponent,
   StatComponent,
-  IconComponent,
+  HudIconComponent,
   BallIconComponent,
   SparksComponent,
   AmbientComponent,
   BattleCtaComponent,
-} from './ui/aurora-ui.components';
-import { HoloCardComponent, AuroraCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+} from '../../shared/ui/ui-kit.components';
+import { HoloCardComponent, FloatCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { DeckRailComponent } from './components/deck-rail.component';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -39,7 +39,7 @@ type LobbyTab = 'public' | 'private';
 type PrivateMode = 'create' | 'join';
 
 @Component({
-  selector: 'app-lobby-aurora',
+  selector: 'app-lobby',
   standalone: true,
   imports: [
     CommonModule,
@@ -47,11 +47,11 @@ type PrivateMode = 'create' | 'join';
     RouterModule,
     RankCrestComponent,
     StatComponent,
-    IconComponent,
+    HudIconComponent,
     SparksComponent,
     AmbientComponent,
     HoloCardComponent,
-    AuroraCardComponent,
+    FloatCardComponent,
     DeckRailComponent,
     BattleCtaComponent,
   ],
@@ -67,6 +67,33 @@ type PrivateMode = 'create' | 'join';
       width: 480px;
       box-shadow: 0 8px 40px rgba(0,0,0,0.4);
     }
+
+    .mode-switch {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 14px;
+      padding: 4px;
+      margin: 8px 0 20px;
+    }
+    .mode-switch-tab {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      color: var(--mut, #7a8090);
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .mode-switch-tab.active {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dk));
+      color: var(--on-accent, #fff);
+      box-shadow: 0 4px 14px -4px var(--accent);
+    }
+    .mode-switch-tab:disabled { opacity: .4; cursor: not-allowed; }
 
     .panel-tabs {
       display: flex;
@@ -171,14 +198,14 @@ type PrivateMode = 'create' | 'join';
     }
 
     .action-btn.primary {
-      background: linear-gradient(135deg, #7c3aed, #4f46e5);
-      color: #fff;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dk));
+      color: var(--on-accent);
+      box-shadow: 0 4px 20px rgba(255,46,62,0.4);
     }
 
     .action-btn.primary:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 6px 28px rgba(124,58,237,0.55);
+      box-shadow: 0 6px 28px rgba(255,46,62,0.55);
     }
 
     .action-btn.primary:disabled {
@@ -253,8 +280,8 @@ type PrivateMode = 'create' | 'join';
     .spinner-ring {
       width: 48px;
       height: 48px;
-      border: 3px solid rgba(124,58,237,0.2);
-      border-top-color: #7c3aed;
+      border: 3px solid var(--accent-soft, rgba(255,46,62,0.2));
+      border-top-color: var(--accent, #ff2e3e);
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
     }
@@ -274,8 +301,8 @@ type PrivateMode = 'create' | 'join';
 
     /* ── Room code display ─────────────────────────────────────────────── */
     .room-code-box {
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.3);
+      background: var(--accent-soft, rgba(255,46,62,0.1));
+      border: 1px solid rgba(255,46,62,0.3);
       border-radius: 14px;
       padding: 18px;
       text-align: center;
@@ -295,7 +322,7 @@ type PrivateMode = 'create' | 'join';
       font-size: 36px;
       font-weight: 900;
       letter-spacing: .25em;
-      color: #a78bfa;
+      color: var(--accent2, #ffce32);
       font-family: 'Space Grotesk', monospace;
     }
 
@@ -310,10 +337,10 @@ type PrivateMode = 'create' | 'join';
       align-items: center;
       gap: 6px;
       padding: 6px 14px;
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.3);
+      background: rgba(255,46,62,0.15);
+      border: 1px solid rgba(255,46,62,0.3);
       border-radius: 8px;
-      color: #a78bfa;
+      color: var(--accent2, #ffce32);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -321,7 +348,7 @@ type PrivateMode = 'create' | 'join';
       transition: all .2s;
     }
 
-    .copy-btn:hover { background: rgba(124,58,237,0.25); }
+    .copy-btn:hover { background: rgba(255,46,62,0.25); }
 
     /* ── Join room input ───────────────────────────────────────────────── */
     .private-mode-tabs {
@@ -344,9 +371,9 @@ type PrivateMode = 'create' | 'join';
     }
 
     .priv-tab.active {
-      border-color: rgba(124,58,237,0.4);
-      color: #a78bfa;
-      background: rgba(124,58,237,0.1);
+      border-color: rgba(255,46,62,0.4);
+      color: var(--accent2, #ffce32);
+      background: rgba(255,46,62,0.1);
     }
 
     .code-input {
@@ -369,7 +396,7 @@ type PrivateMode = 'create' | 'join';
     }
 
     .code-input:focus {
-      border-color: rgba(124,58,237,0.5);
+      border-color: rgba(255,46,62,0.5);
     }
 
     .code-input::placeholder {
@@ -491,8 +518,8 @@ type PrivateMode = 'create' | 'join';
     }
   `],
   template: `
-    <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
-      <!-- aurora mesh -->
+    <div class="scene theme-dark" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
+      <!-- theme mesh -->
       <div class="mesh" [style.opacity]="fog">
         <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
         <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
@@ -500,8 +527,8 @@ type PrivateMode = 'create' | 'join';
         <span style="width: 440px; height: 440px; left: 500px; bottom: -200px; background: var(--m4); animation-delay: -3s;"></span>
       </div>
 
-      <aurora-ambient></aurora-ambient>
-      <aurora-sparks [n]="10" color="var(--accent2)"></aurora-sparks>
+      <hud-ambient></hud-ambient>
+      <hud-sparks [n]="10" color="var(--accent2)"></hud-sparks>
       <div class="bd-noise"></div><div class="bd-vignette"></div>
 
       <!-- hero layout -->
@@ -512,8 +539,8 @@ type PrivateMode = 'create' | 'join';
           <div class="fu" style="display: flex; align-items: center; gap: 12px;">
             <span class="live"></span>
             <span class="eyebrow">Temporada 7 · Liga Oro III</span>
-            <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-              <aurora-icon n="help" [s]="13"></aurora-icon>
+            <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial" aria-label="Ver Tutorial">
+              <hud-icon n="help" [s]="13"></hud-icon>
             </button>
           </div>
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw"
@@ -527,41 +554,33 @@ type PrivateMode = 'create' | 'join';
 
           <!-- Original CTA Buttons -->
           <div class="fu" style="display: flex; align-items: center; gap: 16px; margin-top: 40px; animation-delay: .16s;">
-            <aurora-battle-cta
+            <hud-battle-cta
               id="btn-battle"
               title="BATALLAR"
               sub="Clasificatoria"
               [searching]="lobby.queueStatus() === 'waiting'"
               (startBattle)="openModal('competitive')"
               (cancelBattle)="lobby.leavePublicQueue()">
-            </aurora-battle-cta>
-            <button class="ghost-btn" (click)="openModal('casual')">
-              <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
+            </hud-battle-cta>
+            <button class="ghost-btn" style="white-space: nowrap;" (click)="openModal('casual')">
+              <hud-icon n="sword" [s]="18"></hud-icon> Casual / vs Bot
             </button>
-            <button class="ghost-btn" routerLink="/campaign" style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 16px; line-height: 1;">🗺️</span> Campaña
-            </button>
-            <div class="bot-section">
-              <button class="action-btn bot" style="margin-top: 0; padding: 12px 18px;" [disabled]="lobby.decks().length === 0" (click)="openModal('bot')">
-                <span class="bot-icon">🤖</span> Jugar vs Bot
-              </button>
-            </div>
           </div>
 
           <!-- Rank strip -->
           <div id="rango-info" class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
-            <aurora-rank-crest [size]="48" tier="III"></aurora-rank-crest>
+            <hud-rank-crest [size]="48" tier="III"></hud-rank-crest>
             <div style="border-right: 1px solid var(--line); padding-right: 18px;">
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
               <div style="font-weight: 800; font-size: 15px; margin-top: 3px;">Oro III</div>
             </div>
-            <aurora-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></aurora-stat>
-            <aurora-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></aurora-stat>
+            <hud-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></hud-stat>
+            <hud-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></hud-stat>
             <div>
               <div class="num" style="display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--accent);">
                 {{ streak }}
                 @if (streak >= 2) {
-                  <aurora-icon n="fire" [s]="streak >= 4 ? 20 : 16" class="streak-fire" [class.hot]="streak >= 4"></aurora-icon>
+                  <hud-icon n="fire" [s]="streak >= 4 ? 20 : 16" class="streak-fire" [class.hot]="streak >= 4"></hud-icon>
                 }
               </div>
               <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); margin-top: 4px;">Racha</div>
@@ -572,48 +591,38 @@ type PrivateMode = 'create' | 'join';
         <!-- ── Floating cards (right) ──────────────────────────────── -->
         <div style="flex: 1; position: relative; height: 100%;">
           <div class="card-aura" style="width: 360px; height: 360px; right: 200px; top: 150px;"></div>
-          <aurora-sparks [n]="14" color="var(--accent2)" [area]="{ x: 35, y: 10, w: 60, h: 70 }"></aurora-sparks>
+          <hud-sparks [n]="14" color="var(--accent2)" [area]="{ x: 35, y: 10, w: 60, h: 70 }"></hud-sparks>
           <div class="bd-glow" style="width: 520px; height: 520px; right: 140px; top: 120px; background: var(--accent); opacity: .18;"></div>
 
           <div style="position: absolute; right: 432px; top: 250px;">
-            <aurora-float-card [card]="cards[1]" [w]="196" [rot]="-13" delay="-2s" [z]="2" [op]="0.92"></aurora-float-card>
+            <float-card [card]="cards[1]" [w]="196" [rot]="-13" delay="-2s" [z]="2" [op]="0.92"></float-card>
           </div>
           <div style="position: absolute; right: 96px; top: 236px;">
-            <aurora-float-card [card]="cards[2]" [w]="186" [rot]="13" delay="-4s" [z]="2" [op]="0.92"></aurora-float-card>
+            <float-card [card]="cards[2]" [w]="186" [rot]="13" delay="-4s" [z]="2" [op]="0.92"></float-card>
           </div>
           <div style="position: absolute; right: 232px; top: 120px; z-index: 3;">
-            <aurora-holo-card [card]="cards[0]" [w]="250" [baseRot]="-3"></aurora-holo-card>
+            <holo-card [card]="cards[0]" [w]="250" [baseRot]="-3"></holo-card>
           </div>
         </div>
 
       </div>
 
       <!-- active-deck dock -->
-      <aurora-deck-rail 
-        [deck]="deckRail()" 
-        [deckName]="lobby.activeDeckDetails()?.name || ''"
-        [totalCards]="activeDeckTotalCards()"
-        [energyTypes]="activeDeckEnergyTypes()"
-        [deckId]="lobby.selectedDeckId()"
-        [display]="displayFont">
-      </aurora-deck-rail>
-      <aurora-deck-rail [deckData]="deckRailData()" [display]="displayFont"></aurora-deck-rail>
+      <hud-deck-rail [deckData]="deckRailData()" [deckId]="lobby.selectedDeckId()" [display]="displayFont"></hud-deck-rail>
 
       <!-- ── Match Modal ──────────────────────────────────────────── -->
       @if (modalOpen()) {
         <div class="modal-backdrop" (click)="closeModal()">
           <div class="modal-card" (click)="$event.stopPropagation()">
             <button class="modal-close-btn" (click)="closeModal()">✕</button>
-            
-            <h3 class="modal-title">
-              @if (modalMode() === 'competitive') {
-                🏆 Clasificatoria
-              } @else if (modalMode() === 'casual') {
-                ⚔️ Partida Casual
-              } @else {
-                🤖 Jugar vs Bot
-              }
-            </h3>
+
+            <!-- Mode switch lives inside the modal instead of three separate
+                 home-screen buttons — one entry point, pick the mode here. -->
+            <div class="mode-switch">
+              <button class="mode-switch-tab" [class.active]="modalMode() === 'competitive'" (click)="modalMode.set('competitive')">🏆 Clasificatoria</button>
+              <button class="mode-switch-tab" [class.active]="modalMode() === 'casual'" (click)="modalMode.set('casual')">⚔️ Casual</button>
+              <button class="mode-switch-tab" [class.active]="modalMode() === 'bot'" [disabled]="lobby.decks().length === 0" (click)="modalMode.set('bot')">🤖 vs Bot</button>
+            </div>
 
             <!-- Tabs: Pública / Privada -->
             @if (modalMode() !== 'bot') {
@@ -780,7 +789,7 @@ type PrivateMode = 'create' | 'join';
     </div>
   `,
 })
-export class LobbyAuroraComponent implements OnInit, OnDestroy {
+export class LobbyComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -835,12 +844,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     { name: 'Mewtwo EX', type: 'psychic', img: 'https://images.pokemontcg.io/xy8/62_hires.png' },
   ];
 
-  readonly DEFAULT_DECK = [
-    { name: 'Pikachu', img: 'https://images.pokemontcg.io/xy1/42.png' },
-    { name: 'Mewtwo EX', img: 'https://images.pokemontcg.io/xy8/62.png' },
-    { name: 'Greninja EX', img: 'https://images.pokemontcg.io/xy9/40.png' },
-    { name: 'Simisage', img: 'https://images.pokemontcg.io/xy1/11.png' }
-  ];
   fullSelectedDeck = signal<DeckResponseDTO | null>(null);
 
   constructor() {
@@ -906,76 +909,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
       energyTypes: Array.from(energyTypes).slice(0, 3), // Max 3 types to show in UI
       cards: resolvedCards.slice(0, 6)
     };
-  });
-
-  readonly deckRail = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    const catalog = this.tcgService.cards();
-    
-    const list: any[] = [];
-    const seenIds = new Set<string>();
-
-    if (details && catalog.length > 0) {
-      for (const item of details.cards) {
-        if (seenIds.has(item.cardId)) continue;
-        
-        const found = catalog.find(c => c.id === item.cardId);
-        if (found && found.images?.small) {
-          seenIds.add(item.cardId);
-          list.push({
-            name: found.name,
-            img: found.images.small
-          });
-        }
-      }
-    }
-
-    // Rellenar hasta 6 con las cartas por defecto verificadas
-    let defIdx = 0;
-    while (list.length < 6) {
-      const fallback = this.DEFAULT_DECK[defIdx % this.DEFAULT_DECK.length];
-      list.push({ ...fallback });
-      defIdx++;
-    }
-
-    return list.slice(0, 6);
-  });
-
-  readonly activeDeckTotalCards = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    if (!details) return 0;
-    return details.cards.reduce((acc, item) => acc + item.quantity, 0);
-  });
-
-  readonly activeDeckEnergyTypes = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    if (!details) return [];
-    
-    const catalog = this.tcgService.cards();
-    if (catalog.length === 0) return [];
-    
-    const typesSet = new Set<string>();
-    for (const item of details.cards) {
-      const found = catalog.find(c => c.id === item.cardId);
-      if (found) {
-        if (found.supertype === 'Pokémon' && found.types) {
-          for (const t of found.types) {
-            typesSet.add(t.toLowerCase());
-          }
-        }
-        if (found.supertype === 'Energy') {
-          const nameLower = found.name.toLowerCase();
-          if (nameLower.includes('fire')) typesSet.add('fire');
-          else if (nameLower.includes('water')) typesSet.add('water');
-          else if (nameLower.includes('lightning') || nameLower.includes('electric')) typesSet.add('lightning');
-          else typesSet.add('colorless');
-        }
-      }
-    }
-    
-    const allowed = ['fire', 'water', 'lightning', 'colorless'];
-    const result = Array.from(typesSet).filter(t => allowed.includes(t));
-    return result.length > 0 ? result : ['colorless'];
   });
 
   // ── Lifecycle ────────────────────────────────────────────────────────────

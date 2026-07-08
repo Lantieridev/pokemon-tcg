@@ -6,7 +6,7 @@ import { DeckStore } from '../../core/store/deck.store';
 import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgCard, DeckSummaryDTO } from '../../core/models/game-state.models';
 import { RouterModule, ActivatedRoute } from '@angular/router';
-import { LogoComponent, TrainerChipComponent, AmbientComponent, IconComponent, EnergyTypeComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { LogoComponent, TrainerChipComponent, AmbientComponent, HudIconComponent, EnergyTypeComponent } from '../../shared/ui/ui-kit.components';
 import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../core/services/profile.service';
@@ -21,18 +21,18 @@ interface Filters {
 }
 
 @Component({
-  selector: 'app-deck-aurora',
+  selector: 'app-deck-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AmbientComponent, IconComponent, NgOptimizedImage, HoloCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AmbientComponent, HudIconComponent, EnergyTypeComponent, NgOptimizedImage, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="scene theme-dark" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
       <!-- Background Mesh -->
       <div class="mesh" style="opacity: 0.5;">
         <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
         <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
       </div>
-      <aurora-ambient></aurora-ambient>
+      <hud-ambient></hud-ambient>
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
@@ -42,43 +42,90 @@ interface Filters {
       <div class="fu" style="flex: 1; display: flex; gap: 24px; padding: 0 44px 44px; z-index: 5; height: calc(100vh - 92px);">
         <!-- VISTA 1: LISTADO DE MAZOS -->
         @if (currentView() === 'list') {
-          <div style="flex: 1; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(10px); padding: 40px; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-              <h1 style="font-family: var(--display); font-size: 42px; margin: 0; color: var(--txt);">Tus Mazos</h1>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px;">
-              <!-- Tarjeta Crear Nuevo -->
-              <div class="create-card" (click)="currentView.set('create_options')">
-                <div style="font-size: 48px; color: var(--accent); margin-bottom: 10px;">+</div>
-                <div style="font-family: 'Manrope'; font-weight: 700; font-size: 18px; color: var(--txt);">Crear Mazo</div>
+          <div class="deck-hall">
+            @if (generatingWizard()) {
+              <div class="deck-hall-tint" [style.--tint]="wizardTypeColor(selectedWizardTypes()[0])"></div>
+            }
+            <!-- Hero band: a real card bleeds off the right edge instead of
+                 leaving the band's right two-thirds an empty navy void. -->
+            <div class="deck-hero-band">
+              @if (heroDeckCard(); as bleedCard) {
+                <img class="deck-hero-bleed" [src]="getCardImage(bleedCard, true)" alt="" aria-hidden="true" />
+              }
+              <div class="deck-hero-content">
+                <h1 class="title-editorial deck-hall-title"><em>Tus mazos</em></h1>
+                <p style="color: var(--mut); font-size: 14px; margin: 8px 0 0;">
+                  {{ decks().length }} {{ decks().length === 1 ? 'mazo' : 'mazos' }} ·
+                  {{ validDeckCount() }} {{ validDeckCount() === 1 ? 'listo' : 'listos' }} para batalla
+                </p>
+                <button class="ghost-btn sm" style="margin-top: 20px;" (click)="currentView.set('create_options')">
+                  <span style="font-size: 16px;">+</span> Crear desde cero
+                </button>
               </div>
+            </div>
 
-              <!-- Lista de Mazos -->
+            <!-- Deck boxes: physical objects with a spine, a name plate, and
+                 the real cards peeking out of the top — not glass rectangles. -->
+            <div class="deck-shelf">
               @for (deck of decks(); track deck.id) {
-                <div class="deck-list-card">
-                  <div style="flex: 1; display: flex; flex-direction: column;" (click)="openDeck(deck.id)">
-                    <div style="font-family: 'Manrope'; font-weight: 800; font-size: 20px; color: var(--txt); margin-bottom: 8px;">{{ deck.name }}</div>
-                    <div style="font-size: 13px; color: var(--mut); margin-bottom: 6px;">{{ deck.totalCards }}/60 Cartas</div>
-                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-                      <span style="font-size: 12px; font-weight: 700; display: inline-block; padding: 4px 10px; border-radius: 10px;"
-                           [style.background]="deck.status === 'VALID' ? 'rgba(70, 224, 138, 0.2)' : 'rgba(255, 122, 61, 0.2)'"
-                           [style.color]="deck.status === 'VALID' ? '#46e08a' : '#ff7a3d'">
-                        {{ deck.status === 'VALID' ? 'Válido' : 'Borrador' }}
-                      </span>
-                      @if (lobbyService.selectedDeckId() === deck.id) {
-                        <span style="font-size: 12px; font-weight: 700; display: inline-block; padding: 4px 10px; border-radius: 10px; background: rgba(0, 200, 255, 0.2); color: #00c8ff;">
-                          ✓ Activo
-                        </span>
-                      }
+                <div class="deck-box" [style.--deck-accent]="deckAccentColor(deck.name)" (click)="openDeck(deck.id)">
+                  <button class="delete-btn" (click)="$event.stopPropagation(); deckToDelete.set(deck.id)" aria-label="Eliminar mazo" title="Eliminar Mazo">✕</button>
+
+                  <div class="deck-box-peek">
+                    @for (card of (deckPreviewCards()[deck.id] ?? []); track card.id; let ci = $index) {
+                      <img [src]="getCardImage(card)" [alt]="card.name" [style.--fi]="ci" />
+                    } @empty {
+                      <span class="deck-box-peek-empty">🂠</span>
+                    }
+                  </div>
+
+                  <div class="deck-box-plate">
+                    <div class="deck-box-name">{{ deck.name }}</div>
+                    <div class="deck-fill-meter">
+                      <div class="deck-fill-meter-bar" [style.width.%]="(deck.totalCards / 60) * 100"></div>
                     </div>
+                    <div style="font-size: 11.5px; color: rgba(255,255,255,.65); margin-top: 5px;">{{ deck.totalCards }}/60 cartas</div>
+                  </div>
+
+                  <div class="deck-box-footer">
+                    <span class="deck-box-status" [class.deck-box-status--valid]="deck.status === 'VALID'">
+                      {{ deck.status === 'VALID' ? 'Listo para batalla' : 'Borrador' }}
+                    </span>
+                    @if (lobbyService.selectedDeckId() === deck.id) {
+                      <span class="deck-box-active">✓ Activo</span>
+                    }
                   </div>
                   @if (lobbyService.selectedDeckId() !== deck.id && deck.status === 'VALID') {
                     <button class="select-active-btn" (click)="$event.stopPropagation(); selectActiveDeck(deck.id)">
                       Seleccionar como Activo
                     </button>
                   }
-                  <button class="delete-btn" (click)="$event.stopPropagation(); deckToDelete.set(deck.id)" title="Eliminar Mazo">✕</button>
+                </div>
+              }
+              <!-- Tarjeta Crear Nuevo -->
+              <div class="create-card" (click)="currentView.set('create_options')">
+                <div style="font-size: 48px; color: var(--accent); margin-bottom: 10px;">+</div>
+                <div style="font-family: 'Manrope'; font-weight: 700; font-size: 18px; color: var(--txt);">Crear Mazo</div>
+              </div>
+            </div>
+
+            <!-- Quick start: an immersive element picker, not a row of gray pills —
+                 this is the deck builder's central hook, it earns real screen space. -->
+            <div class="type-picker">
+              <h2 class="title-editorial type-picker-title"><em>Elegí tu elemento</em></h2>
+              <p style="color: var(--mut); font-size: 13px; margin: 6px 0 20px;">El Asistente arma un mazo de 60 cartas al instante.</p>
+              <div class="type-picker-row">
+                @for (t of wizardTypes; track t.id) {
+                  <button class="type-tile" [style.--tcolor]="t.color" [disabled]="generatingWizard()" (click)="quickBuildDeck(t.id)">
+                    <hud-energy-type [type]="t.id" [size]="30"></hud-energy-type>
+                    <span>{{ t.label }}</span>
+                  </button>
+                }
+              </div>
+              @if (generatingWizard()) {
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px; color: var(--accent2);">
+                  <div class="pokespin" style="width: 20px; height: 20px;"></div>
+                  <span style="font-size: 13px; font-weight: 600;">El Asistente está construyendo el mazo...</span>
                 </div>
               }
             </div>
@@ -157,8 +204,8 @@ interface Filters {
               <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 800px; margin-bottom: 20px;">
                 @for (t of wizardTypes; track t.id) {
                   <div class="type-circle-btn" [class.selected]="selectedWizardTypes().includes(t.id)" [style.--tcolor]="t.color" (click)="toggleWizardType(t.id)">
-                    <div class="type-circle" [style.background]="t.color">
-                      <span class="type-emoji">{{ t.emoji }}</span>
+                    <div class="type-circle" style="background: rgba(255,255,255,.06);">
+                      <hud-energy-type [type]="t.id" [size]="26"></hud-energy-type>
                     </div>
                     <span class="type-name">{{ t.label }}</span>
                   </div>
@@ -215,7 +262,7 @@ interface Filters {
                   <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
                   <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
                   <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-                    <aurora-icon n="help" [s]="13"></aurora-icon>
+                    <hud-icon n="help" [s]="13"></hud-icon>
                   </button>
                 </div>
               </div>
@@ -298,7 +345,7 @@ interface Filters {
                 @if (autoCompleting()) {
                   <div class="pokespin" style="width: 20px; height: 20px;"></div>
                 } @else {
-                  <aurora-icon n="decks" [s]="20"></aurora-icon>
+                  <hud-icon n="decks" [s]="20"></hud-icon>
                   <span>Autocompletar</span>
                 }
               </button>
@@ -327,7 +374,7 @@ interface Filters {
            (click)="zoomedCard.set(null)" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
         <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
              (click)="$event.stopPropagation()">
-          <aurora-holo-card [card]="{ img: getCardImage(card, true), name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+          <holo-card [card]="{ img: getCardImage(card, true), name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></holo-card>
         </div>
       </div>
     }
@@ -368,18 +415,102 @@ interface Filters {
         box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
       }
 
-      /* Nuevos estilos */
-      .create-card { border: 2px dashed rgba(255,255,255,0.2); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
-      .create-card:hover { border-color: var(--accent); background: rgba(255,46,62,0.1); transform: translateY(-4px); }
-      
-      .deck-list-card { background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 16px; padding: 24px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; position: relative; }
-      .deck-list-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-      .delete-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,0,0,0.2); border: none; color: #ff4a4a; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; opacity: 0; transition: all 0.2s; }
-      .deck-list-card:hover .delete-btn { opacity: 1; }
-      .delete-btn:hover { background: rgba(255,0,0,0.5); color: white; transform: scale(1.1); }
+      /* ── Deck hall: the list view, now a shelf of physical deck-boxes
+         instead of glass rectangles ────────────────────────────────────── */
+      .deck-hall { flex: 1; display: flex; flex-direction: column; padding: 40px; overflow-y: auto; position: relative; }
+      .deck-hall-title { font-size: 44px; margin: 0; }
+      .deck-hall-tint {
+        position: fixed; inset: 0; z-index: 5; pointer-events: none;
+        background: radial-gradient(ellipse 900px 600px at 50% 30%, color-mix(in srgb, var(--tint) 22%, transparent), transparent 70%);
+        animation: deck-hall-tint-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes deck-hall-tint-pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
 
-      .select-active-btn { margin-top: auto; background: rgba(0, 200, 255, 0.1); border: 1px solid rgba(0, 200, 255, 0.3); color: #00c8ff; padding: 8px 16px; border-radius: 12px; font-family: 'Manrope'; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
+      /* Hero band: a real card OWNS the right third — full height, flush to
+         the top/right edges, bleeding off-canvas — so the band has a real
+         focal point instead of an empty navy void with ambient rings showing
+         through next to the title. */
+      .deck-hero-band { position: relative; min-height: 340px; display: flex; align-items: center; margin-bottom: 8px; overflow: hidden; border-radius: 20px; background: var(--bg); box-shadow: 0 0 0 24px var(--bg); }
+      .deck-hero-bleed {
+        position: absolute; top: -20px; bottom: -20px; right: -50px;
+        height: calc(100% + 40px); width: auto; transform: rotate(-4deg);
+        border-radius: 14px; box-shadow: 0 30px 60px -18px rgba(0,0,0,.8); z-index: 0;
+      }
+      .deck-hero-band::before {
+        content: ''; position: absolute; inset: 0; z-index: 1;
+        background: linear-gradient(90deg, var(--bg) 0%, var(--bg) 38%, color-mix(in srgb, var(--bg) 55%, transparent) 58%, transparent 78%);
+      }
+      .deck-hero-content { position: relative; z-index: 2; padding: 12px 4px; }
+
+      .deck-shelf { display: flex; flex-wrap: wrap; gap: 28px; margin: 30px 0 44px; align-items: flex-start; }
+
+      .create-card { width: 210px; height: 300px; border: 2px dashed rgba(255,255,255,0.2); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); flex: 0 0 auto; }
+      .create-card:hover { border-color: var(--accent); background: rgba(255,46,62,0.1); transform: translateY(-4px); }
+
+      /* A deck-box: thick colored body, cards peeking out the top, a printed
+         name-plate on a diagonal echoing the gym leader's band in Campaign —
+         one authored motif, reused, instead of a one-off gesture. */
+      .deck-box {
+        width: 210px; flex: 0 0 auto; cursor: pointer; position: relative;
+        padding-top: 46px;
+        transition: transform .25s ease;
+      }
+      .deck-box:hover { transform: translateY(-8px); }
+      .deck-box-peek { position: relative; height: 100px; margin: 0 0 -18px 18px; z-index: 2; }
+      .deck-box-peek img {
+        position: absolute; top: 0; left: 0; width: 74px; border-radius: 7px;
+        box-shadow: 0 10px 20px rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.18);
+        transform: translateX(calc(var(--fi) * 34px)) rotate(calc(var(--fi) * 7deg - 7deg));
+        transition: transform .25s ease;
+      }
+      .deck-box:hover .deck-box-peek img { transform: translateX(calc(var(--fi) * 42px)) rotate(calc(var(--fi) * 7deg - 7deg)) translateY(-10px); }
+      .deck-box-peek-empty { font-size: 40px; color: var(--dim); opacity: .5; }
+
+      .deck-box-plate {
+        position: relative; z-index: 1;
+        background: linear-gradient(165deg, color-mix(in srgb, var(--deck-accent, var(--accent)) 85%, black 0%), color-mix(in srgb, var(--deck-accent, var(--accent)) 55%, black 25%));
+        border-radius: 14px 14px 0 0;
+        padding: 28px 16px 14px;
+        box-shadow: 0 -1px 0 rgba(255,255,255,.15) inset, 0 20px 40px -18px rgba(0,0,0,.7);
+      }
+      .deck-box-name {
+        font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+        font-size: 19px; color: #fff; line-height: 1.2; margin-bottom: 10px;
+        text-shadow: 0 2px 8px rgba(0,0,0,.4);
+      }
+      .deck-fill-meter { width: 100%; height: 5px; border-radius: 3px; background: rgba(0,0,0,.3); overflow: hidden; }
+      .deck-fill-meter-bar { height: 100%; border-radius: 3px; background: #fff; opacity: .85; transition: width .3s; }
+
+      .deck-box-footer {
+        background: var(--bg2, #132342); border-radius: 0 0 14px 14px;
+        padding: 12px 16px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        box-shadow: 0 20px 40px -20px rgba(0,0,0,.6);
+      }
+      .deck-box-status { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 10px; background: rgba(255,122,61,.18); color: #ff7a3d; }
+      .deck-box-status--valid { background: rgba(70,224,138,.18); color: #46e08a; }
+      .deck-box-active { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 10px; background: rgba(0,200,255,.18); color: #00c8ff; }
+
+      .delete-btn { position: absolute; top: 4px; right: 4px; z-index: 3; background: rgba(0,0,0,.4); border: none; color: #ff8a8a; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; opacity: 0; transition: all 0.2s; }
+      .deck-box:hover .delete-btn { opacity: 1; }
+      .delete-btn:hover { background: rgba(255,0,0,0.6); color: white; transform: scale(1.1); }
+
+      .select-active-btn { display: block; width: 100%; margin-top: 10px; background: rgba(0, 200, 255, 0.1); border: 1px solid rgba(0, 200, 255, 0.3); color: #00c8ff; padding: 8px 16px; border-radius: 12px; font-family: 'Manrope'; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
       .select-active-btn:hover { background: #00c8ff; color: #07040e; box-shadow: 0 4px 12px rgba(0, 200, 255, 0.3); }
+
+      /* ── Type picker: an immersive moment, not a toolbar of gray pills ── */
+      .type-picker { border-top: 1px solid var(--line); padding-top: 32px; }
+      .type-picker-title { font-size: 26px; margin: 0; }
+      .type-picker-row { display: flex; flex-wrap: wrap; gap: 16px; }
+      .type-tile {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+        width: 100px; height: 110px; border-radius: 18px; cursor: pointer;
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(160deg, color-mix(in srgb, var(--tcolor) 35%, var(--bg2)), color-mix(in srgb, var(--tcolor) 12%, var(--bg2)));
+        color: #fff; font-family: 'Manrope'; font-weight: 700; font-size: 12.5px;
+        transition: transform .2s ease, box-shadow .2s ease;
+      }
+      .type-tile:hover:not(:disabled) { transform: translateY(-6px) scale(1.04); box-shadow: 0 16px 30px -10px color-mix(in srgb, var(--tcolor) 60%, transparent); }
+      .type-tile:disabled { opacity: .45; cursor: not-allowed; }
 
       .mode-card { width: 300px; padding: 40px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 20px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s; }
       .mode-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 16px 32px rgba(255,46,62,0.2); }
@@ -395,7 +526,7 @@ interface Filters {
     </style>
   `
 })
-export class DeckAuroraComponent implements OnInit {
+export class DeckBuilderComponent implements OnInit {
   zoomedCard = signal<any | null>(null);
 
   readonly tcgService = inject(PokemonTcgService);
@@ -412,6 +543,7 @@ export class DeckAuroraComponent implements OnInit {
   // --- Views y Estado ---
   currentView = signal<'list' | 'create_options' | 'wizard_options' | 'builder'>('list');
   decks = signal<DeckSummaryDTO[]>([]);
+  validDeckCount = computed(() => this.decks().filter(d => d.status === 'VALID').length);
   editingDeckId = signal<number | null>(null);
   deckToDelete = signal<number | null>(null);
   generatingWizard = signal(false);
@@ -497,15 +629,42 @@ export class DeckAuroraComponent implements OnInit {
     });
   }
 
+  /** Up to 3 real card images per deck so the list reads as a card game, not
+   *  a spreadsheet of names — fetched once per deck right after the list loads. */
+  deckPreviewCards = signal<Record<number, PokemonTcgCard[]>>({});
+
   loadDecks() {
-    const userId = this.authService.userId;
-    if (userId) {
-      this.deckApi.getDecksByUserId(userId).subscribe({
+    if (this.authService.username) {
+      this.deckApi.getMyDecks().subscribe({
         next: (res) => {
           this.decks.set(res);
           this.cdr.detectChanges();
+          this.loadDeckPreviews(res);
         },
         error: (err) => console.error('Error fetching decks', err)
+      });
+    }
+  }
+
+  private loadDeckPreviews(decks: DeckSummaryDTO[]) {
+    // The card catalog loads async and may not be ready yet — reuse the same
+    // poll pattern the edit-query-param handler already uses in this file.
+    if (this.tcgService.cards().length === 0) {
+      setTimeout(() => this.loadDeckPreviews(decks), 100);
+      return;
+    }
+    for (const deck of decks) {
+      if (this.deckPreviewCards()[deck.id]) continue;
+      this.deckApi.getDeckById(deck.id).subscribe({
+        next: (full) => {
+          const pool = this.tcgService.cards();
+          const preview = full.cards
+            .map(c => pool.find(card => card.id === c.cardId))
+            .filter((c): c is PokemonTcgCard => !!c && c.supertype === 'Pokémon')
+            .slice(0, 3);
+          this.deckPreviewCards.update(m => ({ ...m, [deck.id]: preview }));
+        },
+        error: () => {}
       });
     }
   }
@@ -549,6 +708,38 @@ export class DeckAuroraComponent implements OnInit {
   selectActiveDeck(deckId: number): void {
     this.lobbyService.selectedDeckId.set(deckId);
     this.cdr.markForCheck();
+  }
+
+  /** One-click smart-deck build from the list view's quick-start row, skipping
+   *  the wizard screen entirely for the common case of "just give me a deck". */
+  quickBuildDeck(typeId: string) {
+    this.selectedWizardTypes.set([typeId]);
+    this.generateWizardDeck();
+  }
+
+  wizardTypeColor(typeId: string | undefined): string {
+    return this.wizardTypes.find(t => t.id === typeId)?.color ?? 'var(--accent)';
+  }
+
+  /** The hero band's dead space gets filled with a real card from your active
+   *  (or first) deck — large and sharp, same "bleeding card" language that
+   *  fixed Campaign — instead of an empty navy void. */
+  heroDeckCard(): PokemonTcgCard | null {
+    const decks = this.decks();
+    if (decks.length === 0) return null;
+    const activeId = this.lobbyService.selectedDeckId();
+    const featured = decks.find(d => d.id === activeId) ?? decks[0];
+    const preview = this.deckPreviewCards()[featured.id];
+    return preview?.[0] ?? null;
+  }
+
+  /** Tints a deck-box by its dominant energy so the list reads as a shelf at a
+   *  glance instead of identical grey cards — inferred from the deck's name
+   *  since that's where the smart-deck wizard stamps the theme. */
+  deckAccentColor(deckName: string): string {
+    const lower = deckName.toLowerCase();
+    const match = this.wizardTypes.find(t => lower.includes(t.id) || lower.includes(t.label.toLowerCase()));
+    return match?.color ?? 'var(--accent)';
   }
 
   toggleWizardType(typeId: string) {

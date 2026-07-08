@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BattlePassService, BattlePassStatusDTO, BattlePassLevelDTO } from '../../core/services/battle-pass.service';
 import { ToastService } from '../../core/services/toast.service';
-import { IconComponent, CoinIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { CoinIconComponent } from '../../shared/ui/ui-kit.components';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -198,7 +198,6 @@ export class BattlePassComponent implements OnInit {
       case 'PACK': return 'Sobre de Cartas';
       case 'TITLE': return 'Título de Jugador';
       case 'COINS': return 'Pokémonedas';
-      case 'STARDUST': return 'Polvos Estelares';
       default: return type;
     }
   }
@@ -229,7 +228,6 @@ export class BattlePassComponent implements OnInit {
       case 'PACK': return 'assets/store/pack_base.png';
       case 'TITLE': return 'assets/rewards/title_scroll.png';
       case 'AVATAR': return 'assets/rewards/avatar_box.png';
-      case 'STARDUST': return 'assets/rewards/stardust.png';
       default: return 'assets/achievements/avatars/avatar_versatility_3d.png';
     }
   }

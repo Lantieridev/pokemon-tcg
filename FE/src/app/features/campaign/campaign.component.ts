@@ -6,7 +6,11 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { CampaignService } from '../../core/services/campaign.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { CampaignNode, CampaignProgressResponse } from '../../core/models/campaign.models';
-import { DeckSummaryDTO } from '../../core/models/game-state.models';
+import { DeckSummaryDTO, PokemonTcgCard } from '../../core/models/game-state.models';
+import { HudIconComponent, CoinIconComponent } from '../../shared/ui/ui-kit.components';
+import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
+import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+import { ConfettiService } from '../../core/services/confetti.service';
 
 // ── Deck validation helper ──────────────────────────────────
 
@@ -51,7 +55,7 @@ function validateDeck(deck: DeckSummaryDTO): ValidatedDeck {
 @Component({
   selector: 'app-campaign',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, HudIconComponent, CoinIconComponent, HoloCardComponent],
   templateUrl: './campaign.component.html',
   styleUrl: './campaign.component.css',
 })
@@ -59,6 +63,9 @@ export class CampaignComponent implements OnInit {
   private readonly campaignService = inject(CampaignService);
   private readonly matchService = inject(MatchBackendService);
   private readonly router = inject(Router);
+  private readonly tcgService = inject(PokemonTcgService);
+  private readonly confettiService = inject(ConfettiService);
+  private static readonly CLEARED_COUNT_KEY = 'campaign_cleared_count';
 
   // ── State signals ───────────────────────────────────────
   readonly loading = signal(true);
@@ -91,10 +98,101 @@ export class CampaignComponent implements OnInit {
     });
   });
 
+  /** Retrato real del líder si existe, o el badge de tipo Kanto como emblema
+   *  para los gimnasios que no tienen un retrato con nombre dibujado todavía. */
+  private static readonly GYM_ART: Record<number, string> = {
+    1: 'assets/store/avatar_brock.png',
+    2: 'assets/store/avatar_misty.png',
+    3: 'assets/achievements/avatars/avatar_lightning_kanto.png',
+    4: 'assets/achievements/avatars/avatar_grass_kanto.png',
+    5: 'assets/achievements/avatars/avatar_fire_kanto.png',
+    6: 'assets/achievements/avatars/avatar_psychic_kanto.png',
+    7: 'assets/achievements/avatars/avatar_fire_kanto.png',
+    8: 'assets/achievements/avatars/avatar_colorless_kanto.png',
+  };
+
+  gymArt(nodeId: number): string {
+    return CampaignComponent.GYM_ART[nodeId] ?? 'assets/achievements/avatars/avatar_gym_leader.png';
+  }
+
+  /** Pokémon TCG type each gym leader battles with, so the hero can feature
+   *  real cards from the catalog instead of just a badge icon. */
+  private static readonly GYM_TCG_TYPE: Record<number, string> = {
+    1: 'Fighting', 2: 'Water', 3: 'Lightning', 4: 'Grass',
+    5: 'Fire', 6: 'Psychic', 7: 'Fire', 8: 'Colorless',
+  };
+
+  /** Up to 3 real cards of the current gym's type, for the hero's card fan. */
+  gymCards(nodeId: number): PokemonTcgCard[] {
+    const type = CampaignComponent.GYM_TCG_TYPE[nodeId];
+    if (!type) return [];
+    return this.tcgService.cards()
+      .filter(c => c.supertype === 'Pokémon' && c.types?.includes(type))
+      .slice(0, 3);
+  }
+
+  /** The card that bleeds off the leader panel's edge — deliberately a
+   *  DIFFERENT card than the fan below it, so the same art doesn't repeat
+   *  and read as a duplication mistake. */
+  heroBleedCard(nodeId: number): PokemonTcgCard | null {
+    const type = CampaignComponent.GYM_TCG_TYPE[nodeId];
+    if (!type) return null;
+    const pool = this.tcgService.cards().filter(c => c.supertype === 'Pokémon' && c.types?.includes(type));
+    return pool[3] ?? pool[0] ?? null;
+  }
+
+  getCardImage(card: PokemonTcgCard): string {
+    return card.images?.large ?? card.images?.small ?? '';
+  }
+
+  /** The gym leader panel is tinted by the actual Pokémon type he battles
+   *  with — the accent comes from the content, not a fixed global theme color. */
+  private static readonly GYM_TYPE_COLOR: Record<number, string> = {
+    1: '#d97d4a', 2: '#4aa3ff', 3: '#ffcc33', 4: '#5ad27a',
+    5: '#ff7a3d', 6: '#c87bff', 7: '#ff7a3d', 8: '#cfd6e4',
+  };
+  gymTypeColor(nodeId: number): string {
+    return CampaignComponent.GYM_TYPE_COLOR[nodeId] ?? 'var(--accent)';
+  }
+
+  /** Clicking a cleared gym on the path previews it in the hero panel without
+   *  navigating away; the active (next-to-fight) gym is still the default. */
+  readonly previewNodeId = signal<number | null>(null);
+
+  readonly heroNode = computed<CampaignNode | null>(() => {
+    const nodes = this.progress()?.nodes ?? [];
+    const previewId = this.previewNodeId();
+    if (previewId != null) {
+      const found = nodes.find(n => n.id === previewId);
+      if (found) return found;
+    }
+    return this.activeNode();
+  });
+
+  previewNode(node: CampaignNode): void {
+    if (node.status === 'LOCKED') return;
+    this.previewNodeId.set(node.id);
+  }
+
+  /** The gym the player is on right now — the next UNLOCKED node, or the final
+   *  node once every gym is cleared (so there's still something to feature). */
+  readonly activeNode = computed<CampaignNode | null>(() => {
+    const nodes = this.progress()?.nodes ?? [];
+    return nodes.find(n => n.status === 'UNLOCKED') ?? nodes[nodes.length - 1] ?? null;
+  });
+
+  /** Every other gym, rendered as the compact path strip rather than full cards. */
+  readonly otherNodes = computed<CampaignNode[]>(() => {
+    const nodes = this.progress()?.nodes ?? [];
+    const active = this.activeNode();
+    return nodes.filter(n => n.id !== active?.id);
+  });
+
   // ── Lifecycle ──────────────────────────────────────────
 
   ngOnInit(): void {
     this.loadProgress();
+    this.tcgService.loadCards();
   }
 
   // ── Data loading ───────────────────────────────────────
@@ -106,6 +204,7 @@ export class CampaignComponent implements OnInit {
     try {
       const data = await firstValueFrom(this.campaignService.getProgress());
       this.progress.set(data);
+      this.celebrateIfNewlyCleared(data.clearedNodesCount);
     } catch (err: any) {
       const message =
         err?.error?.message ??
@@ -116,6 +215,18 @@ export class CampaignComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** Fires a confetti burst the moment you come back to Campaign having
+   *  cleared a gym since your last visit — sessionStorage is enough since
+   *  this only needs to survive the round trip to /battle and back. */
+  private celebrateIfNewlyCleared(clearedCount: number): void {
+    const key = CampaignComponent.CLEARED_COUNT_KEY;
+    const previous = Number(sessionStorage.getItem(key) ?? '0');
+    if (clearedCount > previous) {
+      this.confettiService.celebrate();
+    }
+    sessionStorage.setItem(key, String(clearedCount));
   }
 
   private async loadDecks(): Promise<void> {

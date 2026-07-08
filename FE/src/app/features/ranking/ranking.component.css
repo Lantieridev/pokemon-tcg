@@ -1,5 +1,5 @@
 .min-h-screen {
-  font-family: 'Inter', 'Outfit', sans-serif;
+  font-family: 'Manrope', sans-serif;
 }
 
 /* Custom styles for ranking view */
@@ -12,9 +12,73 @@ table tr:hover {
 }
 
 .font-display {
-  font-family: var(--display, 'Outfit', sans-serif);
+  font-family: var(--display, 'Manrope', sans-serif);
 }
 
 .font-chunky {
-  font-family: var(--chunky, 'Inter', sans-serif);
+  font-family: var(--num, 'Manrope', sans-serif);
+}
+
+.tier-filter-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  color: var(--mut);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.tier-filter-chip:hover { border-color: var(--txt); color: var(--txt); }
+.tier-filter-chip.active {
+  border-color: var(--tchip, var(--accent2));
+  color: var(--tchip, var(--accent2));
+  background: rgba(255,255,255,.06);
+}
+
+.ranking-row--me {
+  background: var(--accent-soft) !important;
+}
+.you-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  vertical-align: middle;
+}
+
+.ranking-side-card {
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 20px;
+  padding: 20px;
+}
+.ranking-side-eyebrow {
+  display: block;
+  font-family: var(--num);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.ranking-me-rank {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 34px;
+  color: var(--accent2);
+  margin: 8px 0 2px;
+}
+.ranking-side-hint {
+  font-size: 12.5px;
+  color: var(--mut);
+  line-height: 1.5;
+  margin-top: 8px;
 }

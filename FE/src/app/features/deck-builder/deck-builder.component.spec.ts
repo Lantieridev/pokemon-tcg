@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DeckAuroraComponent } from './deck-aurora.component';
+import { DeckBuilderComponent } from './deck-builder.component';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { DeckStore } from '../../core/store/deck.store';
 import { DeckApiService } from '../deck/deck-api.service';
@@ -11,15 +11,15 @@ import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
-describe('DeckAuroraComponent', () => {
-  let component: DeckAuroraComponent;
-  let fixture: ComponentFixture<DeckAuroraComponent>;
+describe('DeckBuilderComponent', () => {
+  let component: DeckBuilderComponent;
+  let fixture: ComponentFixture<DeckBuilderComponent>;
   let deckApiSpy: jasmine.SpyObj<DeckApiService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
-    deckApiSpy = jasmine.createSpyObj('DeckApiService', ['deleteDeck', 'getDecksByUserId']);
-    deckApiSpy.getDecksByUserId.and.returnValue(of([]));
+    deckApiSpy = jasmine.createSpyObj('DeckApiService', ['deleteDeck', 'getMyDecks']);
+    deckApiSpy.getMyDecks.and.returnValue(of([]));
     
     authServiceSpy = jasmine.createSpyObj('AuthService', [], {
       username: 'TestUser',
@@ -34,19 +34,19 @@ describe('DeckAuroraComponent', () => {
     const tutorialSpy = jasmine.createSpyObj('TutorialService', ['triggerTutorial']);
 
     await TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, DeckAuroraComponent],
+      imports: [HttpClientTestingModule, DeckBuilderComponent],
       providers: [
         { provide: DeckApiService, useValue: deckApiSpy },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: PokemonTcgService, useValue: tcgSpy },
         { provide: ProfileService, useValue: profileSpy },
         { provide: TutorialService, useValue: tutorialSpy },
-        { provide: ActivatedRoute, useValue: {} },
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
         DeckStore
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(DeckAuroraComponent);
+    fixture = TestBed.createComponent(DeckBuilderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -65,7 +65,7 @@ describe('DeckAuroraComponent', () => {
     
     expect(deckApiSpy.deleteDeck).toHaveBeenCalledWith(123);
     expect(component.deckToDelete()).toBeNull();
-    expect(deckApiSpy.getDecksByUserId).toHaveBeenCalled();
+    expect(deckApiSpy.getMyDecks).toHaveBeenCalled();
   });
 
   it('should handle error when deleting deck, reset state, and show alert', () => {

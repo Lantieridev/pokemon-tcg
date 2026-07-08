@@ -47,7 +47,7 @@ describe('DeckApiService', () => {
     httpMock.verify();
   });
 
-  it('should post new deck on saveDeck', () => {
+  it('should post new deck on saveDeck without a client-supplied owner', () => {
     service.saveDeck('Test Deck', 'VALID').subscribe((res) => {
       expect(res.id).toBe(1);
       expect(res.name).toBe('Test Deck');
@@ -56,18 +56,12 @@ describe('DeckApiService', () => {
     const req = httpMock.expectOne('http://localhost:8081/api/decks');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
-      userId: 123,
       name: 'Test Deck',
       status: 'VALID',
       cards: [{ cardId: 'xy1-1', quantity: 2 }]
     });
 
     req.flush({ id: 1, name: 'Test Deck', status: 'VALID', createdAt: '', cards: [] });
-  });
-
-  it('should throw error on saveDeck if no authenticated user', () => {
-    Object.defineProperty(authServiceSpy, 'userId', { get: () => undefined });
-    expect(() => service.saveDeck('Test Deck', 'VALID')).toThrowError('No hay usuario autenticado para guardar el mazo.');
   });
 
   it('should put deck on updateDeck', () => {
@@ -92,12 +86,12 @@ describe('DeckApiService', () => {
     req.flush(null);
   });
 
-  it('should get decks by user id', () => {
-    service.getDecksByUserId(123).subscribe((res) => {
+  it('should get only the authenticated user\'s decks', () => {
+    service.getMyDecks().subscribe((res) => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
+    const req = httpMock.expectOne('http://localhost:8081/api/decks/mine');
     expect(req.request.method).toBe('GET');
     req.flush([{ id: 1, name: 'User Deck' }]);
   });
@@ -123,12 +117,12 @@ describe('DeckApiService', () => {
     req.flush({ id: 1 });
   });
 
-  it('should clone template', () => {
-    service.cloneTemplate(123, 9).subscribe((res) => {
+  it('should clone template for the authenticated user', () => {
+    service.cloneTemplate(9).subscribe((res) => {
       expect(res.id).toBe(10);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/users/123/clone/9');
+    const req = httpMock.expectOne('http://localhost:8081/api/decks/clone/9');
     expect(req.request.method).toBe('POST');
     req.flush({ id: 10 });
   });
@@ -140,7 +134,14 @@ describe('DeckApiService', () => {
 
     const req = httpMock.expectOne('http://localhost:8081/api/decks/assistant/wizard');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ theme: 'Fire/Water' });
+    // The service always includes the optional params in the body object; when omitted by
+    // the caller they're `undefined`, which JSON.stringify drops before it hits the wire.
+    expect(req.request.body).toEqual({
+      theme: 'Fire/Water',
+      preferredTypes: undefined,
+      evolutionLinesCount: undefined,
+      generation: undefined
+    });
     req.flush([{ cardId: 'xy1-2', quantity: 60 }]);
   });
 });

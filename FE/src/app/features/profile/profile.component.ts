@@ -6,23 +6,19 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO, MatchHistoryItemDTO, CardStatDTO, EnergyStatDTO } from '../../core/services/profile.service';
 import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
-import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { StatComponent, HudIconComponent, TrainerChipComponent, LogoComponent } from '../../shared/ui/ui-kit.components';
 import { RouterModule } from '@angular/router';
 import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 
 @Component({
-  selector: 'app-profile-aurora',
+  selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatComponent, IconComponent, AmbientComponent, HoloCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule, StatComponent, HudIconComponent, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
-      <!-- Background Mesh -->
-      <div class="mesh" style="opacity: 0.5;">
-        <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
-        <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
-      </div>
-      <aurora-ambient></aurora-ambient>
+    <div class="scene theme-dark" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
+      <!-- Profile is a dense dashboard, not an atmospheric moment — no drifting
+           blobs/rings competing with the stats rail, unlike Home/Campaign/Store. -->
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
@@ -80,11 +76,11 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
           </div>
           
           <div style="margin-left: auto; display: flex; gap: 24px; padding: 20px 30px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px);">
-            <aurora-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></aurora-stat>
+            <hud-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></hud-stat>
             <div style="width: 1px; background: var(--line);"></div>
-            <aurora-stat [v]="totalLosses.toString()" k="Derrotas"></aurora-stat>
+            <hud-stat [v]="totalLosses.toString()" k="Derrotas"></hud-stat>
             <div style="width: 1px; background: var(--line);"></div>
-            <aurora-stat [v]="overallWinRate + '%'" k="Win Rate" [accent]="true"></aurora-stat>
+            <hud-stat [v]="overallWinRate + '%'" k="Win Rate" [accent]="true"></hud-stat>
           </div>
         </div>
 
@@ -143,7 +139,7 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
                     <div>
                       <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 16px;">
                         <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
-                          <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
+                          <hud-icon n="decks" [s]="22" style="color: var(--on-accent);"></hud-icon>
                         </div>
                         <div>
                           <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profileData?.showcasedDeck?.name }}</div>
@@ -992,7 +988,7 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
            (click)="zoomedCard = null" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
         <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
              (click)="$event.stopPropagation()">
-          <aurora-holo-card [card]="{ img: card.img, name: card.name, type: card.type, rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+          <holo-card [card]="{ img: card.img, name: card.name, type: card.type, rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></holo-card>
         </div>
       </div>
     }
@@ -1715,7 +1711,7 @@ import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component
     </style>
   `
 })
-export class ProfileAuroraComponent implements OnInit {
+export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
   private deckApi = inject(DeckApiService);
@@ -1969,9 +1965,8 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   loadUserDecks(): void {
-    const userId = this.authService.userId;
-    if (userId) {
-      this.deckApi.getDecksByUserId(userId).subscribe({
+    if (this.authService.username) {
+      this.deckApi.getMyDecks().subscribe({
         next: (decks) => {
           this.userDecks = decks;
           this.cdr.detectChanges();
@@ -2047,7 +2042,7 @@ export class ProfileAuroraComponent implements OnInit {
       .replace(/4/g, 'a').replace(/3/g, 'e').replace(/1/g, 'i')
       .replace(/0/g, 'o').replace(/5/g, 's').replace(/7/g, 't');
 
-    const found = ProfileAuroraComponent.BLOCKED_WORDS.find(w => {
+    const found = ProfileComponent.BLOCKED_WORDS.find(w => {
       const normalized = w.toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/4/g, 'a').replace(/3/g, 'e').replace(/1/g, 'i')

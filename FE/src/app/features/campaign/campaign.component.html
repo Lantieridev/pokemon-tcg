@@ -1,70 +1,123 @@
 <!-- ═══════════════════════════════════════════════════════════════
-     Campaign Map – Modo Historia PvE
+     Campaign — one gym at a time, not a settings list.
      ═══════════════════════════════════════════════════════════════ -->
+<div class="scene campaign-scene">
+  <div class="campaign-fog"></div>
 
-<!-- Loading -->
-@if (loading()) {
-  <div class="loading-state">
-    <p>Cargando campaña...</p>
-  </div>
-}
-
-<!-- Error loading -->
-@if (loadError()) {
-  <div class="error-state">
-    <p>{{ loadError() }}</p>
-    <button (click)="loadProgress()">Reintentar</button>
-  </div>
-}
-
-<!-- Map -->
-@if (!loading() && !loadError() && progress()) {
-  <div class="campaign-header">
-    <h1>🏟️ Liga Pokémon de Kanto</h1>
-    <p class="subtitle">Derrota a los 8 líderes de gimnasio para convertirte en campeón</p>
-  </div>
-
-  <!-- Progress bar -->
-  <div class="progress-bar">
-    <div class="progress-track">
-      <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Cargando campaña...</p>
     </div>
-    <p class="progress-label">{{ progress()!.clearedNodesCount }} / {{ progress()!.totalNodesCount }} gimnasios completados</p>
-  </div>
+  }
 
-  <!-- Node map -->
-  <div class="map-container">
-    @for (node of progress()!.nodes; track node.id; let i = $index) {
-      <!-- Path segment (not before first node) -->
-      @if (i > 0) {
-        <div class="path-segment" [class.active]="node.status !== 'LOCKED'"></div>
-      }
+  <!-- Error loading -->
+  @if (loadError()) {
+    <div class="error-state">
+      <p>{{ loadError() }}</p>
+      <button (click)="loadProgress()">Reintentar</button>
+    </div>
+  }
 
-      <!-- Node card -->
-      <div
-        class="node"
-        [class.locked]="node.status === 'LOCKED'"
-        [class.unlocked]="node.status === 'UNLOCKED'"
-        [class.cleared]="node.status === 'CLEARED'"
-        (click)="onNodeClick(node)"
-      >
-        <div class="node-badge">{{ node.id }}</div>
-        <div class="node-info">
-          <div class="node-name">{{ node.name }}</div>
-          <div class="node-bot">Líder: {{ node.botName.replace('Bot-', '') }}</div>
-          <div class="node-rewards">
-            🪙 {{ node.rewardCoins }} monedas · ⭐ {{ node.rewardXp }} XP
+  <!-- Journey: a vertical route down the left, a dominant sticky leader panel
+       on the right. The gym you're looking at owns the screen — this is not
+       a card in a rounded rectangle sitting next to seven identical siblings. -->
+  @if (!loading() && !loadError() && progress(); as p) {
+    <div class="campaign-layout">
+      <!-- ROUTE: the 8 gyms as stops on a winding path, not a settings list -->
+      <div class="route-col">
+        <div class="route-head fu">
+          <span class="eyebrow">Liga Pokémon de Kanto</span>
+          <div class="route-progress">
+            <div class="progress-track"><div class="progress-fill" [style.width.%]="progressPercent()"></div></div>
+            <span>{{ p.clearedNodesCount }} / {{ p.totalNodesCount }} insignias</span>
           </div>
         </div>
-        <div class="node-status">
-          @if (node.status === 'LOCKED') { 🔒 }
-          @if (node.status === 'UNLOCKED') { ⚔️ }
-          @if (node.status === 'CLEARED') { ✅ }
+
+        <div class="route-path">
+          <div class="route-line"></div>
+          @for (node of p.nodes; track node.id; let i = $index) {
+            <button
+              type="button"
+              class="route-stop"
+              [class.route-stop--right]="i % 2 === 1"
+              [class.route-stop--current]="node.id === heroNode()?.id"
+              [class.route-stop--cleared]="node.status === 'CLEARED'"
+              [class.route-stop--locked]="node.status === 'LOCKED'"
+              [style.--stop-color]="gymTypeColor(node.id)"
+              [disabled]="node.status === 'LOCKED'"
+              (click)="previewNode(node)"
+              [attr.aria-label]="node.name + ': ' + (node.status === 'LOCKED' ? 'bloqueado' : node.status === 'CLEARED' ? 'superado' : 'disponible')"
+            >
+              <span class="route-stop-marker">
+                @if (node.status === 'LOCKED') {
+                  <hud-icon n="lock" [s]="15"></hud-icon>
+                } @else if (node.status === 'CLEARED') {
+                  <hud-icon n="check" [s]="15"></hud-icon>
+                } @else {
+                  {{ node.id }}
+                }
+              </span>
+              <span class="route-stop-label">{{ node.name.split(' - ')[1] ?? node.name }}</span>
+            </button>
+          }
         </div>
       </div>
-    }
-  </div>
-}
+
+      <!-- LEADER PANEL: sticky, dominant, tinted by the gym's real Pokémon type.
+           One real card bleeds off the right edge, large and sharp — not
+           blurred wallpaper, a deliberate crop that frames the content. -->
+      @if (heroNode(); as hero) {
+        <div class="leader-panel fu" [style.--type-accent]="gymTypeColor(hero.id)">
+          @if (heroBleedCard(hero.id); as bleedCard) {
+            <img class="leader-panel-bleed" [src]="getCardImage(bleedCard)" [alt]="''" aria-hidden="true" />
+          }
+          <div class="leader-panel-glow" aria-hidden="true"></div>
+          <span class="leader-eyebrow">
+            {{ hero.status === 'CLEARED' ? 'Modo práctica' : 'Tu próximo desafío' }}
+          </span>
+          <div class="leader-portrait">
+            <img [src]="gymArt(hero.id)" [alt]="hero.name" />
+          </div>
+          <div class="leader-name-band">
+            <h1 class="title-editorial leader-name"><em>{{ hero.name.split(' - ')[1] ?? hero.name }}</em></h1>
+            <p class="leader-city">{{ hero.name.split(' - ')[0] }}</p>
+          </div>
+          <p class="leader-bot">Líder: {{ hero.botName.replace('Bot-', '') }}</p>
+
+          @if (gymCards(hero.id).length > 0) {
+            <div class="leader-cardfan">
+              @for (card of gymCards(hero.id); track card.id; let ci = $index) {
+                <div class="leader-card-slot" [style.--fi]="ci">
+                  <holo-card
+                    [card]="{ img: getCardImage(card), name: card.name, type: (card.types?.[0] || 'colorless').toLowerCase(), subtypes: card.subtypes }"
+                    [w]="150"
+                    [idleFloat]="false">
+                  </holo-card>
+                </div>
+              }
+            </div>
+          }
+
+          @if (hero.status !== 'CLEARED') {
+            <div class="leader-rewards">
+              <span><hud-coin-icon [size]="16"></hud-coin-icon> {{ hero.rewardCoins }}</span>
+              <span><hud-icon n="star" [s]="15"></hud-icon> {{ hero.rewardXp }} XP</span>
+            </div>
+          }
+
+          <button type="button" class="cta leader-cta" (click)="onNodeClick(hero)">
+            <div style="text-align: left;">
+              <div class="cta__title">{{ hero.status === 'CLEARED' ? 'Volver a jugar' : 'Desafiar' }}</div>
+              <div class="cta__sub">Elegí tu mazo</div>
+            </div>
+            <span class="cta__arrow"><hud-icon n="arrow" [s]="20"></hud-icon></span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════════
      Modal de desafío
@@ -85,8 +138,8 @@
       <!-- Rewards (only shown if not cleared) -->
       @if (selectedNode()!.status !== 'CLEARED') {
         <div class="rewards-info">
-          <div class="reward-chip">🪙 {{ selectedNode()!.rewardCoins }} monedas</div>
-          <div class="reward-chip">⭐ {{ selectedNode()!.rewardXp }} XP</div>
+          <div class="reward-chip"><hud-coin-icon [size]="15"></hud-coin-icon> {{ selectedNode()!.rewardCoins }} monedas</div>
+          <div class="reward-chip"><hud-icon n="star" [s]="14"></hud-icon> {{ selectedNode()!.rewardXp }} XP</div>
         </div>
       }
 
@@ -101,12 +154,15 @@
       } @else {
         <div class="deck-list">
           @for (deck of sortedDecks(); track deck.summary.id) {
-            <div
+            <button
+              type="button"
               class="deck-item"
               [class.selected]="selectedDeckId() === deck.summary.id"
               [class.disabled]="!deck.usable"
+              [disabled]="!deck.usable"
               (click)="onDeckSelect(deck)"
               [title]="deck.reason ?? ''"
+              [attr.aria-label]="deck.summary.name + (deck.usable ? '' : ': ' + deck.reason)"
             >
               <div>
                 <div class="deck-name">{{ deck.summary.name }}</div>
@@ -115,7 +171,7 @@
                 }
               </div>
               <div class="deck-cards">{{ deck.summary.totalCards }}/60</div>
-            </div>
+            </button>
           }
         </div>
       }

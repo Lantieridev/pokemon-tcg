@@ -7,7 +7,7 @@ export interface StoreItemDTO {
   name: string;
   description: string;
   price: number;
-  itemType: 'TITLE' | 'AVATAR' | 'PACK' | 'COSMETIC';
+  itemType: 'TITLE' | 'AVATAR' | 'PACK';
   imageUrl: string;
 }
 

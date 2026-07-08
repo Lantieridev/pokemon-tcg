@@ -1,6 +1,28 @@
 .bp-container {
+  position: relative;
+  z-index: 2;
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.bp-hero {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.bp-hero .eyebrow { display: block; margin-bottom: 14px; }
+.bp-hero h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  color: var(--txt);
+}
+.bp-hero-sub {
+  font-size: 15px;
+  color: var(--mut);
+  max-width: 440px;
   margin: 0 auto;
 }
 
@@ -53,14 +75,15 @@
 }
 
 .season-badge {
-  font-family: var(--chunky);
+  font-family: 'Manrope';
+  font-weight: 700;
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   padding: 0.2rem 0.6rem;
   border-radius: 1rem;
-  background: var(--p-blue);
+  background: var(--m1);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .bp-title-section p {
@@ -71,39 +94,42 @@
   margin-bottom: 1rem;
 }
 
-.bp-stats {
+/* Fills the hero's dead space with the one thing this screen is about: progress. */
+.bp-level-track {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
 }
-
-.stat-pill {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
+.bp-level-badge {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 120px;
-}
-
-.stat-label {
-  font-family: var(--chunky);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.stat-value {
+  align-items: center;
+  justify-content: center;
   font-family: var(--display);
-  font-size: 1.5rem;
   font-weight: 900;
+  font-size: 20px;
+  background: linear-gradient(180deg, var(--accent2), #b38e00);
+  color: #1a1010;
+  box-shadow: 0 8px 20px -6px rgba(255, 203, 5, .5);
 }
-
-.progress-bar-container {
-  margin-top: 1rem;
-  width: 100%;
+.bp-level-badge--next {
+  background: rgba(255,255,255,.06);
+  color: var(--mut);
+  box-shadow: none;
+  border: 1.5px solid var(--line-2);
+}
+.bp-level-progress { flex: 1; min-width: 0; }
+.bp-level-caption {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--chunky);
+  font-size: 0.7rem;
+  letter-spacing: .05em;
+  color: rgba(255,255,255,.45);
 }
 
 .progress-bar {
@@ -117,8 +143,8 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  background: linear-gradient(90deg, #b38e00, var(--accent2));
+  box-shadow: 0 0 10px rgba(255, 203, 5, 0.5);
   transition: width 0.5s ease-out;
 }
 
@@ -139,7 +165,7 @@
 .premium-buy-card h2 {
   font-family: var(--display);
   font-size: 1.1rem;
-  color: var(--p-yellow);
+  color: var(--accent2);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 900;
@@ -158,7 +184,7 @@
   width: 100%;
   padding: 0.6rem;
   border-radius: 0.5rem;
-  background: var(--p-yellow);
+  background: var(--accent2);
   color: #1a1010;
   font-family: var(--chunky);
   font-size: 0.8rem;
@@ -181,10 +207,14 @@
   box-shadow: 0 1px 0 #b38e00;
 }
 
+/* Stays gold and aspirational even when the player can't afford it yet — a
+   grayscale/broken look here reads as "this button doesn't work" rather than
+   "something to save up for." */
 .buy-premium-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.75;
   cursor: not-allowed;
-  filter: grayscale(1);
+  transform: none;
+  box-shadow: 0 3px 0 #7a6100;
 }
 
 .premium-active-badge {
@@ -199,7 +229,7 @@
   justify-content: center;
   text-align: center;
   box-shadow: 0 0 30px rgba(255, 203, 5, 0.15), inset 0 0 20px rgba(255, 203, 5, 0.1);
-  color: var(--p-yellow);
+  color: var(--accent2);
 }
 
 .premium-active-badge h2 {
@@ -221,7 +251,7 @@
 
 /* Fortnite Style Grid CSS */
 .bp-pagination-header {
-  border-bottom: 2px solid rgba(255,255,255,0.1);
+  border-bottom: none;
   padding-bottom: 0.5rem;
 }
 
@@ -246,9 +276,23 @@
 }
 
 .bp-scroll-host {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
   height: 100%;
   width: 100%;
   overflow-y: auto;
+  padding-top: 92px;
+  background: linear-gradient(180deg, #1a1508 0%, #0a1730 45%);
+}
+
+/* A warm gold ticket-stub glow instead of the shared navy blob mesh —
+   this page is a rewards ladder, it should feel premium/aspirational. */
+.bp-ticket-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 203, 5, .12), transparent 65%);
 }
 
 .bp-container {
@@ -262,13 +306,16 @@
   padding: 1rem 0;
 }
 
+/* Same glass language as .bp-header (rgba navy + blur + hairline border) so the
+   ladder reads as a continuation of the hero panel, not a second, harder object. */
 .bp-grid {
   display: flex;
   width: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: var(--night-2);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 25, 40, 0.6);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  border-radius: 1.5rem;
   overflow: hidden;
 }
 
@@ -289,35 +336,42 @@
 
 .grid-header {
   height: 44px;
-  background: var(--night-3);
+  background: rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* "Current level" reads gold in both the hero badge and here — one concept,
+   one accent, instead of gold above / red below. */
 .is-current .grid-header {
-  background: var(--p-blue);
+  background: linear-gradient(180deg, var(--accent2), #b38e00);
   box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
 }
 
 .header-lbl {
-  font-family: 'Russo One', sans-serif;
+  font-family: var(--num);
   font-size: 0.6rem;
   color: rgba(255, 255, 255, 0.5);
   line-height: 1;
 }
 
 .is-current .header-lbl {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(26, 16, 0, 0.7);
 }
 
 .header-num {
-  font-family: 'Bowlby One', sans-serif;
+  font-family: var(--display);
+  font-weight: 700;
   font-size: 1.4rem;
   color: white;
   line-height: 1;
+}
+
+.is-current .header-num {
+  color: #1a1000;
 }
 
 .grid-cell {
@@ -329,8 +383,8 @@
 }
 
 .cell-free {
-  background: var(--panel-glass-soft);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .cell-free.is-empty {
@@ -338,12 +392,12 @@
 }
 
 .cell-premium {
-  background: linear-gradient(135deg, #ae8934, #ffcb05);
+  background: linear-gradient(135deg, #ae8934, var(--accent2));
   box-shadow: inset 0 0 20px rgba(255, 203, 5, 0.4);
 }
 
 .cell-premium.tier-locked {
-  background: #3a3219;
+  background: rgba(255, 255, 255, 0.04);
   box-shadow: none;
 }
 
@@ -504,7 +558,8 @@
 }
 
 .claim-mini-btn {
-  font-family: 'Russo One', sans-serif;
+  font-family: var(--display);
+  font-weight: 700;
   font-size: 0.6rem;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;

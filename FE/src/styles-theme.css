@@ -1,5 +1,5 @@
 /* =========================================================
-   POKÉMON TCG — Premium lobby system (Aurora)
+   POKÉMON TCG — Premium dashboard theme
    ========================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
@@ -11,11 +11,11 @@
   letter-spacing:-0.01em;
 }
 
-/* ---------- vibe palettes ---------- */
-.v-aurora{
+/* ---------- theme palette ---------- */
+.theme-dark{
   --bg:#0a1730; --bg2:#132342; --surface:rgba(255,255,255,.05);
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.16);
-  --txt:#eaf0ff; --mut:#93a3c4; --dim:#5e6e90;
+  --txt:#eaf0ff; --mut:#93a3c4; --dim:#8493b3;
   --accent:#ff2e3e; --accent-dk:#cc2531; --accent-soft:rgba(255,46,62,.14);
   --display:'Space Grotesk',sans-serif; --num:'Space Mono',monospace;
   --on-accent:#ffffff;
@@ -30,7 +30,7 @@
 .bd-noise{position:absolute;inset:0;pointer-events:none;opacity:.04;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* aurora mesh blobs */
+/* ambient mesh blobs */
 .mesh{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .mesh span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:screen;animation:drift 16s ease-in-out infinite}
 @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,-3%) scale(1.12)}66%{transform:translate(-3%,4%) scale(.95)}}
@@ -74,6 +74,7 @@
   font-family:'Manrope';font-weight:700;font-size:14px;letter-spacing:.01em;transition:border-color .15s,background .15s,transform .15s}
 .ghost-btn:hover{border-color:var(--txt);background:rgba(255,255,255,.06);transform:translateY(-2px)}
 .ghost-btn.sm{height:44px;padding:0 16px;font-size:13px;border-radius:12px}
+.ghost-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;background:var(--surface);border-color:var(--line-2)}
 
 .cancel-link{background:none;border:none;cursor:pointer;color:var(--mut);font-family:'Manrope';
   font-weight:700;font-size:13px;letter-spacing:.04em;padding:6px 4px;transition:color .15s}
@@ -100,7 +101,7 @@
 @keyframes fadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-soft{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
-.fu{animation:fadeup .6s cubic-bezier(.2,.8,.3,1)}
+.fu{animation:fadeup .6s cubic-bezier(.2,.8,.3,1) backwards}
 
 /* live dot */
 .live{width:8px;height:8px;border-radius:50%;background:#46e08a;box-shadow:0 0 0 0 rgba(70,224,138,.5);animation:live 2s infinite}
@@ -150,6 +151,16 @@
 .name-energy{background:linear-gradient(100deg,var(--accent),var(--accent2));
   -webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 3px 16px color-mix(in srgb,var(--accent) 45%,transparent))}
+
+/* Editorial title — Home's signature serif italic, formalized as a reusable
+   convention instead of a one-off inline style, so every screen's H1 shares
+   the same authored voice instead of defaulting to the generic display font. */
+.title-editorial{
+  font-family:'Instrument Serif',serif;
+  font-weight:400;
+  line-height:1.02;
+  letter-spacing:-0.01em;
+  color:var(--txt)}
 
 /* ---------- type energy symbols ---------- */
 .etype{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:0 0 auto;
@@ -514,4 +525,26 @@
 @keyframes foilShine {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* ---------- accessibility: motion & focus ---------- */
+/* Respect the OS-level "reduce motion" request: the app leans heavily on ambient
+   looping animations (drifting mesh blobs, twinkling sparks, floaty cards, pulses)
+   that are purely decorative — a vestibular-disorder user who set this preference
+   should not have them forced on. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Default focus-visible ring for interactive elements that don't define their own —
+   this dark theme has no default browser outline tuned for it, so keyboard focus
+   was effectively invisible on plain links/buttons. */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

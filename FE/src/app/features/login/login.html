@@ -1,13 +1,13 @@
-<div class="absolute inset-0 login-wrapper overflow-hidden font-sans">
-  
+<div class="absolute inset-0 login-wrapper theme-dark overflow-hidden font-sans">
+
   <!-- Kanto Panning Background -->
   <div class="kanto-bg panning-bg"></div>
   <!-- Darker overlay for modern dark mode feel -->
   <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
 
-  <!-- Decorative modern glow -->
+  <!-- Decorative glow — same red/gold accent as the rest of the app -->
   <div class="absolute inset-0 pointer-events-none overflow-hidden">
-    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px]"></div>
+    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-red-500/15 rounded-full blur-[100px]"></div>
     <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-[80px]"></div>
   </div>
 
@@ -27,61 +27,111 @@
 
       <!-- Toggle modo -->
       <div class="modern-tabs mb-8">
-        <button class="modern-tab-btn" [class.modern-tab-active]="isLogin" (click)="mode.set('login')">
+        <button class="modern-tab-btn" [class.modern-tab-active]="isLogin" (click)="isLogin ? null : toggleMode()">
           Iniciar sesión
         </button>
-        <button class="modern-tab-btn" [class.modern-tab-active]="!isLogin" (click)="mode.set('register')">
+        <button class="modern-tab-btn" [class.modern-tab-active]="!isLogin" (click)="isLogin ? toggleMode() : null">
           Registrarse
         </button>
       </div>
 
       <!-- Formulario -->
-      <div class="w-full flex flex-col gap-5">
+      <form class="w-full flex flex-col gap-5" (ngSubmit)="submit()" novalidate>
 
         <!-- Usuario -->
         <div class="modern-field-group">
-          <label class="modern-label">Usuario</label>
+          <label class="modern-label" for="login-username">Usuario</label>
           <input
             id="login-username"
             type="text"
             class="modern-input"
+            [class.modern-input-error]="showError('username', usernameError())"
             placeholder="Ej: AshRivero"
             autocomplete="username"
             [ngModel]="username()"
+            name="username"
             (ngModelChange)="username.set($event)"
+            (blur)="touch('username')"
+            [attr.aria-invalid]="showError('username', usernameError())"
           />
+          @if (showError('username', usernameError())) {
+            <span class="modern-field-error">{{ usernameError() }}</span>
+          }
         </div>
 
         <!-- Email (solo en registro) -->
         @if (!isLogin) {
           <div class="modern-field-group">
-            <label class="modern-label">Email</label>
+            <label class="modern-label" for="login-email">Email</label>
             <input
               id="login-email"
               type="email"
               class="modern-input"
+              [class.modern-input-error]="showError('email', emailError())"
               placeholder="ash@pokemon.com"
               autocomplete="email"
               [ngModel]="email()"
+              name="email"
               (ngModelChange)="email.set($event)"
+              (blur)="touch('email')"
+              [attr.aria-invalid]="showError('email', emailError())"
             />
+            @if (showError('email', emailError())) {
+              <span class="modern-field-error">{{ emailError() }}</span>
+            }
           </div>
         }
 
         <!-- Contraseña -->
         <div class="modern-field-group">
-          <label class="modern-label">Contraseña</label>
-          <input
-            id="login-password"
-            type="password"
-            class="modern-input"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            (keyup.enter)="submit()"
-          />
+          <label class="modern-label" for="login-password">Contraseña</label>
+          <div class="modern-input-with-action">
+            <input
+              id="login-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="modern-input"
+              [class.modern-input-error]="showError('password', passwordError())"
+              placeholder="••••••••"
+              [attr.autocomplete]="isLogin ? 'current-password' : 'new-password'"
+              [ngModel]="password()"
+              name="password"
+              (ngModelChange)="password.set($event)"
+              (blur)="touch('password')"
+              [attr.aria-invalid]="showError('password', passwordError())"
+            />
+            <button type="button" class="modern-input-action" (click)="toggleShowPassword()" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              {{ showPassword() ? '🙈' : '👁' }}
+            </button>
+          </div>
+          @if (showError('password', passwordError())) {
+            <span class="modern-field-error">{{ passwordError() }}</span>
+          } @else if (!isLogin) {
+            <span class="modern-field-hint">Mínimo 6 caracteres.</span>
+          }
         </div>
+
+        <!-- Confirmar contraseña (solo en registro) -->
+        @if (!isLogin) {
+          <div class="modern-field-group">
+            <label class="modern-label" for="login-confirm-password">Confirmar contraseña</label>
+            <input
+              id="login-confirm-password"
+              type="password"
+              class="modern-input"
+              [class.modern-input-error]="showError('confirmPassword', confirmPasswordError())"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              [ngModel]="confirmPassword()"
+              name="confirmPassword"
+              (ngModelChange)="confirmPassword.set($event)"
+              (blur)="touch('confirmPassword')"
+              [attr.aria-invalid]="showError('confirmPassword', confirmPasswordError())"
+            />
+            @if (showError('confirmPassword', confirmPasswordError())) {
+              <span class="modern-field-error">{{ confirmPasswordError() }}</span>
+            }
+          </div>
+        }
 
         <!-- Error message -->
         @if (errorMsg()) {
@@ -93,10 +143,10 @@
         <!-- Botón submit -->
         <button
           id="login-submit-btn"
+          type="submit"
           class="modern-submit-btn mt-2"
           [class.modern-submit-btn-red]="!isLogin"
-          [disabled]="loading()"
-          (click)="submit()"
+          [disabled]="loading() || (submitAttempted() && !formValid())"
         >
           @if (loading()) {
             <span class="modern-spinner"></span>
@@ -106,7 +156,7 @@
           }
         </button>
 
-      </div>
+      </form>
 
       <!-- Footer toggle -->
       <div class="modern-footer mt-8">

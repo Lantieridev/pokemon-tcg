@@ -1,6 +1,6 @@
 <div class="modal-overlay" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    <button class="close-btn" (click)="onClose()">✕</button>
+    <button class="close-btn" (click)="onClose()" aria-label="Cerrar">✕</button>
     
     <!-- Profile Content -->
     <div style="position: relative; width: 100%; display: flex; flex-direction: column; gap: 30px;">
@@ -9,7 +9,7 @@
       <div class="fu" style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
         <div class="avatar" style="width: 80px; height: 80px; font-size: 34px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 4px var(--bg), 0 0 0 8px var(--accent); background: var(--surface); border-radius: 50%; overflow: hidden; padding: 0; flex-shrink: 0;">
           <ng-container *ngIf="isCustomAvatar(profile.avatarIcon)">
-            <img [src]="getAvatarUrl(profile.avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+            <img [src]="getAvatarUrl(profile.avatarIcon)" [alt]="'Avatar de ' + profile.username" style="width: 100%; height: 100%; object-fit: cover;" />
           </ng-container>
           <ng-container *ngIf="!isCustomAvatar(profile.avatarIcon)">
             {{ getAvatarEmoji(profile.avatarIcon) }}
@@ -35,11 +35,11 @@
         </div>
         
         <div style="display: flex; gap: 20px; padding: 16px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; backdrop-filter: blur(10px); margin-right: 24px;">
-          <aurora-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></aurora-stat>
+          <hud-stat [v]="totalWins.toString()" k="Victorias" [accent]="true"></hud-stat>
           <div style="width: 1px; background: var(--line);"></div>
-          <aurora-stat [v]="totalLosses.toString()" k="Derrotas"></aurora-stat>
+          <hud-stat [v]="totalLosses.toString()" k="Derrotas"></hud-stat>
           <div style="width: 1px; background: var(--line);"></div>
-          <aurora-stat [v]="overallWinRate + '%'" k="Win Rate" [accent]="true"></aurora-stat>
+          <hud-stat [v]="overallWinRate + '%'" k="Win Rate" [accent]="true"></hud-stat>
         </div>
       </div>
 
@@ -86,7 +86,7 @@
                 <div *ngIf="profile.showcasedDeck">
                   <div style="display: flex; align-items: center; gap: 20px; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 16px;">
                     <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center;">
-                      <aurora-icon n="decks" [s]="22" style="color: var(--on-accent);"></aurora-icon>
+                      <hud-icon n="decks" [s]="22" style="color: var(--on-accent);"></hud-icon>
                     </div>
                     <div>
                       <div style="font-weight: 700; font-size: 16px; color: var(--txt);">{{ profile.showcasedDeck.name }}</div>

@@ -18,7 +18,7 @@ import { FieldPokemonComponent } from '../../shared/ui/field-pokemon/field-pokem
 import { EnergyPipComponent } from '../../shared/ui/energy-pip/energy-pip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { CardSelectionModalComponent } from '../../shared/ui/card-selection-modal/card-selection-modal.component';
-import { SparksComponent, AmbientComponent, BallIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { SparksComponent, AmbientComponent, BallIconComponent } from '../../shared/ui/ui-kit.components';
 
 import { WebSocketService } from '../../core/services/websocket.service';
 import { MatchStore, DamageEvent } from '../../core/store/match.store';
@@ -1050,7 +1050,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const allCards = this.tcgService.cards();
     const found = allCards.find(c => c.id === cardId);
     if (!found) return null;
-    // Transform to the shape aurora-holo-card expects (card.img, card.name, card.rarity, card.subtypes, card.type)
+    // Transform to the shape holo-card expects (card.img, card.name, card.rarity, card.subtypes, card.type)
     return {
       img: found.images?.large || found.images?.small || this.getCardImageUrl(cardId),
       name: found.name,
@@ -1252,7 +1252,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // ── UI Handlers ───────────────────────────────────────────────────────────
 
-  openCardMenu(e: MouseEvent, pokemon: any, index: number | null = null): void {
+  openCardMenu(e: Event, pokemon: any, index: number | null = null): void {
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     this.menu.set({

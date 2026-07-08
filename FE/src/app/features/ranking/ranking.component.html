@@ -1,30 +1,19 @@
-<div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
-  <!-- Background Mesh -->
-  <div class="mesh" style="opacity: 0.5;">
-    <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
-    <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
-    <span style="width: 560px; height: 560px; right: -120px; bottom: -220px; background: var(--m3); animation-delay: -9s;"></span>
-  </div>
-  <aurora-ambient></aurora-ambient>
-  <aurora-sparks [n]="10" color="var(--accent2)"></aurora-sparks>
-  <div class="bd-noise"></div>
+<div class="scene theme-dark ranking-scene" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
   <div class="bd-vignette"></div>
 
   <!-- Topbar spacer (Navbar is handled globally by app-navbar) -->
   <div style="height: 92px; width: 100%; flex: 0 0 auto;"></div>
 
-  <!-- Content Container -->
+  <!-- Content Container: calm and editorial, but with real supporting content
+       at the sides instead of a narrow card floating in empty space. -->
   <div class="w-full flex flex-col items-center py-12 px-6 relative z-10">
-    <div class="w-full max-w-4xl bg-white/[0.03] border border-white/5 rounded-3xl p-8 backdrop-blur-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
-      <!-- Pokeball background accent -->
-      <div class="absolute -top-24 -right-24 w-64 h-64 bg-red-600/5 rounded-full border border-red-600/10 pointer-events-none"></div>
-      <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/5 rounded-full border border-blue-600/10 pointer-events-none"></div>
-
-      <div class="text-center mb-8 relative z-10">
-        <h1 class="font-display text-4xl font-black text-yellow-400 tracking-widest uppercase filter drop-shadow-[0_2px_8px_rgba(253,224,71,0.2)]">
-          🏆 Leaderboard Global 🏆
+    <div class="w-full" style="max-width: 1280px;">
+      <div class="text-center mb-8 relative z-10 fu">
+        <span class="eyebrow" style="display: block; margin-bottom: 12px;">Ranking · Liga de Kanto</span>
+        <h1 class="title-editorial" style="font-size: 34px; margin: 0;">
+          Los mejores <span class="name-energy" style="font-style: italic;">entrenadores</span>
         </h1>
-        <p class="text-white/60 font-chunky text-sm mt-2">Los mejores 50 entrenadores de la arena de Kanto</p>
+        <p style="color: var(--mut); font-size: 14px; margin-top: 10px;">Los 50 mejores entrenadores de la arena de Kanto.</p>
       </div>
 
       @if (isLoading()) {
@@ -37,91 +26,136 @@
           ⚠️ {{ errorMsg() }}
         </div>
       } @else {
-        <!-- Top 3 podium highlight cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <!-- 2nd Place -->
-          @if (rankings().length > 1) {
-            <div class="order-2 md:order-1 flex flex-col items-center p-6 rounded-2xl border border-white/5 bg-gradient-to-b from-gray-900/50 to-black/30 backdrop-blur-md relative">
-              <span class="text-3xl mb-2">🥈</span>
-              <span class="font-display font-black text-lg text-slate-300">{{ rankings()[1].username }}</span>
-              <span class="text-xs text-white/50 font-chunky mt-1">{{ rankings()[1].tier }}</span>
-              <div class="mt-3 font-display font-bold text-slate-300 text-xl">{{ rankings()[1].mmr }} MMR</div>
-            </div>
-          }
-          
-          <!-- 1st Place -->
-          @if (rankings().length > 0) {
-            <div class="order-1 md:order-2 flex flex-col items-center p-8 rounded-2xl border border-yellow-500/20 bg-gradient-to-b from-yellow-500/10 to-black/30 backdrop-blur-md relative transform md:-translate-y-2 shadow-[0_10px_30px_rgba(234,179,8,0.1)]">
-              <span class="text-4xl mb-2">🥇</span>
-              <span class="font-display font-black text-xl text-yellow-400">{{ rankings()[0].username }}</span>
-              <span class="text-xs text-yellow-300/80 font-chunky mt-1">{{ rankings()[0].tier }}</span>
-              <div class="mt-3 font-display font-extrabold text-yellow-400 text-2xl drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{{ rankings()[0].mmr }} MMR</div>
-            </div>
-          }
-
-          <!-- 3rd Place -->
-          @if (rankings().length > 2) {
-            <div class="order-3 flex flex-col items-center p-6 rounded-2xl border border-white/5 bg-gradient-to-b from-gray-900/50 to-black/30 backdrop-blur-md relative">
-              <span class="text-3xl mb-2">🥉</span>
-              <span class="font-display font-black text-lg text-amber-600">{{ rankings()[2].username }}</span>
-              <span class="text-xs text-white/50 font-chunky mt-1">{{ rankings()[2].tier }}</span>
-              <div class="mt-3 font-display font-bold text-amber-600 text-xl">{{ rankings()[2].mmr }} MMR</div>
-            </div>
-          }
-        </div>
-
-        <!-- Leaderboard table -->
-        <div class="overflow-x-auto rounded-2xl border border-white/5 bg-black/40">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-white/10 text-white/40 text-xs font-display tracking-wider uppercase bg-white/[0.01]">
-                <th class="py-4 px-6 text-center w-24">Puesto</th>
-                <th class="py-4 px-6">Entrenador</th>
-                <th class="py-4 px-6 text-center">Liga</th>
-                <th class="py-4 px-6 text-right">MMR</th>
-                <th class="py-4 px-6 text-right">Partidas</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (player of rankings(); track player.username; let idx = $index) {
-                <tr class="border-b border-white/[0.02] hover:bg-white/[0.02] transition-all duration-200 font-chunky text-sm">
-                  <!-- Rank -->
-                  <td class="py-4 px-6 text-center">
-                    @if (idx === 0) {
-                      <span class="text-lg">🥇</span>
-                    } @else if (idx === 1) {
-                      <span class="text-lg">🥈</span>
-                    } @else if (idx === 2) {
-                      <span class="text-lg">🥉</span>
-                    } @else {
-                      <span class="text-white/40 font-display font-black">#{{ idx + 1 }}</span>
-                    }
-                  </td>
-                  <!-- Username -->
-                  <td class="py-4 px-6 font-bold text-base" [class.text-yellow-400]="idx === 0" [class.text-slate-300]="idx === 1" [class.text-amber-600]="idx === 2" [class.text-white/90]="idx > 2">
-                    {{ player.username }}
-                  </td>
-                  <!-- Tier -->
-                  <td class="py-4 px-6 text-center">
-                    <span class="px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase border border-white/5 bg-white/[0.02]"
-                          [style.color]="player.tier === 'Grandmaster' ? '#f56565' : (player.tier === 'Master' ? '#9f7aea' : (player.tier === 'Diamond' ? '#63b3ed' : (player.tier === 'Platinum' ? '#4fd1c5' : (player.tier === 'Gold' ? '#ecc94b' : '#a0aec0'))))">
-                      {{ player.tier }}
-                    </span>
-                  </td>
-                  <!-- MMR -->
-                  <td class="py-4 px-6 text-right font-display font-extrabold" [class.text-yellow-400]="idx === 0" [class.text-white]="idx > 0">
-                    {{ player.mmr }}
-                  </td>
-                  <!-- Matches Played -->
-                  <td class="py-4 px-6 text-right text-white/50">{{ player.rankedMatchesPlayed }}</td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="5" class="text-center py-20 text-white/30 font-chunky">No hay registros de clasificación clasificados.</td>
-                </tr>
+        <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start;">
+          <!-- Main column: podium + filterable table -->
+          <div class="bg-white/[0.025] border border-white/5 rounded-3xl p-8 relative">
+            <!-- Top 3 podium highlight cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <!-- 2nd Place -->
+              @if (rankings().length > 1) {
+                <div class="order-2 md:order-1 flex flex-col items-center p-6 rounded-2xl border border-white/5 bg-gradient-to-b from-gray-900/50 to-black/30 backdrop-blur-md relative">
+                  <span class="text-3xl mb-2">🥈</span>
+                  <span class="font-display font-black text-lg text-slate-300">{{ rankings()[1].username }}</span>
+                  <span class="text-xs text-white/50 font-chunky mt-1">{{ rankings()[1].tier }}</span>
+                  <div class="mt-3 font-display font-bold text-slate-300 text-xl">{{ rankings()[1].mmr }} MMR</div>
+                </div>
               }
-            </tbody>
-          </table>
+
+              <!-- 1st Place -->
+              @if (rankings().length > 0) {
+                <div class="order-1 md:order-2 flex flex-col items-center p-8 rounded-2xl border border-yellow-500/20 bg-gradient-to-b from-yellow-500/10 to-black/30 backdrop-blur-md relative transform md:-translate-y-2 shadow-[0_10px_30px_rgba(234,179,8,0.1)]">
+                  <span class="text-4xl mb-2">🥇</span>
+                  <span class="font-display font-black text-xl text-yellow-400">{{ rankings()[0].username }}</span>
+                  <span class="text-xs text-yellow-300/80 font-chunky mt-1">{{ rankings()[0].tier }}</span>
+                  <div class="mt-3 font-display font-extrabold text-yellow-400 text-2xl drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{{ rankings()[0].mmr }} MMR</div>
+                </div>
+              }
+
+              <!-- 3rd Place -->
+              @if (rankings().length > 2) {
+                <div class="order-3 flex flex-col items-center p-6 rounded-2xl border border-white/5 bg-gradient-to-b from-gray-900/50 to-black/30 backdrop-blur-md relative">
+                  <span class="text-3xl mb-2">🥉</span>
+                  <span class="font-display font-black text-lg text-amber-600">{{ rankings()[2].username }}</span>
+                  <span class="text-xs text-white/50 font-chunky mt-1">{{ rankings()[2].tier }}</span>
+                  <div class="mt-3 font-display font-bold text-amber-600 text-xl">{{ rankings()[2].mmr }} MMR</div>
+                </div>
+              }
+            </div>
+
+            <!-- League filter -->
+            <div class="flex flex-wrap gap-2 mb-5">
+              <button class="tier-filter-chip" [class.active]="selectedTier() === null" (click)="setTier(null)">Todas las ligas</button>
+              @for (tier of availableTiers(); track tier) {
+                <button class="tier-filter-chip" [class.active]="selectedTier() === tier" [style.--tchip]="tierColor(tier)" (click)="setTier(tier)">
+                  {{ tier }}
+                </button>
+              }
+            </div>
+
+            <!-- Leaderboard table -->
+            <div class="overflow-x-auto rounded-2xl border border-white/5 bg-black/40">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 text-white/40 text-xs font-display tracking-wider uppercase bg-white/[0.01]">
+                    <th class="py-4 px-6 text-center w-24">Puesto</th>
+                    <th class="py-4 px-6">Entrenador</th>
+                    <th class="py-4 px-6 text-center">Liga</th>
+                    <th class="py-4 px-6 text-right">MMR</th>
+                    <th class="py-4 px-6 text-right">Partidas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (player of filteredRankings(); track player.username; let idx = $index) {
+                    <tr class="border-b border-white/[0.02] hover:bg-white/[0.02] transition-all duration-200 font-chunky text-sm"
+                        [class.ranking-row--me]="myRank()?.entry?.username === player.username">
+                      <!-- Rank -->
+                      <td class="py-4 px-6 text-center">
+                        @if (!selectedTier() && idx === 0) {
+                          <span class="text-lg">🥇</span>
+                        } @else if (!selectedTier() && idx === 1) {
+                          <span class="text-lg">🥈</span>
+                        } @else if (!selectedTier() && idx === 2) {
+                          <span class="text-lg">🥉</span>
+                        } @else {
+                          <span class="text-white/40 font-display font-black">#{{ rankings().indexOf(player) + 1 }}</span>
+                        }
+                      </td>
+                      <!-- Username -->
+                      <td class="py-4 px-6 font-bold text-base" [class.text-yellow-400]="idx === 0" [class.text-slate-300]="idx === 1" [class.text-amber-600]="idx === 2" [class.text-white/90]="idx > 2">
+                        {{ player.username }}
+                        @if (myRank()?.entry?.username === player.username) {
+                          <span class="you-badge">VOS</span>
+                        }
+                      </td>
+                      <!-- Tier -->
+                      <td class="py-4 px-6 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase border border-white/5 bg-white/[0.02]"
+                              [style.color]="tierColor(player.tier)">
+                          {{ player.tier }}
+                        </span>
+                      </td>
+                      <!-- MMR -->
+                      <td class="py-4 px-6 text-right font-display font-extrabold" [class.text-yellow-400]="idx === 0" [class.text-white]="idx > 0">
+                        {{ player.mmr }}
+                      </td>
+                      <!-- Matches Played -->
+                      <td class="py-4 px-6 text-right text-white/50">{{ player.rankedMatchesPlayed }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="5" class="text-center py-20 text-white/30 font-chunky">No hay registros de clasificación clasificados.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sidebar: where you stand + league legend -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="ranking-side-card">
+              <span class="ranking-side-eyebrow">Tu posición</span>
+              @if (myRank(); as mine) {
+                <div class="ranking-me-rank">#{{ mine.position }}</div>
+                <div style="font-size: 13px; color: var(--mut); margin-bottom: 12px;">{{ mine.entry.mmr }} MMR · {{ mine.entry.tier }}</div>
+                <div class="ranking-side-hint">{{ mine.entry.rankedMatchesPlayed }} partidas clasificatorias jugadas.</div>
+              } @else {
+                <div class="ranking-side-hint">Todavía no aparecés en el top 50. ¡Ganá partidas clasificatorias para escalar!</div>
+              }
+            </div>
+
+            <div class="ranking-side-card">
+              <span class="ranking-side-eyebrow">Ligas de Kanto</span>
+              <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+                @for (tier of availableTiers(); track tier) {
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;" [style.background]="tierColor(tier)"></span>
+                    <span style="color: var(--txt);">{{ tier }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
         </div>
       }
     </div>

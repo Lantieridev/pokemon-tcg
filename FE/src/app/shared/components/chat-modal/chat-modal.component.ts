@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FriendshipDTO, ChatMessageDTO } from '../../../core/models/friends.models';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
 import { FriendsWsService } from '../../../core/services/friends-ws.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -24,14 +25,18 @@ export class ChatModalComponent implements OnInit, OnDestroy {
   constructor(
     private friendsApi: FriendsApiService,
     private friendsWs: FriendsWsService,
+    private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.friendsApi.getChatHistory(this.friend.friendUsername).subscribe(history => {
-      this.messages = history;
-      this.cdr.detectChanges();
-      this.scrollToBottom();
+    this.friendsApi.getChatHistory(this.friend.friendUsername).subscribe({
+      next: history => {
+        this.messages = history;
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+      },
+      error: () => this.toastService.error('No se pudo cargar el historial del chat')
     });
 
     this.sub = this.friendsWs.messages$.subscribe(msg => {

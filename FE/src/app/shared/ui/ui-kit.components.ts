@@ -3,11 +3,11 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'aurora-icon',
+  selector: 'hud-icon',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <svg [attr.width]="s" [attr.height]="s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <svg [attr.width]="s" [attr.height]="s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
       @switch (n) {
         @case ('home') { <path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5" /> }
         @case ('decks') { <rect x="3" y="3" width="13" height="18" rx="2" /><path d="M19 6.5q2 .6 1.4 2.8l-2.4 9" /> }
@@ -18,28 +18,39 @@ import { RouterModule } from '@angular/router';
         @case ('arrow') { <path d="M5 12h14M13 6l6 6-6 6" /> }
         @case ('fire') { <path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-1.5.5-2.5 1.5-3.5C9.5 5.5 11 5 12 2z" /><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /> }
         @case ('pokecoin') { <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 7v10M9 9.5a3 3 0 1 0 0 5h2.5" /> }
+        @case ('map') { <path d="M9 3 3 5.5v15L9 18l6 2.5L21 18V3l-6 2.5L9 3Zm0 0v15m6-12.5V18" /> }
+        @case ('ticket') { <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /><path d="M13 6v2M13 11v2M13 16v2" /> }
+        @case ('users') { <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-8a4 4 0 0 1 0 7.75M22 21v-2a4 4 0 0 0-3-3.87" /> }
+        @case ('help') { <circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 0 1 4.7 1.2c0 1.6-2.2 1.8-2.2 3.3" /><circle cx="12" cy="17" r=".4" fill="currentColor" stroke="none" /> }
+        @case ('lock') { <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /> }
+        @case ('check') { <path d="M4 12.5 9.5 18 20 6" /> }
+        @case ('star') { <path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3Z" /> }
       }
     </svg>
   `
 })
-export class IconComponent {
+export class HudIconComponent {
   @Input() n: string = 'home';
   @Input() s: number = 22;
 }
 
 @Component({
-  selector: 'aurora-logo',
+  selector: 'hud-logo',
   standalone: true,
   imports: [RouterModule],
   template: `
-    <div routerLink="/lobby" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-      <div style="width: 26px; height: 26px; border-radius: 8px; position: relative; background: linear-gradient(140deg, var(--accent), var(--accent-dk)); display: flex; align-items: center; justify-content: center;">
-        <div style="width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid var(--on-accent); position: relative;">
-          <span style="position: absolute; left: -5px; right: -5px; top: 50%; height: 2.5px; background: var(--on-accent); transform: translateY(-50%);"></span>
-        </div>
-      </div>
-      <div style="font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .04em; color: var(--txt);">
-        POKÉMON<span style="color: var(--mut); font-weight: 500;"> TCG</span>
+    <div routerLink="/lobby" class="brand-mark" style="display: flex; align-items: center; gap: 9px; cursor: pointer;">
+      <svg width="26" height="26" viewBox="0 0 24 24" style="flex: 0 0 auto; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent));">
+        <defs>
+          <linearGradient id="brandSpark" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style="stop-color: var(--accent2)" />
+            <stop offset="1" style="stop-color: var(--accent)" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#brandSpark)" d="M12 0c1 6 5 10 12 12-7 2-11 6-12 12-1-6-5-10-12-12 7-2 11-6 12-12z" />
+      </svg>
+      <div style="font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .04em; color: var(--txt); line-height: 1;">
+        Pokémon<span style="color: var(--mut); font-weight: 500;"> TCG</span>
       </div>
     </div>
   `
@@ -47,7 +58,7 @@ export class IconComponent {
 export class LogoComponent { }
 
 @Component({
-  selector: 'aurora-trainer-chip',
+  selector: 'hud-trainer-chip',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
@@ -90,7 +101,7 @@ export class LogoComponent { }
           <div style="padding: 8px 12px 10px; border-bottom: 1px solid var(--line, rgba(255,255,255,0.08)); margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
             <div class="avatar ring" style="display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; font-size: 18px; width: 34px; height: 34px; border-radius: 50%; background: var(--surface);">
               @if (isCustomAvatar(avatarIcon)) {
-                <img [src]="getAvatarUrl(avatarIcon)" style="width: 100%; height: 100%; object-fit: cover;" />
+                <img [src]="getAvatarUrl(avatarIcon)" [alt]="'Avatar de ' + name" style="width: 100%; height: 100%; object-fit: cover;" />
               } @else if (getAvatarEmoji(avatarIcon)) {
                 {{ getAvatarEmoji(avatarIcon) }}
               } @else {
@@ -102,7 +113,7 @@ export class LogoComponent { }
               <div style="font-weight: 700; font-size: 13.5px;">{{ name }}</div>
             </div>
           </div>
-          
+
           <a
             routerLink="/profile"
             (click)="open = false"
@@ -112,12 +123,28 @@ export class LogoComponent { }
               width: 100%; padding: 9px 12px; border: none; border-radius: 8px;
               background: transparent; color: var(--txt);
               font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
-              transition: background 0.15s; margin-bottom: 6px;">
+              transition: background 0.15s;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
             Mi Perfil
+          </a>
+
+          <a
+            routerLink="/battle-pass"
+            (click)="open = false"
+            class="profile-item"
+            style="
+              display: flex; align-items: center; gap: 8px;
+              width: 100%; padding: 9px 12px; border: none; border-radius: 8px;
+              background: transparent; color: var(--txt);
+              font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+              transition: background 0.15s; margin-bottom: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" /><path d="M13 6v2M13 11v2M13 16v2" />
+            </svg>
+            Pase de Batalla
           </a>
 
           <button
@@ -210,7 +237,7 @@ export class TrainerChipComponent {
 
 
 @Component({
-  selector: 'aurora-stat',
+  selector: 'hud-stat',
   standalone: true,
   template: `
     <div>
@@ -226,7 +253,7 @@ export class StatComponent {
 }
 
 @Component({
-  selector: 'aurora-rank-crest',
+  selector: 'hud-rank-crest',
   standalone: true,
   template: `
     <div style="position: relative; flex: 0 0 auto;" [style.width.px]="size" [style.height.px]="size">
@@ -262,7 +289,7 @@ export class RankCrestComponent {
 }
 
 @Component({
-  selector: 'aurora-ball-icon',
+  selector: 'hud-ball-icon',
   standalone: true,
   template: `
     <span [style.width.px]="size" [style.height.px]="size" style="border-radius: 50%; display: inline-block; flex: 0 0 auto; position: relative; background: linear-gradient(#ee1515 0 50%, #f4f4f4 50% 100%); box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.6);">
@@ -276,7 +303,7 @@ export class BallIconComponent {
 }
 
 @Component({
-  selector: 'aurora-coin-icon',
+  selector: 'hud-coin-icon',
   standalone: true,
   template: `
     <span [style.width.px]="size" [style.height.px]="size" style="border-radius: 50%; display: inline-block; flex: 0 0 auto; position: relative; background: linear-gradient(135deg, #fff080 0%, #f1c40f 40%, #b9770e 100%); box-shadow: inset 0 0 0 1px #fcf3cf, 0 1px 4px rgba(0,0,0,.6);">
@@ -290,9 +317,9 @@ export class CoinIconComponent {
 }
 
 @Component({
-  selector: 'aurora-battle-cta',
+  selector: 'hud-battle-cta',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule, HudIconComponent],
   template: `
     @if (_searching()) {
       <div class="cta cta--searching">
@@ -311,7 +338,7 @@ export class CoinIconComponent {
           <div class="cta__title">{{ title }}</div>
           <div class="cta__sub">{{ sub }}</div>
         </div>
-        <span class="cta__arrow"><aurora-icon n="arrow" [s]="22"></aurora-icon></span>
+        <span class="cta__arrow"><hud-icon n="arrow" [s]="22"></hud-icon></span>
       </button>
     }
   `
@@ -373,7 +400,7 @@ export class BattleCtaComponent implements OnDestroy {
 }
 
 @Component({
-  selector: 'aurora-energy-type',
+  selector: 'hud-energy-type',
   standalone: true,
   template: `
     <span class="etype" [style.width.px]="size" [style.height.px]="size" [style.--c]="c">
@@ -410,7 +437,7 @@ export class EnergyTypeComponent {
 }
 
 @Component({
-  selector: 'aurora-sparks',
+  selector: 'hud-sparks',
   standalone: true,
   template: `
     <div class="sparks">
@@ -438,7 +465,7 @@ export class SparksComponent {
 }
 
 @Component({
-  selector: 'aurora-ambient',
+  selector: 'hud-ambient',
   standalone: true,
   template: `
     <div class="energy-ring" style="width: 400px; height: 400px; right: 180px; top: 60px;"></div>
@@ -454,7 +481,7 @@ export class SparksComponent {
 export class AmbientComponent { }
 
 @Component({
-  selector: 'aurora-sig-card',
+  selector: 'hud-sig-card',
   standalone: true,
   template: `
     <div [style]="'width: ' + w + 'px; aspect-ratio: 5/7; border-radius: ' + (w * 0.06) + 'px; position: relative; flex: 0 0 auto; transform: rotate(' + rot + 'deg); background: linear-gradient(160deg, ' + tones()[0] + ', ' + tones()[1] + ' 55%, ' + tones()[2] + '); box-shadow: 0 30px 60px -22px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.18);'">
@@ -469,7 +496,7 @@ export class AmbientComponent { }
     </div>
   `
 })
-export class SigCardComponent {
+export class HudSigCardComponent {
   @Input() w: number = 230;
   @Input() type: string = 'fire';
   @Input() name: string = 'CHARIZARD';

@@ -41,7 +41,7 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
               <div class="card-slot counter-slot" [class.has-counters]="getCounter(id) > 0">
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="cleanCardId(id)"
+                  [alt]="getCardName(id)"
                   class="card-img"
                   draggable="false"
                 />
@@ -65,11 +65,14 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
               <div
                 class="card-slot pair-slot"
                 [class.active-source]="selectedSourceId() === id"
+                role="button" tabindex="0" [attr.aria-label]="getCardName(id)"
                 (click)="handleEarInfluenceClick(id)"
+                (keydown.enter)="handleEarInfluenceClick(id)"
+                (keydown.space)="$event.preventDefault(); handleEarInfluenceClick(id)"
               >
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="cleanCardId(id)"
+                  [alt]="getCardName(id)"
                   class="card-img"
                   draggable="false"
                 />
@@ -84,11 +87,14 @@ import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
                 class="card-slot"
                 [class.selected]="isSelected($index)"
                 [class.disabled]="!isSelected($index) && selectedIndices().size >= maxSelections"
+                role="button" tabindex="0" [attr.aria-label]="getCardName(id)"
                 (click)="toggleCard($index)"
+                (keydown.enter)="toggleCard($index)"
+                (keydown.space)="$event.preventDefault(); toggleCard($index)"
               >
                 <img
                   [src]="getCardImageUrl(id)"
-                  [alt]="cleanCardId(id)"
+                  [alt]="getCardName(id)"
                   class="card-img"
                   draggable="false"
                 />

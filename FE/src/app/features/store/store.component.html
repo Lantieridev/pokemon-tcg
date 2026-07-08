@@ -1,17 +1,37 @@
-<div class="store-container">
-  <div class="store-header">
-    <h1>Tienda Pokémon</h1>
-    <p>Adquiere nuevos avatares exclusivos y sobres de expansión.</p>
+<div class="scene theme-dark store-container">
+  <div class="store-vault-spotlight" aria-hidden="true"></div>
+  <div class="bd-noise"></div>
+
+  <div class="store-header fu">
+    <span class="eyebrow">Tienda · Sobres y avatares</span>
+    <h1 class="title-editorial">Vestí tu <span class="name-energy" style="font-style: italic;">leyenda</span></h1>
     <div class="balance-badge">
-      <span class="coin-icon" style="margin-right: 6px;"><aurora-coin-icon [size]="20"></aurora-coin-icon></span> {{ pokecoins() }} Pokécoins
+      <hud-coin-icon [size]="20"></hud-coin-icon> {{ pokecoins() }} Pokécoins
     </div>
   </div>
 
-  <div class="category-tabs">
-    @for (cat of categories; track cat) {
-      <button class="category-tab" [class.active]="selectedCategory() === cat" (click)="setCategory(cat)">
-        {{ cat === 'AVATAR' ? 'Avatares' : cat === 'PACK' ? 'Comprar Sobres' : 'Mis Sobres' }}
+  <!-- Section: buying (Tienda) is a different action from owning/using (Mochila) -->
+  <div class="section-tabs fu" style="animation-delay: .04s;">
+    <button class="section-tab" [class.active]="activeSection() === 'TIENDA'" (click)="setSection('TIENDA')">
+      <hud-icon n="shop" [s]="16"></hud-icon> Tienda
+    </button>
+    <button class="section-tab" [class.active]="activeSection() === 'MOCHILA'" (click)="setSection('MOCHILA')">
+      🎒 Mochila
+    </button>
+  </div>
+
+  <div class="category-tabs fu" style="animation-delay: .08s;">
+    @if (activeSection() === 'TIENDA') {
+      <button class="category-tab" [class.active]="selectedCategory() === 'AVATAR'" (click)="setCategory('AVATAR')">Avatares</button>
+      <button class="category-tab" [class.active]="selectedCategory() === 'PACK'" (click)="setCategory('PACK')">Sobres</button>
+    } @else {
+      <button class="category-tab" [class.active]="selectedCategory() === 'MY_PACKS'" (click)="setCategory('MY_PACKS')">
+        Abrir sobres
+        @if (filteredPacksCount() > 0 && selectedCategory() !== 'MY_PACKS') {
+          <span class="tab-badge">{{ filteredPacksCount() }}</span>
+        }
       </button>
+      <button class="category-tab" [class.active]="selectedCategory() === 'MY_AVATARS'" (click)="setCategory('MY_AVATARS')">Equipar avatar</button>
     }
   </div>
 
@@ -22,8 +42,8 @@
     </div>
   } @else if (selectedCategory() === 'AVATAR') {
     <div class="catalog-grid">
-      @for (item of filteredItems(); track item.id) {
-        <div class="store-card group">
+      @for (item of filteredItems(); track item.id; let i = $index) {
+        <div class="store-card group fu" [style.animation-delay.ms]="i * 40">
           <div class="card-image-wrapper">
             <div class="card-bg-gradient"></div>
             <img [src]="getImageSrc(item)" [alt]="item.name" class="card-image avatar-style" />
@@ -43,7 +63,7 @@
                         (click)="selectedItemToBuy.set(item)" [disabled]="pokecoins() < item.price">
                   <span class="text-gray-400 font-chunky text-sm uppercase tracking-wider">Costo:</span>
                   <span class="text-[var(--p-yellow)] font-black text-xl flex items-center gap-1">
-                    <aurora-coin-icon [size]="20"></aurora-coin-icon> {{ item.price }}
+                    <hud-coin-icon [size]="20"></hud-coin-icon> {{ item.price }}
                   </span>
                 </button>
               }
@@ -55,25 +75,27 @@
   } @else if (selectedCategory() === 'PACK') {
     <div class="fifa-pack-container">
       <div class="fifa-pack-carousel">
-        @for (item of filteredItems(); track item.id) {
-          <div class="fifa-pack-wrapper">
+        @for (item of filteredItems(); track item.id; let i = $index) {
+          <div class="fifa-pack-wrapper fu" [style.animation-delay.ms]="i * 60">
             <!-- The Pack Card -->
-            <div class="fifa-pack-card" (click)="selectedItemToBuy.set(item)">
-              <div class="pack-glare"></div>
-              <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
-              
+            <div class="fifa-pack-card" [class]="getPackTierClass(item.name)">
+              <button type="button" class="fifa-pack-card-hit" (click)="selectedItemToBuy.set(item)" [attr.aria-label]="'Comprar ' + item.name">
+                <div class="pack-glare"></div>
+                <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
+              </button>
+
               <!-- Inventory / Open Badge -->
               @if ((packsInventory()[item.imageUrl || 'pack_base'] || 0) > 0) {
-                <div class="pack-inventory-badge" (click)="openPack(item.imageUrl || 'pack_base'); $event.stopPropagation()" title="Abrir Sobre">
-                  <div class="badge-count">x{{ packsInventory()[item.imageUrl || 'pack_base'] }}</div>
-                </div>
+                <button type="button" class="pack-inventory-badge" (click)="openPack(item.imageUrl || 'pack_base')" title="Abrir Sobre" [attr.aria-label]="'Abrir ' + item.name">
+                  <span class="badge-count">x{{ packsInventory()[item.imageUrl || 'pack_base'] }}</span>
+                </button>
               }
             </div>
             
             <!-- Pack Name & Price Below -->
             <div class="pack-name-label">{{ item.name }}</div>
             <div class="pack-price-container">
-              <aurora-coin-icon [size]="18"></aurora-coin-icon>
+              <hud-coin-icon [size]="18"></hud-coin-icon>
               <span>{{ item.price }}</span>
             </div>
           </div>
@@ -83,15 +105,17 @@
   } @else if (selectedCategory() === 'MY_PACKS') {
     <div class="fifa-pack-container">
       <div class="fifa-pack-carousel">
-        @for (item of filteredItems(); track item.id) {
-          <div class="fifa-pack-wrapper">
+        @for (item of filteredItems(); track item.id; let i = $index) {
+          <div class="fifa-pack-wrapper fu" [style.animation-delay.ms]="i * 60">
             <!-- The Pack Card -->
-            <div class="fifa-pack-card" (click)="openPack(item.imageUrl || 'pack_base')">
-              <div class="pack-glare"></div>
-              <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
-              
-              <!-- Open Badge (Always visible here) -->
-              <div class="pack-inventory-badge" title="Abrir Sobre">
+            <div class="fifa-pack-card" [class]="getPackTierClass(item.name)">
+              <button type="button" class="fifa-pack-card-hit" (click)="openPack(item.imageUrl || 'pack_base')" [attr.aria-label]="'Abrir ' + item.name">
+                <div class="pack-glare"></div>
+                <img [src]="getImageSrc(item)" [alt]="item.name" class="pack-img" />
+              </button>
+
+              <!-- Open Badge (Always visible here, decorative count) -->
+              <div class="pack-inventory-badge" aria-hidden="true">
                 <div class="badge-count">x{{ packsInventory()[item.imageUrl || 'pack_base'] }}</div>
               </div>
             </div>
@@ -102,11 +126,46 @@
         }
         @if (filteredItems().length === 0) {
           <div class="text-center text-gray-400 mt-10">
-            <p class="font-chunky text-xl mb-4">No tienes ningún sobre en tu inventario.</p>
-            <p>¡Compra sobres en la tienda o sube de nivel en el Pase de Batalla para conseguir más!</p>
+            <p class="font-chunky text-xl mb-4">No tenés ningún sobre en tu mochila.</p>
+            <p>¡Comprá sobres en la Tienda o subí de nivel en el Pase de Batalla para conseguir más!</p>
           </div>
         }
       </div>
+    </div>
+  } @else if (selectedCategory() === 'MY_AVATARS') {
+    <div class="catalog-grid">
+      @for (item of filteredItems(); track item.id; let i = $index) {
+        <div class="store-card group fu" [style.animation-delay.ms]="i * 40">
+          <div class="card-image-wrapper">
+            <div class="card-bg-gradient"></div>
+            <img [src]="getImageSrc(item)" [alt]="item.name" class="card-image avatar-style" />
+          </div>
+          <div class="card-content">
+            <div class="card-text-area">
+              <h3>{{ item.name }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
+            <div class="card-actions">
+              @if (isEquipped(item)) {
+                <button class="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-2xl bg-black/60 border border-[var(--accent2)]/40 opacity-70 cursor-not-allowed" disabled>
+                  <span class="font-chunky text-sm uppercase tracking-wider" style="color: var(--accent2);">Equipado</span>
+                </button>
+              } @else {
+                <button class="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-2xl bg-black/40 border border-[var(--p-yellow)]/30 hover:bg-black/60 hover:border-[var(--p-yellow)]/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        (click)="equipAvatar(item)" [disabled]="equippingAvatar()">
+                  <span class="text-gray-200 font-chunky text-sm uppercase tracking-wider">Equipar</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      @if (filteredItems().length === 0) {
+        <div class="text-center text-gray-400 mt-10" style="grid-column: 1 / -1;">
+          <p class="font-chunky text-xl mb-4">Todavía no compraste ningún avatar.</p>
+          <p>Los avatares que compres en la Tienda aparecen acá para equipar.</p>
+        </div>
+      }
     </div>
   }
 
@@ -183,7 +242,7 @@
         <div class="flex items-center gap-3 mb-8 z-10 px-8 py-4 rounded-2xl bg-black/50 border border-[var(--p-yellow)]/20 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
           <span class="text-gray-400 font-chunky text-sm uppercase tracking-widest">A pagar:</span>
           <span class="text-[var(--p-yellow)] font-black text-2xl flex items-center gap-2">
-            <aurora-coin-icon [size]="24"></aurora-coin-icon> {{ selectedItemToBuy()!.price }}
+            <hud-coin-icon [size]="24"></hud-coin-icon> {{ selectedItemToBuy()!.price }}
           </span>
         </div>
 
@@ -205,13 +264,33 @@
     </div>
   }
 
+  <!-- Post-purchase: offer to open the pack right now instead of burying it in "Mis Sobres" -->
+  @if (justPurchasedPack(); as boughtPack) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
+      <div class="flex flex-col items-center justify-center w-full max-w-md px-6 py-8 rounded-3xl relative overflow-hidden"
+           style="background: var(--bg2); border: 1px solid var(--line-2); box-shadow: 0 30px 70px -20px rgba(0,0,0,.7);">
+        <div class="w-32 mb-6">
+          <img [src]="getImageSrc(boughtPack)" [alt]="boughtPack.name" style="width: 100%; filter: drop-shadow(0 15px 25px rgba(0,0,0,.6));" />
+        </div>
+        <h2 style="font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--txt); margin: 0 0 6px; text-align: center;">¡{{ boughtPack.name }} comprado!</h2>
+        <p style="color: var(--mut); font-size: 14px; margin-bottom: 28px; text-align: center;">¿Lo abrís ahora o lo guardás para después?</p>
+        <div class="flex w-full gap-3">
+          <button type="button" class="ghost-btn" style="flex: 1; justify-content: center;" (click)="dismissJustPurchasedPack()">Guardar</button>
+          <button type="button" class="cta" style="flex: 1; height: 52px; width: auto; justify-content: center; padding: 0 20px;" (click)="openJustPurchasedPack()">
+            <span class="cta__title" style="font-size: 16px;">Abrir ahora</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Fullscreen Card Zoom Modal Overlay -->
   @if (zoomedCard(); as card) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm cursor-pointer select-none"
          (click)="zoomedCard.set(null)" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
       <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
            (click)="$event.stopPropagation()">
-        <aurora-holo-card [card]="{ img: card.img, name: card.name, type: card.type, rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+        <holo-card [card]="{ img: card.img, name: card.name, type: card.type, rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></holo-card>
       </div>
     </div>
   }

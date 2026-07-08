@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './core/components/navbar/navbar.component';
-import { AmbientComponent } from './features/lobby-aurora/ui/aurora-ui.components';
 
 import { ToastComponent } from './shared/components/toast/toast.component';
 import { HelpAgentComponent } from './shared/components/help-agent/help-agent.component';
@@ -9,7 +8,7 @@ import { HelpAgentComponent } from './shared/components/help-agent/help-agent.co
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, AmbientComponent, ToastComponent, HelpAgentComponent],
+  imports: [RouterOutlet, NavbarComponent, ToastComponent, HelpAgentComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush

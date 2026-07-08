@@ -1,6 +1,6 @@
 @if (me() && opp()) {
-<div class="scene v-aurora absolute inset-0 flex overflow-hidden" (click)="closeMenu()">
-  <!-- aurora mesh -->
+<div class="scene theme-dark absolute inset-0 flex overflow-hidden" (click)="closeMenu()">
+  <!-- theme mesh -->
   <div class="mesh absolute inset-0 opacity-40 pointer-events-none">
     <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
     <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
@@ -8,8 +8,8 @@
     <span style="width: 440px; height: 440px; left: 500px; bottom: -200px; background: var(--m4); animation-delay: -3s;"></span>
   </div>
 
-  <aurora-ambient></aurora-ambient>
-  <aurora-sparks [n]="12" color="var(--accent2)"></aurora-sparks>
+  <hud-ambient></hud-ambient>
+  <hud-sparks [n]="12" color="var(--accent2)"></hud-sparks>
   <div class="bd-noise absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"></div>
   <div class="bd-vignette absolute inset-0 pointer-events-none"></div>
 
@@ -137,6 +137,10 @@
             }
             @for (b of opp()!.bench; track $index) {
               <div (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isValidTarget('opponent', 'bench', $index) ? selectTarget('bench', $index) : zoomCard(b.cardId))"
+                   role="button" tabindex="0"
+                   [attr.aria-label]="'Pokémon rival en banca ' + ($index + 1)"
+                   (keydown.enter)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isValidTarget('opponent', 'bench', $index) ? selectTarget('bench', $index) : zoomCard(b.cardId))"
+                   (keydown.space)="$event.preventDefault(); targetingAbility() ? onAbilityTargetClick('bench', $index) : (isValidTarget('opponent', 'bench', $index) ? selectTarget('bench', $index) : zoomCard(b.cardId))"
                    class="cursor-pointer"
                    [class.target-highlight]="isValidTarget('opponent', 'bench', $index)">
                 <app-field-pokemon
@@ -158,7 +162,10 @@
           @if (opp()!.active; as activeOpp) {
             <div class="active-pokemon-wrapper cursor-pointer" style="transform: rotate(180deg)"
                  [class.target-highlight]="isValidTarget('opponent', 'active', null)"
-                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (isValidTarget('opponent', 'active', null) ? selectTarget('active', null) : zoomCard(activeOpp.cardId))">
+                 role="button" tabindex="0" aria-label="Pokémon activo del rival"
+                 (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (isValidTarget('opponent', 'active', null) ? selectTarget('active', null) : zoomCard(activeOpp.cardId))"
+                 (keydown.enter)="targetingAbility() ? onAbilityTargetClick('active', null) : (isValidTarget('opponent', 'active', null) ? selectTarget('active', null) : zoomCard(activeOpp.cardId))"
+                 (keydown.space)="$event.preventDefault(); targetingAbility() ? onAbilityTargetClick('active', null) : (isValidTarget('opponent', 'active', null) ? selectTarget('active', null) : zoomCard(activeOpp.cardId))">
               @if (oppActiveIsBurned()) {
                 <div class="token-burned" title="Oponente Quemado">🔥</div>
               }
@@ -225,7 +232,10 @@
           @if (me()!.active; as activeMe) {
             <div class="active-pokemon-wrapper cursor-pointer"
                  [class.target-highlight]="isValidTarget('me', 'active', null)"
+                 role="button" tabindex="0" aria-label="Tu Pokémon activo"
                  (click)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
+                 (keydown.enter)="targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
+                 (keydown.space)="$event.preventDefault(); targetingAbility() ? onAbilityTargetClick('active', null) : (selectedHandCard() ? selectTarget('active', null) : openCardMenu($event, activeMe))"
                  (dblclick)="zoomCard(activeMe.cardId)"
                  (contextmenu)="zoomCard(activeMe.cardId); $event.preventDefault()"
                  (dragover)="onDragOver($event)"
@@ -269,7 +279,10 @@
             @for (b of me()!.bench; track $index) {
               <div class="cursor-pointer" [class.target-highlight]="isValidTarget('me', 'bench', $index)"
                    [class.pulse-promote]="!me()!.active"
+                   role="button" tabindex="0" [attr.aria-label]="'Pokémon en tu banca ' + ($index + 1)"
                    (click)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
+                   (keydown.enter)="targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
+                   (keydown.space)="$event.preventDefault(); targetingAbility() ? onAbilityTargetClick('bench', $index) : (isRetreating() ? onRetreatClick($index) : (!me()!.active ? promoteActive($index) : (selectedHandCard() ? selectTarget('bench', $index) : openCardMenu($event, b, $index))))"
                    (dblclick)="zoomCard(b.cardId)"
                    (contextmenu)="zoomCard(b.cardId); $event.preventDefault()"
                    (dragover)="onDragOver($event)"
@@ -291,7 +304,10 @@
             @for (b of myEmptyBench(); track $index) {
               <div class="flex flex-col items-center justify-center gap-1 opacity-35" style="width: 75px; height: 105px;"
                    [class.target-highlight]="isValidTarget('me', 'bench', null)"
+                   role="button" tabindex="0" aria-label="Espacio vacío en tu banca"
                    (click)="selectTarget('bench', null)"
+                   (keydown.enter)="selectTarget('bench', null)"
+                   (keydown.space)="$event.preventDefault(); selectTarget('bench', null)"
                    (dragover)="onDragOver($event)"
                    (drop)="onDropField($event)">
                 <div class="w-full h-full rounded-md flex items-center justify-center"
@@ -396,11 +412,11 @@
           <!-- Botón Fin de Turno — habilitado solo en fase MAIN y turno del jugador -->
           <button
             id="btn-end-turn"
-            class="btn-aurora-cta"
+            class="btn-battle-cta"
             [disabled]="!canEndTurn()"
             (click)="endTurn()"
           >
-            <aurora-ball-icon [size]="20"></aurora-ball-icon>
+            <hud-ball-icon [size]="20"></hud-ball-icon>
             <span>FIN TURNO</span>
           </button>
         </div>
@@ -409,10 +425,13 @@
       <!-- Fan hand -->
       <div class="fan-hand pointer-events-auto" (click)="$event.stopPropagation()">
         @for (c of handCardsAnimated(); track $index) {
-          <div class="fan-card cursor-pointer" 
+          <div class="fan-card cursor-pointer"
                [class.fan-card--selected]="isSelected($index)"
                [style.--i]="$index" [style.--n]="handCount()" [style.--spread]="spread + 'deg'" [style.zIndex]="10 + $index"
+               role="button" tabindex="0" [attr.aria-label]="'Carta en tu mano: ' + c.name"
                (click)="playCard(c, $index)"
+               (keydown.enter)="playCard(c, $index)"
+               (keydown.space)="$event.preventDefault(); playCard(c, $index)"
                (dblclick)="zoomCard(c.id)"
                (contextmenu)="zoomCard(c.id); $event.preventDefault()"
                draggable="true"
@@ -445,7 +464,10 @@
             @if (isActiveAbility(ab.name)) {
               <div class="item animate-pulse"
                    [class.opacity-50]="!isMyTurn()"
-                   (click)="triggerAbility(ab.name, menu().index === null ? -1 : menu().index)">
+                   role="button" tabindex="0" [attr.aria-label]="'Usar habilidad ' + ab.name"
+                   (click)="triggerAbility(ab.name, menu().index === null ? -1 : menu().index)"
+                   (keydown.enter)="triggerAbility(ab.name, menu().index === null ? -1 : menu().index)"
+                   (keydown.space)="$event.preventDefault(); triggerAbility(ab.name, menu().index === null ? -1 : menu().index)">
                 <app-icon name="star" svgClass="w-4 h-4" style="color:var(--p-yellow)"></app-icon>
                 <span>Habilidad: {{ ab.name }}</span>
                 <span class="key">HAB</span>
@@ -459,7 +481,10 @@
           @for (atk of me()!.active!.attacks; track $index) {
             <div class="item"
                  [class.opacity-50]="!canAttack()"
-                 (click)="attack($index)">
+                 role="button" tabindex="0" [attr.aria-label]="'Atacar con ' + atk.name"
+                 (click)="attack($index)"
+                 (keydown.enter)="attack($index)"
+                 (keydown.space)="$event.preventDefault(); attack($index)">
               <app-icon name="bolt" svgClass="w-4 h-4" style="color:var(--p-red)"></app-icon>
               <span>{{ atk.name }}</span>
               <span class="cost ml-auto mr-2">
@@ -477,7 +502,10 @@
         @if (menu().index === null) {
           <div class="item"
                [class.opacity-50]="!canRetreat()"
-               (click)="startRetreat()">
+               role="button" tabindex="0" aria-label="Retirar a la banca"
+               (click)="startRetreat()"
+               (keydown.enter)="startRetreat()"
+               (keydown.space)="$event.preventDefault(); startRetreat()">
             <app-icon name="back" svgClass="w-4 h-4" style="color:#5b6885"></app-icon>
             <span>Retirar a la banca</span>
             <span class="cost ml-auto mr-2">
@@ -489,7 +517,10 @@
         } @else {
           <!-- Promover a Activo si no hay activo -->
           @if (!me()!.active) {
-            <div class="item" (click)="promoteActive(menu().index); closeMenu()">
+            <div class="item" role="button" tabindex="0" aria-label="Promover a activo"
+                 (click)="promoteActive(menu().index); closeMenu()"
+                 (keydown.enter)="promoteActive(menu().index); closeMenu()"
+                 (keydown.space)="$event.preventDefault(); promoteActive(menu().index); closeMenu()">
               <app-icon name="arrow-up" svgClass="w-4 h-4" style="color:var(--p-blue)"></app-icon>
               <span>Promover a Activo</span>
             </div>
@@ -541,7 +572,7 @@
                 {{ getKindStyles(l.kind).label }}
               </span>
               <span class="font-chunky text-[9px] tracking-wider truncate"
-                    [style.color]="l.mine ? 'var(--p-blue)' : 'var(--p-red)'">
+                    [style.color]="l.mine ? 'var(--p-blue-text)' : 'var(--p-red)'">
                 {{ l.who }}
               </span>
             </div>
@@ -640,7 +671,7 @@
            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
         <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
              (click)="$event.stopPropagation()">
-          <aurora-holo-card [card]="{ img: card.images?.large || card.images?.small || card.img, name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+          <holo-card [card]="{ img: card.images?.large || card.images?.small || card.img, name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></holo-card>
         </div>
       </div>
     }
@@ -737,7 +768,7 @@
         <div class="flashbang-overlay pointer-events-none absolute inset-0 z-[100]"></div>
 
         <!-- Green sparks dynamic animation -->
-        <aurora-sparks [n]="30" color="#2ecc71" class="absolute inset-0 z-0 pointer-events-none opacity-60"></aurora-sparks>
+        <hud-sparks [n]="30" color="#2ecc71" class="absolute inset-0 z-0 pointer-events-none opacity-60"></hud-sparks>
 
         <!-- Spinning rays background (reused) -->
         <div class="victory-rays opacity-30 pointer-events-none" style="filter: hue-rotate(120deg);"></div>
@@ -785,12 +816,12 @@
                   <div class="mvp-card-3d">
                     <!-- Spinning conic glow ring (green themed) scaled -->
                     <div class="mvp-glow" style="background: conic-gradient(from 0deg, transparent, #2ecc71, transparent, #2ecc71, transparent); transform: scale(0.77);"></div>
-                    <aurora-holo-card
+                    <holo-card
                          [card]="getCardDetailsForHolo(mvpCardId()!)"
                          [w]="115"
                          [idleFloat]="true"
                          class="relative block rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.7)] border-2 transition-transform duration-300 gym-victory-mvp-border">
-                    </aurora-holo-card>
+                    </holo-card>
                   </div>
                 </div>
 
@@ -868,7 +899,7 @@
 
         <!-- Sparks Effect -->
         @if (gameResult() === 'VICTORIA') {
-          <aurora-sparks [n]="30" color="#ffcb05" class="absolute inset-0 z-0 pointer-events-none opacity-60"></aurora-sparks>
+          <hud-sparks [n]="30" color="#ffcb05" class="absolute inset-0 z-0 pointer-events-none opacity-60"></hud-sparks>
         }
 
         <!-- Spinning gold rays background -->
@@ -923,13 +954,13 @@
                   <div class="mvp-card-3d">
                     <!-- Spinning conic glow ring -->
                     <div class="mvp-glow"></div>
-                    <aurora-holo-card
+                    <holo-card
                          [card]="getCardDetailsForHolo(mvpCardId()!)"
                          [w]="150"
                          [idleFloat]="true"
                          class="relative block rounded-xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] border-2 transition-transform duration-300"
                          [style.borderColor]="gameResult() === 'VICTORIA' ? 'rgba(255,203,5,0.8)' : 'rgba(255,255,255,0.2)'">
-                    </aurora-holo-card>
+                    </holo-card>
                   </div>
                 </div>
 

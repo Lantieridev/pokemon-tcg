@@ -88,7 +88,7 @@ export interface OpponentView {
 /** Refleja PendingSelectionRequestDTO.java */
 export interface PendingSelectionRequest {
   sourceEffect: string;
-  targetId: string;
+  targetId: string | null; // el backend lo permite null (ver PendingSelectionRequest.target() en el BE)
   maxSelections: number;
   source: string;
   options: string[];
@@ -151,9 +151,12 @@ export interface DeckCardRequestDTO {
   quantity: number;
 }
 
-/** Refleja DeckRequestDTO.java */
+/**
+ * Refleja DeckRequestDTO.java.
+ * No lleva userId: el dueño del mazo lo determina el backend a partir del
+ * usuario autenticado (JWT), nunca de un campo que mande el cliente.
+ */
 export interface DeckRequestDTO {
-  userId: number;
   name: string;
   status: 'VALID' | 'DRAFT';
   cards: DeckCardRequestDTO[];

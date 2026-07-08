@@ -124,8 +124,8 @@
   to   { opacity: 1; box-shadow: 0 0 20px var(--p-yellow); }
 }
 
-/* Aurora Battle Button CTA */
-.btn-aurora-cta {
+/* Battle Button CTA */
+.btn-battle-cta {
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -144,17 +144,17 @@
   overflow: hidden;
 }
 
-.btn-aurora-cta:hover:not(:disabled) {
+.btn-battle-cta:hover:not(:disabled) {
   transform: translateY(-2px);
   filter: brightness(1.08);
   box-shadow: 0 12px 28px -8px var(--accent), inset 0 1px 0 rgba(255,255,255,.3);
 }
 
-.btn-aurora-cta:active:not(:disabled) {
+.btn-battle-cta:active:not(:disabled) {
   transform: translateY(0) scale(.98);
 }
 
-.btn-aurora-cta:disabled {
+.btn-battle-cta:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   box-shadow: none;

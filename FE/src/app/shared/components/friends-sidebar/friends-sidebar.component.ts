@@ -51,11 +51,17 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   loadData() {
-    this.friendsApi.getActiveFriends().subscribe(res => { this.friends.set(res); this.cdr.markForCheck(); });
-    this.friendsApi.getPendingRequests().subscribe(res => { 
-      this.requests.set(res); 
-      this.onRequestsUpdated.emit(res.length);
-      this.cdr.markForCheck(); 
+    this.friendsApi.getActiveFriends().subscribe({
+      next: res => { this.friends.set(res); this.cdr.markForCheck(); },
+      error: () => this.toastService.error('No se pudo cargar la lista de amigos')
+    });
+    this.friendsApi.getPendingRequests().subscribe({
+      next: res => {
+        this.requests.set(res);
+        this.onRequestsUpdated.emit(res.length);
+        this.cdr.markForCheck();
+      },
+      error: () => this.toastService.error('No se pudieron cargar las solicitudes de amistad')
     });
   }
 
@@ -90,7 +96,10 @@ export class FriendsSidebarComponent implements OnInit {
   }
 
   rejectRequest(id: number) {
-    this.friendsApi.rejectFriendRequest(id).subscribe(() => this.loadData());
+    this.friendsApi.rejectFriendRequest(id).subscribe({
+      next: () => this.loadData(),
+      error: () => this.toastService.error('No se pudo rechazar la solicitud')
+    });
   }
 
   confirmRemoveFriend(friend: FriendshipDTO) {
@@ -104,10 +113,13 @@ export class FriendsSidebarComponent implements OnInit {
   removeFriend() {
     const friend = this.friendToDelete();
     if (!friend) return;
-    this.friendsApi.removeFriend(friend.id).subscribe(() => {
-      this.toastService.success('Amigo eliminado correctamente');
-      this.friendToDelete.set(null);
-      this.loadData();
+    this.friendsApi.removeFriend(friend.id).subscribe({
+      next: () => {
+        this.toastService.success('Amigo eliminado correctamente');
+        this.friendToDelete.set(null);
+        this.loadData();
+      },
+      error: () => this.toastService.error('No se pudo eliminar al amigo')
     });
   }
 

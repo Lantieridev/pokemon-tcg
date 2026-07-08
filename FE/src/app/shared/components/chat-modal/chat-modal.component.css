@@ -4,14 +4,15 @@
   right: 400px;
   width: 320px;
   height: 450px;
-  background: #1e1e24;
-  border-radius: 12px 12px 0 0;
+  background: var(--bg2, #132342);
+  border-radius: 16px 16px 0 0;
   box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
   z-index: 200010;
-  border: 1px solid #333;
+  border: 1px solid var(--line, rgba(255,255,255,.1));
   border-bottom: none;
+  font-family: 'Manrope', sans-serif;
 }
 
 .chat-header {
@@ -19,16 +20,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
-  background: #2a2a35;
-  border-radius: 12px 12px 0 0;
-  border-bottom: 1px solid #333;
+  background: rgba(255,255,255,.03);
+  border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid var(--line, rgba(255,255,255,.1));
 }
 
 .friend-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: white;
+  color: var(--txt, #eaf0ff);
   font-weight: bold;
 }
 
@@ -38,12 +39,10 @@
   gap: 10px;
 }
 
-
-
 .close-btn {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--mut, #93a3c4);
   cursor: pointer;
   font-size: 1.2rem;
 }
@@ -75,49 +74,49 @@
 .bubble {
   padding: 8px 12px;
   border-radius: 12px;
-  color: white;
+  color: var(--txt, #eaf0ff);
   font-size: 0.9rem;
 }
 
 .message.sent .bubble {
-  background: #6c5ce7;
+  background: linear-gradient(135deg, var(--accent, #ff2e3e), var(--accent-dk, #cc2531));
   border-bottom-right-radius: 2px;
 }
 
 .message.received .bubble {
-  background: #444;
+  background: var(--surface, rgba(255,255,255,.08));
   border-bottom-left-radius: 2px;
 }
 
 .time {
   font-size: 0.7rem;
-  color: #888;
+  color: var(--dim, #8493b3);
   margin-top: 2px;
 }
 
 .chat-input {
   display: flex;
   padding: 10px;
-  background: #2a2a35;
-  border-top: 1px solid #333;
+  background: rgba(255,255,255,.03);
+  border-top: 1px solid var(--line, rgba(255,255,255,.1));
 }
 
 .chat-input input {
   flex: 1;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #1e1e24;
-  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2, rgba(255,255,255,.16));
+  background: var(--bg, #0a1730);
+  color: var(--txt, #eaf0ff);
   margin-right: 10px;
 }
 
 .chat-input button {
-  background: #6c5ce7;
-  color: white;
+  background: linear-gradient(135deg, var(--accent, #ff2e3e), var(--accent-dk, #cc2531));
+  color: var(--on-accent, #fff);
   border: none;
   padding: 0 15px;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
 }

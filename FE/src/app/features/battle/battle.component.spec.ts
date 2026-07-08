@@ -5,7 +5,7 @@ import { GameStateResponseDTO } from '../../core/models/game-state.models';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('BattleComponent Integration', () => {
@@ -19,7 +19,9 @@ describe('BattleComponent Integration', () => {
   beforeEach(async () => {
     wsServiceSpy = jasmine.createSpyObj('WebSocketService', ['connect', 'disconnect']);
     (wsServiceSpy as any).chatMessage$ = of();
-    (wsServiceSpy as any).gameState$ = of();
+    // A real Subject, not a cold of() observable: the "should connect to WebSocket..." test
+    // below needs to call .next() on it to simulate a server push after connect().
+    (wsServiceSpy as any).gameState$ = new Subject<GameStateResponseDTO>();
     (wsServiceSpy as any).error$ = of();
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     matchBackendSpy = jasmine.createSpyObj('MatchBackendService', ['getMatchState', 'getChatHistory', 'surrenderMatch']);
@@ -57,7 +59,7 @@ describe('BattleComponent Integration', () => {
   });
 
   it('should connect to WebSocket and update MatchStore on load when matchId exists', fakeAsync(() => {
-    const mockState: GameStateDTO = {
+    const mockState: GameStateResponseDTO = {
       matchId: 'match-xyz',
       version: 1,
       turnNumber: 1,
@@ -136,17 +138,20 @@ describe('BattleComponent Integration', () => {
     const mockState: GameStateResponseDTO = {
       matchId: 'match-xyz',
       version: 1,
+      turnNumber: 1,
       activePlayerIndex: 0,
       currentPhase: 'MAIN',
       self: { playerId: 'AshRivero', active: null, bench: [], hand: [], deckSize: 60, prizeCount: 6 },
       opponent: { playerId: 'BrockSteel', active: null, bench: [], handSize: 7, deckSize: 60, prizeCount: 6 },
       pendingSelectionRequest: {
         sourceEffect: 'FLASH_CLAW',
+        targetId: null,
         maxSelections: 1,
         source: 'HAND',
         options: ['c1']
       }
     };
+    matchBackendSpy.getMatchState.and.returnValue(of(mockState));
     store.updateState(mockState);
     fixture.detectChanges();
 

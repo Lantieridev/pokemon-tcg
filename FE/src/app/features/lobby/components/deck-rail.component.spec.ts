@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { DeckRailComponent } from './deck-rail.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 describe('DeckRailComponent', () => {
   let component: DeckRailComponent;
@@ -13,7 +13,10 @@ describe('DeckRailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DeckRailComponent],
       providers: [
-        { provide: Router, useValue: routerSpy }
+        { provide: Router, useValue: routerSpy },
+        // The template's routerLink="/deck" instantiates a RouterLink directive, which
+        // requires an injectable ActivatedRoute even though this test never navigates via it.
+        { provide: ActivatedRoute, useValue: {} }
       ]
     }).compileComponents();
 
@@ -26,26 +29,29 @@ describe('DeckRailComponent', () => {
   });
 
   it('should render active deck name, total cards count, and energy types', () => {
-    component.deckName = 'Super Electric Deck';
-    component.totalCards = 60;
-    component.energyTypes = ['lightning', 'colorless'];
-    component.deck = [
-      { name: 'Pikachu', img: 'pikachu.png' }
-    ];
-    
+    // Real production shape: LobbyComponent passes deckData bound to its
+    // deckRailData() computed signal, not the standalone deckName/totalCards/energyTypes
+    // inputs (those were leftovers from a superseded pipeline and have been removed).
+    component.deckData = {
+      name: 'Super Electric Deck',
+      totalCount: 60,
+      energyTypes: ['lightning', 'colorless'],
+      cards: [{ name: 'Pikachu', img: 'pikachu.png' }]
+    };
+
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    
+
     // Check deck name
     expect(compiled.textContent).toContain('Super Electric Deck');
-    
+
     // Check card count
     expect(compiled.textContent).toContain('60 / 60 cartas');
-    
+
     // Check slots rendering
     const cards = compiled.querySelectorAll('.dock-card');
-    expect(cards.length).toBe(1); // Returns 1 card as defined in component.deck
+    expect(cards.length).toBe(1); // Returns 1 card as defined in component.deckData.cards
   });
 
   it('should navigate to deck builder on edit click', () => {

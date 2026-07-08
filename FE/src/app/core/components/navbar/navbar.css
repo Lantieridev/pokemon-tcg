@@ -1,28 +1,146 @@
-.nav-tab {
+.app-header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 92px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  border-radius: 12px 12px 0 0;
-  border: 2px solid transparent;
-  border-bottom: none;
-  color: #a59cc4;
-  font-family: 'Bowlby One', sans-serif;
-  font-size: 11px;
-  text-transform: uppercase;
-  transition: all 0.2s;
-  background: transparent;
+  justify-content: space-between;
+  padding: 0 44px;
+  z-index: 10000;
+  pointer-events: none;
+}
+.app-header > * { pointer-events: auto; }
+
+/* The fade/blur backdrop lives on its own layer behind the header's content
+   instead of on .app-header itself — mask-image groups a masked element's
+   whole subtree for compositing, which was clipping anything a descendant
+   popover (like the trainer-chip dropdown) rendered below the header's own
+   92px box, even though it looked "open" (the chevron flipped, the menu just
+   never became visible). */
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 78%, transparent) 0%, color-mix(in srgb, var(--bg) 40%, transparent) 65%, transparent 100%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  mask-image: linear-gradient(180deg, #000 0%, #000 75%, transparent 100%);
 }
 
-.nav-tab:hover {
-  color: #fff;
-  background: rgba(255,255,255,0.05);
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
-.nav-tab.active {
-  color: #fff;
-  background: linear-gradient(180deg, #1c2a44 0%, #131e30 100%);
-  border-color: rgba(255,203,5,0.4);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.1);
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border-radius: 11px;
+  color: var(--mut);
+  font-family: 'Manrope';
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .18s, background .18s;
+}
+.nav-item svg { transition: color .18s; flex: 0 0 auto; }
+
+.nav-item:hover {
+  color: var(--txt);
+  background: rgba(255,255,255,.05);
+}
+
+.nav-item.active {
+  color: var(--txt);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.nav-item.active svg { color: var(--accent); }
+
+.nav-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 8px;
+  flex: 0 0 auto;
+}
+
+.nav-badge {
+  position: absolute; top: 0; right: 2px;
+  background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 800;
+  padding: 1px 5px; border-radius: 10px; line-height: 1.4;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.nav-dot {
+  position: absolute; top: 5px; right: 5px;
+  background: #46e08a; width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.level-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 4px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.level-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dk));
+  color: var(--on-accent);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+.level-track {
+  width: 56px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  overflow: hidden;
+}
+.level-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  transition: width .4s ease;
+}
+
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--mut);
+  cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.icon-btn:hover {
+  color: var(--txt);
+  border-color: var(--line-2);
+  background: rgba(255,255,255,.06);
 }
 
 .coin-pop {

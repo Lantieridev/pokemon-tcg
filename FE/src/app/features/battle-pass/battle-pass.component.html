@@ -1,25 +1,29 @@
-<div class="bp-scroll-host">
+<div class="scene theme-dark bp-scroll-host">
+  <div class="bp-ticket-glow" aria-hidden="true"></div>
+  <div class="bd-noise"></div>
+  <div class="bd-vignette"></div>
+
   <div class="bp-container">
     @if (loading()) {
       <div class="flex justify-center items-center h-64">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     } @else if (status()) {
-      <div class="bp-header mb-8 relative" [ngClass]="status()?.isPremium ? 'premium-aura' : ''">
+      <div class="bp-hero fu">
+        <span class="eyebrow">Temporada 1 · Pase de Batalla</span>
+        <h1 class="title-editorial">Subí de <span class="name-energy" style="font-style: italic;">nivel</span></h1>
+        <p class="bp-hero-sub">Jugá partidas, ganá experiencia y desbloqueá recompensas exclusivas.</p>
+      </div>
+
+      <div class="bp-header mb-8 relative fu" style="animation-delay: .08s;" [ngClass]="status()?.isPremium ? 'premium-aura' : ''">
         <div class="bp-title-section transition-all duration-1000">
-          <h1 class="font-display text-4xl text-white tracking-wider mb-2" [ngClass]="status()?.isPremium ? 'text-yellow-300 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]' : ''">PASE DE BATALLA</h1>
-          <span class="season-badge font-chunky">TEMPORADA 1</span>
-          <p class="text-[var(--ink-dim)] mt-4">Juega partidas, gana experiencia y desbloquea recompensas exclusivas.</p>
-          
-          <div class="bp-stats mt-6">
-            <div class="stat-pill">
-              <span class="stat-label">NIVEL ACTUAL</span>
-              <span class="stat-value text-white">{{ status()?.currentLevel || 0 }}</span>
+          <div class="bp-level-track">
+            <div class="bp-level-badge">{{ status()?.currentLevel || 0 }}</div>
+            <div class="bp-level-progress">
+              <div class="progress-bar"><div class="progress-fill" [style.width.%]="progressPercentage()"></div></div>
+              <span class="bp-level-caption">{{ status()?.currentXp || 0 }} XP · Nivel {{ (status()?.currentLevel || 0) + 1 }} próximamente</span>
             </div>
-            <div class="stat-pill">
-              <span class="stat-label">EXPERIENCIA</span>
-              <span class="stat-value text-[var(--p-blue)]">{{ status()?.currentXp || 0 }} XP</span>
-            </div>
+            <div class="bp-level-badge bp-level-badge--next">{{ (status()?.currentLevel || 0) + 1 }}</div>
           </div>
         </div>
         
@@ -36,7 +40,7 @@
               <h2>Desbloquea el Pase Premium</h2>
               <p>Consigue sobres extra, títulos exclusivos y avatares 3D.</p>
               <button class="buy-premium-btn" (click)="openPurchaseModal()" [disabled]="pokecoins() < 1000">
-                Desbloquear por 1000 <aurora-coin-icon [size]="16" class="inline ml-1"></aurora-coin-icon>
+                Desbloquear por 1000 <hud-coin-icon [size]="16" class="inline ml-1"></hud-coin-icon>
               </button>
             </div>
           }
@@ -47,12 +51,12 @@
       <div class="bp-pagination-header mt-10 mb-2 flex justify-between items-end px-2">
         <h3 class="font-chunky text-white/50 text-sm tracking-widest">TEMPORADA 1</h3>
         <div class="pagination-controls flex items-center gap-4">
-          <button class="nav-arrow" (click)="prevPage()" [disabled]="currentPage() === 0">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+          <button class="nav-arrow" (click)="prevPage()" [disabled]="currentPage() === 0" aria-label="Página anterior">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
           </button>
           <span class="font-chunky text-white tracking-widest text-sm">PÁGINA {{ currentPage() + 1 }} / {{ totalPages() }}</span>
-          <button class="nav-arrow" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+          <button class="nav-arrow" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1" aria-label="Página siguiente">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
           </button>
         </div>
       </div>
@@ -72,11 +76,12 @@
               <div class="grid-cell cell-free" [class.is-empty]="!level.freeRewardType">
                 @if (level.freeRewardType) {
                   <div class="cell-content">
-                    <img [src]="getRewardImage(level.freeRewardType, level.freeRewardValue)" 
-                         class="cell-img" 
+                    <img [src]="getRewardImage(level.freeRewardType, level.freeRewardValue)"
+                         [alt]="getRewardTypeName(level.freeRewardType) + (level.freeRewardValue ? ': ' + level.freeRewardValue : '')"
+                         class="cell-img"
                          [ngClass]="'img-' + (level.freeRewardType.toLowerCase() || 'default')"
                          (error)="onImageError($event, level.freeRewardType)" />
-                    @if (level.freeRewardType === 'COINS' || level.freeRewardType === 'STARDUST') {
+                    @if (level.freeRewardType === 'COINS') {
                       <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.freeRewardAmount || level.freeRewardValue }}</span>
                     }
                     
@@ -104,8 +109,8 @@
 
                   <!-- Centered Claim Button Overlay -->
                   @if (canClaimFree(level.level)) {
-                    <div class="absolute inset-0 z-20 flex items-center justify-center bg-blue-900/30 backdrop-blur-[2px] pointer-events-none rounded-b-lg sm:rounded-none">
-                      <button class="pointer-events-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full font-black text-white uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:scale-110 hover:shadow-[0_0_25px_rgba(59,130,246,0.9)] transition-all animate-pulse border border-blue-400" 
+                    <div class="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px] pointer-events-none rounded-b-lg sm:rounded-none">
+                      <button class="pointer-events-auto px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 rounded-full font-black text-white uppercase tracking-widest text-sm shadow-[0_0_15px_rgba(255,46,62,0.6)] hover:scale-110 hover:shadow-[0_0_25px_rgba(255,46,62,0.9)] transition-all animate-pulse border border-red-400"
                               (click)="claimReward(level.level, false)">
                         Reclamar
                       </button>
@@ -116,11 +121,12 @@
               <!-- Premium Reward (Bottom) -->
               <div class="grid-cell cell-premium" [class.tier-locked]="!status()?.isPremium">
                 <div class="cell-content">
-                  <img [src]="getRewardImage(level.premiumRewardType, level.premiumRewardValue)" 
-                       class="cell-img" 
+                  <img [src]="getRewardImage(level.premiumRewardType, level.premiumRewardValue)"
+                       [alt]="getRewardTypeName(level.premiumRewardType) + (level.premiumRewardValue ? ': ' + level.premiumRewardValue : '')"
+                       class="cell-img"
                        [ngClass]="'img-' + (level.premiumRewardType.toLowerCase() || 'default')"
                        (error)="onImageError($event, level.premiumRewardType)" />
-                  @if (level.premiumRewardType === 'COINS' || level.premiumRewardType === 'STARDUST') {
+                  @if (level.premiumRewardType === 'COINS') {
                     <span class="font-chunky text-[10px] text-white mt-1 relative z-10 drop-shadow-md">x{{ level.premiumRewardAmount || level.premiumRewardValue }}</span>
                   }
                   
@@ -174,18 +180,19 @@
 @if (claimedReward()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-modal-bg">
     <div class="bg-gradient-to-b from-[#1a2035] to-[#0f1423] p-10 rounded-2xl border-2 shadow-2xl animate-modal-content text-center flex flex-col items-center gap-6"
-         [ngClass]="claimedReward()!.isPremium ? 'border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.3)]' : 'border-blue-400 shadow-[0_0_50px_rgba(96,165,250,0.3)]'"
+         [ngClass]="claimedReward()!.isPremium ? 'border-yellow-400 shadow-[0_0_50px_rgba(250,204,21,0.3)]' : 'border-red-400 shadow-[0_0_50px_rgba(255,46,62,0.3)]'"
          (click)="$event.stopPropagation()">
       
       <div class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r drop-shadow-md tracking-widest uppercase"
-           [ngClass]="claimedReward()!.isPremium ? 'from-yellow-300 to-yellow-600' : 'from-blue-300 to-indigo-500'">
+           [ngClass]="claimedReward()!.isPremium ? 'from-yellow-300 to-yellow-600' : 'from-red-300 to-red-600'">
         ¡Recompensa Desbloqueada!
       </div>
-      
+
       <div class="relative w-56 h-56 flex items-center justify-center mt-4 mb-2 animate-float-reward">
         <div class="absolute inset-0 blur-3xl rounded-full animate-pulse"
-             [ngClass]="claimedReward()!.isPremium ? 'bg-yellow-400/30' : 'bg-blue-400/30'"></div>
-        <img [src]="getRewardImage(claimedReward()!.type, claimedReward()!.value)" 
+             [ngClass]="claimedReward()!.isPremium ? 'bg-yellow-400/30' : 'bg-red-400/30'"></div>
+        <img [src]="getRewardImage(claimedReward()!.type, claimedReward()!.value)"
+             [alt]="getRewardTypeName(claimedReward()!.type)"
              class="w-full h-full object-contain relative z-10 drop-shadow-[0_20px_20px_rgba(0,0,0,0.8)]"
              [ngClass]="'img-' + (claimedReward()!.type?.toLowerCase() || 'default')"
              (error)="onImageError($event, claimedReward()!.type)" />
@@ -194,13 +201,13 @@
       <div class="text-center bg-[#0a0d14]/50 py-3 px-8 rounded-xl border border-white/5">
         <div class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{{ getRewardTypeName(claimedReward()!.type) }}</div>
         <div class="text-3xl font-black text-white drop-shadow-md">
-          {{ claimedReward()!.type === 'COINS' || claimedReward()!.type === 'STARDUST' ? 'x' + claimedReward()!.amount : claimedReward()!.value }}
+          {{ claimedReward()!.type === 'COINS' ? 'x' + claimedReward()!.amount : claimedReward()!.value }}
         </div>
       </div>
 
       <button (click)="closeClaimModal()" 
               class="mt-4 px-10 py-3 rounded-full font-bold text-white uppercase tracking-wider transition-all transform hover:scale-105"
-              [ngClass]="claimedReward()!.isPremium ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.5)]' : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]'">
+              [ngClass]="claimedReward()!.isPremium ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:shadow-[0_0_20px_rgba(234,179,8,0.5)]' : 'bg-gradient-to-r from-red-500 to-red-700 hover:shadow-[0_0_20px_rgba(255,46,62,0.5)]'">
         Aceptar
       </button>
     </div>
@@ -235,7 +242,7 @@
         </button>
         <button (click)="confirmPurchasePremium()" 
                 class="px-8 py-3 rounded-full font-bold text-black uppercase tracking-wider transition-all transform hover:scale-105 bg-gradient-to-r from-yellow-400 to-yellow-600 hover:shadow-[0_0_20px_rgba(250,204,21,0.6)] flex items-center gap-2">
-          Comprar 1000 <aurora-coin-icon [size]="20"></aurora-coin-icon>
+          Comprar 1000 <hud-coin-icon [size]="20"></hud-coin-icon>
         </button>
       </div>
     </div>

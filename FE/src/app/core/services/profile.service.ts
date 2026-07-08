@@ -42,7 +42,6 @@ export interface UserProfileResponseDTO {
   battlePoints: number;
   packs: number;
   packsInventory?: { [key: string]: number };
-  stardust: number;
   statistics: {
     matchesPlayed: number;
     matchesWon: number;

@@ -47,15 +47,14 @@ export class MatchBackendService {
   }
 
   /**
-   * GET /api/decks/user/{userId}
-   * Lista todos los mazos del usuario.
+   * GET /api/decks/mine
+   * Lista los mazos del usuario autenticado.
    */
   getDecks(): Observable<DeckSummaryDTO[]> {
-    const userId = this.authService.userId;
-    if (!userId) {
+    if (!this.authService.username) {
       return of([]);
     }
-    return this.http.get<DeckSummaryDTO[]>(`${this.DECKS_URL}/user/${userId}`);
+    return this.http.get<DeckSummaryDTO[]>(`${this.DECKS_URL}/mine`);
   }
 
   /**

@@ -1,109 +1,140 @@
 .store-container {
-  padding: 40px;
-  height: 100%;
-  background: radial-gradient(circle at top right, #1a1a2e, #16213e, #0f3460);
-  color: #fff;
-  font-family: 'Inter', sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 100px 40px 40px;
   overflow-y: auto;
   box-sizing: border-box;
+  /* Near-black display case instead of the shared navy blob mesh — the packs
+     supply the color here, the backdrop should get out of the way like glass. */
+  background: radial-gradient(ellipse 900px 500px at 50% 0%, #14141c 0%, #06060a 65%);
 }
+.store-vault-spotlight {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 700px 380px at 50% 30%, rgba(255,255,255,.05), transparent 70%);
+}
+
+/* Section switch: Tienda (spend coins) vs Mochila (use what you already own) —
+   a different axis from the category tabs below it, so it gets its own row. */
+.section-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 2;
+}
+.section-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  padding: 8px 6px;
+  font-family: 'Manrope';
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.section-tab.active {
+  color: var(--txt);
+  border-color: var(--accent);
+}
+.section-tab:hover:not(.active) { color: var(--mut); }
 
 .category-tabs {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 10px;
   margin-bottom: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .category-tab {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #a0a0b8;
-  padding: 12px 30px;
-  border-radius: 30px;
-  font-size: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  color: var(--mut);
+  padding: 0 24px;
+  height: 48px;
+  border-radius: 14px;
+  font-family: 'Manrope';
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: .01em;
   cursor: pointer;
-  transition: all 0.3s;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: border-color .15s, background .15s, transform .15s, color .15s;
 }
 
 .category-tab:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border-color: var(--txt);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
   transform: translateY(-2px);
 }
 
 .category-tab.active {
-  background: linear-gradient(135deg, #f39c12, #d35400);
-  color: #fff;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dk));
+  color: var(--on-accent);
   border-color: transparent;
-  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
-}
-
-.title-preview {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2c3e50, #3498db);
-  padding: 20px;
-  text-align: center;
-  border-radius: 12px;
-}
-
-.title-preview span {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px -12px var(--accent);
 }
 
 .store-header {
   text-align: center;
-  margin-bottom: 50px;
-  animation: fadeInDown 0.8s ease-out;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.store-header .eyebrow {
+  display: block;
+  margin-bottom: 14px;
 }
 
 .store-header h1 {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 4rem;
-  font-weight: 900;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.02em;
-  filter: drop-shadow(0 4px 16px rgba(59, 76, 202, 0.4)) drop-shadow(0 2px 4px rgba(59, 76, 202, 0.6));
-  -webkit-text-stroke: 1px rgba(59, 76, 202, 0.8);
-  text-transform: uppercase;
-}
-
-.store-header p {
-  color: #ffffff;
-  font-size: 1.2rem;
-  opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
-  font-family: var(--chunky);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--txt);
 }
 
 .balance-badge {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 30px;
-  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 10px 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  font-family: var(--num);
+  font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--txt);
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .catalog-grid {
@@ -115,8 +146,8 @@
 }
 
 .store-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 24px;
   overflow: hidden;
   backdrop-filter: blur(15px);
@@ -129,8 +160,8 @@
 
 .store-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-  border-color: rgba(241, 196, 15, 0.5);
+  box-shadow: 0 20px 45px -18px var(--accent);
+  border-color: var(--accent-soft);
 }
 
 .card-image-wrapper {
@@ -189,15 +220,16 @@
 }
 
 .card-text-area h3 {
-  font-size: 1.2rem;
+  font-family: var(--display);
+  font-size: 1.15rem;
   margin: 15px 0 8px;
-  font-weight: 800;
-  color: #fff;
+  font-weight: 700;
+  color: var(--txt);
 }
 
 .card-text-area p {
-  color: #a0a0b8;
-  font-size: 0.9rem;
+  color: var(--mut);
+  font-size: 0.85rem;
   line-height: 1.4;
   margin-bottom: 20px;
 }
@@ -256,8 +288,8 @@
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #f39c12;
+  border: 5px solid var(--line);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -265,11 +297,6 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-30px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* FIFA PACK STORE STYLES */
@@ -310,7 +337,60 @@
 
 .fifa-pack-card:hover {
   transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 20px 30px rgba(255,203,5,0.4);
+}
+
+/* Real <button> filling the card so the pack stays keyboard/screen-reader operable
+   (the outer .fifa-pack-card is a plain positioning div, not itself interactive,
+   so the separate open-badge button below can be a sibling instead of nesting inside it). */
+.fifa-pack-card-hit {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.fifa-pack-card-hit:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: -2px;
+}
+
+/* ── Rarity-tier glow rings ──────────────────────────────────
+   Common/Rare/Epic/Legendary read at a glance, same convention as pulled cards. */
+.fifa-pack-card.tier-common {
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,.12);
+}
+.fifa-pack-card.tier-common:hover {
+  box-shadow: 0 20px 30px -8px rgba(255,255,255,.35), 0 0 0 1px rgba(255,255,255,.3);
+}
+
+.fifa-pack-card.tier-rare {
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6), 0 0 0 1px color-mix(in srgb, var(--m1) 70%, transparent);
+}
+.fifa-pack-card.tier-rare:hover {
+  box-shadow: 0 20px 34px -8px var(--m1), 0 0 0 1px var(--m1);
+}
+
+.fifa-pack-card.tier-epic {
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6), 0 0 0 1px color-mix(in srgb, var(--m2) 70%, transparent);
+}
+.fifa-pack-card.tier-epic:hover {
+  box-shadow: 0 20px 34px -8px var(--m2), 0 0 0 1px color-mix(in srgb, var(--m2) 80%, #fff);
+}
+
+.fifa-pack-card.tier-legendary {
+  box-shadow: 0 15px 25px rgba(0,0,0,0.6), 0 0 0 1.5px var(--accent2);
+  animation: legendary-pulse 2.6s ease-in-out infinite;
+}
+.fifa-pack-card.tier-legendary:hover {
+  box-shadow: 0 24px 40px -6px var(--accent2), 0 0 0 1.5px var(--accent2);
+}
+@keyframes legendary-pulse {
+  0%, 100% { box-shadow: 0 15px 25px rgba(0,0,0,0.6), 0 0 0 1.5px var(--accent2); }
+  50% { box-shadow: 0 15px 30px rgba(0,0,0,0.6), 0 0 22px -2px var(--accent2), 0 0 0 1.5px var(--accent2); }
 }
 
 .pack-img {
@@ -344,17 +424,24 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: linear-gradient(135deg, var(--p-yellow) 0%, #ff8c00 100%);
+  background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
   border: 2px solid #fff;
   border-radius: 50%;
   width: 36px;
   height: 36px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   transition: all 0.2s;
+  cursor: pointer;
+  font: inherit;
+}
+.pack-inventory-badge:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .pack-inventory-badge:hover {
@@ -386,13 +473,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--chunky);
+  font-family: var(--num);
   font-size: 1.2rem;
-  color: #fff;
+  color: var(--txt);
   background: rgba(0,0,0,0.4);
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--line);
 }
 
 /* Pack Tearing Animation */

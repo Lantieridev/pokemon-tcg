@@ -1,13 +1,13 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
+import { EnergyTypeComponent, HudIconComponent } from '../../../shared/ui/ui-kit.components';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'aurora-deck-rail',
+  selector: 'hud-deck-rail',
   standalone: true,
-  imports: [CommonModule, RouterModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
+  imports: [CommonModule, RouterModule, EnergyTypeComponent, HudIconComponent, NgOptimizedImage],
   template: `
     <div class="deck-dock fu" style="animation-delay: .3s;">
       <div style="flex: 0 0 auto;">
@@ -18,7 +18,7 @@ import { Router } from '@angular/router';
           </div>
           <span style="display: flex; gap: 5px; flex: 0 0 auto;">
             @for (type of deckData?.energyTypes || []; track type) {
-              <aurora-energy-type [type]="type" [size]="20"></aurora-energy-type>
+              <hud-energy-type [type]="type" [size]="20"></hud-energy-type>
             }
           </span>
         </div>
@@ -40,18 +40,14 @@ import { Router } from '@angular/router';
 
       <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 14px;">
         <span class="dock-count">{{ deckData?.totalCount || 0 }} / 60 cartas</span>
-        <button class="ghost-btn sm" routerLink="/deck"><aurora-icon n="decks" [s]="16"></aurora-icon> Editar mazo</button>
+        <button class="ghost-btn sm" routerLink="/deck"><hud-icon n="decks" [s]="16"></hud-icon> Editar mazo</button>
       </div>
     </div>
   `
 })
 export class DeckRailComponent {
   @Input() deckData: any = null;
-  @Input() set deck(val: any) { this.deckData = val; }
   @Input() display: string = "'Instrument Serif',serif";
-  @Input() deckName: string = '';
-  @Input() totalCards: number = 0;
-  @Input() energyTypes: string[] = [];
   @Input() deckId: number | null = null;
 
   private router = inject(Router);

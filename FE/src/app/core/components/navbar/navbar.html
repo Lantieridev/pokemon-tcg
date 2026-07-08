@@ -1,35 +1,48 @@
-<header style="position: absolute; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 10000; pointer-events: auto;">
+<header class="app-header">
   <a routerLink="/lobby" class="cursor-pointer transition hover:opacity-80" style="text-decoration: none; display: flex; align-items: center;">
-    <aurora-logo></aurora-logo>
+    <hud-logo></hud-logo>
   </a>
   <div style="display: flex; align-items: center; gap: 22px;">
     @if (username !== 'Invitado') {
-      <nav style="display: flex; gap: 26px; font-size: 13.5px; font-weight: 600; color: var(--mut);">
-        <a routerLink="/lobby" [style.color]="isActive('/lobby') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Inicio</a>
-        <a routerLink="/deck" [style.color]="isActive('/deck') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Mazos</a>
-        <a routerLink="/campaign" [style.color]="isActive('/campaign') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Campaña</a>
-        <a routerLink="/battle-pass" [style.color]="isActive('/battle-pass') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Pase de Batalla</a>
-        <a routerLink="/profile" [style.color]="isActive('/profile') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Perfil</a>
-        <a routerLink="/store" [style.color]="isActive('/store') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Tienda</a>
-        <a routerLink="/ranking" [style.color]="isActive('/ranking') ? 'var(--txt)' : 'var(--mut)'" style="text-decoration: none; transition: color 0.2s;">Ranking</a>
-        <a (click)="toggleFriendsSidebar()" style="cursor: pointer; text-decoration: none; transition: color 0.2s; position: relative;" [style.color]="unreadMessagesCount() > 0 ? 'var(--txt)' : 'var(--mut)'">
-          Amigos
-          @if (pendingRequestsCount() > 0) {
-            <span style="position: absolute; top: -8px; right: -12px; background: #ff4757; color: white; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; line-height: 1;">{{ pendingRequestsCount() }}</span>
-          }
-          @if (unreadMessagesCount() > 0) {
-            <span style="position: absolute; top: -4px; right: -6px; background: #2ed573; width: 8px; height: 8px; border-radius: 50%;"></span>
-          }
+      <nav class="main-nav">
+        <a routerLink="/lobby" class="nav-item" [class.active]="isActive('/lobby')">
+          <hud-icon n="home" [s]="15"></hud-icon><span>Inicio</span>
+        </a>
+        <a routerLink="/deck" class="nav-item" [class.active]="isActive('/deck')">
+          <hud-icon n="decks" [s]="15"></hud-icon><span>Mazos</span>
+        </a>
+        <a routerLink="/campaign" class="nav-item" [class.active]="isActive('/campaign')">
+          <hud-icon n="map" [s]="15"></hud-icon><span>Campaña</span>
+        </a>
+        <a routerLink="/store" class="nav-item" [class.active]="isActive('/store')">
+          <hud-icon n="shop" [s]="15"></hud-icon><span>Tienda</span>
+        </a>
+        <a routerLink="/ranking" class="nav-item" [class.active]="isActive('/ranking')">
+          <hud-icon n="rank" [s]="15"></hud-icon><span>Ranking</span>
         </a>
       </nav>
+      <div class="level-chip" title="Nivel {{ profileData()?.level ?? 1 }} · {{ profileData()?.xp ?? 0 }}/{{ profileData()?.xpToNextLevel ?? 100 }} XP">
+        <span class="level-num">{{ profileData()?.level ?? 1 }}</span>
+        <div class="level-track">
+          <div class="level-fill" [style.width.%]="xpPercent()"></div>
+        </div>
+      </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <div class="topcur" title="Experiencia"><span style="font-weight: 800; font-family: var(--display); color: #4aa3ff; font-size: 14px; letter-spacing: -0.5px;">XP</span> {{ profileData()?.xp ?? 0 }}</div>
-        <div class="topcur" title="Battle Points"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-        <div class="topcur" title="Pokécoins" [class.coin-pop]="animateCoins()"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <div class="topcur" title="Battle Points" [attr.aria-label]="'Battle Points: ' + (profileData()?.battlePoints ?? 0)"><hud-ball-icon [size]="15"></hud-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
+        <div class="topcur" title="Pokécoins" [attr.aria-label]="'Pokécoins: ' + (profileData()?.pokecoins ?? 0)" [class.coin-pop]="animateCoins()"><hud-coin-icon [size]="15"></hud-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <button class="icon-btn" title="Amigos" aria-label="Amigos" (click)="toggleFriendsSidebar()">
+          <hud-icon n="users" [s]="16"></hud-icon>
+          @if (pendingRequestsCount() > 0) {
+            <span class="nav-badge">{{ pendingRequestsCount() }}</span>
+          }
+          @if (unreadMessagesCount() > 0) {
+            <span class="nav-dot"></span>
+          }
+        </button>
       </div>
     }
     <div>
-      <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></aurora-trainer-chip>
+      <hud-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></hud-trainer-chip>
     </div>
   </div>
 </header>

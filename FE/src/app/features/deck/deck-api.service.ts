@@ -14,18 +14,16 @@ export class DeckApiService {
 
   /**
    * POST /api/decks
+   * El dueño lo determina el backend a partir del JWT — no se manda userId.
    */
   saveDeck(deckName: string, status: 'VALID' | 'DRAFT'): Observable<DeckResponseDTO> {
-    const userId = this.authService.userId;
-    if (!userId) throw new Error('No hay usuario autenticado para guardar el mazo.');
-
     const grouped = this.deckStore.deckGrouped();
     const cards: DeckRequestDTO['cards'] = grouped.map(({ card, count }) => ({
       cardId: card.id,
       quantity: count,
     }));
 
-    const body: DeckRequestDTO = { userId, name: deckName, status, cards };
+    const body: DeckRequestDTO = { name: deckName, status, cards };
     return this.http.post<DeckResponseDTO>(this.API_URL, body);
   }
 
@@ -33,16 +31,13 @@ export class DeckApiService {
    * PUT /api/decks/{id}
    */
   updateDeck(id: number, deckName: string, status: 'VALID' | 'DRAFT'): Observable<DeckResponseDTO> {
-    const userId = this.authService.userId;
-    if (!userId) throw new Error('No hay usuario autenticado para guardar el mazo.');
-
     const grouped = this.deckStore.deckGrouped();
     const cards: DeckRequestDTO['cards'] = grouped.map(({ card, count }) => ({
       cardId: card.id,
       quantity: count,
     }));
 
-    const body: DeckRequestDTO = { userId, name: deckName, status, cards };
+    const body: DeckRequestDTO = { name: deckName, status, cards };
     return this.http.put<DeckResponseDTO>(`${this.API_URL}/${id}`, body);
   }
 
@@ -54,10 +49,11 @@ export class DeckApiService {
   }
 
   /**
-   * GET /api/decks/user/{userId}
+   * GET /api/decks/mine
+   * Devuelve únicamente los mazos del usuario autenticado.
    */
-  getDecksByUserId(userId: number): Observable<DeckSummaryDTO[]> {
-    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/user/${userId}`);
+  getMyDecks(): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/mine`);
   }
 
   /**
@@ -77,11 +73,11 @@ export class DeckApiService {
   }
 
   /**
-   * POST /api/decks/users/{userId}/clone/{templateId}
-   * Clona una plantilla para un usuario.
+   * POST /api/decks/clone/{templateId}
+   * Clona una plantilla para el usuario autenticado.
    */
-  cloneTemplate(userId: number, templateId: number): Observable<DeckResponseDTO> {
-    return this.http.post<DeckResponseDTO>(`${this.API_URL}/users/${userId}/clone/${templateId}`, {});
+  cloneTemplate(templateId: number): Observable<DeckResponseDTO> {
+    return this.http.post<DeckResponseDTO>(`${this.API_URL}/clone/${templateId}`, {});
   }
 
   /**

@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PublicProfileDTO } from '../../../core/models/friends.models';
 import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
-import { StatComponent, IconComponent, TrainerChipComponent } from '../../../features/lobby-aurora/ui/aurora-ui.components';
+import { StatComponent, HudIconComponent, TrainerChipComponent } from '../../ui/ui-kit.components';
 
 @Component({
   selector: 'app-public-profile-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatComponent, IconComponent],
+  imports: [CommonModule, FormsModule, StatComponent, HudIconComponent],
   templateUrl: './public-profile-modal.component.html',
   styleUrls: ['./public-profile-modal.component.css']
 })

@@ -5,7 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AuthService } from './auth.service';
-import { DeckSummaryDTO, DeckResponseDTO } from '../models/game-state.models';
+import { DeckSummaryDTO } from '../models/game-state.models';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -55,41 +55,25 @@ export class LobbyService {
   readonly selectedDeckId = signal<number | null>(
     localStorage.getItem('selected_deck_id') ? Number(localStorage.getItem('selected_deck_id')) : null
   );
-  readonly activeDeckDetails = signal<DeckResponseDTO | null>(null);
-
   constructor() {
     effect(() => {
       const deckId = this.selectedDeckId();
       if (deckId !== null) {
         localStorage.setItem('selected_deck_id', String(deckId));
-        this.loadActiveDeckDetails(deckId);
       } else {
         localStorage.removeItem('selected_deck_id');
-        this.activeDeckDetails.set(null);
       }
     });
   }
 
-  async loadActiveDeckDetails(deckId: number): Promise<void> {
-    try {
-      const details = await firstValueFrom(
-        this.http.get<DeckResponseDTO>(`http://localhost:8081/api/decks/${deckId}`)
-      );
-      this.activeDeckDetails.set(details);
-    } catch (e) {
-      console.warn('[LobbyService] No se pudieron cargar los detalles del mazo activo:', e);
-    }
-  }
-
   async loadDecks(): Promise<void> {
     try {
-      const userId = this.authService.userId;
-      if (!userId) {
-        console.warn('[LobbyService] No authenticated user ID found.');
+      if (!this.authService.username) {
+        console.warn('[LobbyService] No authenticated user found.');
         return;
       }
       const decks = await firstValueFrom(
-        this.http.get<DeckSummaryDTO[]>(`http://localhost:8081/api/decks/user/${userId}`)
+        this.http.get<DeckSummaryDTO[]>(`http://localhost:8081/api/decks/mine`)
       );
       this.decks.set(decks ?? []);
       

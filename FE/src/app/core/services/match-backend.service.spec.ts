@@ -71,13 +71,13 @@ describe('MatchBackendService', () => {
     req.flush({ matchId: 'match-999' });
   });
 
-  it('should call getDecks', () => {
+  it('should call getDecks for the authenticated user', () => {
     const mockDecks: DeckSummaryDTO[] = [];
     service.getDecks().subscribe((decks) => {
       expect(decks).toEqual(mockDecks);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks');
+    const req = httpMock.expectOne('http://localhost:8081/api/decks/mine');
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
   });
