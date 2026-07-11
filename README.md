@@ -1,4 +1,7 @@
-# TPI Pokémon TCG - Documentación Técnica y Arquitectura
+# Pokémon TCG - Documentación Técnica y Arquitectura
+
+> [!NOTE]
+> Este proyecto arrancó como un TPI grupal (Trabajo Práctico Integrador) de la carrera de UTN FRC. Se mantiene en este repo personal como parte del portfolio.
 
 Bienvenido a la documentación oficial del proyecto. Esta documentación ha sido diseñada **tanto para desarrolladores humanos como para Agentes de IA (LLMs)**. Cada archivo detalla clases, flujos de datos y convenciones de diseño estrictas que deben respetarse.
 
