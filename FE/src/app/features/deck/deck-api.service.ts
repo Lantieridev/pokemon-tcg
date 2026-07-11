@@ -108,12 +108,12 @@ export class DeckApiService {
     evolutionLinesCount?: number,
     generation?: string
   ): Observable<DeckCardRequestDTO[]> {
-    return this.http.post<DeckCardRequestDTO[]>(`${this.API_URL}/assistant/wizard`, {
-      theme,
-      preferredTypes,
-      evolutionLinesCount,
-      generation
-    });
+    const body: Record<string, unknown> = { theme };
+    if (preferredTypes !== undefined) body['preferredTypes'] = preferredTypes;
+    if (evolutionLinesCount !== undefined) body['evolutionLinesCount'] = evolutionLinesCount;
+    if (generation !== undefined) body['generation'] = generation;
+
+    return this.http.post<DeckCardRequestDTO[]>(`${this.API_URL}/assistant/wizard`, body);
   }
 }
 
