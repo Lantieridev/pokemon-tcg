@@ -19,7 +19,8 @@ describe('LobbyService', () => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     authServiceStub = {
       token: 'valid-jwt-token',
-      username: 'AshRivero'
+      username: 'AshRivero',
+      userId: 123
     };
 
     isConnectedVal = false;
@@ -57,7 +58,7 @@ describe('LobbyService', () => {
     ];
 
     const promise = service.loadDecks();
-    const req = httpMock.expectOne('http://localhost:8081/api/decks');
+    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
 

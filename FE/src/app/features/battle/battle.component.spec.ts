@@ -5,7 +5,7 @@ import { GameStateResponseDTO } from '../../core/models/game-state.models';
 import { WebSocketService } from '../../core/services/websocket.service';
 import { MatchBackendService } from '../../core/services/match-backend.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('BattleComponent Integration', () => {
@@ -19,7 +19,7 @@ describe('BattleComponent Integration', () => {
   beforeEach(async () => {
     wsServiceSpy = jasmine.createSpyObj('WebSocketService', ['connect', 'disconnect']);
     (wsServiceSpy as any).chatMessage$ = of();
-    (wsServiceSpy as any).gameState$ = of();
+    (wsServiceSpy as any).gameState$ = new Subject();
     (wsServiceSpy as any).error$ = of();
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     matchBackendSpy = jasmine.createSpyObj('MatchBackendService', ['getMatchState', 'getChatHistory', 'surrenderMatch']);
@@ -149,6 +149,7 @@ describe('BattleComponent Integration', () => {
         options: ['c1']
       }
     };
+    matchBackendSpy.getMatchState.and.returnValue(of(mockState));
     store.updateState(mockState);
     fixture.detectChanges();
 

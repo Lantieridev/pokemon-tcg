@@ -11,7 +11,8 @@ describe('MatchBackendService', () => {
 
   beforeEach(() => {
     authServiceStub = {
-      username: 'AshRivero'
+      username: 'AshRivero',
+      userId: 123
     };
 
     TestBed.configureTestingModule({
@@ -77,7 +78,7 @@ describe('MatchBackendService', () => {
       expect(decks).toEqual(mockDecks);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks');
+    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
   });
