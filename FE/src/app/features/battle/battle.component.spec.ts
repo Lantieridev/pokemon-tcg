@@ -57,7 +57,7 @@ describe('BattleComponent Integration', () => {
   });
 
   it('should connect to WebSocket and update MatchStore on load when matchId exists', fakeAsync(() => {
-    const mockState: GameStateDTO = {
+    const mockState: GameStateResponseDTO = {
       matchId: 'match-xyz',
       version: 1,
       turnNumber: 1,
@@ -136,12 +136,14 @@ describe('BattleComponent Integration', () => {
     const mockState: GameStateResponseDTO = {
       matchId: 'match-xyz',
       version: 1,
+      turnNumber: 1,
       activePlayerIndex: 0,
       currentPhase: 'MAIN',
       self: { playerId: 'AshRivero', active: null, bench: [], hand: [], deckSize: 60, prizeCount: 6 },
       opponent: { playerId: 'BrockSteel', active: null, bench: [], handSize: 7, deckSize: 60, prizeCount: 6 },
       pendingSelectionRequest: {
         sourceEffect: 'FLASH_CLAW',
+        targetId: 'AshRivero',
         maxSelections: 1,
         source: 'HAND',
         options: ['c1']

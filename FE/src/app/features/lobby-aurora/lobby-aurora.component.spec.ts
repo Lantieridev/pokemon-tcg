@@ -39,6 +39,7 @@ describe('LobbyAuroraComponent', () => {
     
     const authSpy = jasmine.createSpyObj('AuthService', [], { username: 'Test' });
     const profileSpy = jasmine.createSpyObj('ProfileService', ['getProfile']);
+    profileSpy.getProfile.and.returnValue(of({}));
     const tutorialSpy = jasmine.createSpyObj('TutorialService', ['triggerTutorial']);
     const matchSpy = jasmine.createSpyObj('MatchBackendService', ['createBotMatch']);
 

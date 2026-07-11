@@ -41,7 +41,7 @@ describe('DeckAuroraComponent', () => {
         { provide: PokemonTcgService, useValue: tcgSpy },
         { provide: ProfileService, useValue: profileSpy },
         { provide: TutorialService, useValue: tutorialSpy },
-        { provide: ActivatedRoute, useValue: {} },
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
         DeckStore
       ]
     }).compileComponents();
