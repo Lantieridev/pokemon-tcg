@@ -1,7 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { EnergyTypeComponent, IconComponent } from '../ui/aurora-ui.components';
+import { EnergyTypeComponent, IconComponent } from '../../../shared/ui/ui-kit.components';
 import { Router } from '@angular/router';
 
 @Component({

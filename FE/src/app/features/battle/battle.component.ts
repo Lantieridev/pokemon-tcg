@@ -18,7 +18,7 @@ import { FieldPokemonComponent } from '../../shared/ui/field-pokemon/field-pokem
 import { EnergyPipComponent } from '../../shared/ui/energy-pip/energy-pip.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { CardSelectionModalComponent } from '../../shared/ui/card-selection-modal/card-selection-modal.component';
-import { SparksComponent, AmbientComponent, BallIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { SparksComponent, AmbientComponent, BallIconComponent } from '../../shared/ui/ui-kit.components';
 
 import { WebSocketService } from '../../core/services/websocket.service';
 import { MatchStore, DamageEvent } from '../../core/store/match.store';

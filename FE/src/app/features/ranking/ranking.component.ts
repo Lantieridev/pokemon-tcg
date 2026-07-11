@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RankingService, RankingDto } from '../../core/services/ranking.service';
-import { AmbientComponent, SparksComponent, IconComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { AmbientComponent, SparksComponent, IconComponent } from '../../shared/ui/ui-kit.components';
 
 @Component({
   selector: 'app-ranking',

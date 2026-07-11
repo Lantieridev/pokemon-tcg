@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BattlePassService, BattlePassStatusDTO, BattlePassLevelDTO } from '../../core/services/battle-pass.service';
 import { ToastService } from '../../core/services/toast.service';
-import { IconComponent, CoinIconComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { IconComponent, CoinIconComponent } from '../../shared/ui/ui-kit.components';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 

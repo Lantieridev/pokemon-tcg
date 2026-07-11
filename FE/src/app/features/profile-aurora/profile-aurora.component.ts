@@ -6,7 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProfileService, UserProfileResponseDTO, UserAchievementProgressDTO, MatchHistoryItemDTO, CardStatDTO, EnergyStatDTO } from '../../core/services/profile.service';
 import { DeckApiService } from '../deck/deck-api.service';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
-import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../lobby-aurora/ui/aurora-ui.components';
+import { StatComponent, IconComponent, TrainerChipComponent, AmbientComponent, LogoComponent } from '../../shared/ui/ui-kit.components';
 import { RouterModule } from '@angular/router';
 import { HoloCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 

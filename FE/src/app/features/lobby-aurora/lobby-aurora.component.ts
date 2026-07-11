@@ -21,7 +21,7 @@ import {
   SparksComponent,
   AmbientComponent,
   BattleCtaComponent,
-} from './ui/aurora-ui.components';
+} from '../../shared/ui/ui-kit.components';
 import { HoloCardComponent, AuroraCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { DeckRailComponent } from './components/deck-rail.component';
 import { RouterModule, Router } from '@angular/router';
