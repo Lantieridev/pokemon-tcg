@@ -23,6 +23,27 @@ La arquitectura del juego es **Server-Authoritative**. El Frontend NUNCA altera 
 6. **Logueo inmutable:** Se hace un insert en `MatchLogEntity` para tener el registro paso a paso.
 7. **Broadcast:** Se manda la `GameStateView` (visión sanitizada del estado, escondiendo las cartas del oponente) a `/topic/match/{matchId}`.
 
+```mermaid
+sequenceDiagram
+    participant FE as Frontend (Angular)
+    participant MRC as MatchRestController
+    participant MSR as MatchSessionRegistry (Lock)
+    participant GF as GameFacade (Engine)
+    participant PERS as JpaGameStatePersistence
+    participant Topic as /topic/match/{matchId}
+
+    FE->>MRC: STOMP send /app/match/{id}/action
+    MRC->>MSR: lock.lock(matchId)
+    MSR->>GF: aplicar acción (turno, daño, KOs)
+    GF-->>MSR: nuevo estado + eventos
+    MSR->>PERS: serializar MatchSession a JSON, UPDATE
+    MSR->>MSR: lock.unlock(matchId)
+    MSR->>Topic: broadcast GameStateView (sanitizada)
+    Topic-->>FE: nuevo estado (ambos jugadores)
+```
+
+Ver también [ADR 0002](./adr/0002-server-authoritative-websocket-sync.md) — por qué el diseño es server-authoritative y qué implica el lock por partida.
+
 > [!WARNING]
 > **Aviso para AI Agents:** Si vas a modificar el Game Engine, el código SIEMPRE debe ir dentro del bloque `try { lock.lock(); ... } finally { lock.unlock(); }` de `MatchService`. Nunca modifiques la sesión por fuera del lock.
 
