@@ -16,4 +16,7 @@ Contiene la lógica de dominio del proyecto:
 ### 3. [Guía de Desarrollo, CI y Setup](docs/03_guia_desarrollo_y_setup.md)
 Instrucciones para levantar el proyecto localmente, comandos de Maven y NPM, convenciones de código (Checkstyle) y Testing.
 
+### 4. [Architecture Decision Records](docs/adr/README.md)
+Por qué el motor está aislado con Clean/Hexagonal Architecture, por qué la sincronización es server-authoritative vía STOMP, y el diseño de persistencia atómica del ganador.
+
 Listado de todo lo que queda por hacer (Sistema Económico, Sobres, Pase de Batalla). **Los agentes de IA deben consultar este archivo para entender el contexto futuro y las dependencias de features.**
