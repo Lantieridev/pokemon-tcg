@@ -47,11 +47,7 @@ import { Router } from '@angular/router';
 })
 export class DeckRailComponent {
   @Input() deckData: any = null;
-  @Input() set deck(val: any) { this.deckData = val; }
   @Input() display: string = "'Instrument Serif',serif";
-  @Input() deckName: string = '';
-  @Input() totalCards: number = 0;
-  @Input() energyTypes: string[] = [];
   @Input() deckId: number | null = null;
 
   private router = inject(Router);

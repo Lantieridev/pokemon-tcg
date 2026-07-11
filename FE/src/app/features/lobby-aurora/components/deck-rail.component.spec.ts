@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { DeckRailComponent } from './deck-rail.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 describe('DeckRailComponent', () => {
   let component: DeckRailComponent;
@@ -13,7 +13,8 @@ describe('DeckRailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DeckRailComponent],
       providers: [
-        { provide: Router, useValue: routerSpy }
+        { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: {} }
       ]
     }).compileComponents();
 
@@ -26,13 +27,15 @@ describe('DeckRailComponent', () => {
   });
 
   it('should render active deck name, total cards count, and energy types', () => {
-    component.deckName = 'Super Electric Deck';
-    component.totalCards = 60;
-    component.energyTypes = ['lightning', 'colorless'];
-    component.deck = [
-      { name: 'Pikachu', img: 'pikachu.png' }
-    ];
-    
+    component.deckData = {
+      name: 'Super Electric Deck',
+      totalCount: 60,
+      energyTypes: ['lightning', 'colorless'],
+      cards: [
+        { name: 'Pikachu', img: 'pikachu.png' }
+      ]
+    };
+
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;

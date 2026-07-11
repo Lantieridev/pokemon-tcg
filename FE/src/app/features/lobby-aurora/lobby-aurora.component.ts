@@ -589,15 +589,7 @@ type PrivateMode = 'create' | 'join';
       </div>
 
       <!-- active-deck dock -->
-      <aurora-deck-rail 
-        [deck]="deckRail()" 
-        [deckName]="lobby.activeDeckDetails()?.name || ''"
-        [totalCards]="activeDeckTotalCards()"
-        [energyTypes]="activeDeckEnergyTypes()"
-        [deckId]="lobby.selectedDeckId()"
-        [display]="displayFont">
-      </aurora-deck-rail>
-      <aurora-deck-rail [deckData]="deckRailData()" [display]="displayFont"></aurora-deck-rail>
+      <aurora-deck-rail [deckData]="deckRailData()" [deckId]="lobby.selectedDeckId()" [display]="displayFont"></aurora-deck-rail>
 
       <!-- ── Match Modal ──────────────────────────────────────────── -->
       @if (modalOpen()) {
@@ -835,12 +827,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
     { name: 'Mewtwo EX', type: 'psychic', img: 'https://images.pokemontcg.io/xy8/62_hires.png' },
   ];
 
-  readonly DEFAULT_DECK = [
-    { name: 'Pikachu', img: 'https://images.pokemontcg.io/xy1/42.png' },
-    { name: 'Mewtwo EX', img: 'https://images.pokemontcg.io/xy8/62.png' },
-    { name: 'Greninja EX', img: 'https://images.pokemontcg.io/xy9/40.png' },
-    { name: 'Simisage', img: 'https://images.pokemontcg.io/xy1/11.png' }
-  ];
   fullSelectedDeck = signal<DeckResponseDTO | null>(null);
 
   constructor() {
@@ -906,76 +892,6 @@ export class LobbyAuroraComponent implements OnInit, OnDestroy {
       energyTypes: Array.from(energyTypes).slice(0, 3), // Max 3 types to show in UI
       cards: resolvedCards.slice(0, 6)
     };
-  });
-
-  readonly deckRail = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    const catalog = this.tcgService.cards();
-    
-    const list: any[] = [];
-    const seenIds = new Set<string>();
-
-    if (details && catalog.length > 0) {
-      for (const item of details.cards) {
-        if (seenIds.has(item.cardId)) continue;
-        
-        const found = catalog.find(c => c.id === item.cardId);
-        if (found && found.images?.small) {
-          seenIds.add(item.cardId);
-          list.push({
-            name: found.name,
-            img: found.images.small
-          });
-        }
-      }
-    }
-
-    // Rellenar hasta 6 con las cartas por defecto verificadas
-    let defIdx = 0;
-    while (list.length < 6) {
-      const fallback = this.DEFAULT_DECK[defIdx % this.DEFAULT_DECK.length];
-      list.push({ ...fallback });
-      defIdx++;
-    }
-
-    return list.slice(0, 6);
-  });
-
-  readonly activeDeckTotalCards = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    if (!details) return 0;
-    return details.cards.reduce((acc, item) => acc + item.quantity, 0);
-  });
-
-  readonly activeDeckEnergyTypes = computed(() => {
-    const details = this.lobby.activeDeckDetails();
-    if (!details) return [];
-    
-    const catalog = this.tcgService.cards();
-    if (catalog.length === 0) return [];
-    
-    const typesSet = new Set<string>();
-    for (const item of details.cards) {
-      const found = catalog.find(c => c.id === item.cardId);
-      if (found) {
-        if (found.supertype === 'Pokémon' && found.types) {
-          for (const t of found.types) {
-            typesSet.add(t.toLowerCase());
-          }
-        }
-        if (found.supertype === 'Energy') {
-          const nameLower = found.name.toLowerCase();
-          if (nameLower.includes('fire')) typesSet.add('fire');
-          else if (nameLower.includes('water')) typesSet.add('water');
-          else if (nameLower.includes('lightning') || nameLower.includes('electric')) typesSet.add('lightning');
-          else typesSet.add('colorless');
-        }
-      }
-    }
-    
-    const allowed = ['fire', 'water', 'lightning', 'colorless'];
-    const result = Array.from(typesSet).filter(t => allowed.includes(t));
-    return result.length > 0 ? result : ['colorless'];
   });
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
