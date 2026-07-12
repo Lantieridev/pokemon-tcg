@@ -20,8 +20,8 @@
         <checkstyle-maven-plugin.version>3.3.0</checkstyle-maven-plugin.version>
         <springdoc-openapi.version>2.2.0</springdoc-openapi.version>
         <modelmapper.version>3.1.1</modelmapper.version>
-        <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
-        <pmdVersion>7.0.0-rc3</pmdVersion>
+        <maven-pmd-plugin.version>3.22.0</maven-pmd-plugin.version>
+        <pmdVersion>7.0.0</pmdVersion>
     </properties>
 
     <dependencies>
@@ -186,6 +186,28 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>${maven-pmd-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-core</artifactId>
+                        <version>${pmdVersion}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-java</artifactId>
+                        <version>${pmdVersion}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-javascript</artifactId>
+                        <version>${pmdVersion}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-jsp</artifactId>
+                        <version>${pmdVersion}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <linkXRef>false</linkXRef>
                     <inputEncoding>utf-8</inputEncoding>
