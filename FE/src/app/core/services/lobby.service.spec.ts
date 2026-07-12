@@ -59,7 +59,7 @@ describe('LobbyService', () => {
     ];
 
     const promise = service.loadDecks();
-    const req = httpMock.expectOne(`${environment.apiUrl}/decks/user/123`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/mine`);
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
 

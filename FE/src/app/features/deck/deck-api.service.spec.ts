@@ -93,12 +93,12 @@ describe('DeckApiService', () => {
     req.flush(null);
   });
 
-  it('should get decks by user id', () => {
-    service.getDecksByUserId(123).subscribe((res) => {
+  it('should get the authenticated user\'s decks', () => {
+    service.getMyDecks().subscribe((res) => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/decks/user/123`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/mine`);
     expect(req.request.method).toBe('GET');
     req.flush([{ id: 1, name: 'User Deck' }]);
   });
@@ -125,11 +125,11 @@ describe('DeckApiService', () => {
   });
 
   it('should clone template', () => {
-    service.cloneTemplate(123, 9).subscribe((res) => {
+    service.cloneTemplate(9).subscribe((res) => {
       expect(res.id).toBe(10);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/decks/users/123/clone/9`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/clone/9`);
     expect(req.request.method).toBe('POST');
     req.flush({ id: 10 });
   });

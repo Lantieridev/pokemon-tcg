@@ -55,10 +55,11 @@ export class DeckApiService {
   }
 
   /**
-   * GET /api/decks/user/{userId}
+   * GET /api/decks/mine
+   * Devuelve los mazos del usuario autenticado (resuelto por el backend desde el JWT).
    */
-  getDecksByUserId(userId: number): Observable<DeckSummaryDTO[]> {
-    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/user/${userId}`);
+  getMyDecks(): Observable<DeckSummaryDTO[]> {
+    return this.http.get<DeckSummaryDTO[]>(`${this.API_URL}/mine`);
   }
 
   /**
@@ -78,11 +79,11 @@ export class DeckApiService {
   }
 
   /**
-   * POST /api/decks/users/{userId}/clone/{templateId}
-   * Clona una plantilla para un usuario.
+   * POST /api/decks/clone/{templateId}
+   * Clona una plantilla para el usuario autenticado (resuelto por el backend desde el JWT).
    */
-  cloneTemplate(userId: number, templateId: number): Observable<DeckResponseDTO> {
-    return this.http.post<DeckResponseDTO>(`${this.API_URL}/users/${userId}/clone/${templateId}`, {});
+  cloneTemplate(templateId: number): Observable<DeckResponseDTO> {
+    return this.http.post<DeckResponseDTO>(`${this.API_URL}/clone/${templateId}`, {});
   }
 
   /**

@@ -90,7 +90,7 @@ export class LobbyService {
         return;
       }
       const decks = await firstValueFrom(
-        this.http.get<DeckSummaryDTO[]>(`${environment.apiUrl}/decks/user/${userId}`)
+        this.http.get<DeckSummaryDTO[]>(`${environment.apiUrl}/decks/mine`)
       );
       this.decks.set(decks ?? []);
       

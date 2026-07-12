@@ -1969,9 +1969,8 @@ export class ProfileAuroraComponent implements OnInit {
   }
 
   loadUserDecks(): void {
-    const userId = this.authService.userId;
-    if (userId) {
-      this.deckApi.getDecksByUserId(userId).subscribe({
+    if (this.authService.userId) {
+      this.deckApi.getMyDecks().subscribe({
         next: (decks) => {
           this.userDecks = decks;
           this.cdr.detectChanges();

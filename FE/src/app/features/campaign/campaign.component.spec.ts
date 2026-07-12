@@ -117,7 +117,7 @@ describe('CampaignComponent', () => {
     it('does nothing for a locked node', () => {
       component.onNodeClick(makeNode({ status: 'LOCKED' }));
       expect(component.modalOpen()).toBeFalse();
-      httpMock.expectNone(`${environment.apiUrl}/decks/user/1`);
+      httpMock.expectNone(`${environment.apiUrl}/decks/mine`);
     });
 
     it('opens the modal and loads decks for an unlocked node', fakeAsync(() => {
@@ -128,7 +128,7 @@ describe('CampaignComponent', () => {
       expect(component.selectedNode()).toBe(node);
       expect(component.selectedDeckId()).toBeNull();
 
-      httpMock.expectOne(`${environment.apiUrl}/decks/user/1`).flush([{ id: 10, name: 'Mazo Fuego', totalCards: 60 } as any]);
+      httpMock.expectOne(`${environment.apiUrl}/decks/mine`).flush([{ id: 10, name: 'Mazo Fuego', totalCards: 60 } as any]);
       httpMock.expectOne(`${environment.apiUrl}/decks/templates`).flush([{ id: 99, name: 'Plantilla', totalCards: 55 } as any]);
       tick();
 
@@ -144,7 +144,7 @@ describe('CampaignComponent', () => {
       });
       tick();
       component.onNodeClick(makeNode());
-      httpMock.expectOne(`${environment.apiUrl}/decks/user/1`).flush([
+      httpMock.expectOne(`${environment.apiUrl}/decks/mine`).flush([
         { id: 1, name: 'Incompleto', totalCards: 40 },
         { id: 2, name: 'Completo', totalCards: 60 },
       ] as any);

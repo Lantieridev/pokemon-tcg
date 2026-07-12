@@ -498,9 +498,8 @@ export class DeckAuroraComponent implements OnInit {
   }
 
   loadDecks() {
-    const userId = this.authService.userId;
-    if (userId) {
-      this.deckApi.getDecksByUserId(userId).subscribe({
+    if (this.authService.userId) {
+      this.deckApi.getMyDecks().subscribe({
         next: (res) => {
           this.decks.set(res);
           this.cdr.detectChanges();

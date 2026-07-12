@@ -42,7 +42,7 @@ describe('ProfileAuroraComponent', () => {
       ...overrides,
     });
     httpMock.expectOne(`${environment.apiUrl}/users/AshRivero/profile/achievements`).flush([]);
-    httpMock.expectOne(`${environment.apiUrl}/decks/user/1`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/decks/mine`).flush([]);
     httpMock.expectOne(`${environment.apiUrl}/users/me/history?page=0&size=10`).flush({ content: [] });
   }
 

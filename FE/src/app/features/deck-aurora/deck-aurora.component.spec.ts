@@ -18,8 +18,8 @@ describe('DeckAuroraComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
-    deckApiSpy = jasmine.createSpyObj('DeckApiService', ['deleteDeck', 'getDecksByUserId']);
-    deckApiSpy.getDecksByUserId.and.returnValue(of([]));
+    deckApiSpy = jasmine.createSpyObj('DeckApiService', ['deleteDeck', 'getMyDecks']);
+    deckApiSpy.getMyDecks.and.returnValue(of([]));
     
     authServiceSpy = jasmine.createSpyObj('AuthService', [], {
       username: 'TestUser',
@@ -65,7 +65,7 @@ describe('DeckAuroraComponent', () => {
     
     expect(deckApiSpy.deleteDeck).toHaveBeenCalledWith(123);
     expect(component.deckToDelete()).toBeNull();
-    expect(deckApiSpy.getDecksByUserId).toHaveBeenCalled();
+    expect(deckApiSpy.getMyDecks).toHaveBeenCalled();
   });
 
   it('should handle error when deleting deck, reset state, and show alert', () => {
