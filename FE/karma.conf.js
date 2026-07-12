@@ -16,15 +16,16 @@ module.exports = function (config) {
       dir: require('path').join(__dirname, './coverage/FE'),
       subdir: '.',
       reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      // Honest floor at the current measured baseline (38.45%/20.71%/35.61%/40.43%
-      // statements/branches/functions/lines), not an aspirational number - this repo
-      // has 18 of 22 components with zero unit tests. Raise these as that gap closes.
+      // Honest floor at the current measured baseline (64.66%/43.25%/67.59%/66.69%
+      // statements/branches/functions/lines, minus margin), not an aspirational
+      // number. Raised from the original 35/18/32/37 once all 18 previously-untested
+      // components got real tests. Raise again as coverage grows further.
       check: {
         global: {
-          statements: 35,
-          branches: 18,
-          functions: 32,
-          lines: 37,
+          statements: 60,
+          branches: 38,
+          functions: 62,
+          lines: 62,
         },
       },
     },
