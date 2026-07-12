@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { MatchBackendService } from './match-backend.service';
 import { AuthService } from './auth.service';
 import { GameStateResponseDTO, DeckResponseDTO, DeckSummaryDTO } from '../models/game-state.models';
@@ -38,7 +39,7 @@ describe('MatchBackendService', () => {
       expect(state).toEqual(mockState);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/matches/match-1/state');
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/match-1/state`);
     expect(req.request.method).toBe('GET');
     expect(req.request.headers.get('X-Player-Id')).toBe('AshRivero');
     req.flush(mockState);
@@ -51,7 +52,7 @@ describe('MatchBackendService', () => {
       expect(chat).toEqual(mockChat);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/matches/match-1/chat');
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/match-1/chat`);
     expect(req.request.method).toBe('GET');
     req.flush(mockChat);
   });
@@ -61,7 +62,7 @@ describe('MatchBackendService', () => {
       expect(res.matchId).toBe('match-999');
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/matches');
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       playerAId: 'playerA',
@@ -78,7 +79,7 @@ describe('MatchBackendService', () => {
       expect(decks).toEqual(mockDecks);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/user/123`);
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
   });
@@ -89,7 +90,7 @@ describe('MatchBackendService', () => {
       expect(templates).toEqual(mockTemplates);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/templates');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/templates`);
     expect(req.request.method).toBe('GET');
     req.flush(mockTemplates);
   });
@@ -100,7 +101,7 @@ describe('MatchBackendService', () => {
       expect(deck).toEqual(mockDeck);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/10');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/10`);
     expect(req.request.method).toBe('GET');
     req.flush(mockDeck);
   });
@@ -110,7 +111,7 @@ describe('MatchBackendService', () => {
       expect(res.matchId).toBe('match-bot');
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/matches/bot');
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/bot`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       playerAId: 'AshRivero',
@@ -124,7 +125,7 @@ describe('MatchBackendService', () => {
   it('should call surrenderMatch with custom X-Player-Id header', () => {
     service.surrenderMatch('match-1').subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/matches/match-1/surrender');
+    const req = httpMock.expectOne(`${environment.apiUrl}/matches/match-1/surrender`);
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('X-Player-Id')).toBe('AshRivero');
     req.flush({});

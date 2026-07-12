@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface BattlePassLevelDTO {
   level: number;
@@ -25,7 +26,7 @@ export interface BattlePassStatusDTO {
 @Injectable({ providedIn: 'root' })
 export class BattlePassService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/battle-pass';
+  private readonly API_URL = `${environment.apiUrl}/battle-pass`;
 
   getStatus(): Observable<BattlePassStatusDTO> {
     return this.http.get<BattlePassStatusDTO>(`${this.API_URL}/status`);

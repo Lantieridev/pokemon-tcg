@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { LobbyService, LobbyStatus, LobbyResponse } from './lobby.service';
@@ -58,7 +59,7 @@ describe('LobbyService', () => {
     ];
 
     const promise = service.loadDecks();
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/user/123`);
     expect(req.request.method).toBe('GET');
     req.flush(mockDecks);
 
@@ -84,7 +85,7 @@ describe('LobbyService', () => {
     };
 
     const promise = service.joinPublicQueue(false);
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/queue');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/queue`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ deckId: 101, isRanked: false });
     req.flush(mockResp);
@@ -104,7 +105,7 @@ describe('LobbyService', () => {
     };
 
     const promise = service.joinPublicQueue(true);
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/queue');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/queue`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ deckId: 101, isRanked: true });
     req.flush(mockResp);
@@ -118,7 +119,7 @@ describe('LobbyService', () => {
   it('should handle joinPublicQueue error', async () => {
     service.selectedDeckId.set(101);
     const promise = service.joinPublicQueue(false);
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/queue');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/queue`);
     req.error(new ErrorEvent('Network error'));
 
     await promise;
@@ -130,7 +131,7 @@ describe('LobbyService', () => {
   it('should leave public queue successfully', async () => {
     service.queueStatus.set('waiting');
     const promise = service.leavePublicQueue();
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/queue');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/queue`);
     expect(req.request.method).toBe('DELETE');
     req.flush({});
 
@@ -146,7 +147,7 @@ describe('LobbyService', () => {
     };
 
     const promise = service.createPrivateRoom();
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/room');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/room`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ deckId: 101 });
     req.flush(mockResp);
@@ -166,7 +167,7 @@ describe('LobbyService', () => {
     };
 
     const promise = service.joinPrivateRoom('ROOM12');
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/room/ROOM12/join');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/room/ROOM12/join`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ deckId: 101 });
     req.flush(mockResp);
@@ -181,7 +182,7 @@ describe('LobbyService', () => {
   it('should handle joinPrivateRoom error', async () => {
     service.selectedDeckId.set(101);
     const promise = service.joinPrivateRoom('ROOM12');
-    const req = httpMock.expectOne('http://localhost:8081/api/lobby/room/ROOM12/join');
+    const req = httpMock.expectOne(`${environment.apiUrl}/lobby/room/ROOM12/join`);
     req.flush({ message: 'Sala llena' }, { status: 400, statusText: 'Bad Request' });
 
     await promise;

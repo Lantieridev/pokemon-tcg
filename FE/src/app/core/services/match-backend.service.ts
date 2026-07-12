@@ -2,14 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 import { GameStateResponseDTO, DeckResponseDTO, DeckSummaryDTO } from '../models/game-state.models';
 
 @Injectable({ providedIn: 'root' })
 export class MatchBackendService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private readonly MATCHES_URL = 'http://localhost:8081/api/matches';
-  private readonly DECKS_URL = 'http://localhost:8081/api/decks';
+  private readonly MATCHES_URL = `${environment.apiUrl}/matches`;
+  private readonly DECKS_URL = `${environment.apiUrl}/decks`;
 
   /**
    * GET /api/matches/{matchId}/state

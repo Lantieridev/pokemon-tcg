@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subject, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface CardStatDTO {
   cardId: string;
@@ -110,7 +111,7 @@ export interface SliceMatchHistoryResponseDTO {
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/users';
+  private readonly API_URL = `${environment.apiUrl}/users`;
 
   public profile$ = new BehaviorSubject<UserProfileResponseDTO | null>(null);
   public readonly profileUpdated$ = new Subject<void>();

@@ -2,6 +2,7 @@ import { Injectable, inject, NgZone } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, Subject } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { MatchStore } from '../store/match.store';
 import { GameStateResponseDTO, ActionRequestDTO } from '../models/game-state.models';
@@ -57,7 +58,7 @@ export class WebSocketService {
     this.currentMatchId = matchId;
 
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(`${environment.wsUrl}`),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },

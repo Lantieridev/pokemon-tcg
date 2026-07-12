@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AuthResponseDTO } from '../models/game-state.models';
+import { environment } from '../../../environments/environment';
 
 export interface AuthUser {
   username: string;
@@ -15,7 +16,7 @@ export interface AuthUser {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/auth';
+  private readonly API_URL = `${environment.apiUrl}/auth`;
 
   public currentUser = signal<AuthUser | null>(null);
 

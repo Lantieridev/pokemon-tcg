@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CampaignProgressResponse, ChallengeResponse } from '../models/campaign.models';
+import { environment } from '../../../environments/environment';
 
 /**
  * Servicio HTTP para la Campaña PvE.
@@ -14,7 +15,7 @@ import { CampaignProgressResponse, ChallengeResponse } from '../models/campaign.
 @Injectable({ providedIn: 'root' })
 export class CampaignService {
   private readonly http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/campaign';
+  private readonly API_URL = `${environment.apiUrl}/campaign`;
 
   /**
    * Obtiene el progreso de campaña del usuario autenticado.

@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
@@ -10,7 +11,7 @@ export class DeckApiService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private deckStore = inject(DeckStore);
-  private readonly API_URL = 'http://localhost:8081/api/decks';
+  private readonly API_URL = `${environment.apiUrl}/decks`;
 
   /**
    * POST /api/decks

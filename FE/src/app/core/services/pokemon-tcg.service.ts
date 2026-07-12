@@ -2,13 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { PokemonTcgCard } from '../models/game-state.models';
+import { environment } from '../../../environments/environment';
 
 const CACHE_KEY = 'xy1_xy2_cards_cache';
 
 @Injectable({ providedIn: 'root' })
 export class PokemonTcgService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/cards';
+  private readonly API_URL = `${environment.apiUrl}/cards`;
 
   /** Las 146 cartas del set XY1 */
   readonly cards = signal<PokemonTcgCard[]>([]);

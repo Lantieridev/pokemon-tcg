@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 /**
  * Interceptor funcional que inyecta el JWT en todas las peticiones
@@ -20,7 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (
   const token = authService.token;
 
   // Solo inyectar en llamadas al backend propio
-  const isBackendRequest = req.url.includes('localhost:8081');
+  const isBackendRequest = req.url.startsWith(environment.apiUrl);
 
   let preparedReq = req;
   if (token && isBackendRequest) {

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -47,7 +48,7 @@ describe('AuthService', () => {
       expect(localStorage.getItem('jwt')).toBe('new-token');
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/auth/login');
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
     expect(req.request.method).toBe('POST');
     req.flush(mockResponse);
   });
@@ -55,7 +56,7 @@ describe('AuthService', () => {
   it('should register successfully', () => {
     service.register('AshRivero', 'ash@pokemon.com', 'password123').subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/auth/register');
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/register`);
     expect(req.request.method).toBe('POST');
     req.flush(null);
   });

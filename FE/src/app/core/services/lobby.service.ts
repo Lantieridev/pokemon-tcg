@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { AuthService } from './auth.service';
@@ -34,7 +35,7 @@ export class LobbyService {
   private router = inject(Router);
   private authService = inject(AuthService);
 
-  private readonly BASE = 'http://localhost:8081/api/lobby';
+  private readonly BASE = `${environment.apiUrl}/lobby`;
   private lobbyStompClient: Client | null = null;
 
   // ── Signals de estado ──────────────────────────────────────────────────────
@@ -73,7 +74,7 @@ export class LobbyService {
   async loadActiveDeckDetails(deckId: number): Promise<void> {
     try {
       const details = await firstValueFrom(
-        this.http.get<DeckResponseDTO>(`http://localhost:8081/api/decks/${deckId}`)
+        this.http.get<DeckResponseDTO>(`${environment.apiUrl}/decks/${deckId}`)
       );
       this.activeDeckDetails.set(details);
     } catch (e) {
@@ -89,7 +90,7 @@ export class LobbyService {
         return;
       }
       const decks = await firstValueFrom(
-        this.http.get<DeckSummaryDTO[]>(`http://localhost:8081/api/decks/user/${userId}`)
+        this.http.get<DeckSummaryDTO[]>(`${environment.apiUrl}/decks/user/${userId}`)
       );
       this.decks.set(decks ?? []);
       
@@ -123,7 +124,7 @@ export class LobbyService {
     if (this.lobbyStompClient?.connected) return;
 
     this.lobbyStompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(`${environment.wsUrl}`),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 3000,
     });

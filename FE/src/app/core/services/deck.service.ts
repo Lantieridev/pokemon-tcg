@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface DeckCardRequest {
   cardId: string;
@@ -20,7 +21,7 @@ export interface DeckRequest {
 export class DeckService {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private readonly API_URL = 'http://localhost:8081/api/decks';
+  private readonly API_URL = `${environment.apiUrl}/decks`;
 
   /**
    * Guarda un mazo en la base de datos haciendo un POST a /api/decks.

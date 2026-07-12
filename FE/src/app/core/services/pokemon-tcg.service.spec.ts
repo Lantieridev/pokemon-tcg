@@ -1,5 +1,6 @@
 ﻿import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { PokemonTcgService } from './pokemon-tcg.service';
 
 describe('PokemonTcgService', () => {
@@ -25,7 +26,7 @@ describe('PokemonTcgService', () => {
 
     service.loadCards();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/cards/catalog?setIds=xy1,xy2');
+    const req = httpMock.expectOne(`${environment.apiUrl}/cards/catalog?setIds=xy1,xy2`);
     expect(req.request.method).toBe('GET');
     req.flush(dummyCards);
 
@@ -42,7 +43,7 @@ describe('PokemonTcgService', () => {
 
     expect(service.cards().length).toBe(1);
     expect(service.cards()).toEqual(cachedCards);
-    httpMock.expectNone('http://localhost:8081/api/cards/catalog?setIds=xy1,xy2');
+    httpMock.expectNone(`${environment.apiUrl}/cards/catalog?setIds=xy1,xy2`);
   });
 
   it('should clear cache and cards signal', () => {

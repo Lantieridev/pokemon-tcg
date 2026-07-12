@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { DeckApiService } from './deck-api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DeckStore } from '../../core/store/deck.store';
@@ -53,7 +54,7 @@ describe('DeckApiService', () => {
       expect(res.name).toBe('Test Deck');
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       userId: 123,
@@ -76,7 +77,7 @@ describe('DeckApiService', () => {
       expect(res.status).toBe('DRAFT');
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/1`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body.name).toBe('Updated Deck');
     expect(req.request.body.status).toBe('DRAFT');
@@ -87,7 +88,7 @@ describe('DeckApiService', () => {
   it('should delete deck on deleteDeck', () => {
     service.deleteDeck(1).subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/1`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });
@@ -97,7 +98,7 @@ describe('DeckApiService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/user/123');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/user/123`);
     expect(req.request.method).toBe('GET');
     req.flush([{ id: 1, name: 'User Deck' }]);
   });
@@ -107,7 +108,7 @@ describe('DeckApiService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/assistant/autocomplete');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/assistant/autocomplete`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual([{ cardId: 'xy1-1', quantity: 2 }]);
     req.flush([{ cardId: 'xy1-2', quantity: 1 }]);
@@ -118,7 +119,7 @@ describe('DeckApiService', () => {
       expect(res.id).toBe(1);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/1`);
     expect(req.request.method).toBe('GET');
     req.flush({ id: 1 });
   });
@@ -128,7 +129,7 @@ describe('DeckApiService', () => {
       expect(res.id).toBe(10);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/users/123/clone/9');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/users/123/clone/9`);
     expect(req.request.method).toBe('POST');
     req.flush({ id: 10 });
   });
@@ -138,7 +139,7 @@ describe('DeckApiService', () => {
       expect(res.length).toBe(1);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/decks/assistant/wizard');
+    const req = httpMock.expectOne(`${environment.apiUrl}/decks/assistant/wizard`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ theme: 'Fire/Water' });
     req.flush([{ cardId: 'xy1-2', quantity: 60 }]);

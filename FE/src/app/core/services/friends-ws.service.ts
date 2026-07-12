@@ -2,6 +2,7 @@ import { Injectable, inject, NgZone } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ChatMessageDTO, ChallengeDTO } from '../models/friends.models';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 import { Client, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
@@ -23,7 +24,7 @@ export class FriendsWsService {
     if (!token) return;
 
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(`${environment.wsUrl}`),
       connectHeaders: {
         Authorization: 'Bearer ' + token
       },

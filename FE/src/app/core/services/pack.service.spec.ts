@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { PackService, PackOpeningResultDTO } from './pack.service';
 
 describe('PackService', () => {
@@ -29,7 +30,7 @@ describe('PackService', () => {
       expect(res).toEqual(mockResult);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/packs/open?packType=pack_raro');
+    const req = httpMock.expectOne(`${environment.apiUrl}/packs/open?packType=pack_raro`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({});
     req.flush(mockResult);
@@ -37,7 +38,7 @@ describe('PackService', () => {
 
   it('should default to pack_base if no packType is provided', () => {
     service.openPack().subscribe();
-    const req = httpMock.expectOne('http://localhost:8081/api/packs/open?packType=pack_base');
+    const req = httpMock.expectOne(`${environment.apiUrl}/packs/open?packType=pack_base`);
     expect(req.request.method).toBe('POST');
     req.flush({});
   });

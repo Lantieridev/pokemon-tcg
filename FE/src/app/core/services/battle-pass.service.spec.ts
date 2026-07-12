@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { BattlePassService, BattlePassStatusDTO } from './battle-pass.service';
 
 describe('BattlePassService', () => {
@@ -33,7 +34,7 @@ describe('BattlePassService', () => {
       expect(res).toEqual(mockStatus);
     });
 
-    const req = httpMock.expectOne('http://localhost:8081/api/battle-pass/status');
+    const req = httpMock.expectOne(`${environment.apiUrl}/battle-pass/status`);
     expect(req.request.method).toBe('GET');
     req.flush(mockStatus);
   });
@@ -41,7 +42,7 @@ describe('BattlePassService', () => {
   it('should post to /claim with level and isPremium query parameters', () => {
     service.claimReward(5, true).subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/battle-pass/claim?level=5&isPremium=true');
+    const req = httpMock.expectOne(`${environment.apiUrl}/battle-pass/claim?level=5&isPremium=true`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({});
     req.flush(null);
@@ -50,7 +51,7 @@ describe('BattlePassService', () => {
   it('should post to /purchase-premium', () => {
     service.purchasePremium().subscribe();
 
-    const req = httpMock.expectOne('http://localhost:8081/api/battle-pass/purchase-premium');
+    const req = httpMock.expectOne(`${environment.apiUrl}/battle-pass/purchase-premium`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({});
     req.flush(null);

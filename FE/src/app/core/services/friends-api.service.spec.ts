@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { environment } from '../../../environments/environment';
 import { FriendsApiService } from './friends-api.service';
 import { FriendshipDTO, PublicProfileDTO, ChatMessageDTO } from '../models/friends.models';
 
@@ -22,7 +23,7 @@ describe('FriendsApiService', () => {
 
   it('should sendFriendRequest', () => {
     service.sendFriendRequest('GaryOak').subscribe();
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/request');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/request`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ targetUsername: 'GaryOak' });
     req.flush({});
@@ -33,7 +34,7 @@ describe('FriendsApiService', () => {
     service.getActiveFriends().subscribe((friends) => {
       expect(friends).toEqual(mockFriends);
     });
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/list');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/list`);
     expect(req.request.method).toBe('GET');
     req.flush(mockFriends);
   });
@@ -43,28 +44,28 @@ describe('FriendsApiService', () => {
     service.getPendingRequests().subscribe((requests) => {
       expect(requests).toEqual(mockRequests);
     });
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/requests');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/requests`);
     expect(req.request.method).toBe('GET');
     req.flush(mockRequests);
   });
 
   it('should acceptFriendRequest', () => {
     service.acceptFriendRequest(12).subscribe();
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/accept/12');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/accept/12`);
     expect(req.request.method).toBe('PUT');
     req.flush({});
   });
 
   it('should rejectFriendRequest', () => {
     service.rejectFriendRequest(34).subscribe();
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/reject/34');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/reject/34`);
     expect(req.request.method).toBe('PUT');
     req.flush({});
   });
 
   it('should removeFriend', () => {
     service.removeFriend(56).subscribe();
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/remove/56');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/remove/56`);
     expect(req.request.method).toBe('DELETE');
     req.flush({});
   });
@@ -74,7 +75,7 @@ describe('FriendsApiService', () => {
     service.getPublicProfile('AshRivero').subscribe((profile) => {
       expect(profile).toEqual(mockProfile);
     });
-    const req = httpMock.expectOne('http://localhost:8081/api/users/AshRivero/profile/public');
+    const req = httpMock.expectOne(`${environment.apiUrl}/users/AshRivero/profile/public`);
     expect(req.request.method).toBe('GET');
     req.flush(mockProfile);
   });
@@ -84,7 +85,7 @@ describe('FriendsApiService', () => {
     service.getChatHistory('GaryOak').subscribe((chat) => {
       expect(chat).toEqual(mockChat);
     });
-    const req = httpMock.expectOne('http://localhost:8081/api/friends/chat/GaryOak');
+    const req = httpMock.expectOne(`${environment.apiUrl}/friends/chat/GaryOak`);
     expect(req.request.method).toBe('GET');
     req.flush(mockChat);
   });

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface StoreItemDTO {
   id: number;
@@ -18,7 +19,7 @@ export interface BuyRequestDTO {
 @Injectable({ providedIn: 'root' })
 export class StoreService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8081/api/store';
+  private readonly API_URL = `${environment.apiUrl}/store`;
 
   getAvailableItems(): Observable<StoreItemDTO[]> {
     return this.http.get<StoreItemDTO[]>(`${this.API_URL}/items`);
