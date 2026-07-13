@@ -51,13 +51,13 @@ Toda la lógica del sistema reside en [ProfileServiceImpl.java](../BE/src/main/j
 ### Commit 3: Colores para Nuevas Categorías en Frontend
 *   **Mensaje del commit:** `style(FE): add color mapping for new achievement categories in profile page`
 *   **Descripción de cambios:**
-	*   Se añadieron los mapeos de color en `getCategoryColor` en `profile-aurora.component.ts` para las nuevas categorías de logros (`RESILIENCIA`, `COMPETITIVO`, `VERSATILIDAD`, `TITULOS`, `ECONOMIA`, `COMBATE`, `ELEMENTAL`, `LEALTAD`).
+	*   Se añadieron los mapeos de color en `getCategoryColor` en `profile.component.ts` para las nuevas categorías de logros (`RESILIENCIA`, `COMPETITIVO`, `VERSATILIDAD`, `TITULOS`, `ECONOMIA`, `COMBATE`, `ELEMENTAL`, `LEALTAD`).
 
 ### Commit 4: Unificación del Menú de Usuario en Navbar
 *   **Mensaje del commit:** `fix(FE): remove duplicate overlapping profile dropdown and delegate menu to TrainerChipComponent`
 *   **Descripción de cambios:**
 	*   Se removió el menú superpuesto redundante de `navbar.html` y el manejador `toggleUserMenu()` de `navbar.component.ts`.
-	*   Se integró el enlace "Mi Perfil" directamente dentro del componente de menú estilizado `TrainerChipComponent` en `aurora-ui.components.ts` e importó `RouterModule` para permitir navegación.
+	*   Se integró el enlace "Mi Perfil" directamente dentro del componente de menú estilizado `TrainerChipComponent` en `ui-kit.components.ts` e importó `RouterModule` para permitir navegación.
 
 ### Commit 5: Actualización del DTO de Logros y Vista del Navbar en Frontend
 *   **Mensaje del commit:** `feat(FE): extend UserAchievementProgressDTO and link avatar icon to navbar trainer chip`
