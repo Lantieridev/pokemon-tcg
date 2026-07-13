@@ -304,6 +304,45 @@ public final class RuleValidator {
         return 60;
     }
 
+    private record TrainerCardContext(PlayTrainerAction action, int playerIndex, int opponentIndex) {
+    }
+
+    /**
+     * Validates one {@link TrainerEffectId}'s card-specific preconditions (e.g. Super Potion
+     * needs a damaged target). Returns {@code null} when the card's preconditions are met, or
+     * an {@link ValidationResult.Invalid} describing which precondition failed.
+     */
+    @FunctionalInterface
+    private interface TrainerCardValidator {
+        ValidationResult.Invalid validate(TrainerCardContext ctx);
+    }
+
+    private final Map<ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId, TrainerCardValidator> trainerCardValidators = buildTrainerCardValidators();
+
+    private Map<ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId, TrainerCardValidator> buildTrainerCardValidators() {
+        final Map<ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId, TrainerCardValidator> v =
+                new java.util.EnumMap<>(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.class);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SUPER_POTION, this::validateSuperPotionCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CASSIUS, this::validateCassiusCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA, this::validateEvosodaCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE, this::validateMaxReviveCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER, this::validateNonEmptyDeckCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.GREAT_BALL, this::validateNonEmptyDeckCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_FAN_CLUB, this::validateNonEmptyDeckCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TEAM_FLARE_GRUNT, this::validateTeamFlareGruntCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RED_CARD, this::validateRedCardCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE, this::validateLysandreCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH, this::validateSacredAshCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH, this::validateFieryTorchCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL, this::validateTrickShovelCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.STARTLING_MEGAPHONE, this::validateStartlingMegaphoneCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD, this::validatePalPadCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH, this::validateBlacksmithCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY, this::validatePokemonCenterLadyCard);
+        v.put(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL, this::validateUltraBallCard);
+        return v;
+    }
+
     private ValidationResult validatePlayTrainer(final PlayTrainerAction action, final int playerIndex) {
         MainPhase mainPhase = turnManager.requireMainPhase();
 
@@ -318,192 +357,11 @@ public final class RuleValidator {
         }
 
         final var effectId = action.effectId();
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SUPER_POTION) {
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            if (action.target().getDamageCounters() == 0) {
-                return new ValidationResult.Invalid("target_has_no_damage");
-            }
-            if (action.target().getAttachedEnergies().isEmpty()) {
-                return new ValidationResult.Invalid("target_has_no_energy");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.CASSIUS) {
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            final boolean inPlay = (battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex)))
-                    || benchStateProvider.getBenchedPokemon(playerIndex).contains(action.target());
-            if (!inPlay) {
-                return new ValidationResult.Invalid("target_pokemon_not_in_play");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.EVOSODA) {
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            final boolean inPlay = (battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex)))
-                    || benchStateProvider.getBenchedPokemon(playerIndex).contains(action.target());
-            if (!inPlay) {
-                return new ValidationResult.Invalid("target_pokemon_not_in_play");
-            }
-            boolean hasAdaptiveEvolution = action.target().getAbilities().stream()
-                    .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION);
-            if (!hasAdaptiveEvolution) {
-                if (turnManager.isFirstTurnOfPlayer(playerIndex)) {
-                    return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
-                }
-                if (turnInPlayProvider.getTurnsInPlay(action.target()) < MIN_TURNS_TO_EVOLVE) {
-                    return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
-                }
-            }
-            if (action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2
-                    || action.target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
-                return new ValidationResult.Invalid("cannot_evolve_further");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.MAX_REVIVE) {
-            final List<ar.edu.utn.frc.tup.piii.engine.model.Card> discard = getDiscardPile(playerIndex);
-            final boolean hasBasicPokemon = discard.stream()
-                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
-            if (!hasBasicPokemon) {
-                return new ValidationResult.Invalid("no_basic_pokemon_in_discard_pile");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PROFESSORS_LETTER
-                || effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.GREAT_BALL) {
-            if (getDeckSize(playerIndex) == 0) {
-                return new ValidationResult.Invalid("deck_is_empty");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TEAM_FLARE_GRUNT) {
-            if (battlefieldProvider == null) {
-                return new ValidationResult.Invalid("battlefield_provider_required");
-            }
-            final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(opponentIndex);
-            if (opponentActive == null) {
-                return new ValidationResult.Invalid("opponent_has_no_active_pokemon");
-            }
-            if (opponentActive.getAttachedEnergies().isEmpty()) {
-                return new ValidationResult.Invalid("opponent_active_has_no_energy");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.RED_CARD) {
-            if (handStateProvider.getHandSize(opponentIndex) == 0) {
-                return new ValidationResult.Invalid("opponent_hand_is_empty");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.LYSANDRE) {
-            if (benchStateProvider == null || benchStateProvider.getBenchSize(opponentIndex) == 0) {
-                return new ValidationResult.Invalid("opponent_bench_empty");
-            }
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            if (!benchStateProvider.getBenchedPokemon(opponentIndex).contains(action.target())) {
-                return new ValidationResult.Invalid("target_must_be_on_opponent_bench");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.SACRED_ASH) {
-            final List<Card> discard = getDiscardPile(playerIndex);
-            final boolean hasPokemon = discard.stream().anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
-            if (!hasPokemon) {
-                return new ValidationResult.Invalid("no_pokemon_in_discard_pile");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_FAN_CLUB) {
-            if (getDeckSize(playerIndex) == 0) {
-                return new ValidationResult.Invalid("deck_is_empty");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FIERY_TORCH) {
-            if (getDeckSize(playerIndex) == 0) {
-                return new ValidationResult.Invalid("deck_is_empty");
-            }
-            final List<Card> hand = handStateProvider.getHandCards(playerIndex);
-            final boolean hasFireEnergy = hand.stream().anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE);
-            if (!hasFireEnergy) {
-                return new ValidationResult.Invalid("fire_energy_required_in_hand");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.TRICK_SHOVEL) {
-            final int targetPlayerIndex = (action.target() != null && battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex)))
-                    ? playerIndex : opponentIndex;
-            if (getDeckSize(targetPlayerIndex) == 0) {
-                return new ValidationResult.Invalid("deck_is_empty");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.STARTLING_MEGAPHONE) {
-            boolean opponentHasTool = false;
-            final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(opponentIndex);
-            if (opponentActive != null && opponentActive.hasToolAttached()) {
-                opponentHasTool = true;
-            }
-            if (!opponentHasTool && benchStateProvider != null) {
-                for (final BattlePokemonState benched : benchStateProvider.getBenchedPokemon(opponentIndex)) {
-                    if (benched.hasToolAttached()) {
-                        opponentHasTool = true;
-                        break;
-                    }
-                }
-            }
-            if (!opponentHasTool) {
-                return new ValidationResult.Invalid("opponent_has_no_tools_attached");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PAL_PAD) {
-            final List<Card> discard = getDiscardPile(playerIndex);
-            final boolean hasSupporter = discard.stream()
-                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER);
-            if (!hasSupporter) {
-                return new ValidationResult.Invalid("no_supporter_in_discard_pile");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BLACKSMITH) {
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            if (action.target().getPokemonType() != PokemonType.FIRE) {
-                return new ValidationResult.Invalid("target_must_be_fire_pokemon");
-            }
-            final List<Card> discard = getDiscardPile(playerIndex);
-            final boolean hasFireEnergy = discard.stream()
-                    .anyMatch(c -> c instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE);
-            if (!hasFireEnergy) {
-                return new ValidationResult.Invalid("fire_energy_required_in_discard");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.POKEMON_CENTER_LADY) {
-            if (action.target() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            final boolean isActive = battlefieldProvider != null && action.target().equals(battlefieldProvider.getActivePokemon(playerIndex));
-            final boolean hasStatus = isActive && !getActiveStatusEffectManager(playerIndex).activeEffects().isEmpty();
-            if (action.target().getDamageCounters() == 0 && !hasStatus) {
-                return new ValidationResult.Invalid("target_has_no_damage_or_status");
-            }
-        }
-
-        if (effectId == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.ULTRA_BALL) {
-            if (handStateProvider.getHandSize(playerIndex) < 3) {
-                return new ValidationResult.Invalid("insufficient_cards_in_hand");
+        final TrainerCardValidator validator = trainerCardValidators.get(effectId);
+        if (validator != null) {
+            final ValidationResult.Invalid invalid = validator.validate(new TrainerCardContext(action, playerIndex, opponentIndex));
+            if (invalid != null) {
+                return invalid;
             }
         }
 
@@ -513,6 +371,203 @@ public final class RuleValidator {
             case ITEM         -> new ValidationResult.Valid();
             case POKEMON_TOOL -> validatePokemonTool(action.target());
         };
+    }
+
+    private ValidationResult.Invalid validateSuperPotionCard(final TrainerCardContext ctx) {
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        if (ctx.action().target().getDamageCounters() == 0) {
+            return new ValidationResult.Invalid("target_has_no_damage");
+        }
+        if (ctx.action().target().getAttachedEnergies().isEmpty()) {
+            return new ValidationResult.Invalid("target_has_no_energy");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateCassiusCard(final TrainerCardContext ctx) {
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        final boolean inPlay = (battlefieldProvider != null && ctx.action().target().equals(battlefieldProvider.getActivePokemon(ctx.playerIndex())))
+                || benchStateProvider.getBenchedPokemon(ctx.playerIndex()).contains(ctx.action().target());
+        if (!inPlay) {
+            return new ValidationResult.Invalid("target_pokemon_not_in_play");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateEvosodaCard(final TrainerCardContext ctx) {
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        final boolean inPlay = (battlefieldProvider != null && ctx.action().target().equals(battlefieldProvider.getActivePokemon(ctx.playerIndex())))
+                || benchStateProvider.getBenchedPokemon(ctx.playerIndex()).contains(ctx.action().target());
+        if (!inPlay) {
+            return new ValidationResult.Invalid("target_pokemon_not_in_play");
+        }
+        boolean hasAdaptiveEvolution = ctx.action().target().getAbilities().stream()
+                .anyMatch(a -> a.effectId() == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ADAPTIVE_EVOLUTION);
+        if (!hasAdaptiveEvolution) {
+            if (turnManager.isFirstTurnOfPlayer(ctx.playerIndex())) {
+                return new ValidationResult.Invalid(CANNOT_EVOLVE_FIRST_TURN);
+            }
+            if (turnInPlayProvider.getTurnsInPlay(ctx.action().target()) < MIN_TURNS_TO_EVOLVE) {
+                return new ValidationResult.Invalid(POKEMON_ENTERED_THIS_TURN);
+            }
+        }
+        if (ctx.action().target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.STAGE_2
+                || ctx.action().target().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+            return new ValidationResult.Invalid("cannot_evolve_further");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateMaxReviveCard(final TrainerCardContext ctx) {
+        final List<ar.edu.utn.frc.tup.piii.engine.model.Card> discard = getDiscardPile(ctx.playerIndex());
+        final boolean hasBasicPokemon = discard.stream()
+                .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC);
+        if (!hasBasicPokemon) {
+            return new ValidationResult.Invalid("no_basic_pokemon_in_discard_pile");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateNonEmptyDeckCard(final TrainerCardContext ctx) {
+        if (getDeckSize(ctx.playerIndex()) == 0) {
+            return new ValidationResult.Invalid("deck_is_empty");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateTeamFlareGruntCard(final TrainerCardContext ctx) {
+        if (battlefieldProvider == null) {
+            return new ValidationResult.Invalid("battlefield_provider_required");
+        }
+        final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(ctx.opponentIndex());
+        if (opponentActive == null) {
+            return new ValidationResult.Invalid("opponent_has_no_active_pokemon");
+        }
+        if (opponentActive.getAttachedEnergies().isEmpty()) {
+            return new ValidationResult.Invalid("opponent_active_has_no_energy");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateRedCardCard(final TrainerCardContext ctx) {
+        if (handStateProvider.getHandSize(ctx.opponentIndex()) == 0) {
+            return new ValidationResult.Invalid("opponent_hand_is_empty");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateLysandreCard(final TrainerCardContext ctx) {
+        if (benchStateProvider == null || benchStateProvider.getBenchSize(ctx.opponentIndex()) == 0) {
+            return new ValidationResult.Invalid("opponent_bench_empty");
+        }
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        if (!benchStateProvider.getBenchedPokemon(ctx.opponentIndex()).contains(ctx.action().target())) {
+            return new ValidationResult.Invalid("target_must_be_on_opponent_bench");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateSacredAshCard(final TrainerCardContext ctx) {
+        final List<Card> discard = getDiscardPile(ctx.playerIndex());
+        final boolean hasPokemon = discard.stream().anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard);
+        if (!hasPokemon) {
+            return new ValidationResult.Invalid("no_pokemon_in_discard_pile");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateFieryTorchCard(final TrainerCardContext ctx) {
+        if (getDeckSize(ctx.playerIndex()) == 0) {
+            return new ValidationResult.Invalid("deck_is_empty");
+        }
+        final List<Card> hand = handStateProvider.getHandCards(ctx.playerIndex());
+        final boolean hasFireEnergy = hand.stream().anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE);
+        if (!hasFireEnergy) {
+            return new ValidationResult.Invalid("fire_energy_required_in_hand");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateTrickShovelCard(final TrainerCardContext ctx) {
+        final int targetPlayerIndex = (ctx.action().target() != null && battlefieldProvider != null && ctx.action().target().equals(battlefieldProvider.getActivePokemon(ctx.playerIndex())))
+                ? ctx.playerIndex() : ctx.opponentIndex();
+        if (getDeckSize(targetPlayerIndex) == 0) {
+            return new ValidationResult.Invalid("deck_is_empty");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateStartlingMegaphoneCard(final TrainerCardContext ctx) {
+        boolean opponentHasTool = false;
+        final BattlePokemonState opponentActive = battlefieldProvider.getActivePokemon(ctx.opponentIndex());
+        if (opponentActive != null && opponentActive.hasToolAttached()) {
+            opponentHasTool = true;
+        }
+        if (!opponentHasTool && benchStateProvider != null) {
+            for (final BattlePokemonState benched : benchStateProvider.getBenchedPokemon(ctx.opponentIndex())) {
+                if (benched.hasToolAttached()) {
+                    opponentHasTool = true;
+                    break;
+                }
+            }
+        }
+        if (!opponentHasTool) {
+            return new ValidationResult.Invalid("opponent_has_no_tools_attached");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validatePalPadCard(final TrainerCardContext ctx) {
+        final List<Card> discard = getDiscardPile(ctx.playerIndex());
+        final boolean hasSupporter = discard.stream()
+                .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER);
+        if (!hasSupporter) {
+            return new ValidationResult.Invalid("no_supporter_in_discard_pile");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateBlacksmithCard(final TrainerCardContext ctx) {
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        if (ctx.action().target().getPokemonType() != PokemonType.FIRE) {
+            return new ValidationResult.Invalid("target_must_be_fire_pokemon");
+        }
+        final List<Card> discard = getDiscardPile(ctx.playerIndex());
+        final boolean hasFireEnergy = discard.stream()
+                .anyMatch(c -> c instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE);
+        if (!hasFireEnergy) {
+            return new ValidationResult.Invalid("fire_energy_required_in_discard");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validatePokemonCenterLadyCard(final TrainerCardContext ctx) {
+        if (ctx.action().target() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        final boolean isActive = battlefieldProvider != null && ctx.action().target().equals(battlefieldProvider.getActivePokemon(ctx.playerIndex()));
+        final boolean hasStatus = isActive && !getActiveStatusEffectManager(ctx.playerIndex()).activeEffects().isEmpty();
+        if (ctx.action().target().getDamageCounters() == 0 && !hasStatus) {
+            return new ValidationResult.Invalid("target_has_no_damage_or_status");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateUltraBallCard(final TrainerCardContext ctx) {
+        if (handStateProvider.getHandSize(ctx.playerIndex()) < 3) {
+            return new ValidationResult.Invalid("insufficient_cards_in_hand");
+        }
+        return null;
     }
 
     private ValidationResult validateSupporter(final MainPhase mainPhase) {
@@ -650,174 +705,220 @@ public final class RuleValidator {
         return new ValidationResult.Valid();
     }
 
+    private static final java.util.Set<AbilityEffectId> ONCE_PER_TURN_ABILITIES = java.util.Set.of(
+            AbilityEffectId.MYSTICAL_FIRE,
+            AbilityEffectId.MAGNETIC_DRAW,
+            AbilityEffectId.DRIVE_OFF,
+            AbilityEffectId.WATER_SHURIKEN,
+            AbilityEffectId.STANCE_CHANGE,
+            AbilityEffectId.LEAF_DRAW,
+            AbilityEffectId.ENERGY_GRACE,
+            AbilityEffectId.BIG_JUMP,
+            AbilityEffectId.UPSIDE_DOWN_EVOLUTION
+    );
+
+    private record AbilityContext(UseAbilityAction action, BattlePokemonState source,
+            ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime, int playerIndex) {
+    }
+
+    /**
+     * Validates one {@link AbilityEffectId}'s use-specific preconditions (e.g. Drive Off needs
+     * the source active and the opponent's bench non-empty). Returns {@code null} when met.
+     */
+    @FunctionalInterface
+    private interface AbilityValidator {
+        ValidationResult.Invalid validate(AbilityContext ctx);
+    }
+
+    private final Map<AbilityEffectId, AbilityValidator> abilityValidators = buildAbilityValidators();
+
+    private Map<AbilityEffectId, AbilityValidator> buildAbilityValidators() {
+        final Map<AbilityEffectId, AbilityValidator> v = new java.util.EnumMap<>(AbilityEffectId.class);
+        v.put(AbilityEffectId.GOOEY_REGENERATION, this::validateGooeyRegenerationAbility);
+        v.put(AbilityEffectId.DRIVE_OFF, this::validateDriveOffAbility);
+        v.put(AbilityEffectId.WATER_SHURIKEN, this::validateWaterShurikenAbility);
+        v.put(AbilityEffectId.LEAF_DRAW, this::validateLeafDrawAbility);
+        v.put(AbilityEffectId.ENERGY_GRACE, this::validateEnergyGraceAbility);
+        v.put(AbilityEffectId.STANCE_CHANGE, this::validateStanceChangeAbility);
+        v.put(AbilityEffectId.UPSIDE_DOWN_EVOLUTION, this::validateUpsideDownEvolutionAbility);
+        v.put(AbilityEffectId.SHADOW_VOID, this::validateShadowVoidAbility);
+        return v;
+    }
+
     private ValidationResult validateUseAbility(final UseAbilityAction action, final int playerIndex) {
         turnManager.requireMainPhase();
-        
+
         final BattlePokemonState source = action.source();
         if (source == null) {
             return new ValidationResult.Invalid("target_pokemon_required");
         }
-        
+
         final String abilityIdStr = action.abilityId();
-        
+
         var abilityOpt = source.getAbilities().stream()
                 .filter(a -> a.name().equalsIgnoreCase(abilityIdStr) || a.effectId().name().equalsIgnoreCase(abilityIdStr))
                 .findFirst();
-                
+
         if (abilityOpt.isEmpty()) {
             return new ValidationResult.Invalid("ability_not_found");
         }
-        
+
         var ability = abilityOpt.get();
         final AbilityEffectId effId = ability.effectId();
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MYSTICAL_FIRE || 
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.MAGNETIC_DRAW ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.WATER_SHURIKEN ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ENERGY_GRACE ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.BIG_JUMP ||
-            effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
-            if (source.hasUsedAbilityThisTurn(effId.name())) {
-                return new ValidationResult.Invalid("ability_already_used_this_turn");
-            }
+
+        if (ONCE_PER_TURN_ABILITIES.contains(effId) && source.hasUsedAbilityThisTurn(effId.name())) {
+            return new ValidationResult.Invalid("ability_already_used_this_turn");
         }
-        
+
         final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime = getActiveStatusEffectManager(playerIndex).getPlayerRuntime();
 
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.GOOEY_REGENERATION) {
-            if (runtime == null) {
-                return new ValidationResult.Invalid("player_runtime_required");
-            }
-            if (source.getAttachedEnergyCards().isEmpty()) {
-                return new ValidationResult.Invalid("no_energy_attached");
-            }
-            if (source.getDamageCounters() == 0) {
-                return new ValidationResult.Invalid("no_damage_to_heal");
-            }
-        }
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.DRIVE_OFF) {
-            if (runtime == null || runtime.getActivePokemon() != source) {
-                return new ValidationResult.Invalid("pokemon_must_be_active");
-            }
-            final int opponentIndex = 1 - playerIndex;
-            if (benchStateProvider.getBenchSize(opponentIndex) == 0) {
-                return new ValidationResult.Invalid("opponent_bench_empty");
-            }
-        }
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.WATER_SHURIKEN) {
-            if (runtime == null) {
-                return new ValidationResult.Invalid("player_runtime_required");
-            }
-            final boolean hasWaterEnergy = runtime.getHand().getCards().stream()
-                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.WATER);
-            if (!hasWaterEnergy) {
-                return new ValidationResult.Invalid("water_energy_required_in_hand");
-            }
-        }
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.LEAF_DRAW) {
-            if (runtime == null) {
-                return new ValidationResult.Invalid("player_runtime_required");
-            }
-            final boolean hasGrassEnergy = runtime.getHand().getCards().stream()
-                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.GRASS);
-            if (!hasGrassEnergy) {
-                return new ValidationResult.Invalid("grass_energy_required_in_hand");
+        final AbilityValidator validator = abilityValidators.get(effId);
+        if (validator != null) {
+            final ValidationResult.Invalid invalid = validator.validate(new AbilityContext(action, source, runtime, playerIndex));
+            if (invalid != null) {
+                return invalid;
             }
         }
 
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.ENERGY_GRACE) {
-            if (runtime == null) {
-                return new ValidationResult.Invalid("player_runtime_required");
-            }
-            final boolean hasBasicEnergyInDiscard = runtime.getDiscardPile().getCards().stream()
-                    .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic())
-                    || source.getAttachedEnergyCards().stream().anyMatch(ec -> ec.isBasic());
-            if (!hasBasicEnergyInDiscard) {
-                return new ValidationResult.Invalid("basic_energy_required_in_discard");
-            }
-            boolean hasNonExTarget = false;
-            if (runtime.getActivePokemon() != null && runtime.getActivePokemon() != source && !runtime.getActivePokemon().isEx()) {
-                hasNonExTarget = true;
-            }
-            for (var benched : runtime.getBench().getAll()) {
-                if (benched != source && !benched.isEx()) {
-                    hasNonExTarget = true;
-                    break;
-                }
-            }
-            if (!hasNonExTarget) {
-                return new ValidationResult.Invalid("no_valid_non_ex_target_in_play");
-            }
-
-            // Validate specific target
-            BattlePokemonState specificTarget = null;
-            if (action.targetIndex() == null || action.targetIndex() == -1) {
-                specificTarget = runtime.getActivePokemon();
-            } else if (action.targetIndex() >= 0 && action.targetIndex() < runtime.getBench().getAll().size()) {
-                specificTarget = runtime.getBench().getAll().get(action.targetIndex());
-            } else {
-                return new ValidationResult.Invalid("invalid_target_index");
-            }
-
-            if (specificTarget == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            if (specificTarget == source) {
-                return new ValidationResult.Invalid("cannot_target_self");
-            }
-            if (specificTarget.isEx()) {
-                return new ValidationResult.Invalid("cannot_target_ex_pokemon");
-            }
-        }
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.STANCE_CHANGE) {
-            if (runtime == null) {
-                return new ValidationResult.Invalid("player_runtime_required");
-            }
-            final boolean hasAegislash = runtime.getHand().getCards().stream()
-                    .anyMatch(c -> c.getName().equalsIgnoreCase("Aegislash") && !c.getCardId().equals(source.getCardId()));
-            if (!hasAegislash) {
-                return new ValidationResult.Invalid("aegislash_required_in_hand");
-            }
-        }
-        
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.UPSIDE_DOWN_EVOLUTION) {
-            if (runtime == null || runtime.getActivePokemon() != source) {
-                return new ValidationResult.Invalid("pokemon_must_be_active");
-            }
-            if (!getActiveStatusEffectManager(playerIndex).has(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.CONFUNDIDO)) {
-                return new ValidationResult.Invalid("pokemon_must_be_confused");
-            }
-        }
-
-        if (effId == ar.edu.utn.frc.tup.piii.engine.model.AbilityEffectId.SHADOW_VOID) {
-            if (action.targetIndex() == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            BattlePokemonState targetPokemon = action.targetIndex() < 0
-                    ? battlefieldProvider.getActivePokemon(playerIndex)
-                    : (benchStateProvider != null && action.targetIndex() < benchStateProvider.getBenchedPokemon(playerIndex).size()
-                        ? benchStateProvider.getBenchedPokemon(playerIndex).get(action.targetIndex())
-                        : null);
-
-            if (targetPokemon == null) {
-                return new ValidationResult.Invalid("target_pokemon_required");
-            }
-            if (targetPokemon.getDamageCounters() * 10 < 10) {
-                return new ValidationResult.Invalid("target_has_no_damage");
-            }
-            if (source.getDamageCounters() * 10 + 10 >= source.getMaxHp()) {
-                return new ValidationResult.Invalid("dusknoir_max_hp_reached");
-            }
-        }
-        
         return new ValidationResult.Valid();
+    }
+
+    private ValidationResult.Invalid validateGooeyRegenerationAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null) {
+            return new ValidationResult.Invalid("player_runtime_required");
+        }
+        if (ctx.source().getAttachedEnergyCards().isEmpty()) {
+            return new ValidationResult.Invalid("no_energy_attached");
+        }
+        if (ctx.source().getDamageCounters() == 0) {
+            return new ValidationResult.Invalid("no_damage_to_heal");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateDriveOffAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null || !ctx.source().equals(ctx.runtime().getActivePokemon())) {
+            return new ValidationResult.Invalid("pokemon_must_be_active");
+        }
+        final int opponentIndex = 1 - ctx.playerIndex();
+        if (benchStateProvider.getBenchSize(opponentIndex) == 0) {
+            return new ValidationResult.Invalid("opponent_bench_empty");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateWaterShurikenAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null) {
+            return new ValidationResult.Invalid("player_runtime_required");
+        }
+        final boolean hasWaterEnergy = ctx.runtime().getHand().getCards().stream()
+                .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.WATER);
+        if (!hasWaterEnergy) {
+            return new ValidationResult.Invalid("water_energy_required_in_hand");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateLeafDrawAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null) {
+            return new ValidationResult.Invalid("player_runtime_required");
+        }
+        final boolean hasGrassEnergy = ctx.runtime().getHand().getCards().stream()
+                .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.getEnergyType() == PokemonType.GRASS);
+        if (!hasGrassEnergy) {
+            return new ValidationResult.Invalid("grass_energy_required_in_hand");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateEnergyGraceAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null) {
+            return new ValidationResult.Invalid("player_runtime_required");
+        }
+        final boolean hasBasicEnergyInDiscard = ctx.runtime().getDiscardPile().getCards().stream()
+                .anyMatch(c -> c instanceof ar.edu.utn.frc.tup.piii.engine.model.EnergyCard ec && ec.isBasic())
+                || ctx.source().getAttachedEnergyCards().stream().anyMatch(ec -> ec.isBasic());
+        if (!hasBasicEnergyInDiscard) {
+            return new ValidationResult.Invalid("basic_energy_required_in_discard");
+        }
+        boolean hasNonExTarget = false;
+        if (ctx.runtime().getActivePokemon() != null && !ctx.runtime().getActivePokemon().equals(ctx.source()) && !ctx.runtime().getActivePokemon().isEx()) {
+            hasNonExTarget = true;
+        }
+        for (var benched : ctx.runtime().getBench().getAll()) {
+            if (!benched.equals(ctx.source()) && !benched.isEx()) {
+                hasNonExTarget = true;
+                break;
+            }
+        }
+        if (!hasNonExTarget) {
+            return new ValidationResult.Invalid("no_valid_non_ex_target_in_play");
+        }
+
+        // Validate specific target
+        BattlePokemonState specificTarget = null;
+        if (ctx.action().targetIndex() == null || ctx.action().targetIndex() == -1) {
+            specificTarget = ctx.runtime().getActivePokemon();
+        } else if (ctx.action().targetIndex() >= 0 && ctx.action().targetIndex() < ctx.runtime().getBench().getAll().size()) {
+            specificTarget = ctx.runtime().getBench().getAll().get(ctx.action().targetIndex());
+        } else {
+            return new ValidationResult.Invalid("invalid_target_index");
+        }
+
+        if (specificTarget == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        if (specificTarget.equals(ctx.source())) {
+            return new ValidationResult.Invalid("cannot_target_self");
+        }
+        if (specificTarget.isEx()) {
+            return new ValidationResult.Invalid("cannot_target_ex_pokemon");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateStanceChangeAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null) {
+            return new ValidationResult.Invalid("player_runtime_required");
+        }
+        final boolean hasAegislash = ctx.runtime().getHand().getCards().stream()
+                .anyMatch(c -> c.getName().equalsIgnoreCase("Aegislash") && !c.getCardId().equals(ctx.source().getCardId()));
+        if (!hasAegislash) {
+            return new ValidationResult.Invalid("aegislash_required_in_hand");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateUpsideDownEvolutionAbility(final AbilityContext ctx) {
+        if (ctx.runtime() == null || !ctx.source().equals(ctx.runtime().getActivePokemon())) {
+            return new ValidationResult.Invalid("pokemon_must_be_active");
+        }
+        if (!getActiveStatusEffectManager(ctx.playerIndex()).has(ar.edu.utn.frc.tup.piii.engine.model.StatusEffectType.CONFUNDIDO)) {
+            return new ValidationResult.Invalid("pokemon_must_be_confused");
+        }
+        return null;
+    }
+
+    private ValidationResult.Invalid validateShadowVoidAbility(final AbilityContext ctx) {
+        if (ctx.action().targetIndex() == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        BattlePokemonState targetPokemon = ctx.action().targetIndex() < 0
+                ? battlefieldProvider.getActivePokemon(ctx.playerIndex())
+                : (benchStateProvider != null && ctx.action().targetIndex() < benchStateProvider.getBenchedPokemon(ctx.playerIndex()).size()
+                    ? benchStateProvider.getBenchedPokemon(ctx.playerIndex()).get(ctx.action().targetIndex())
+                    : null);
+
+        if (targetPokemon == null) {
+            return new ValidationResult.Invalid("target_pokemon_required");
+        }
+        if (targetPokemon.getDamageCounters() * 10 < 10) {
+            return new ValidationResult.Invalid("target_has_no_damage");
+        }
+        if (ctx.source().getDamageCounters() * 10 + 10 >= ctx.source().getMaxHp()) {
+            return new ValidationResult.Invalid("dusknoir_max_hp_reached");
+        }
+        return null;
     }
 
     /**
