@@ -188,6 +188,37 @@ class AbilityStrategiesTest {
     }
 
     @Test
+    void testBigJumpStrategy_clearsActiveSlot_whenActivePokemonEqualsSourceButIsADifferentInstance() {
+        // Regression test: BigJumpStrategy used to compare `runtime.getActivePokemon() == source`
+        // by reference. InPlayPokemon.equals() is UUID-based specifically so that the *same*
+        // Pokemon survives a JSON deserialization round-trip (new object, same UUID) - the
+        // reference check silently failed to recognize that case, leaving a stale Pokemon "in
+        // play" with no active slot. Built with two distinct InPlayPokemon instances sharing a
+        // UUID (not mocks, since Mockito mocks default equals() to identity too) to prove the
+        // fix actually compares by value.
+        BigJumpStrategy strategy = new BigJumpStrategy();
+
+        PokemonCard lopunnyCard = new PokemonCard.Builder("lopunny-1", "Lopunny", 90, PokemonType.COLORLESS).build();
+        InPlayPokemon source = new InPlayPokemon(lopunnyCard);
+        InPlayPokemon activePokemonAfterRoundTrip = new InPlayPokemon(lopunnyCard);
+        activePokemonAfterRoundTrip.setUuid(source.getUuid());
+
+        when(activeRuntime.getActivePokemon()).thenReturn(activePokemonAfterRoundTrip);
+
+        Hand hand = new Hand();
+        when(activeRuntime.getHand()).thenReturn(hand);
+
+        Bench bench = new Bench();
+        when(activeRuntime.getBench()).thenReturn(bench);
+
+        UseAbilityAction action = new UseAbilityAction(source, "Big Jump", -1, -1, List.of());
+        strategy.apply(session, action);
+
+        verify(activeRuntime, times(1)).clearActivePokemon();
+        assertTrue(hand.getCards().stream().anyMatch(c -> c.getCardId().equals("lopunny-1")));
+    }
+
+    @Test
     void testGooeyRegenerationStrategy() {
         GooeyRegenerationStrategy strategy = new GooeyRegenerationStrategy();
 
