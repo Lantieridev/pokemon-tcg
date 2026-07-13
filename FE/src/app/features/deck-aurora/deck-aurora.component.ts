@@ -294,7 +294,7 @@ interface Filters {
               @if (saveSuccess()) {
                 <div style="color: #46e08a; font-size: 12px; margin-bottom: 10px; text-align: center; font-weight: 600;">¡Guardado exitoso!</div>
               }
-              <button id="boton-autocompletar" class="cta secondary" style="width: 100%; height: 48px; justify-content: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid var(--line); margin-bottom: 10px;" [disabled]="autoCompleting()" (click)="autoComplete()">
+              <button id="boton-autocompletar" class="cta secondary" style="width: 100%; height: 48px; justify-content: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid var(--line); margin-bottom: 10px;" [disabled]="autoCompleting() || tcgService.cards().length === 0" (click)="autoComplete()">
                 @if (autoCompleting()) {
                   <div class="pokespin" style="width: 20px; height: 20px;"></div>
                 } @else {
