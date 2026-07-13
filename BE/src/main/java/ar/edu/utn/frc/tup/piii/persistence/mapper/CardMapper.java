@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -232,262 +233,258 @@ public final class CardMapper {
         return new Attack(name, baseDamage, requiredEnergies, effectText);
     }
 
+    private static final Map<String, String> EXACT_ATTACK_NAME_EFFECTS = Map.ofEntries(
+            Map.entry("deranged dance", "deranged_dance"),
+            Map.entry("parabolic charge", "search_deck_energy:2"),
+            Map.entry("brilliant search", "search_deck_any:3"),
+            Map.entry("buried treasure hunt", "look_top_4_take_2_discard_rest"),
+            Map.entry("stoke", "stoke"),
+            Map.entry("combustion blast", "combustion_blast"),
+            Map.entry("scorching fang", "scorching_fang"),
+            Map.entry("bright garden", "bright_garden"),
+            Map.entry("ear we go", "ear_we_go"),
+            Map.entry("clairvoyant eye", "clairvoyant_eye"),
+            Map.entry("quiver dance", "quiver_dance"),
+            Map.entry("powerful friends", "powerful_friends:70"),
+            Map.entry("smokescreen", "smokescreen"),
+            Map.entry("sand-attack", "smokescreen"),
+            Map.entry("icy wind", "sleep"),
+            Map.entry("sitdown bounce", "coin_flip_self_disable"),
+            Map.entry("frost barrier", "prevent_damage_20"),
+            Map.entry("shatter", "discard_stadium"),
+            Map.entry("peck off", "discard_opponent_tool"),
+            Map.entry("flash claw", "discard_opponent_hand:1"),
+            Map.entry("rock rush", "discard_hand_energy_multiply_damage:fighting:30"),
+            Map.entry("exciting shake", "exciting_shake"),
+            Map.entry("heart wink", "coin_flip_skip_opponent_draw"),
+            Map.entry("stomp off", "discard_opponent_deck:1"),
+            Map.entry("wild blaze", "discard_deck_self:5"),
+            Map.entry("dual bullet", "dual_bullet"),
+            Map.entry("pain pellets", "pain_pellets"),
+            Map.entry("triple poison", "triple_poison"),
+            Map.entry("strong gust", "strong_gust"),
+            Map.entry("smash uppercut", "ignore_resistance"),
+            Map.entry("clutch", "block_retreat"),
+            Map.entry("corner", "block_retreat"),
+            Map.entry("dark clamp", "block_retreat")
+    );
+
+    /**
+     * Infers a machine-readable effect id (e.g. {@code "heal:20"}, {@code "coin_flip_paralysis"})
+     * from an attack's name and raw rules text, since the source data only carries prose.
+     *
+     * <p>Checked in order: attacks whose effect depends only on their name (a plain lookup),
+     * then a handful of exact-name attacks whose effect also depends on the text (Petal
+     * Blizzard, Call for Family, Bounce), then a cascade of text-pattern rules grouped by
+     * category — each category is its own method so this dispatcher stays a flat sequence
+     * of "does this category match?" checks instead of one long nested chain.</p>
+     */
     private String inferAttackEffectText(final String attackName, final String text) {
         if (text == null || text.isBlank() || "null".equals(text)) {
             return "";
         }
-        final String lowerName = attackName != null ? attackName.toLowerCase() : "";
-        if ("deranged dance".equals(lowerName)) {
-            return "deranged_dance";
+        final String lowerName = attackName != null ? attackName.toLowerCase(Locale.ROOT) : "";
+        final String lower = text.toLowerCase(Locale.ROOT).replace("’", "'").replace("`", "'");
+
+        final String exactEffect = EXACT_ATTACK_NAME_EFFECTS.get(lowerName);
+        if (exactEffect != null) {
+            return exactEffect;
         }
+
         if ("petal blizzard".equals(lowerName)) {
-            final String lower = text.toLowerCase();
             if (lower.contains("20")) {
                 return "damage_all_opponents:20";
             }
             return "damage_all_opponents:10";
         }
-        if ("parabolic charge".equals(lowerName)) {
-            return "search_deck_energy:2";
-        }
-        if ("brilliant search".equals(lowerName)) {
-            return "search_deck_any:3";
-        }
-        if ("buried treasure hunt".equals(lowerName)) {
-            return "look_top_4_take_2_discard_rest";
-        }
-        if ("stoke".equals(lowerName)) {
-            return "stoke";
-        }
-        if ("combustion blast".equals(lowerName)) {
-            return "combustion_blast";
-        }
-        if ("scorching fang".equals(lowerName)) {
-            return "scorching_fang";
-        }
-        if ("bright garden".equals(lowerName)) {
-            return "bright_garden";
-        }
-        if ("ear we go".equals(lowerName)) {
-            return "ear_we_go";
-        }
-        if ("clairvoyant eye".equals(lowerName)) {
-            return "clairvoyant_eye";
-        }
         if ("call for family".equals(lowerName)) {
-            if (text != null && text.toLowerCase().contains("up to 2")) {
+            if (lower.contains("up to 2")) {
                 return "call_for_family:2";
             }
             return "call_for_family:1";
         }
-        if ("quiver dance".equals(lowerName)) {
-            return "quiver_dance";
-        }
-        if ("powerful friends".equals(lowerName)) {
-            return "powerful_friends:70";
-        }
-        if ("smokescreen".equals(lowerName) || "sand-attack".equals(lowerName)) {
-            return "smokescreen";
-        }
-        if ("icy wind".equals(lowerName)) {
-            return "sleep";
-        }
-        if ("sitdown bounce".equals(lowerName)) {
-            return "coin_flip_self_disable";
-        }
-        if ("frost barrier".equals(lowerName)) {
-            return "prevent_damage_20";
-        }
-        if ("shatter".equals(lowerName)) {
-            return "discard_stadium";
-        }
-        if ("peck off".equals(lowerName)) {
-            return "discard_opponent_tool";
-        }
-        final String lower = text.toLowerCase().replace("’", "'").replace("`", "'");
-
         if ("bounce".equals(lowerName)) {
             if (lower.contains("flip a coin")) {
                 return "coin_flip_switch_self";
             }
             return "switch_self";
         }
-        if ("flash claw".equals(lowerName)) {
-            return "discard_opponent_hand:1";
+
+        String effect = inferDrawCardsEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("rock rush".equals(lowerName)) {
-            return "discard_hand_energy_multiply_damage:fighting:30";
+        effect = inferDamageModifierEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("exciting shake".equals(lowerName)) {
-            return "exciting_shake";
+        effect = inferCoinFlipEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("heart wink".equals(lowerName)) {
-            return "coin_flip_skip_opponent_draw";
+        effect = inferSleepAndStatusEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("stomp off".equals(lowerName)) {
-            return "discard_opponent_deck:1";
+        effect = inferDamagePreventionEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("wild blaze".equals(lowerName)) {
-            return "discard_deck_self:5";
+        effect = inferHealAndSelfDamageEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("dual bullet".equals(lowerName)) {
-            return "dual_bullet";
+        effect = inferDiscardEffect(lower);
+        if (effect != null) {
+            return effect;
         }
-        if ("pain pellets".equals(lowerName)) {
-            return "pain_pellets";
-        }
-        if ("triple poison".equals(lowerName)) {
-            return "triple_poison";
-        }
-        if ("strong gust".equals(lowerName)) {
-            return "strong_gust";
-        }
-        if ("smash uppercut".equals(lowerName)) {
-            return "ignore_resistance";
-        }
-        if ("clutch".equals(lowerName) || "corner".equals(lowerName) || "dark clamp".equals(lowerName)) {
-            return "block_retreat";
+        effect = inferCounterAndBenchEffect(lower);
+        if (effect != null) {
+            return effect;
         }
 
-        // --- Draw cards ---
+        return "";
+    }
+
+    private String inferDrawCardsEffect(final String lower) {
         if (lower.contains("draw a card")) {
             return "draw_cards:1";
         }
-        java.util.regex.Matcher mDraw = java.util.regex.Pattern.compile("draw\\s+(\\d+)\\s+cards").matcher(lower);
+        final java.util.regex.Matcher mDraw = java.util.regex.Pattern.compile("draw\\s+(\\d+)\\s+cards").matcher(lower);
         if (mDraw.find()) {
             return "draw_cards:" + mDraw.group(1);
         }
+        return null;
+    }
 
-        // --- Damage times self counters ---
+    private String inferDamageModifierEffect(final String lower) {
         if (lower.contains("times the number of damage counters on this pok")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage\\s+times").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage\\s+times").matcher(lower);
             if (m.find()) {
                 return "damage_times_self_counters:" + m.group(1);
             }
         }
-
-        // --- Damage per retreat cost ---
         if (lower.contains("for each") && lower.contains("opponent") && lower.contains("retreat cost")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
             if (m.find()) {
                 return "damage_per_retreat_cost:" + m.group(1);
             }
         }
-
-        // --- Damage per ALL energies on opponent (e.g. Meowstic Psychic) ---
         if (lower.contains("more damage for each energy attached to your opponent")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
             if (m.find()) {
                 return "damage_per_opponent_all_energy:" + m.group(1);
             }
         }
-
-        // --- Damage per energy type ---
         if (lower.contains("more damage for each") && lower.contains("energy")) {
-            java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
-            java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
+            final java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
             if (mDamage.find() && mEnergy.find()) {
                 return "damage_per_energy_type:" + mEnergy.group(1) + ":" + mDamage.group(1);
             }
         }
-
-        // --- Damage modifiers based on counters and prizes ---
         if (lower.contains("already has any damage counters")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
             if (m.find()) {
                 return "damage_if_target_damaged:" + m.group(1);
             }
         }
         if (lower.contains("minus") && lower.contains("damage for each damage counter on this")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("minus\\s+(\\d+)\\s+damage\\s+for\\s+each").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("minus\\s+(\\d+)\\s+damage\\s+for\\s+each").matcher(lower);
             if (m.find()) {
                 return "damage_minus_per_counter:" + m.group(1);
             }
         }
         if (lower.contains("if any of your pokémon were knocked out") && lower.contains("last turn")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+more\\s+damage").matcher(lower);
             if (m.find()) {
                 return "revenge_damage:" + m.group(1);
             }
         }
         if (lower.contains("times the number of prize cards your opponent has taken")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+times").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+times").matcher(lower);
             if (m.find()) {
                 return "damage_per_opponent_prize:" + m.group(1);
             }
         }
+        return null;
+    }
 
-        // --- Coin-flips until tails ---
+    private String inferCoinFlipEffect(final String lower) {
         if (lower.contains("until you get tails")) {
             if (lower.contains("discard") && lower.contains("energy") && (lower.contains("opponent") || lower.contains("defending") || lower.contains("active"))) {
                 return "coin_flips_until_tails_discard_opponent_energy";
             }
             if (lower.contains("more damage")) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
+                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
                 if (m.find()) {
                     return "coin_flips_until_tails_extra:" + m.group(1);
                 }
             }
         }
 
-        // --- Coin-flip multiplier (e.g. "Flip 3 coins. This attack does 40 damage times the number of heads.") ---
         if (lower.contains("flip") && lower.contains("coin") && lower.contains("times the number of heads")) {
             if (lower.contains("until you get tails")) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
                 if (m.find()) {
                     return "coin_flips_until_tails:" + m.group(1);
                 }
-            }
-            else if (lower.contains("for each") && lower.contains("energy")) {
-                java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
-                java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+            } else if (lower.contains("for each") && lower.contains("energy")) {
+                final java.util.regex.Matcher mEnergy = java.util.regex.Pattern.compile("for each\\s+(\\w+)\\s+energy").matcher(lower);
+                final java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
                 if (mEnergy.find() && mDamage.find()) {
                     return "coin_flips_per_energy:" + mEnergy.group(1) + ":" + mDamage.group(1);
                 }
-            }
-            else if (lower.contains("for each damage counter")) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+            } else if (lower.contains("for each damage counter")) {
+                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
                 if (m.find()) {
                     return "coin_flips_per_damage_counter:" + m.group(1);
                 }
-            }
-            else {
-                java.util.regex.Matcher mCoins = java.util.regex.Pattern.compile("flip\\s+(\\d+)\\s+coins").matcher(lower);
-                java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
+            } else {
+                final java.util.regex.Matcher mCoins = java.util.regex.Pattern.compile("flip\\s+(\\d+)\\s+coins").matcher(lower);
+                final java.util.regex.Matcher mDamage = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage").matcher(lower);
                 if (mCoins.find() && mDamage.find()) {
                     return "coin_flips_multiplier:" + mCoins.group(1) + ":" + mDamage.group(1);
                 }
             }
         }
 
-        // --- Coin-flip extra damage (e.g. "Flip a coin. If heads, this attack does 30 more damage.") ---
         if (lower.contains("flip a coin") && lower.contains("more damage")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
             if (m.find()) {
                 return "coin_flip_extra:" + m.group(1);
             }
         }
 
-        // --- Coin-flip fail on tails ---
         if (lower.contains("flip a coin") && (lower.contains("if tails, this attack does nothing") || lower.contains("if tails, that attack does nothing"))) {
             return "coin_flip_fail";
         }
 
-        // --- Coin-flip switch self ---
         if (lower.contains("flip a coin") && lower.contains("switch this pok") && lower.contains("benched")) {
             return "coin_flip_switch_self";
         }
 
-        // --- Coin-flip status conditions ---
         if (lower.contains("flip a coin") || lower.contains("flip 2 coins")) {
-            if (lower.contains("paralyzed"))  return "coin_flip_paralysis";
-            if (lower.contains("asleep"))     return "coin_flip_sleep";
-            if (lower.contains("poisoned"))   return "coin_flip_poison";
-            if (lower.contains("burned"))     return "coin_flip_burn";
-            if (lower.contains("confused"))   return "coin_flip_confusion";
+            if (lower.contains("paralyzed")) {
+                return "coin_flip_paralysis";
+            }
+            if (lower.contains("asleep")) {
+                return "coin_flip_sleep";
+            }
+            if (lower.contains("poisoned")) {
+                return "coin_flip_poison";
+            }
+            if (lower.contains("burned")) {
+                return "coin_flip_burn";
+            }
+            if (lower.contains("confused")) {
+                return "coin_flip_confusion";
+            }
         }
+        return null;
+    }
 
-        // --- Sleep self (Rest, Sleepy Press) ---
+    private String inferSleepAndStatusEffect(final String lower) {
         if (lower.contains("this pokémon is now asleep") || lower.contains("this pokemon is now asleep")) {
             if (lower.contains("heal")) {
                 final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
@@ -498,7 +495,6 @@ public final class CardMapper {
             return "sleep_self";
         }
 
-        // --- Guaranteed status conditions ---
         if (lower.contains("is now poisoned") || lower.contains("the defending pokémon is now poisoned") || lower.contains("now poisoned")) {
             return "poison";
         }
@@ -515,12 +511,13 @@ public final class CardMapper {
             return "confusion";
         }
 
-        // --- Disable attack (e.g. Torment) ---
         if (lower.contains("can't use that attack") || lower.contains("cant use that attack")) {
             return "disable_attack";
         }
+        return null;
+    }
 
-        // --- Damage prevention ---
+    private String inferDamagePreventionEffect(final String lower) {
         if (lower.contains("prevent all damage done to this pok")
                 || lower.contains("prevent all effects of attacks, including damage, done to this pok")
                 || lower.contains("prevent that attack's damage done to this pok")) {
@@ -535,12 +532,14 @@ public final class CardMapper {
             }
             return "prevent_damage";
         }
+        return null;
+    }
 
-        // --- Heal ---
+    private String inferHealAndSelfDamageEffect(final String lower) {
         if (lower.contains("heal")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
             if (m.find()) {
-                String amt = m.group(1);
+                final String amt = m.group(1);
                 if (lower.contains("1 of your benched pok")) {
                     return "heal_bench:" + amt;
                 } else if (lower.contains("1 of your pok")) {
@@ -553,15 +552,16 @@ public final class CardMapper {
             }
         }
 
-        // --- Self damage / recoil ---
         if (lower.contains("does") && lower.contains("damage to itself")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+to\\s+itself").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("does\\s+(\\d+)\\s+damage\\s+to\\s+itself").matcher(lower);
             if (m.find()) {
                 return "self_damage:" + m.group(1);
             }
         }
+        return null;
+    }
 
-        // --- Discard cards from deck ---
+    private String inferDiscardEffect(final String lower) {
         if (lower.contains("discard") && lower.contains("top") && lower.contains("your deck")) {
             final java.util.regex.Matcher m = java.util.regex.Pattern.compile("discard\\s+the\\s+top\\s+(\\d+)\\s+cards").matcher(lower);
             if (m.find()) {
@@ -569,7 +569,6 @@ public final class CardMapper {
             }
         }
 
-        // --- Discard energy ---
         if (lower.contains("discard") && (lower.contains("energy") || lower.contains("a darkness energy"))) {
             final boolean opponent = lower.contains("opponent") || lower.contains("defending");
             final boolean coinFlip = lower.contains("flip a coin") || lower.contains("flip");
@@ -578,7 +577,7 @@ public final class CardMapper {
             if (m.find()) {
                 amount = Integer.parseInt(m.group(1));
             }
-            
+
             final String prefix = coinFlip ? "coin_flip_" : "";
             if (opponent) {
                 return prefix + "discard_opponent_energy:" + amount;
@@ -587,70 +586,65 @@ public final class CardMapper {
             }
         }
 
-        // --- Put damage counters on opponent active (Sneaky Placement) ---
-        if (lower.contains("put") && lower.contains("damage counter") && lower.contains("opponent's active")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counter").matcher(lower);
-            if (m.find()) {
-                return "place_counters_opponent:" + m.group(1);
-            }
-        }
-
-        // --- Put damage counters distributed (Cursed Drop) ---
-        if (lower.contains("put") && lower.contains("damage counters") && lower.contains("in any way")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counters").matcher(lower);
-            if (m.find()) {
-                return "place_counters_distributed:" + m.group(1);
-            }
-        }
-
-        // --- Move opponent counters (Ear Influence) ---
-        if (lower.contains("move") && lower.contains("damage counters") && lower.contains("opponent")) {
-            return "move_opponent_counters";
-        }
-
-        // --- Discard opponent hand to limit (Chip Off) ---
         if (lower.contains("discard") && lower.contains("opponent's hand") && lower.contains("until") && lower.contains("card")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("until.*\\s+(\\d+)\\s+card").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("until.*\\s+(\\d+)\\s+card").matcher(lower);
             if (m.find()) {
                 return "discard_opponent_hand_to_limit:" + m.group(1);
             }
             return "discard_opponent_hand_to_limit:4";
         }
 
-        // --- Place opponent basic from discard (Revival) ---
+        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("trainer") && lower.contains("discard")) {
+            return "discard_trainer_from_opponent_hand";
+        }
+        return null;
+    }
+
+    private String inferCounterAndBenchEffect(final String lower) {
+        if (lower.contains("put") && lower.contains("damage counter") && lower.contains("opponent's active")) {
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counter").matcher(lower);
+            if (m.find()) {
+                return "place_counters_opponent:" + m.group(1);
+            }
+        }
+
+        if (lower.contains("put") && lower.contains("damage counters") && lower.contains("in any way")) {
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("put\\s+(\\d+)\\s+damage\\s+counters").matcher(lower);
+            if (m.find()) {
+                return "place_counters_distributed:" + m.group(1);
+            }
+        }
+
+        if (lower.contains("move") && lower.contains("damage counters") && lower.contains("opponent")) {
+            return "move_opponent_counters";
+        }
+
         if (lower.contains("basic pok") && lower.contains("opponent's discard") && lower.contains("bench")) {
             return "place_opponent_basic_from_discard";
         }
 
-        // --- Discard trainer from opponent hand (Fang Snipe) ---
-        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("trainer") && lower.contains("discard")) {
-            return "discard_trainer_from_opponent_hand";
-        }
-
-        // --- Shuffle pokemon from discard (Rescue) ---
         if (lower.contains("shuffle") && lower.contains("pok") && lower.contains("discard pile into your deck")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("shuffle\\s+(\\d+)\\s+pok").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("shuffle\\s+(\\d+)\\s+pok").matcher(lower);
             if (m.find()) {
                 return "shuffle_pokemon_from_discard:" + m.group(1);
             }
             return "shuffle_pokemon_from_discard:3";
         }
 
-        // --- Bench damage ---
         if (lower.contains("each of your opponent's benched pok")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
             if (m.find()) {
                 return "bench_damage:" + m.group(1);
             }
         } else if (lower.contains("1 of your opponent's benched pok")
                 || lower.contains("one of your opponent's benched pok")
                 || (lower.contains("opponent's benched") && (lower.contains("1 of") || lower.contains("one of")))) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
             if (m.find()) {
                 return "bench_damage_one:" + m.group(1);
             }
         } else if (lower.contains("opponent's benched")) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+damage").matcher(lower);
             if (m.find()) {
                 return "bench_damage:" + m.group(1);
             }
@@ -659,8 +653,7 @@ public final class CardMapper {
         if (lower.contains("your opponent switches") && (lower.contains("benched") || lower.contains("bench"))) {
             return "force_switch_opponent";
         }
-
-        return "";
+        return null;
     }
 
     private int parseDamage(final String damageStr) {
@@ -726,7 +719,7 @@ public final class CardMapper {
         if (text == null || text.isBlank()) {
             return TrainerEffectId.NONE;
         }
-        final String lower = text.toLowerCase();
+        final String lower = text.toLowerCase(Locale.ROOT);
         
         // ── Professor Sycamore / Professor's Research ───────────────────────────
         if (lower.contains("discard your hand and draw 7 cards")) {
@@ -767,14 +760,14 @@ public final class CardMapper {
         if (cardId == null) {
             return PokemonToolEffectId.NONE;
         }
-        final String cid = cardId.toLowerCase();
-        if (cid.contains("xy1-121") || (text != null && text.toLowerCase().contains("muscle band"))) {
+        final String cid = cardId.toLowerCase(Locale.ROOT);
+        if (cid.contains("xy1-121") || (text != null && text.toLowerCase(Locale.ROOT).contains("muscle band"))) {
             return PokemonToolEffectId.MUSCLE_BAND; // xy1-121
         }
-        if (cid.contains("xy1-119") || (text != null && text.toLowerCase().contains("hard charm"))) {
+        if (cid.contains("xy1-119") || (text != null && text.toLowerCase(Locale.ROOT).contains("hard charm"))) {
             return PokemonToolEffectId.HARD_CHARM; // xy1-119
         }
-        if (cid.contains("xy2-95") || (text != null && text.toLowerCase().contains("protection cube"))) {
+        if (cid.contains("xy2-95") || (text != null && text.toLowerCase(Locale.ROOT).contains("protection cube"))) {
             return PokemonToolEffectId.PROTECTION_CUBE; // xy2-95
         }
         
