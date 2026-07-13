@@ -26,6 +26,7 @@ public final class TurnManager {
     private static final int UNSTARTED_PLAYER_INDEX = -1;
     private static final int PLAYER_COUNT = 2;
     private static final int FIRST_PLAYER_INDEX = 0;
+    private static final String NO_TURN_IN_PROGRESS_MSG = "No turn in progress — call startTurn() first";
 
     private TurnPhase currentPhase;
     private TurnPhase previousPhase;
@@ -181,24 +182,10 @@ public final class TurnManager {
      * @throws InvalidPhaseTransitionException if not currently in DrawPhase or no turn in progress
      */
     public void endDraw() {
-        if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
-        }
-        switch (currentPhase) {
-            case DrawPhase d -> {
-                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
-                currentPhase = new MainPhase();
-                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
-            }
-            case MainPhase m -> throw new InvalidPhaseTransitionException(
-                    "endDraw() called during MainPhase");
-            case AttackPhase a -> throw new InvalidPhaseTransitionException(
-                    "endDraw() called during AttackPhase");
-            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
-                    "endDraw() called during BetweenTurnsPhase");
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
-                    "endDraw() called during ActionResolutionPhase");
-        }
+        requirePhase(DrawPhase.class, "endDraw");
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        currentPhase = new MainPhase();
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     /**
@@ -214,7 +201,7 @@ public final class TurnManager {
      */
     public MainPhase requireMainPhase() {
         if (currentPhase == null) {
-            throw new InvalidTurnPhaseException("No turn in progress — call startTurn() first");
+            throw new InvalidTurnPhaseException(NO_TURN_IN_PROGRESS_MSG);
         }
         if (!(currentPhase instanceof MainPhase main)) {
             throw new InvalidTurnPhaseException(
@@ -230,7 +217,7 @@ public final class TurnManager {
      */
     public void interruptMainPhase() {
         if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+            throw new InvalidPhaseTransitionException(NO_TURN_IN_PROGRESS_MSG);
         }
         if (!(currentPhase instanceof MainPhase || currentPhase instanceof AttackPhase)) {
             throw new InvalidPhaseTransitionException("Can only interrupt during MainPhase or AttackPhase");
@@ -248,7 +235,7 @@ public final class TurnManager {
      */
     public void resumeMainPhase() {
         if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress");
+            throw new InvalidPhaseTransitionException(NO_TURN_IN_PROGRESS_MSG);
         }
         if (!(currentPhase instanceof ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase)) {
             throw new InvalidPhaseTransitionException("Can only resume from ActionResolutionPhase");
@@ -267,29 +254,14 @@ public final class TurnManager {
      * @throws FirstTurnAttackException        if player 0 attempts to attack on their first turn
      */
     public void declareAttack() {
-        if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
+        requirePhase(MainPhase.class, "declareAttack");
+        if (activePlayerIndex == startingPlayerIndex && !firstTurnCompleted[startingPlayerIndex]) {
+            throw new FirstTurnAttackException(
+                    "Player " + startingPlayerIndex + " cannot attack on their first turn");
         }
-        switch (currentPhase) {
-            case MainPhase m -> {
-                if (activePlayerIndex == startingPlayerIndex
-                        && !firstTurnCompleted[startingPlayerIndex]) {
-                    throw new FirstTurnAttackException(
-                            "Player " + startingPlayerIndex + " cannot attack on their first turn");
-                }
-                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
-                currentPhase = new AttackPhase();
-                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
-            }
-            case DrawPhase d -> throw new InvalidPhaseTransitionException(
-                    "declareAttack() called during DrawPhase");
-            case AttackPhase a -> throw new InvalidPhaseTransitionException(
-                    "declareAttack() called during AttackPhase");
-            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
-                    "declareAttack() called during BetweenTurnsPhase");
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
-                    "declareAttack() called during ActionResolutionPhase");
-        }
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        currentPhase = new AttackPhase();
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     /**
@@ -299,24 +271,10 @@ public final class TurnManager {
      * @throws InvalidPhaseTransitionException if not currently in MainPhase or no turn in progress
      */
     public void passTurn() {
-        if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
-        }
-        switch (currentPhase) {
-            case MainPhase m -> {
-                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
-                currentPhase = new BetweenTurnsPhase();
-                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
-            }
-            case DrawPhase d -> throw new InvalidPhaseTransitionException(
-                    "passTurn() called during DrawPhase");
-            case AttackPhase a -> throw new InvalidPhaseTransitionException(
-                    "passTurn() called during AttackPhase");
-            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
-                    "passTurn() called during BetweenTurnsPhase");
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
-                    "passTurn() called during ActionResolutionPhase");
-        }
+        requirePhase(MainPhase.class, "passTurn");
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        currentPhase = new BetweenTurnsPhase();
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     /**
@@ -326,24 +284,10 @@ public final class TurnManager {
      * @throws InvalidPhaseTransitionException if not currently in AttackPhase or no turn in progress
      */
     public void endAttack() {
-        if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
-        }
-        switch (currentPhase) {
-            case AttackPhase a -> {
-                fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
-                currentPhase = new BetweenTurnsPhase();
-                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
-            }
-            case DrawPhase d -> throw new InvalidPhaseTransitionException(
-                    "endAttack() called during DrawPhase");
-            case MainPhase m -> throw new InvalidPhaseTransitionException(
-                    "endAttack() called during MainPhase");
-            case BetweenTurnsPhase b -> throw new InvalidPhaseTransitionException(
-                    "endAttack() called during BetweenTurnsPhase");
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
-                    "endAttack() called during ActionResolutionPhase");
-        }
+        requirePhase(AttackPhase.class, "endAttack");
+        fire(new PhaseEvent.PhaseExited(activePlayerIndex, currentPhase));
+        currentPhase = new BetweenTurnsPhase();
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     /**
@@ -355,34 +299,20 @@ public final class TurnManager {
      * @throws InvalidPhaseTransitionException if not currently in BetweenTurnsPhase or no turn in progress
      */
     public void endBetweenTurns() {
-        if (currentPhase == null) {
-            throw new InvalidPhaseTransitionException("No turn in progress — call startTurn() first");
-        }
-        switch (currentPhase) {
-            case BetweenTurnsPhase b -> {
-                int endingPlayer = activePlayerIndex;
-                TurnPhase endingPhase = currentPhase;
+        requirePhase(BetweenTurnsPhase.class, "endBetweenTurns");
+        final int endingPlayer = activePlayerIndex;
+        final TurnPhase endingPhase = currentPhase;
 
-                fire(new PhaseEvent.PhaseExited(endingPlayer, endingPhase));
-                fire(new PhaseEvent.TurnEnded(endingPlayer, endingPhase));
+        fire(new PhaseEvent.PhaseExited(endingPlayer, endingPhase));
+        fire(new PhaseEvent.TurnEnded(endingPlayer, endingPhase));
 
-                firstTurnCompleted[endingPlayer] = true;
-                activePlayerIndex = PLAYER_COUNT - 1 - endingPlayer;
-                turnCounts[activePlayerIndex]++;
-                currentPhase = new DrawPhase();
+        firstTurnCompleted[endingPlayer] = true;
+        activePlayerIndex = PLAYER_COUNT - 1 - endingPlayer;
+        turnCounts[activePlayerIndex]++;
+        currentPhase = new DrawPhase();
 
-                fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));
-                fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
-            }
-            case DrawPhase d -> throw new InvalidPhaseTransitionException(
-                    "endBetweenTurns() called during DrawPhase");
-            case MainPhase m -> throw new InvalidPhaseTransitionException(
-                    "endBetweenTurns() called during MainPhase");
-            case AttackPhase a -> throw new InvalidPhaseTransitionException(
-                    "endBetweenTurns() called during AttackPhase");
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> throw new InvalidPhaseTransitionException(
-                    "endBetweenTurns() called during ActionResolutionPhase");
-        }
+        fire(new PhaseEvent.TurnStarted(activePlayerIndex, currentPhase));
+        fire(new PhaseEvent.PhaseEntered(activePlayerIndex, currentPhase));
     }
 
     // -------------------------------------------------------------------------
@@ -408,5 +338,24 @@ public final class TurnManager {
      */
     private String phaseName(final TurnPhase phase) {
         return phase == null ? "null" : phase.name();
+    }
+
+    /**
+     * Guards a transition method to the expected phase, throwing
+     * {@link InvalidPhaseTransitionException} if no turn is in progress or the
+     * current phase doesn't match. Centralizes the "one expected phase, throw for
+     * every other phase" shape shared by all transition methods below.
+     *
+     * @param expected   the phase type this transition requires
+     * @param methodName the calling method's name, used in the exception message
+     */
+    private void requirePhase(final Class<? extends TurnPhase> expected, final String methodName) {
+        if (currentPhase == null) {
+            throw new InvalidPhaseTransitionException(NO_TURN_IN_PROGRESS_MSG);
+        }
+        if (!expected.isInstance(currentPhase)) {
+            throw new InvalidPhaseTransitionException(
+                    methodName + "() called during " + phaseName(currentPhase));
+        }
     }
 }
