@@ -63,15 +63,22 @@ Calcula el daño final de un ataque evaluando:
 3. Resistencia (-20 si matchea).
 4. Efectos adicionales.
 
+## 7. Capa de Aplicación (fuera del Engine puro)
+
+El Engine descrito arriba es intencionalmente ciego a infraestructura. La capa que lo conecta con WebSocket/DB vive en `ar.edu.utn.frc.tup.piii.services` y `ar.edu.utn.frc.tup.piii.controllers`:
+
+- **`GameFacade`:** traduce los DTOs de acción del frontend (`ActionRequestDTO`) a `Action`s del Engine (`toEngineAction`) y aplica cada tipo de acción sobre el `MatchSession` (`apply`). Es la única clase que conoce tanto los DTOs de transporte como el modelo del Engine.
+- **`MatchService`:** orquesta una partida completa — mantiene el `MatchSessionRegistry` en memoria, delega en `GameFacade` para aplicar acciones, persiste el estado vía `GameStatePersistence`, calcula MMR (`MmrCalculationService`), aplica penalizaciones por abandono, decide jugadas del bot (`BotDecisionService`) y notifica a los clientes por STOMP (`SimpMessagingTemplate`).
+- **`GameWebSocketController`:** único punto de entrada STOMP para acciones de partida (`/app/match/{matchId}/action`). Verifica que el `Principal` autenticado coincida con el `playerId` del payload y delega todo en `MatchService.processAction`.
+
 ## Resumen del Flujo de Ejecución Real
 
-1. El usuario aprieta "Atacar" en la UI.
-2. El **Controlador REST / WebSocket** recibe el Request JSON. *(No implementado aún)*
-3. El Controlador carga el estado del juego desde la **Base de Datos**. *(No implementado aún)*
-4. El Controlador instancia un `AttackAction` y se lo pasa al `RuleValidator` **(Engine)**.
-5. El Validator dice `Valid`.
-6. El Controlador ejecuta la matemática del daño con `DamageCalculator` **(Engine)** y actualiza la entidad.
-7. El Controlador llama a `turnManager.endMainPhase()` y `turnManager.startAttackPhase()` **(Engine)**.
-8. El `KnockoutManager` **(Engine)** detecta que el HP llegó a 0 y emite el evento de KO.
-9. El Controlador guarda el nuevo estado en la **Base de Datos**. *(No implementado aún)*
-10. El Controlador le avisa al Frontend por **WebSocket** que el ataque fue exitoso y el Pokémon murió. *(No implementado aún)*
+1. El usuario aprieta "Atacar" en la UI. El cliente Angular publica sobre STOMP a `/app/match/{matchId}/action`.
+2. `GameWebSocketController.handleAction` recibe el mensaje, valida que el `Principal` autenticado coincida con el `playerId` del header, y delega en `MatchService.processAction`.
+3. `MatchService` recupera la `MatchSession` en memoria desde `MatchSessionRegistry`.
+4. `GameFacade.toEngineAction` traduce el DTO a un `DeclareAttackAction` del Engine; `GameFacade.apply` lo ejecuta contra el `RuleValidator` **(Engine)**.
+5. Si el validador dice `Invalid`, `MatchService` propaga el error al tópico `/topic/match/{matchId}/player/{playerId}/errors` sin tocar el estado.
+6. Si es `Valid`, el `AttackPipeline` **(Engine)** corre sus steps (`ValidationStep` → `DamageCalculationStep` → `DamageApplicationStep` → `KnockoutCheckStep` → ...) usando `DamageCalculator` para la matemática del daño.
+7. El `KnockoutManager` **(Engine)** detecta HP en 0 y emite el evento de KO; `VictoryConditionChecker` **(Engine)** evalúa si la partida terminó.
+8. `MatchService` persiste el nuevo estado vía `GameStatePersistence` y actualiza MMR/estadísticas si la partida terminó (`MmrCalculationService`, `MatchStatisticsTracker`).
+9. `MatchService` proyecta el estado por jugador con `PlayerPerspectiveMapper` (cada jugador solo ve lo que le corresponde: no la mano rival, por ejemplo) y lo publica por WebSocket a ambos clientes.
