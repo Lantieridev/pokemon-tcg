@@ -39,24 +39,26 @@ public class DeckAssistantService {
             return currentCards;
         }
 
-        List<DeckCardRequestDTO> result = new ArrayList<>(currentCards);
-        
         // TODO: Refactor to check card supertype/subtype from API instead of hardcoded strings
         // Find dominant type based on templates
         boolean hasFire = currentCards.stream().anyMatch(c -> c.cardId().contains("xy1-14") || c.cardId().contains("xy1-15") || c.cardId().contains("xy1-16"));
         boolean hasWater = currentCards.stream().anyMatch(c -> c.cardId().contains("xy1-35") || c.cardId().contains("xy1-36"));
-        
-        String energyId = hasWater ? "xy1-134" : (hasFire ? "xy1-133" : "xy1-132");
-        
+
         int missing = 60 - currentSize;
 
-        // If a lot of cards are missing, inject some essential trainers
+        // Starting mostly from scratch (< 40 cards picked): the trainer+energy
+        // top-off below never adds a single Pokemon card, which produces an
+        // unplayable deck (every real match requires a Basic Pokemon just to
+        // set up). Build a complete, known-valid deck (real evolution lines +
+        // trainers + energy, same generator the deck wizard's fallback uses)
+        // instead of layering on top of a near-empty selection.
         if (missing > 20) {
-            addOrUpdateCard(result, "xy1-123", 4); // Professor Sycamore
-            addOrUpdateCard(result, "xy1-127", 4); // Shauna
-            addOrUpdateCard(result, "xy1-122", 2); // Professor's Letter
-            missing -= 10;
+            String theme = hasWater ? "water" : (hasFire ? "fire" : "grass");
+            return generateFallbackWizardDeck(theme);
         }
+
+        List<DeckCardRequestDTO> result = new ArrayList<>(currentCards);
+        String energyId = hasWater ? "xy1-134" : (hasFire ? "xy1-133" : "xy1-132");
 
         // Fill the rest with the corresponding energy
         addOrUpdateCard(result, energyId, missing);

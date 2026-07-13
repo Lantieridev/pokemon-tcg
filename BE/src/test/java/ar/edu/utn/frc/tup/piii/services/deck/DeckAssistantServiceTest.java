@@ -22,29 +22,39 @@ class DeckAssistantServiceTest {
     }
 
     @Test
-    void autocomplete_injectsTrainersAndEnergiesWhenMissingMoreThan20Cards() {
-        // Arrange
-        // Current size: 4
+    void autocomplete_buildsACompleteDeckWithRealPokemonWhenMissingMoreThan20Cards() {
+        // Regression test: autocomplete() used to fill a near-empty deck with
+        // ONLY trainers + a single energy type (e.g. 4 Sycamore + 4 Shauna +
+        // 2 Professor's Letter + 46 Fire Energy = 60 cards, zero Pokemon),
+        // producing a deck that can never legally start a match (every real
+        // game requires a Basic Pokemon). Fixed to delegate to the same
+        // known-good evolution-line generator the deck wizard's fallback
+        // uses, so the result always contains real Pokemon.
         List<DeckCardRequestDTO> currentCards = List.of(
-                new DeckCardRequestDTO("xy1-14", 4) // Charmander
+                new DeckCardRequestDTO("xy1-14", 4) // Charmander (signals the fire theme)
         );
 
-        // Act
         List<DeckCardRequestDTO> result = service.autocomplete(currentCards);
 
-        // Assert
         int totalCards = result.stream().mapToInt(DeckCardRequestDTO::quantity).sum();
         assertEquals(60, totalCards, "The total cards should be exactly 60");
 
-        boolean hasSycamore = result.stream().anyMatch(c -> c.cardId().equals("xy1-123") && c.quantity() == 4);
-        boolean hasShauna = result.stream().anyMatch(c -> c.cardId().equals("xy1-127") && c.quantity() == 4);
-        boolean hasLetter = result.stream().anyMatch(c -> c.cardId().equals("xy1-122") && c.quantity() == 2);
-        boolean hasFireEnergy = result.stream().anyMatch(c -> c.cardId().equals("xy1-133") && c.quantity() == 46);
+        long pokemonCopies = result.stream()
+                .filter(c -> !c.cardId().equals("xy1-123") && !c.cardId().equals("xy1-127")
+                        && !c.cardId().equals("xy1-122") && !c.cardId().equals("xy1-128")
+                        && !c.cardId().equals("xy1-125") && !c.cardId().equals("xy1-121")
+                        && !c.cardId().equals("xy1-124") && !c.cardId().equals("xy1-133")
+                        && !c.cardId().equals("xy1-134") && !c.cardId().equals("xy1-132")
+                        && !c.cardId().equals("xy1-130"))
+                .mapToInt(DeckCardRequestDTO::quantity)
+                .sum();
+        assertTrue(pokemonCopies > 0, "The generated deck must contain real Pokemon cards, not just trainers and energy");
+    }
 
-        assertTrue(hasSycamore, "Should inject 4 Professor Sycamore");
-        assertTrue(hasShauna, "Should inject 4 Shauna");
-        assertTrue(hasLetter, "Should inject 2 Professor's Letter");
-        assertTrue(hasFireEnergy, "Should inject 46 Fire Energy cards to complete the deck");
+    @Test
+    void autocomplete_returnsCurrentCardsUnchangedWhenAlreadyAt60() {
+        List<DeckCardRequestDTO> full = List.of(new DeckCardRequestDTO("xy1-132", 60));
+        assertEquals(full, service.autocomplete(full));
     }
 
     @Test
