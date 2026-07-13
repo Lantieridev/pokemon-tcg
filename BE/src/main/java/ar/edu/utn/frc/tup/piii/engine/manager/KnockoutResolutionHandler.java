@@ -49,9 +49,9 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
     public void onKnockout(final BattlePokemonState knocked, final int prizesToTake) {
         // Find which player owns `knocked`
         int ownerIndex = -1;
-        if (playerRuntimes.get(0).getActivePokemon() == knocked || playerRuntimes.get(0).getBench().getAll().contains(knocked)) {
+        if (Objects.equals(knocked, playerRuntimes.get(0).getActivePokemon()) || playerRuntimes.get(0).getBench().getAll().contains(knocked)) {
             ownerIndex = 0;
-        } else if (playerRuntimes.get(1).getActivePokemon() == knocked || playerRuntimes.get(1).getBench().getAll().contains(knocked)) {
+        } else if (Objects.equals(knocked, playerRuntimes.get(1).getActivePokemon()) || playerRuntimes.get(1).getBench().getAll().contains(knocked)) {
             ownerIndex = 1;
         }
 

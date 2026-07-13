@@ -165,6 +165,39 @@ class KnockoutResolutionHandlerTest {
     }
 
     @Test
+    void shouldResolveKnockoutWhenActivePokemonReferenceDiffersFromKnockedButUuidMatches() {
+        // Regression test: onKnockout() used to find the owner via
+        // `playerRuntimes.get(i).getActivePokemon() == knocked` (reference equality).
+        // InPlayPokemon.equals() is UUID-based specifically so the same Pokemon is still
+        // recognized after a JSON deserialization round-trip (new object, same UUID) - the
+        // reference check silently failed that case for an ACTIVE (non-benched) Pokemon,
+        // where the bench-side `.contains()` fallback doesn't apply either, so the whole
+        // knockout (discard, prizes, downstream notification) was skipped with no error.
+        turnManager.startTurn(0);
+
+        final PokemonCard knockedCard = buildCharmander("knocked-poke");
+        final InPlayPokemon activeOnBoard = new InPlayPokemon(knockedCard);
+        defender.setActivePokemon(activeOnBoard);
+
+        final InPlayPokemon knockedFromEvent = new InPlayPokemon(knockedCard);
+        knockedFromEvent.setUuid(activeOnBoard.getUuid());
+
+        final AtomicBoolean downstreamCalled = new AtomicBoolean(false);
+        final KnockoutHandler downstream = (k, p) -> downstreamCalled.set(true);
+        final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
+                List.of(attacker, defender), turnManager, downstream);
+
+        final int handSizeBefore = attacker.getHand().size();
+        handler.onKnockout(knockedFromEvent, ONE_PRIZE);
+
+        assertTrue(defenderDiscard.getCards().contains(knockedCard),
+                "Knocked Pokémon's card should be in defender's discard pile");
+        assertEquals(handSizeBefore + ONE_PRIZE, attacker.getHand().size(),
+                "Attacker should receive the prize card even when the knocked reference differs");
+        assertTrue(downstreamCalled.get(), "Downstream handler must still be called");
+    }
+
+    @Test
     void shouldRemoveBenchedKnockedPokemonFromDefendersBench() {
         turnManager.startTurn(0);
 
