@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SigCardComponent, HoloCardComponent, AuroraCardComponent } from './holo-card.component';
+import { SigCardComponent, HoloCardComponent, FloatCardComponent } from './holo-card.component';
 
 describe('SigCardComponent', () => {
   let fixture: ComponentFixture<SigCardComponent>;
@@ -118,14 +118,14 @@ describe('HoloCardComponent', () => {
       fixture.detectChanges();
       const img = fixture.nativeElement.querySelector('img.holo__img');
       expect(img).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('aurora-sig-card')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-sig-card')).toBeNull();
     });
 
     it('falls back to the sig-card placeholder when there is no card image', () => {
       component.card = null;
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('img.holo__img')).toBeNull();
-      expect(fixture.nativeElement.querySelector('aurora-sig-card')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('app-sig-card')).not.toBeNull();
     });
 
     it('applies the holo--ex class when the card resolves to the ex tier', () => {
@@ -175,13 +175,13 @@ describe('HoloCardComponent', () => {
   });
 });
 
-describe('AuroraCardComponent', () => {
-  let fixture: ComponentFixture<AuroraCardComponent>;
-  let component: AuroraCardComponent;
+describe('FloatCardComponent', () => {
+  let fixture: ComponentFixture<FloatCardComponent>;
+  let component: FloatCardComponent;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [AuroraCardComponent] }).compileComponents();
-    fixture = TestBed.createComponent(AuroraCardComponent);
+    await TestBed.configureTestingModule({ imports: [FloatCardComponent] }).compileComponents();
+    fixture = TestBed.createComponent(FloatCardComponent);
     component = fixture.componentInstance;
   });
 
@@ -195,7 +195,7 @@ describe('AuroraCardComponent', () => {
     component.card = { name: 'Charizard' };
     fixture.detectChanges();
     expect(component.show()).toBeFalsy();
-    expect(fixture.nativeElement.querySelector('aurora-sig-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-sig-card')).not.toBeNull();
   });
 
   it('falls back to the placeholder once the image errors, even if it had an img url', () => {

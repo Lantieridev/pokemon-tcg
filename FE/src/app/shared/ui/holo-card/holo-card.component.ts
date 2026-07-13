@@ -2,7 +2,7 @@ import { Component, Input, signal, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 
 @Component({
-  selector: 'aurora-sig-card',
+  selector: 'app-sig-card',
   standalone: true,
   template: `
     <div [style]="'width: ' + w + 'px; aspect-ratio: 5/7; border-radius: ' + (w * 0.06) + 'px; position: relative; flex: 0 0 auto; transform: rotate(' + rot + 'deg); background: linear-gradient(160deg, ' + tones()[0] + ', ' + tones()[1] + ' 55%, ' + tones()[2] + '); box-shadow: 0 30px 60px -22px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.18);'">
@@ -34,7 +34,7 @@ export class SigCardComponent {
 }
 
 @Component({
-  selector: 'aurora-holo-card',
+  selector: 'app-holo-card',
   standalone: true,
   imports: [CommonModule, SigCardComponent, NgOptimizedImage],
   template: `
@@ -50,7 +50,7 @@ export class SigCardComponent {
         @if (card?.img) {
           <img class="holo__img" [ngSrc]="card.img" [alt]="card.name || 'card'" [width]="w" [height]="w * 1.4" priority draggable="false" />
         } @else {
-          <aurora-sig-card [w]="w" [type]="card?.type || fallbackType" [name]="card?.name || 'CHARIZARD'"></aurora-sig-card>
+          <app-sig-card [w]="w" [type]="card?.type || fallbackType" [name]="card?.name || 'CHARIZARD'"></app-sig-card>
         }
         <div class="holo__shine"></div>
         <div class="holo__glitter"></div>
@@ -147,7 +147,7 @@ export class HoloCardComponent {
 }
 
 @Component({
-  selector: 'aurora-float-card',
+  selector: 'app-float-card',
   standalone: true,
   imports: [CommonModule, SigCardComponent, NgOptimizedImage],
   template: `
@@ -168,12 +168,12 @@ export class HoloCardComponent {
           <div style="position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; background: linear-gradient(125deg,transparent 38%,rgba(255,255,255,.22) 50%,transparent 62%); background-size: 250% 250%; animation: holo 6s ease-in-out infinite;"></div>
         </div>
       } @else {
-        <aurora-sig-card [w]="w" [type]="card?.type || 'fire'" [name]="card?.name || 'CHARIZARD'"></aurora-sig-card>
+        <app-sig-card [w]="w" [type]="card?.type || 'fire'" [name]="card?.name || 'CHARIZARD'"></app-sig-card>
       }
     </div>
   `
 })
-export class AuroraCardComponent {
+export class FloatCardComponent {
   @Input() card: any;
   @Input() w: number = 200;
   @Input() rot: number = 0;

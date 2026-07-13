@@ -1,6 +1,6 @@
 <header style="position: absolute; top: 0; left: 0; right: 0; height: 92px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; z-index: 10000; pointer-events: auto;">
   <a routerLink="/lobby" class="cursor-pointer transition hover:opacity-80" style="text-decoration: none; display: flex; align-items: center;">
-    <aurora-logo></aurora-logo>
+    <app-logo></app-logo>
   </a>
   <div style="display: flex; align-items: center; gap: 22px;">
     @if (username !== 'Invitado') {
@@ -24,12 +24,12 @@
       </nav>
       <div style="display: flex; align-items: center; gap: 8px;">
         <div class="topcur" title="Experiencia"><span style="font-weight: 800; font-family: var(--display); color: #4aa3ff; font-size: 14px; letter-spacing: -0.5px;">XP</span> {{ profileData()?.xp ?? 0 }}</div>
-        <div class="topcur" title="Battle Points"><aurora-ball-icon [size]="15"></aurora-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
-        <div class="topcur" title="Pokécoins" [class.coin-pop]="animateCoins()"><aurora-coin-icon [size]="15"></aurora-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
+        <div class="topcur" title="Battle Points"><app-ball-icon [size]="15"></app-ball-icon> {{ profileData()?.battlePoints ?? 0 }}</div>
+        <div class="topcur" title="Pokécoins" [class.coin-pop]="animateCoins()"><app-coin-icon [size]="15"></app-coin-icon> {{ profileData()?.pokecoins ?? 0 }}</div>
       </div>
     }
     <div>
-      <aurora-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></aurora-trainer-chip>
+      <app-trainer-chip [name]="username" [initial]="userInitial" [mmr]="profileData()?.mmr?.toString() || '1200'" [avatarIcon]="profileData()?.avatarIcon || ''"></app-trainer-chip>
     </div>
   </div>
 </header>

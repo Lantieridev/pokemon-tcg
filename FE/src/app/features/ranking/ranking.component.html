@@ -1,12 +1,12 @@
-<div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
+<div class="scene v-default" style="position: fixed; inset: 0; z-index: 9999; overflow-y: auto;">
   <!-- Background Mesh -->
   <div class="mesh" style="opacity: 0.5;">
     <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
     <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
     <span style="width: 560px; height: 560px; right: -120px; bottom: -220px; background: var(--m3); animation-delay: -9s;"></span>
   </div>
-  <aurora-ambient></aurora-ambient>
-  <aurora-sparks [n]="10" color="var(--accent2)"></aurora-sparks>
+  <app-ambient></app-ambient>
+  <app-sparks [n]="10" color="var(--accent2)"></app-sparks>
   <div class="bd-noise"></div>
   <div class="bd-vignette"></div>
 

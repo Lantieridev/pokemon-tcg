@@ -5,7 +5,7 @@ import { EnergyTypeComponent, IconComponent } from '../../../shared/ui/ui-kit.co
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'aurora-deck-rail',
+  selector: 'app-deck-rail',
   standalone: true,
   imports: [CommonModule, RouterModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
   template: `
@@ -18,7 +18,7 @@ import { Router } from '@angular/router';
           </div>
           <span style="display: flex; gap: 5px; flex: 0 0 auto;">
             @for (type of deckData?.energyTypes || []; track type) {
-              <aurora-energy-type [type]="type" [size]="20"></aurora-energy-type>
+              <app-energy-type [type]="type" [size]="20"></app-energy-type>
             }
           </span>
         </div>
@@ -40,7 +40,7 @@ import { Router } from '@angular/router';
 
       <div style="flex: 0 0 auto; display: flex; align-items: center; gap: 14px;">
         <span class="dock-count">{{ deckData?.totalCount || 0 }} / 60 cartas</span>
-        <button class="ghost-btn sm" routerLink="/deck"><aurora-icon n="decks" [s]="16"></aurora-icon> Editar mazo</button>
+        <button class="ghost-btn sm" routerLink="/deck"><app-glyph-icon n="decks" [s]="16"></app-glyph-icon> Editar mazo</button>
       </div>
     </div>
   `

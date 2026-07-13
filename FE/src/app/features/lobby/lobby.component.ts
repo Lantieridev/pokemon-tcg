@@ -22,7 +22,7 @@ import {
   AmbientComponent,
   BattleCtaComponent,
 } from '../../shared/ui/ui-kit.components';
-import { HoloCardComponent, AuroraCardComponent } from '../../shared/ui/holo-card/holo-card.component';
+import { HoloCardComponent, FloatCardComponent } from '../../shared/ui/holo-card/holo-card.component';
 import { DeckRailComponent } from './components/deck-rail.component';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -39,7 +39,7 @@ type LobbyTab = 'public' | 'private';
 type PrivateMode = 'create' | 'join';
 
 @Component({
-  selector: 'app-lobby-aurora',
+  selector: 'app-lobby',
   standalone: true,
   imports: [
     CommonModule,
@@ -51,7 +51,7 @@ type PrivateMode = 'create' | 'join';
     SparksComponent,
     AmbientComponent,
     HoloCardComponent,
-    AuroraCardComponent,
+    FloatCardComponent,
     DeckRailComponent,
     BattleCtaComponent,
   ],
@@ -491,8 +491,8 @@ type PrivateMode = 'create' | 'join';
     }
   `],
   template: `
-    <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
-      <!-- aurora mesh -->
+    <div class="scene v-default" style="position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh;">
+      <!-- gradient mesh -->
       <div class="mesh" [style.opacity]="fog">
         <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
         <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
@@ -500,8 +500,8 @@ type PrivateMode = 'create' | 'join';
         <span style="width: 440px; height: 440px; left: 500px; bottom: -200px; background: var(--m4); animation-delay: -3s;"></span>
       </div>
 
-      <aurora-ambient></aurora-ambient>
-      <aurora-sparks [n]="10" color="var(--accent2)"></aurora-sparks>
+      <app-ambient></app-ambient>
+      <app-sparks [n]="10" color="var(--accent2)"></app-sparks>
       <div class="bd-noise"></div><div class="bd-vignette"></div>
 
       <!-- hero layout -->
@@ -513,7 +513,7 @@ type PrivateMode = 'create' | 'join';
             <span class="live"></span>
             <span class="eyebrow">Temporada 7 · Liga Oro III</span>
             <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-              <aurora-icon n="help" [s]="13"></aurora-icon>
+              <app-glyph-icon n="help" [s]="13"></app-glyph-icon>
             </button>
           </div>
           <h1 class="fu" [style.font-family]="displayFont" [style.font-weight]="fw"
@@ -527,16 +527,16 @@ type PrivateMode = 'create' | 'join';
 
           <!-- Original CTA Buttons -->
           <div class="fu" style="display: flex; align-items: center; gap: 16px; margin-top: 40px; animation-delay: .16s;">
-            <aurora-battle-cta
+            <app-battle-cta
               id="btn-battle"
               title="BATALLAR"
               sub="Clasificatoria"
               [searching]="lobby.queueStatus() === 'waiting'"
               (startBattle)="openModal('competitive')"
               (cancelBattle)="lobby.leavePublicQueue()">
-            </aurora-battle-cta>
+            </app-battle-cta>
             <button class="ghost-btn" (click)="openModal('casual')">
-              <aurora-icon n="sword" [s]="18"></aurora-icon> Casual
+              <app-glyph-icon n="sword" [s]="18"></app-glyph-icon> Casual
             </button>
             <button class="ghost-btn" routerLink="/campaign" style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 16px; line-height: 1;">🗺️</span> Campaña
@@ -550,18 +550,18 @@ type PrivateMode = 'create' | 'join';
 
           <!-- Rank strip -->
           <div id="rango-info" class="fu" style="display: flex; align-items: center; gap: 18px; margin-top: 36px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); width: fit-content; backdrop-filter: blur(6px); animation-delay: .22s;">
-            <aurora-rank-crest [size]="48" tier="III"></aurora-rank-crest>
+            <app-rank-crest [size]="48" tier="III"></app-rank-crest>
             <div style="border-right: 1px solid var(--line); padding-right: 18px;">
               <div class="eyebrow" style="font-size: 10.5px;">Rango</div>
               <div style="font-weight: 800; font-size: 15px; margin-top: 3px;">Oro III</div>
             </div>
-            <aurora-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></aurora-stat>
-            <aurora-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></aurora-stat>
+            <app-stat [v]="profileData?.mmr?.toString() ?? '...'" k="MMR"></app-stat>
+            <app-stat [v]="(profileData?.statistics?.winRate ?? 0) + '%'" k="WR"></app-stat>
             <div>
               <div class="num" style="display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; color: var(--accent);">
                 {{ streak }}
                 @if (streak >= 2) {
-                  <aurora-icon n="fire" [s]="streak >= 4 ? 20 : 16" class="streak-fire" [class.hot]="streak >= 4"></aurora-icon>
+                  <app-glyph-icon n="fire" [s]="streak >= 4 ? 20 : 16" class="streak-fire" [class.hot]="streak >= 4"></app-glyph-icon>
                 }
               </div>
               <div style="font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--mut); margin-top: 4px;">Racha</div>
@@ -572,24 +572,24 @@ type PrivateMode = 'create' | 'join';
         <!-- ── Floating cards (right) ──────────────────────────────── -->
         <div style="flex: 1; position: relative; height: 100%;">
           <div class="card-aura" style="width: 360px; height: 360px; right: 200px; top: 150px;"></div>
-          <aurora-sparks [n]="14" color="var(--accent2)" [area]="{ x: 35, y: 10, w: 60, h: 70 }"></aurora-sparks>
+          <app-sparks [n]="14" color="var(--accent2)" [area]="{ x: 35, y: 10, w: 60, h: 70 }"></app-sparks>
           <div class="bd-glow" style="width: 520px; height: 520px; right: 140px; top: 120px; background: var(--accent); opacity: .18;"></div>
 
           <div style="position: absolute; right: 432px; top: 250px;">
-            <aurora-float-card [card]="cards[1]" [w]="196" [rot]="-13" delay="-2s" [z]="2" [op]="0.92"></aurora-float-card>
+            <app-float-card [card]="cards[1]" [w]="196" [rot]="-13" delay="-2s" [z]="2" [op]="0.92"></app-float-card>
           </div>
           <div style="position: absolute; right: 96px; top: 236px;">
-            <aurora-float-card [card]="cards[2]" [w]="186" [rot]="13" delay="-4s" [z]="2" [op]="0.92"></aurora-float-card>
+            <app-float-card [card]="cards[2]" [w]="186" [rot]="13" delay="-4s" [z]="2" [op]="0.92"></app-float-card>
           </div>
           <div style="position: absolute; right: 232px; top: 120px; z-index: 3;">
-            <aurora-holo-card [card]="cards[0]" [w]="250" [baseRot]="-3"></aurora-holo-card>
+            <app-holo-card [card]="cards[0]" [w]="250" [baseRot]="-3"></app-holo-card>
           </div>
         </div>
 
       </div>
 
       <!-- active-deck dock -->
-      <aurora-deck-rail [deckData]="deckRailData()" [deckId]="lobby.selectedDeckId()" [display]="displayFont"></aurora-deck-rail>
+      <app-deck-rail [deckData]="deckRailData()" [deckId]="lobby.selectedDeckId()" [display]="displayFont"></app-deck-rail>
 
       <!-- ── Match Modal ──────────────────────────────────────────── -->
       @if (modalOpen()) {
@@ -772,7 +772,7 @@ type PrivateMode = 'create' | 'join';
     </div>
   `,
 })
-export class LobbyAuroraComponent implements OnInit, OnDestroy {
+export class LobbyComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private authService = inject(AuthService);

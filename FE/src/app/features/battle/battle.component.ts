@@ -1050,7 +1050,7 @@ export class BattleComponent implements OnInit, OnDestroy, AfterViewChecked {
     const allCards = this.tcgService.cards();
     const found = allCards.find(c => c.id === cardId);
     if (!found) return null;
-    // Transform to the shape aurora-holo-card expects (card.img, card.name, card.rarity, card.subtypes, card.type)
+    // Transform to the shape app-holo-card expects (card.img, card.name, card.rarity, card.subtypes, card.type)
     return {
       img: found.images?.large || found.images?.small || this.getCardImageUrl(cardId),
       name: found.name,

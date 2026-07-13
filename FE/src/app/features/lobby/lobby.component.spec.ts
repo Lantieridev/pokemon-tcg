@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { LobbyAuroraComponent } from './lobby-aurora.component';
+import { LobbyComponent } from './lobby.component';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { DeckApiService } from '../deck/deck-api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,9 +12,9 @@ import { signal } from '@angular/core';
 import { of, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
-describe('LobbyAuroraComponent', () => {
-  let component: LobbyAuroraComponent;
-  let fixture: ComponentFixture<LobbyAuroraComponent>;
+describe('LobbyComponent', () => {
+  let component: LobbyComponent;
+  let fixture: ComponentFixture<LobbyComponent>;
   let lobbySpy: jasmine.SpyObj<LobbyService>;
   let tcgSpy: jasmine.SpyObj<PokemonTcgService>;
   let deckApiSpy: jasmine.SpyObj<DeckApiService>;
@@ -44,7 +44,7 @@ describe('LobbyAuroraComponent', () => {
     const matchSpy = jasmine.createSpyObj('MatchBackendService', ['createBotMatch']);
 
     await TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, LobbyAuroraComponent],
+      imports: [HttpClientTestingModule, LobbyComponent],
       providers: [
         { provide: LobbyService, useValue: lobbySpy },
         { provide: PokemonTcgService, useValue: tcgSpy },
@@ -57,7 +57,7 @@ describe('LobbyAuroraComponent', () => {
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(LobbyAuroraComponent);
+    fixture = TestBed.createComponent(LobbyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

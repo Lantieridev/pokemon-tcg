@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ProfileAuroraComponent } from './profile-aurora.component';
+import { ProfileComponent } from './profile.component';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { environment } from '../../../environments/environment';
 
@@ -12,9 +12,9 @@ function loginAs(userId: number, username: string): void {
   localStorage.setItem('userId', String(userId));
 }
 
-describe('ProfileAuroraComponent', () => {
-  let fixture: ComponentFixture<ProfileAuroraComponent>;
-  let component: ProfileAuroraComponent;
+describe('ProfileComponent', () => {
+  let fixture: ComponentFixture<ProfileComponent>;
+  let component: ProfileComponent;
   let httpMock: HttpTestingController;
   let tcgService: PokemonTcgService;
 
@@ -22,9 +22,9 @@ describe('ProfileAuroraComponent', () => {
     localStorage.clear();
     loginAs(1, 'AshRivero');
     await TestBed.configureTestingModule({
-      imports: [ProfileAuroraComponent, HttpClientTestingModule],
+      imports: [ProfileComponent, HttpClientTestingModule],
     }).compileComponents();
-    fixture = TestBed.createComponent(ProfileAuroraComponent);
+    fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
     tcgService = TestBed.inject(PokemonTcgService);

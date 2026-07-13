@@ -21,18 +21,18 @@ interface Filters {
 }
 
 @Component({
-  selector: 'app-deck-aurora',
+  selector: 'app-deck',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, AmbientComponent, IconComponent, NgOptimizedImage, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div class="scene v-aurora" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="scene v-default" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">
       <!-- Background Mesh -->
       <div class="mesh" style="opacity: 0.5;">
         <span style="width: 540px; height: 540px; left: -120px; top: -160px; background: var(--m1);"></span>
         <span style="width: 620px; height: 620px; left: 360px; top: -240px; background: var(--m2); animation-delay: -5s;"></span>
       </div>
-      <aurora-ambient></aurora-ambient>
+      <app-ambient></app-ambient>
       <div class="bd-noise"></div>
       <div class="bd-vignette"></div>
 
@@ -215,7 +215,7 @@ interface Filters {
                   <button [class.active-tab]="filters().supertype === 'Trainer'" (click)="setSupertype('Trainer')" class="tab-btn">Trainer</button>
                   <button [class.active-tab]="filters().supertype === 'Energy'" (click)="setSupertype('Energy')" class="tab-btn">Energy</button>
                   <button class="help-trigger-btn" (click)="triggerHelp()" title="Ver Tutorial">
-                    <aurora-icon n="help" [s]="13"></aurora-icon>
+                    <app-glyph-icon n="help" [s]="13"></app-glyph-icon>
                   </button>
                 </div>
               </div>
@@ -298,7 +298,7 @@ interface Filters {
                 @if (autoCompleting()) {
                   <div class="pokespin" style="width: 20px; height: 20px;"></div>
                 } @else {
-                  <aurora-icon n="decks" [s]="20"></aurora-icon>
+                  <app-glyph-icon n="decks" [s]="20"></app-glyph-icon>
                   <span>Autocompletar</span>
                 }
               </button>
@@ -327,7 +327,7 @@ interface Filters {
            (click)="zoomedCard.set(null)" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);">
         <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center p-4 transition-all duration-300 transform scale-100"
              (click)="$event.stopPropagation()">
-          <aurora-holo-card [card]="{ img: getCardImage(card, true), name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></aurora-holo-card>
+          <app-holo-card [card]="{ img: getCardImage(card, true), name: card.name, type: (card.types && card.types[0]?.toLowerCase()) || 'colorless', rarity: card.rarity, subtypes: card.subtypes }" [w]="400" [idleFloat]="false"></app-holo-card>
         </div>
       </div>
     }
@@ -395,7 +395,7 @@ interface Filters {
     </style>
   `
 })
-export class DeckAuroraComponent implements OnInit {
+export class DeckComponent implements OnInit {
   zoomedCard = signal<any | null>(null);
 
   readonly tcgService = inject(PokemonTcgService);

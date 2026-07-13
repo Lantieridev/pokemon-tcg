@@ -1,5 +1,5 @@
 /* =========================================================
-   POKÉMON TCG — Premium lobby system (Aurora)
+   POKÉMON TCG — Premium lobby system
    ========================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Sora:wght@600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
@@ -12,7 +12,7 @@
 }
 
 /* ---------- vibe palettes ---------- */
-.v-aurora{
+.v-default{
   --bg:#0a1730; --bg2:#132342; --surface:rgba(255,255,255,.05);
   --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.16);
   --txt:#eaf0ff; --mut:#93a3c4; --dim:#5e6e90;
@@ -30,7 +30,7 @@
 .bd-noise{position:absolute;inset:0;pointer-events:none;opacity:.04;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-/* aurora mesh blobs */
+/* gradient mesh blobs */
 .mesh{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .mesh span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:screen;animation:drift 16s ease-in-out infinite}
 @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,-3%) scale(1.12)}66%{transform:translate(-3%,4%) scale(.95)}}

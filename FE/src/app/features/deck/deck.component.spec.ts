@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DeckAuroraComponent } from './deck-aurora.component';
+import { DeckComponent } from './deck.component';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { DeckStore } from '../../core/store/deck.store';
 import { DeckApiService } from '../deck/deck-api.service';
@@ -11,9 +11,9 @@ import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
-describe('DeckAuroraComponent', () => {
-  let component: DeckAuroraComponent;
-  let fixture: ComponentFixture<DeckAuroraComponent>;
+describe('DeckComponent', () => {
+  let component: DeckComponent;
+  let fixture: ComponentFixture<DeckComponent>;
   let deckApiSpy: jasmine.SpyObj<DeckApiService>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
@@ -34,7 +34,7 @@ describe('DeckAuroraComponent', () => {
     const tutorialSpy = jasmine.createSpyObj('TutorialService', ['triggerTutorial']);
 
     await TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, DeckAuroraComponent],
+      imports: [HttpClientTestingModule, DeckComponent],
       providers: [
         { provide: DeckApiService, useValue: deckApiSpy },
         { provide: AuthService, useValue: authServiceSpy },
@@ -46,7 +46,7 @@ describe('DeckAuroraComponent', () => {
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(DeckAuroraComponent);
+    fixture = TestBed.createComponent(DeckComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
