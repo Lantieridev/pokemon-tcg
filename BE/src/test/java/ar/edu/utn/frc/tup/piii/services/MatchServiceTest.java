@@ -620,6 +620,92 @@ class MatchServiceTest {
     }
 
     @Test
+    void shouldAwardPerfectWinBonusWhenLoserNeverLostAPrize() {
+        // Loser still has all 6 prizes remaining at match end -> perfect win for the winner.
+        final MatchSession finishSession = buildFinishedMatchSession(6, PLAYER_A_ID);
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(finishSession.getBoard().getActivePokemon(0)));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+        org.mockito.Mockito.doAnswer(invocation -> {
+            finishSession.finish();
+            finishSession.setWinnerId(PLAYER_A_ID);
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        verify(profileService).awardXpAndCheckAchievements(
+                any(Long.class), org.mockito.ArgumentMatchers.eq(true),
+                org.mockito.ArgumentMatchers.eq(true), org.mockito.ArgumentMatchers.eq(false), any(Integer.class));
+        verify(profileService).awardXpAndCheckAchievements(
+                any(Long.class), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.eq(false), org.mockito.ArgumentMatchers.eq(false), any(Integer.class));
+    }
+
+    @Test
+    void shouldAwardComebackWinBonusWhenLoserHadOnePrizeRemaining() {
+        // Loser was down to their last prize (about to win) when the winner turned it around.
+        final MatchSession finishSession = buildFinishedMatchSession(1, PLAYER_A_ID);
+
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(finishSession.getBoard().getActivePokemon(0)));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+        org.mockito.Mockito.doAnswer(invocation -> {
+            finishSession.finish();
+            finishSession.setWinnerId(PLAYER_A_ID);
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        matchService.processAction(MATCH_ID, PLAYER_A_ID, dto);
+
+        verify(profileService).awardXpAndCheckAchievements(
+                any(Long.class), org.mockito.ArgumentMatchers.eq(true),
+                org.mockito.ArgumentMatchers.eq(false), org.mockito.ArgumentMatchers.eq(true), any(Integer.class));
+        verify(profileService).awardXpAndCheckAchievements(
+                any(Long.class), org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.eq(false), org.mockito.ArgumentMatchers.eq(false), any(Integer.class));
+    }
+
+    /**
+     * Builds a fresh, active, non-ranked session where the loser (player index 1) has
+     * {@code loserRemainingPrizes} prizes left on the board, wired into the shared mocks
+     * and registered with {@link #registry} so {@code processAction} can find it.
+     */
+    private MatchSession buildFinishedMatchSession(final int loserRemainingPrizes, final String winnerId) {
+        final FakeBattlePokemonState active = new FakeBattlePokemonState(
+                100, PokemonType.FIRE, null, null, false);
+        final PlayerState winnerState = new PlayerState(active, List.of(), 45, 0, Map.of());
+        final PlayerState loserState = new PlayerState(active, List.of(), 45, loserRemainingPrizes, Map.of());
+        final MatchBoard finishBoard = new MatchBoard(List.of(winnerState, loserState));
+
+        final ar.edu.utn.frc.tup.piii.engine.model.Card dummyCard = new ar.edu.utn.frc.tup.piii.engine.model.PokemonCard.Builder("dummy", "Dummy", 10, PokemonType.FIRE).build();
+        final ar.edu.utn.frc.tup.piii.engine.model.Deck dummyDeck = new ar.edu.utn.frc.tup.piii.engine.model.Deck(List.of(dummyCard));
+        final ar.edu.utn.frc.tup.piii.engine.model.Hand dummyHand = new ar.edu.utn.frc.tup.piii.engine.model.Hand();
+        final ar.edu.utn.frc.tup.piii.engine.model.Bench dummyBench = new ar.edu.utn.frc.tup.piii.engine.model.Bench();
+        final ar.edu.utn.frc.tup.piii.engine.model.DiscardPile dummyDiscard = new ar.edu.utn.frc.tup.piii.engine.model.DiscardPile();
+        final ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem0 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        final ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager sem1 = new ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager(() -> true);
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime0 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem0, active);
+        final ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime runtime1 = new ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime(dummyDeck, dummyHand, dummyBench, dummyDiscard, sem1, active);
+
+        final MatchSession finishSession = new MatchSession(MATCH_ID, List.of(PLAYER_A_ID, PLAYER_B_ID), finishBoard, List.of(runtime0, runtime1));
+        finishSession.setup();
+        finishSession.start();
+        finishSession.setRuleValidator(ruleValidator);
+        finishSession.setTurnManager(turnManager);
+
+        when(registry.find(MATCH_ID)).thenReturn(Optional.of(finishSession));
+        when(turnManager.activePlayerIndex()).thenReturn(0);
+
+        return finishSession;
+    }
+
+    @Test
     void shouldLogTrainerCardPlayToChat() {
         final ActionRequestDTO dto = new ActionRequestDTO(
                 ActionType.PLAY_TRAINER, "xy1-118", null, null, null, null);
