@@ -64,7 +64,6 @@ public class MatchService {
     private static final int FIRST_ROUND = 0;
     private static final String MATCH_TOPIC_BASE = "/topic/match/";
     private static final String PLAYER_SUB_PATH = "/player/";
-    private static final int RANKED_WIN_BATTLE_POINTS = 10;
 
     private final MatchSessionRegistry registry;
     private final GameFacade facade;
@@ -77,8 +76,7 @@ public class MatchService {
     private final ProfileService profileService;
     private final UserRepository userRepository;
     private final BotDecisionService botDecisionService;
-    private final MmrCalculationService mmrCalculationService;
-    private final CampaignService campaignService;
+    private final MatchRewardService matchRewardService;
     private final ChatService chatService;
 
     /**
@@ -94,6 +92,7 @@ public class MatchService {
      * @param profileService        manages user profiles and XP (never null)
      * @param userRepository        repository for User entities (never null)
      * @param botDecisionService    service for handling bot turns
+     * @param matchRewardService    resolves match winners and applies MMR/campaign rewards (never null)
      * @param abandonTimeoutSeconds seconds before a disconnected player forfeits
      */
     public MatchService(final MatchSessionRegistry registry,
@@ -106,8 +105,7 @@ public class MatchService {
                         final ProfileService profileService,
                         final UserRepository userRepository,
                         @Lazy final BotDecisionService botDecisionService,
-                        final MmrCalculationService pMmrCalculationService,
-                        @Lazy final CampaignService campaignService,
+                        final MatchRewardService matchRewardService,
                         final ChatService chatService,
                         @Value("${match.abandon.timeout-seconds:60}") final long abandonTimeoutSeconds) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
@@ -121,8 +119,7 @@ public class MatchService {
         this.profileService = Objects.requireNonNull(profileService, "profileService must not be null");
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
         this.botDecisionService = botDecisionService;
-        this.mmrCalculationService = Objects.requireNonNull(pMmrCalculationService, "mmrCalculationService must not be null");
-        this.campaignService = Objects.requireNonNull(campaignService, "campaignService must not be null");
+        this.matchRewardService = Objects.requireNonNull(matchRewardService, "matchRewardService must not be null");
         this.chatService = Objects.requireNonNull(chatService, "chatService must not be null");
         this.abandonTimeoutSeconds = abandonTimeoutSeconds;
     }
@@ -264,7 +261,7 @@ public class MatchService {
             persistence.logAction(matchId, turnNumber, playerId, dto.type().name(), resultDetail);
 
             if (session.getState() == MatchSessionState.FINISHED) {
-                final String winnerId = determineWinner(session);
+                final String winnerId = matchRewardService.determineWinner(session);
                 final int winnerIndex = session.indexOf(winnerId);
                 final int loserIndex = 1 - winnerIndex;
                 final MatchBoard board = session.getBoard();
@@ -306,11 +303,11 @@ public class MatchService {
                 
                 // Handle MMR updates if ranked
                 if (session.isRanked()) {
-                    updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
+                    matchRewardService.updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
                 }
 
                 // Handle campaign progress
-                handleCampaignCompletion(session);
+                matchRewardService.handleCampaignCompletion(session);
             }
             
             updateTurnTimers(session);
@@ -869,14 +866,14 @@ public class MatchService {
                 if (session.isRanked()) {
                     // Standard forfeit MMR loss (winner gets MMR, forfeiting player loses MMR)
                     if (winnerUsername != null) {
-                        updateMmr(session, winnerUsername, forfeitingPlayerId);
+                        matchRewardService.updateMmr(session, winnerUsername, forfeitingPlayerId);
                     }
                     // Apply 15 minute ranked ban for abandoning
                     penaltyService.applyRankedBan(forfeitingPlayerId, 15);
                 }
 
                 // Handle campaign progress
-                handleCampaignCompletion(session);
+                matchRewardService.handleCampaignCompletion(session);
             } finally {
                 lock.unlock();
             }
@@ -894,126 +891,11 @@ public class MatchService {
                 MATCH_TOPIC_BASE + matchId + PLAYER_SUB_PATH + session.getPlayerIdB(), viewB);
     }
 
-    private void updateMmr(MatchSession session, String winnerId, String loserId) {
-        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity winner = userRepository.findFirstByUsername(winnerId).orElse(null);
-        ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity loser = userRepository.findFirstByUsername(loserId).orElse(null);
-
-        if (winner != null && loser != null) {
-            int winnerMmr = winner.getMmr() != null ? winner.getMmr() : 1000;
-            int loserMmr = loser.getMmr() != null ? loser.getMmr() : 1000;
-
-            int winnerRankedMatches = winner.getRankedMatchesPlayed() != null ? winner.getRankedMatchesPlayed() : 0;
-            int loserRankedMatches = loser.getRankedMatchesPlayed() != null ? loser.getRankedMatchesPlayed() : 0;
-
-            Tier winnerTierBefore = Tier.fromMmrAndMatches(winnerMmr, winnerRankedMatches);
-            Tier loserTierBefore = Tier.fromMmrAndMatches(loserMmr, loserRankedMatches);
-
-            int newWinnerMmr = mmrCalculationService.calculateNewMmr(winnerMmr, loserMmr, true, winnerRankedMatches);
-            int newLoserMmr = mmrCalculationService.calculateNewMmr(loserMmr, winnerMmr, false, loserRankedMatches);
-
-            winner.setMmr(newWinnerMmr);
-            winner.setRankedMatchesPlayed(winnerRankedMatches + 1);
-            winner.setBattlePoints((winner.getBattlePoints() != null ? winner.getBattlePoints() : 0) + RANKED_WIN_BATTLE_POINTS);
-            loser.setMmr(newLoserMmr);
-            loser.setRankedMatchesPlayed(loserRankedMatches + 1);
-
-            userRepository.save(winner);
-            userRepository.save(loser);
-
-            Tier winnerTierAfter = Tier.fromMmrAndMatches(newWinnerMmr, winnerRankedMatches + 1);
-            Tier loserTierAfter = Tier.fromMmrAndMatches(newLoserMmr, loserRankedMatches + 1);
-
-            boolean winnerRankedUp = winnerTierAfter.isHigherThan(winnerTierBefore);
-            boolean loserRankedUp = loserTierAfter.isHigherThan(loserTierBefore);
-
-            if (winnerId.equals(session.getPlayerIdA())) {
-                session.setMmrChangeA(newWinnerMmr - winnerMmr);
-                session.setMmrChangeB(newLoserMmr - loserMmr);
-                session.setCurrentMmrA(newWinnerMmr);
-                session.setCurrentMmrB(newLoserMmr);
-                session.setCurrentTierA(winnerTierAfter.getName());
-                session.setCurrentTierB(loserTierAfter.getName());
-                session.setRankUpTriggeredA(winnerRankedUp);
-                session.setRankUpTriggeredB(loserRankedUp);
-            } else {
-                session.setMmrChangeB(newWinnerMmr - winnerMmr);
-                session.setMmrChangeA(newLoserMmr - loserMmr);
-                session.setCurrentMmrB(newWinnerMmr);
-                session.setCurrentMmrA(newLoserMmr);
-                session.setCurrentTierB(winnerTierAfter.getName());
-                session.setCurrentTierA(loserTierAfter.getName());
-                session.setRankUpTriggeredB(winnerRankedUp);
-                session.setRankUpTriggeredA(loserRankedUp);
-            }
-        }
-    }
-
     private int getCurrentTurnNumber(final MatchSession session) {
         if (session.getTurnManager() == null) {
             return 0;
         }
         return session.getTurnManager().getTurnCount(0) + session.getTurnManager().getTurnCount(1);
-    }
-
-    private String determineWinner(final MatchSession session) {
-        final MatchBoard board = session.getBoard();
-        final String playerA = session.getPlayerIdA();
-        final String playerB = session.getPlayerIdB();
-
-        // 1. Condición de Premios (Prize cards)
-        if (board.getRemainingPrizes(0) == 0) {
-            return playerA;
-        }
-        if (board.getRemainingPrizes(1) == 0) {
-            return playerB;
-        }
-
-        // 2. Condición de Bancarrota de Pokémon (Active + Bench)
-        final boolean hasActiveA = board.getActivePokemon(0) != null;
-        final boolean hasBenchA = !board.getBenchedPokemon(0).isEmpty();
-        final boolean hasActiveB = board.getActivePokemon(1) != null;
-        final boolean hasBenchB = !board.getBenchedPokemon(1).isEmpty();
-
-        if (!hasActiveA && !hasBenchA) {
-            return playerB;
-        }
-        if (!hasActiveB && !hasBenchB) {
-            return playerA;
-        }
-
-        // 3. Condición de Deck out
-        if (board.getDeckSize(0) == 0) {
-            return playerB;
-        }
-        if (board.getDeckSize(1) == 0) {
-            return playerA;
-        }
-
-        // Fallback
-        return playerA;
-    }
-
-    private void handleCampaignCompletion(final MatchSession session) {
-        if (session.getState() != MatchSessionState.FINISHED) {
-            return;
-        }
-        final String winnerId = session.getWinnerId();
-        if (winnerId == null) {
-            return;
-        }
-
-        final String playerA = session.getPlayerIdA();
-        final String playerB = session.getPlayerIdB();
-
-        for (final CampaignService.CampaignNodeInfo node : CampaignService.NODES) {
-            if (node.botId().equals(playerA) || node.botId().equals(playerB)) {
-                final String humanPlayer = node.botId().equals(playerA) ? playerB : playerA;
-                if (winnerId.equals(humanPlayer)) {
-                    campaignService.completeNode(humanPlayer, node.id(), session.getMatchId());
-                }
-                break;
-            }
-        }
     }
 
     private void sendSystemMessage(final String matchId, final String message) {

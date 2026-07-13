@@ -126,10 +126,12 @@ class MatchServiceAbandonTest {
                 null);
         when(mapper.toResponse(any(), any(Integer.class))).thenReturn(fakeView);
 
+        final MatchRewardService matchRewardService =
+                new MatchRewardService(userRepository, mmrCalculationService, campaignService);
         matchService = new MatchService(
                 registry, facade, persistence, mapper, messaging,
-                scheduler, penaltyService, profileService, userRepository, botDecisionService, mmrCalculationService,
-                campaignService, chatService, TIMEOUT_SECONDS);
+                scheduler, penaltyService, profileService, userRepository, botDecisionService, matchRewardService,
+                chatService, TIMEOUT_SECONDS);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
