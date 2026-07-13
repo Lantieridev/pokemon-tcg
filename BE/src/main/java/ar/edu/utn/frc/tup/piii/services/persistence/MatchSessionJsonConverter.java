@@ -14,10 +14,12 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.*;
 
+@Slf4j
 @Converter(autoApply = false)
 public class MatchSessionJsonConverter implements AttributeConverter<MatchSession, String> {
 
@@ -71,7 +73,6 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         try {
             return OBJECT_MAPPER.writeValueAsString(attribute);
         } catch (IOException e) {
-            e.printStackTrace();
             throw new IllegalArgumentException("Failed to serialize MatchSession to JSON string", e);
         }
     }
@@ -96,7 +97,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                         cleanData = OBJECT_MAPPER.readValue(cleanData, String.class).trim();
                         continue;
                     } catch (IOException e) {
-                        // ignore and break
+                        log.debug("Could not unwrap double-encoded MatchSession JSON string, using it as-is: {}", e.getMessage());
+                        break;
                     }
                 }
                 break;
@@ -309,7 +311,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                                 turnsInPlay.put(bench.get(index), val);
                             }
                         } catch (NumberFormatException e) {
-                            // ignore invalid keys
+                            log.debug("Ignoring turnsInPlay key with invalid bench index: {}", key);
                         }
                     }
                 }
@@ -334,8 +336,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 field.setAccessible(true);
                 List<PlayerState> players = (List<PlayerState>) field.get(value);
                 gen.writeObjectField("players", players);
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new IOException("Failed to serialize MatchBoard.players", e);
             }
             gen.writeEndObject();
@@ -449,7 +450,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                                 turnsInPlay.put(benched.get(index), val);
                             }
                         } catch (NumberFormatException e) {
-                            // ignore invalid keys
+                            log.debug("Ignoring turnsInPlay key with invalid bench index: {}", key);
                         }
                     }
                 }
@@ -507,7 +508,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
                 gen.writeEndArray();
                 gen.writeEndObject();
-            } catch (Exception e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new IOException("Failed to serialize Deck", e);
             }
         }
@@ -651,7 +652,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 runtimesField.setAccessible(true);
                 List<PlayerRuntime> runtimes = (List<PlayerRuntime>) runtimesField.get(value);
                 gen.writeObjectField("playerRuntimes", runtimes);
-            } catch (Exception e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new IOException("Failed to serialize MatchSession.playerRuntimes", e);
             }
 
@@ -733,7 +734,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 java.lang.reflect.Field pendingReqField = MatchSession.class.getDeclaredField("pendingSelectionRequest");
                 pendingReqField.setAccessible(true);
                 pendingReqField.set(session, pendingSelectionRequest);
-            } catch (Exception e) {
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 throw new IOException("Failed to restore MatchSession state fields", e);
             }
 
