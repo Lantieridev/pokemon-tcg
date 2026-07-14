@@ -8,14 +8,20 @@ control to the following step. Omitting the call halts the chain (e.g., blocked 
 
 ## Step Order (XY1 §3)
 
+Wired in `GameFacade`'s constructor, in this exact order — 9 steps, not 6 (an earlier revision of
+this table only listed the "core" damage steps and silently dropped 3 real ones):
+
 | # | Step | Responsibility |
 |---|------|---------------|
 | 1 | `ValidationStep` | Check that the attacker has the required energy types attached |
 | 2 | `PreDamageEffectsStep` | Handle Confusion coin flip; if tails, apply 30 self-damage and block the chain |
-| 3 | `DamageCalculationStep` | Base damage → attacker modifiers → Weakness ×2 → Resistance −20 (min 0) → defender modifiers |
-| 4 | `DamageApplicationStep` | Write the computed `DamageResult` damage counters onto the defender |
-| 5 | `PostDamageEffectsStep` | Apply secondary effects (Poison, Burn, Sleep, Paralysis, Confusion, heal, coin-flip extra) |
-| 6 | `KnockoutCheckStep` | Detect defender KO; invoke `KnockoutHandler.onKnockout()` with prize count (2 for EX) |
+| 3 | `PokemonToolStep` | Apply attached Pokémon Tool modifiers (e.g. damage reduction/boost items) before damage math |
+| 4 | `StadiumEffectStep` | Apply the active Stadium card's effect, if any, before damage math |
+| 5 | `AttackCancellationStep` | Apply cross-turn cancellation effects (e.g. an effect set up on a previous turn that blocks this attack) |
+| 6 | `DamageCalculationStep` | Base damage → attacker modifiers → Weakness ×2 → Resistance −20 (min 0) → defender modifiers |
+| 7 | `DamageApplicationStep` | Write the computed `DamageResult` damage counters onto the defender |
+| 8 | `PostDamageEffectsStep` | Apply secondary effects (Poison, Burn, Sleep, Paralysis, Confusion, heal, coin-flip extra) |
+| 9 | `KnockoutCheckStep` | Detect defender KO; invoke `KnockoutHandler.onKnockout()` with prize count (2 for EX) |
 
 ## Effect Dispatch
 

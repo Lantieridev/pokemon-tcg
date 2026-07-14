@@ -10,6 +10,7 @@ Hay dos documentos de arquitectura con nombres parecidos, cada uno con un propó
 - **[`ARCHITECTURE.md`](ARCHITECTURE.md)** — mapa mental del *motor* de juego en sí (Hexagonal, `TurnManager`, patrón Observer). Léelo cuando trabajes específicamente en `engine/`.
 - **[`02_sistemas_core.md`](02_sistemas_core.md)** — dónde vive cada sistema (Game Engine, condiciones de victoria, etc.) en el código real.
 - **[`03_guia_desarrollo_y_setup.md`](03_guia_desarrollo_y_setup.md)** — cómo levantar el proyecto localmente (prerrequisitos, build, tests).
+- **[`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)** — qué cubre cada capa de testing (BE y FE) y qué no, explícitamente.
 
 ## Decisiones de arquitectura (ADRs)
 
@@ -51,7 +52,7 @@ Instrucciones obligatorias por módulo, pensadas para que un agente de IA las si
 
 ## Convenciones de repo
 
-- [`REPO_GUIDELINES.md`](REPO_GUIDELINES.md) — reglas para trabajar en equipo (límites de arquitectura, testing obligatorio, convenciones de commits). Escrito para el equipo original de 5 personas del TPI; en esta cuenta personal el repo tiene autoridad total, pero las reglas técnicas (Strategy pattern en vez de if-chains gigantes, no mezclar el engine con Spring/WebSockets/DB) siguen aplicando.
+- Las convenciones técnicas que sí siguen vigentes (Strategy pattern en vez de if-chains gigantes, no mezclar el engine con Spring/WebSockets/DB, convenciones de Angular/commits) viven en la sección 5 de [`01_arquitectura_y_flujo.md`](01_arquitectura_y_flujo.md#5-convenciones-de-código). El antiguo `REPO_GUIDELINES.md` (reglas de flujo de trabajo para el equipo de 5 del TPI original — branch prefixes, revisor obligatorio) fue eliminado: ese proceso de equipo ya no existe, el repo es de un solo dueño con autoridad total. Ver [`CONTRIBUTING.md`](../CONTRIBUTING.md) para la política real actual.
 
 ## Material de referencia (`references/`)
 

@@ -46,8 +46,9 @@ Este documento contiene EXCLUSIVAMENTE la lógica dura y algorítmica del juego.
 - **Confundido:** No impide retiro. Al intentar atacar, lanzar moneda (Cruz = ataque falla y atacante recibe 3 contadores de daño).
 - **Quemado:** *Between-turns:* Lanzar moneda (Cruz = 2 contadores de daño).
 - **Envenenado:** *Between-turns:* 1 contador de daño (Sin moneda).
-- **Incompatibilidades:** Dormido, Confundido y Paralizado son excluyentes (la más reciente pisa a la anterior). Quemado y Envenenado pueden coexistir con cualquiera.
-- **Orden Between-turns:** 1. Envenenado -> 2. Quemado -> 3. Dormido -> 4. Paralizado. Luego Abilities. Luego check de Knockouts.
+- **Precisión Baja** (Pantalla de Humo / Ataque Arena): No impide atacar ni retirarse. Al intentar atacar, lanzar moneda (Cruz = el ataque falla, sin daño propio — a diferencia de Confundido). Se cura automáticamente al final del turno del jugador afectado, igual que Paralizado (no se cura mientras es turno del rival).
+- **Incompatibilidades:** Dormido, Confundido y Paralizado son excluyentes (la más reciente pisa a la anterior). Quemado, Envenenado y Precisión Baja pueden coexistir con cualquiera.
+- **Orden Between-turns:** 1. Envenenado -> 2. Quemado -> 3. Dormido -> 4. Paralizado -> 5. Precisión Baja. Luego Abilities. Luego check de Knockouts.
 
 ## 6. Condiciones de Victoria
 - Victoria por Premios: Tomar la última carta de Premio.

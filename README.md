@@ -22,4 +22,7 @@ Instrucciones para levantar el proyecto localmente, comandos de Maven y NPM, con
 ### 4. [Architecture Decision Records](docs/adr/README.md)
 Por qué el motor está aislado con Clean/Hexagonal Architecture, por qué la sincronización es server-authoritative vía STOMP, y el diseño de persistencia atómica del ganador.
 
-Listado de todo lo que queda por hacer (Sistema Económico, Sobres, Pase de Batalla). **Los agentes de IA deben consultar este archivo para entender el contexto futuro y las dependencias de features.**
+### 5. [Contribuir](CONTRIBUTING.md)
+Convenciones de commits, branching y calidad para este repo (propiedad individual, sin proceso de revisión de equipo).
+
+> No hay un roadmap/backlog vivo en este repo — Tienda, Sobres y Pase de Batalla, mencionados como "pendientes" en versiones anteriores de este README, ya están implementados. Ver [CHANGELOG.md](CHANGELOG.md) para el historial real de cambios.
