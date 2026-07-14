@@ -50,9 +50,9 @@ public class CampaignRestController {
             String matchId = campaignService.iniciarDesafioPvE(principal.getName(), nodeId, deckId);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("matchId", matchId));
         } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
 }
