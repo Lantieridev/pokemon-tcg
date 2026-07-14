@@ -11,6 +11,7 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.CardEntity;
 import ar.edu.utn.frc.tup.piii.persistence.mapper.CardMapper;
 import ar.edu.utn.frc.tup.piii.persistence.repository.CardRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -81,11 +82,23 @@ public class DeckAssistantService {
     private final DeckTemplateService templateService;
     private final CardRepository cardRepository;
     private final CardMapper cardMapper;
+    private final Random random;
 
+    @Autowired
     public DeckAssistantService(DeckTemplateService templateService, CardRepository cardRepository, CardMapper cardMapper) {
+        this(templateService, cardRepository, cardMapper, new Random());
+    }
+
+    /**
+     * Package-private constructor for tests that need deterministic evolution-line
+     * shuffling — pass a seeded {@link Random} to assert exact deck composition instead
+     * of only aggregate properties like total card count.
+     */
+    DeckAssistantService(DeckTemplateService templateService, CardRepository cardRepository, CardMapper cardMapper, Random random) {
         this.templateService = templateService;
         this.cardRepository = cardRepository;
         this.cardMapper = cardMapper;
+        this.random = random;
     }
 
     public List<DeckCardRequestDTO> autocomplete(List<DeckCardRequestDTO> currentCards) {
@@ -137,8 +150,8 @@ public class DeckAssistantService {
     public List<DeckCardResponseDTO> getSuggestions(List<DeckCardRequestDTO> currentCards) {
         // Suggest trainers if low on them, or evolution if basic is present
         List<DeckCardResponseDTO> suggestions = new ArrayList<>();
-        suggestions.add(new DeckCardResponseDTO("xy1-123", "Professor Sycamore", "Trainer", "Supporter", 1));
-        suggestions.add(new DeckCardResponseDTO("xy1-122", "Professor's Letter", "Trainer", "Item", 1));
+        suggestions.add(new DeckCardResponseDTO("xy1-122", "Professor Sycamore", "Trainer", "Supporter", 1));
+        suggestions.add(new DeckCardResponseDTO("xy1-123", "Professor's Letter", "Trainer", "Item", 1));
         suggestions.add(new DeckCardResponseDTO("xy1-128", "Super Potion", "Trainer", "Item", 1));
 
         // TODO: Refactor to check card supertype/subtype from API
@@ -245,7 +258,7 @@ public class DeckAssistantService {
         if (filteredLines.isEmpty()) {
             filteredLines = allEvolutionLines;
         }
-        Collections.shuffle(filteredLines, new Random());
+        Collections.shuffle(filteredLines, random);
         return filteredLines;
     }
 
@@ -278,6 +291,14 @@ public class DeckAssistantService {
         }
     }
 
+    // Shared by generateWizardDeck (real evolution lines, 1-3 cards) and
+    // generateFallbackWizardDeck (hardcoded FALLBACK_DECKS lines). Before this method was
+    // extracted, a 1-card line (a Basic with no evolutions) was added by
+    // generateWizardDeck but silently dropped by generateFallbackWizardDeck's own inline
+    // loop. Unifying them applies generateWizardDeck's behavior (4 copies of a lone
+    // Basic) everywhere. Currently inert - no FALLBACK_DECKS entry has a 1-card line -
+    // but a themed starter deck added later with one would now include it, where it
+    // previously would have been silently skipped.
     private void addEvolutionLine(List<DeckCardRequestDTO> deck, List<String> cardIds) {
         for (int i = 0; i < cardIds.size() && i < EVOLUTION_LINE_COPIES.length; i++) {
             deck.add(new DeckCardRequestDTO(cardIds.get(i), EVOLUTION_LINE_COPIES[i]));
@@ -285,12 +306,12 @@ public class DeckAssistantService {
     }
 
     private void addCoreTrainers(List<DeckCardRequestDTO> deck) {
-        deck.add(new DeckCardRequestDTO("xy1-123", 4));
-        deck.add(new DeckCardRequestDTO("xy1-127", 4));
-        deck.add(new DeckCardRequestDTO("xy1-128", 4));
-        deck.add(new DeckCardRequestDTO("xy1-125", 4));
-        deck.add(new DeckCardRequestDTO("xy1-121", 3));
-        deck.add(new DeckCardRequestDTO("xy1-124", 3));
+        deck.add(new DeckCardRequestDTO("xy1-123", 4)); // Professor's Letter
+        deck.add(new DeckCardRequestDTO("xy1-127", 4)); // Shauna
+        deck.add(new DeckCardRequestDTO("xy1-128", 4)); // Super Potion
+        deck.add(new DeckCardRequestDTO("xy1-125", 4)); // Roller Skates
+        deck.add(new DeckCardRequestDTO("xy1-121", 3)); // Muscle Band
+        deck.add(new DeckCardRequestDTO("xy1-124", 3)); // Red Card
     }
 
     private List<List<PokemonCard>> buildEvolutionLines(List<PokemonCard> pokemonCards) {
@@ -395,7 +416,7 @@ public class DeckAssistantService {
 
         List<DeckCardRequestDTO> deck = new ArrayList<>();
         List<List<String>> lines = new ArrayList<>(starter.evolutionLines());
-        Collections.shuffle(lines, new Random());
+        Collections.shuffle(lines, random);
         List<List<String>> pickedLines = lines.subList(0, Math.min(DEFAULT_EVOLUTION_LINES_COUNT, lines.size()));
 
         for (List<String> line : pickedLines) {
