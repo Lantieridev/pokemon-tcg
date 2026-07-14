@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -36,6 +37,11 @@ import java.util.function.BiConsumer;
 public final class AttackEffectResolver {
 
     private static final int DAMAGE_PER_COUNTER = 10;
+
+    // Used across several handlers to decide "exactly one candidate, auto-resolve"
+    // vs "more than one, prompt the player to pick" (e.g. a single benched Pokemon vs
+    // multiple when force-switching, a single discard-pile Basic vs several).
+    private static final int SINGLE_CANDIDATE = 1;
 
     private static final Map<String, AttackEffectType> TEXT_TO_TYPE;
 
@@ -213,7 +219,7 @@ public final class AttackEffectResolver {
                                 basics.add(pc);
                             }
                         }
-                        if (basics.size() > 1) {
+                        if (basics.size() > SINGLE_CANDIDATE) {
                             ctx.getMatchSession().setPendingSelectionRequest(
                                     new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
                                             ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL,
@@ -225,7 +231,7 @@ public final class AttackEffectResolver {
                             if (ctx.getMatchSession().getTurnManager() != null) {
                                 ctx.getMatchSession().getTurnManager().interruptMainPhase();
                             }
-                        } else if (basics.size() == 1) {
+                        } else if (basics.size() == SINGLE_CANDIDATE) {
                             ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = basics.get(0);
                             defender.getDiscardPile().remove(basic);
                             ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(basic);
@@ -414,7 +420,7 @@ public final class AttackEffectResolver {
                 (amount, ctx) -> {
                     final PlayerRuntime defender = ctx.getDefenderRuntime();
                     if (defender != null && !defender.getBench().getAll().isEmpty()) {
-                        if (defender.getBench().getAll().size() == 1) {
+                        if (defender.getBench().getAll().size() == SINGLE_CANDIDATE) {
                             final BattlePokemonState oldActive = defender.getActivePokemon();
                             final BattlePokemonState newActive = defender.getBench().promote(0);
                             defender.setActivePokemon(newActive);
@@ -441,12 +447,12 @@ public final class AttackEffectResolver {
                     final PlayerRuntime opponent = ctx.getDefenderRuntime();
                     if (opponent != null) {
                         List<BattlePokemonState> bench = opponent.getBench().getAll();
-                        if (bench.size() == 1) {
+                        if (bench.size() == SINGLE_CANDIDATE) {
                             bench.get(0).addDamageCounters(amount / DAMAGE_PER_COUNTER);
                             if (bench.get(0).getDamageCounters() * 10 >= bench.get(0).getMaxHp()) {
                                 ctx.getMatchSession().getKnockoutHandler().onKnockout(bench.get(0), bench.get(0).isEx() ? 2 : 1);
                             }
-                        } else if (bench.size() > 1) {
+                        } else if (bench.size() > SINGLE_CANDIDATE) {
                             ctx.getMatchSession().setPendingSelectionRequest(
                                     new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
                                             ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BENCH_DAMAGE_ONE,
@@ -704,19 +710,17 @@ public final class AttackEffectResolver {
         m.put(AttackEffectType.SWITCH_SELF,
                 (amount, ctx) -> {
                     final PlayerRuntime attacker = ctx.getAttackerRuntime();
-                    if (attacker != null && !attacker.getBench().getAll().isEmpty()) {
-                        if (ctx.getMatchSession() != null) {
-                            ctx.getMatchSession().setPendingSelectionRequest(
-                                    new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                            ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
-                                            null,
-                                            1,
-                                            ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
-                                    )
-                            );
-                            if (ctx.getMatchSession().getTurnManager() != null) {
-                                ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                            }
+                    if (attacker != null && !attacker.getBench().getAll().isEmpty() && ctx.getMatchSession() != null) {
+                        ctx.getMatchSession().setPendingSelectionRequest(
+                                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BOUNCE,
+                                        null,
+                                        1,
+                                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+                                )
+                        );
+                        if (ctx.getMatchSession().getTurnManager() != null) {
+                            ctx.getMatchSession().getTurnManager().interruptMainPhase();
                         }
                     }
                 });
@@ -888,7 +892,7 @@ public final class AttackEffectResolver {
         final String key = effectText.contains(":")
                 ? effectText.substring(0, effectText.indexOf(':'))
                 : effectText;
-        return TEXT_TO_TYPE.getOrDefault(key.toLowerCase(), AttackEffectType.NONE);
+        return TEXT_TO_TYPE.getOrDefault(key.toLowerCase(Locale.ROOT), AttackEffectType.NONE);
     }
 
     /**
