@@ -105,6 +105,9 @@ public final class PreDamageEffectsStep implements AttackPipelineStep {
         }
     }
 
+    // Not in EFFECT_HANDLERS: unlike the other ~20 effects, this one has always run as an
+    // unconditional post-check alongside safeguard/status/scorching-fang above, not as a
+    // dispatched case (pre-dates this class's Strategy-map conversion).
     private static void applyDerangedDance(final AttackContext ctx, final String effectText) {
         if (!DERANGED_DANCE.equals(effectText)) {
             return;
