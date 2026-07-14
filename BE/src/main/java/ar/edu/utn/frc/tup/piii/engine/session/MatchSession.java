@@ -31,6 +31,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
 public final class MatchSession {
 
     private static final int UNSET_PLAYER_INDEX = -1;
+    private static final String PLAYER_ID_NOT_NULL_MSG = "playerId must not be null";
 
     private final String matchId;
     private final List<String> playerIds;
@@ -293,7 +294,7 @@ public final class MatchSession {
     }
 
     public int getMissedTurns(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
             return missedTurnsA;
         }
@@ -301,7 +302,7 @@ public final class MatchSession {
     }
 
     public void incrementMissedTurns(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
             missedTurnsA++;
         } else {
@@ -310,7 +311,7 @@ public final class MatchSession {
     }
 
     public void resetMissedTurns(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
             missedTurnsA = 0;
         } else {
@@ -336,7 +337,7 @@ public final class MatchSession {
      * @param future   the scheduled task to cancel (never null)
      */
     public void setTurnTimeout(final String playerId, final ScheduledFuture<?> future) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         Objects.requireNonNull(future, "future must not be null");
         if (playerId.equals(getPlayerIdA())) {
             playerATimeout = future;
@@ -352,7 +353,7 @@ public final class MatchSession {
      * @return the scheduled future, or null
      */
     public ScheduledFuture<?> getTimeoutFuture(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
             return playerATimeout;
         }
@@ -366,7 +367,7 @@ public final class MatchSession {
      * @param playerId the player whose future to clear (never null)
      */
     public void clearTimeoutFuture(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
             playerATimeout = null;
         } else {
@@ -592,7 +593,7 @@ public final class MatchSession {
      * @throws IllegalArgumentException if playerId is not a participant of this session
      */
     public int indexOf(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         final int index = playerIds.indexOf(playerId);
         if (index < 0) {
             throw new IllegalArgumentException("Player '" + playerId + "' is not part of match " + matchId);
