@@ -44,7 +44,7 @@ public class PackServiceImpl implements PackService {
     );
 
     // First (guaranteed) slot: tiers 1-2 pull mostly common with a small chance of rare.
-    private static final double FIRST_SLOT_RARE_CHANCE_COMPLEMENT = 0.9;
+    private static final double FIRST_SLOT_COMMON_CHANCE = 0.9;
 
     // Slots after the first: independent chance rolls scaling with pack tier.
     private static final int OTHER_SLOT_LEGENDARY_MIN_TIER = 6;
@@ -219,7 +219,7 @@ public class PackServiceImpl implements PackService {
         if (tier == TIER_RARE_MIN || tier == TIER_RARE_MIN + 1) {
             return pools.rare().get(random.nextInt(pools.rare().size()));
         }
-        return random.nextDouble() < FIRST_SLOT_RARE_CHANCE_COMPLEMENT
+        return random.nextDouble() < FIRST_SLOT_COMMON_CHANCE
                 ? pools.common().get(random.nextInt(pools.common().size()))
                 : pools.rare().get(random.nextInt(pools.rare().size()));
     }
