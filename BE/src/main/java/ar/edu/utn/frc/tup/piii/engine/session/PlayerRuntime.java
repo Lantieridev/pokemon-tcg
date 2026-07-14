@@ -119,10 +119,13 @@ public final class PlayerRuntime {
             field.setAccessible(true);
             field.set(statusEffectManager, this);
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            // This is a pure POJO with zero logging-framework dependency, so this can't be
-            // logged. It can only fail if StatusEffectManager's "playerRuntime" field is
-            // renamed or removed, which would also break every other reflective use of it -
-            // a compile-time-safe refactor would catch that long before this runs.
+            // Kept silent by convention (this package doesn't use a logging framework
+            // elsewhere, though nothing prevents adding one). Note this catch does NOT
+            // cover Field.setAccessible()'s unchecked InaccessibleObjectException (JPMS,
+            // Java 9+) or SecurityException (if a SecurityManager is installed) - neither
+            // applies to this app today (classpath-based, no SecurityManager), but a
+            // future move to modular JARs could make this throw uncaught instead of
+            // silently no-op-ing as before.
         }
     }
 
