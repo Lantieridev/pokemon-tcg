@@ -141,208 +141,246 @@ public class MatchService {
         final ReentrantLock lock = session.getLock();
         lock.lock();
         try {
-            if (session.getState() != MatchSessionState.ACTIVE) {
-                throw new IllegalStateException("Match is not active");
-            }
-            session.clearLastCoinFlips();
-            final int playerIndex = session.indexOf(playerId);
-            
-            if (session.getTurnManager() != null) {
-                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
-                    session.resetMissedTurns(playerId);
-                }
-            }
-
-            boolean isAuthorized = false;
-
-            if (session.isAwaitingPromotion()) {
-                // Enforce promotion-gate: while a KO replacement is pending, only the
-                // promoting player may act, and only with PROMOTE_ACTIVE (XY1 Rulebook §2).
-                if (dto.type() != ActionType.PROMOTE_ACTIVE) {
-                    throw new InvalidActionException("must_promote_before_continuing");
-                }
-                if (session.getPromotingPlayerIndex() != playerIndex) {
-                    throw new InvalidActionException("not_your_promotion");
-                }
-                isAuthorized = true;
-            } else {
-                boolean isOpponentChoosing = false;
-                if (session.getPendingSelectionRequest() != null
-                        && (session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
-                        || session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN)) {
-                    isOpponentChoosing = true;
-                }
-
-                if (isOpponentChoosing) {
-                    if (playerIndex == 1 - session.getTurnManager().activePlayerIndex()) {
-                        isAuthorized = true;
-                    }
-                } else {
-                    if (playerIndex == session.getTurnManager().activePlayerIndex()) {
-                        isAuthorized = true;
-                    } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
-                        isAuthorized = true;
-                    }
-                }
-            }
-
-            if (!isAuthorized) {
-                throw new InvalidActionException("not_your_turn");
-            }
-
-            session.setActivePlayerIndex(playerIndex);
-
-            final Action action = facade.toEngineAction(session, playerIndex, dto);
-
-            // Use the per-session RuleValidator if available
-            final RuleValidator validator = resolveValidator(session);
-            final ValidationResult result = validator.validate(action, playerIndex);
-
-            if (result instanceof ValidationResult.Invalid invalid) {
-                throw new InvalidActionException(invalid.reason());
-            }
-
-            final TurnManager turnManager = session.getTurnManager();
-            // Look up card name in hand if cardId is provided in dto
-            String cardName = null;
-            if (dto.cardId() != null) {
-                final String targetCardId = dto.cardId();
-                cardName = session.getPlayerRuntime(playerIndex).getHand().getCards().stream()
-                        .filter(c -> c.getCardId().equals(targetCardId))
-                        .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getName)
-                        .findFirst().orElse(null);
-            }
-
-            // Track action-specific stats
-            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction attackAction) {
-                profileService.trackDamageDealt(playerId, attackAction.attack().baseDamage());
-            } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
-                profileService.trackTrainerCardPlayed(playerId);
-            }
-
-            // Apply action and manage TurnManager phase transitions
-            applyWithPhaseTransitions(session, action, turnManager);
-
-            // Log Trainer card usage
-            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
-                final String name = cardName != null ? cardName : "Entrenador";
-                sendSystemMessage(matchId, playerId + " jugó la carta de Entrenador: " + name);
-            }
-
-            // Log coin flips
-            final java.util.List<Boolean> flips = session.getLastCoinFlips();
-            if (!flips.isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                sb.append("Lanzamiento de moneda");
-                if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction declareAttackAction) {
-                    sb.append(" para el ataque '").append(declareAttackAction.attack().name()).append("'");
-                } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
-                    final String name = cardName != null ? cardName : "Entrenador";
-                    sb.append(" para la carta de Entrenador '").append(name).append("'");
-                } else if (dto.type() == ActionType.END_TURN) {
-                    sb.append(" para chequeo de estado");
-                }
-                sb.append(": ");
-                for (int i = 0; i < flips.size(); i++) {
-                    if (i > 0) sb.append(", ");
-                    sb.append(flips.get(i) ? "CARA" : "SECA");
-                }
-                sendSystemMessage(matchId, sb.toString());
-            }
-
-            session.incrementVersion();
-
-            final int turnNumber = getCurrentTurnNumber(session);
-            final GameStateSnapshot snapshot = new GameStateSnapshot(
-                    matchId, turnNumber, session.getPlayerIds());
-            persistence.save(snapshot);
-            persistence.saveMatch(session);
-            String resultDetail = String.format("Executed action %s with cardId=%s, targetId=%s", dto.type(), dto.cardId(), dto.targetId());
-            persistence.logAction(matchId, turnNumber, playerId, dto.type().name(), resultDetail);
-
-            if (session.getState() == MatchSessionState.FINISHED) {
-                final String winnerId = matchRewardService.determineWinner(session);
-                final int winnerIndex = session.indexOf(winnerId);
-                final int loserIndex = 1 - winnerIndex;
-                final MatchBoard board = session.getBoard();
-
-                final int loserPrizesAtEnd = board.getRemainingPrizes(loserIndex);
-                final boolean isPerfectWin = (loserPrizesAtEnd == 6);
-                final boolean isComebackWin = (loserPrizesAtEnd == 1);
-
-                // Legitimate match finish, counts for mute decrement for all penalized players in the match
-                for (final String participantId : session.getPlayerIds()) {
-                    final boolean won = participantId.equals(winnerId);
-                    final int calculatedDamage;
-                    final int calculatedKos;
-                    if (session.hasPlayerRuntimes()) {
-                        final int participantIndex = session.indexOf(participantId);
-                        final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
-                        calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
-                        calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
-                    } else {
-                        calculatedDamage = 0;
-                        calculatedKos = 0;
-                    }
-
-                    userRepository.findFirstByUsername(participantId).ifPresent(user -> {
-                        profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, calculatedKos);
-                        profileService.trackDamageDealt(participantId, calculatedDamage);
-                        final int xpGained = won ? 50 : 25;
-                        final int coinsGained = won ? 50 : 10;
-                        if (participantId.equals(session.getPlayerIdA())) {
-                            session.setXpGainedA(xpGained);
-                            session.setCoinsGainedA(coinsGained);
-                        } else {
-                            session.setXpGainedB(xpGained);
-                            session.setCoinsGainedB(coinsGained);
-                        }
-                    });
-                    penaltyService.registerMatchFinished(participantId, true);
-                }
-                
-                // Handle MMR updates if ranked
-                if (session.isRanked()) {
-                    matchRewardService.updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
-                }
-
-                // Handle campaign progress
-                matchRewardService.handleCampaignCompletion(session);
-            }
-            
+            final int playerIndex = authorizePlayer(session, playerId, dto);
+            executeAction(session, matchId, playerId, dto, playerIndex);
             updateTurnTimers(session);
-
         } finally {
             lock.unlock();
         }
 
         broadcastState(matchId, session);
+        triggerBotTurnIfNeeded(matchId);
+    }
 
-        // Check for bot turn or bot promotion
+    /**
+     * Confirms the match is ACTIVE and the acting player is allowed to submit this action
+     * right now — their own turn, a pending KO-replacement promotion, or a pending
+     * interactive selection they're allowed to answer (ADR-5 step 2).
+     *
+     * @return the acting player's index (0 or 1)
+     * @throws IllegalStateException  if the match is not ACTIVE
+     * @throws InvalidActionException if the player is not authorized to act right now
+     */
+    private int authorizePlayer(final MatchSession session, final String playerId, final ActionRequestDTO dto) {
+        if (session.getState() != MatchSessionState.ACTIVE) {
+            throw new IllegalStateException("Match is not active");
+        }
+        session.clearLastCoinFlips();
+        final int playerIndex = session.indexOf(playerId);
+
+        if (session.getTurnManager() != null) {
+            if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                session.resetMissedTurns(playerId);
+            }
+        }
+
+        boolean isAuthorized = false;
+
+        if (session.isAwaitingPromotion()) {
+            // Enforce promotion-gate: while a KO replacement is pending, only the
+            // promoting player may act, and only with PROMOTE_ACTIVE (XY1 Rulebook §2).
+            if (dto.type() != ActionType.PROMOTE_ACTIVE) {
+                throw new InvalidActionException("must_promote_before_continuing");
+            }
+            if (session.getPromotingPlayerIndex() != playerIndex) {
+                throw new InvalidActionException("not_your_promotion");
+            }
+            isAuthorized = true;
+        } else {
+            boolean isOpponentChoosing = false;
+            if (session.getPendingSelectionRequest() != null
+                    && (session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.FLASH_CLAW
+                    || session.getPendingSelectionRequest().sourceEffect() == ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN)) {
+                isOpponentChoosing = true;
+            }
+
+            if (isOpponentChoosing) {
+                if (playerIndex == 1 - session.getTurnManager().activePlayerIndex()) {
+                    isAuthorized = true;
+                }
+            } else {
+                if (playerIndex == session.getTurnManager().activePlayerIndex()) {
+                    isAuthorized = true;
+                } else if (dto.type() == ActionType.PLACE_BASIC_POKEMON && session.getPlayerRuntime(playerIndex).getActivePokemon() == null) {
+                    isAuthorized = true;
+                }
+            }
+        }
+
+        if (!isAuthorized) {
+            throw new InvalidActionException("not_your_turn");
+        }
+
+        session.setActivePlayerIndex(playerIndex);
+        return playerIndex;
+    }
+
+    /**
+     * Translates the DTO to an engine Action, validates it, applies it (advancing
+     * TurnManager phases), persists the result, and handles match-finish reward bookkeeping
+     * if the match ended (ADR-5 steps 3-6). Runs entirely while the caller holds the
+     * session lock.
+     */
+    private void executeAction(final MatchSession session, final String matchId, final String playerId,
+                                final ActionRequestDTO dto, final int playerIndex) {
+        final Action action = facade.toEngineAction(session, playerIndex, dto);
+
+        // Use the per-session RuleValidator if available
+        final RuleValidator validator = resolveValidator(session);
+        final ValidationResult result = validator.validate(action, playerIndex);
+
+        if (result instanceof ValidationResult.Invalid invalid) {
+            throw new InvalidActionException(invalid.reason());
+        }
+
+        final TurnManager turnManager = session.getTurnManager();
+        // Look up card name in hand if cardId is provided in dto
+        String cardName = null;
+        if (dto.cardId() != null) {
+            final String targetCardId = dto.cardId();
+            cardName = session.getPlayerRuntime(playerIndex).getHand().getCards().stream()
+                    .filter(c -> c.getCardId().equals(targetCardId))
+                    .map(ar.edu.utn.frc.tup.piii.engine.model.Card::getName)
+                    .findFirst().orElse(null);
+        }
+
+        // Track action-specific stats
+        if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction attackAction) {
+            profileService.trackDamageDealt(playerId, attackAction.attack().baseDamage());
+        } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+            profileService.trackTrainerCardPlayed(playerId);
+        }
+
+        // Apply action and manage TurnManager phase transitions
+        applyWithPhaseTransitions(session, action, turnManager);
+
+        // Log Trainer card usage
+        if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+            final String name = cardName != null ? cardName : "Entrenador";
+            sendSystemMessage(matchId, playerId + " jugó la carta de Entrenador: " + name);
+        }
+
+        // Log coin flips
+        final java.util.List<Boolean> flips = session.getLastCoinFlips();
+        if (!flips.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Lanzamiento de moneda");
+            if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.DeclareAttackAction declareAttackAction) {
+                sb.append(" para el ataque '").append(declareAttackAction.attack().name()).append("'");
+            } else if (action instanceof ar.edu.utn.frc.tup.piii.engine.model.PlayTrainerAction) {
+                final String name = cardName != null ? cardName : "Entrenador";
+                sb.append(" para la carta de Entrenador '").append(name).append("'");
+            } else if (dto.type() == ActionType.END_TURN) {
+                sb.append(" para chequeo de estado");
+            }
+            sb.append(": ");
+            for (int i = 0; i < flips.size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(flips.get(i) ? "CARA" : "SECA");
+            }
+            sendSystemMessage(matchId, sb.toString());
+        }
+
+        session.incrementVersion();
+
+        final int turnNumber = getCurrentTurnNumber(session);
+        final GameStateSnapshot snapshot = new GameStateSnapshot(
+                matchId, turnNumber, session.getPlayerIds());
+        persistence.save(snapshot);
+        persistence.saveMatch(session);
+        String resultDetail = String.format("Executed action %s with cardId=%s, targetId=%s", dto.type(), dto.cardId(), dto.targetId());
+        persistence.logAction(matchId, turnNumber, playerId, dto.type().name(), resultDetail);
+
+        if (session.getState() == MatchSessionState.FINISHED) {
+            handleMatchFinish(session);
+        }
+    }
+
+    /**
+     * Awards XP/coins/MMR/campaign progress to both participants when a match finishes as
+     * the direct result of an in-match action. (Abandon/surrender endings are handled
+     * separately in {@link #abandonMatch}.)
+     */
+    private void handleMatchFinish(final MatchSession session) {
+        final String winnerId = matchRewardService.determineWinner(session);
+        final int winnerIndex = session.indexOf(winnerId);
+        final int loserIndex = 1 - winnerIndex;
+        final MatchBoard board = session.getBoard();
+
+        final int loserPrizesAtEnd = board.getRemainingPrizes(loserIndex);
+        final boolean isPerfectWin = (loserPrizesAtEnd == 6);
+        final boolean isComebackWin = (loserPrizesAtEnd == 1);
+
+        // Legitimate match finish, counts for mute decrement for all penalized players in the match
+        for (final String participantId : session.getPlayerIds()) {
+            final boolean won = participantId.equals(winnerId);
+            final int calculatedDamage;
+            final int calculatedKos;
+            if (session.hasPlayerRuntimes()) {
+                final int participantIndex = session.indexOf(participantId);
+                final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
+                calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
+                calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
+            } else {
+                calculatedDamage = 0;
+                calculatedKos = 0;
+            }
+
+            userRepository.findFirstByUsername(participantId).ifPresent(user -> {
+                profileService.awardXpAndCheckAchievements(user.getId(), won, won && isPerfectWin, won && isComebackWin, calculatedKos);
+                profileService.trackDamageDealt(participantId, calculatedDamage);
+                final int xpGained = won ? 50 : 25;
+                final int coinsGained = won ? 50 : 10;
+                if (participantId.equals(session.getPlayerIdA())) {
+                    session.setXpGainedA(xpGained);
+                    session.setCoinsGainedA(coinsGained);
+                } else {
+                    session.setXpGainedB(xpGained);
+                    session.setCoinsGainedB(coinsGained);
+                }
+            });
+            penaltyService.registerMatchFinished(participantId, true);
+        }
+
+        // Handle MMR updates if ranked
+        if (session.isRanked()) {
+            matchRewardService.updateMmr(session, winnerId, loserIndex == 0 ? session.getPlayerIdA() : session.getPlayerIdB());
+        }
+
+        // Handle campaign progress
+        matchRewardService.handleCampaignCompletion(session);
+    }
+
+    /**
+     * Checks whether a bot needs to act next (their turn, or a pending KO promotion) and
+     * triggers async evaluation if so. Runs AFTER the session lock is released.
+     */
+    private void triggerBotTurnIfNeeded(final String matchId) {
         final MatchSession currentSession = registry.find(matchId).orElse(null);
-        if (currentSession != null) {
-            boolean triggerBot = false;
-            if (currentSession.getTurnManager() != null) {
-                int activeIndex = currentSession.getTurnManager().activePlayerIndex();
-                if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
-                    String activeId = currentSession.getPlayerIds().get(activeIndex);
-                    if (activeId != null && activeId.startsWith("Bot-")) {
-                        triggerBot = true;
-                    }
+        if (currentSession == null) {
+            return;
+        }
+        boolean triggerBot = false;
+        if (currentSession.getTurnManager() != null) {
+            int activeIndex = currentSession.getTurnManager().activePlayerIndex();
+            if (activeIndex >= 0 && activeIndex < currentSession.getPlayerIds().size()) {
+                String activeId = currentSession.getPlayerIds().get(activeIndex);
+                if (activeId != null && activeId.startsWith("Bot-")) {
+                    triggerBot = true;
                 }
             }
-            if (currentSession.isAwaitingPromotion()) {
-                int promotingIndex = currentSession.getPromotingPlayerIndex();
-                if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
-                    String promotingId = currentSession.getPlayerIds().get(promotingIndex);
-                    if (promotingId != null && promotingId.startsWith("Bot-")) {
-                        triggerBot = true;
-                    }
+        }
+        if (currentSession.isAwaitingPromotion()) {
+            int promotingIndex = currentSession.getPromotingPlayerIndex();
+            if (promotingIndex >= 0 && promotingIndex < currentSession.getPlayerIds().size()) {
+                String promotingId = currentSession.getPlayerIds().get(promotingIndex);
+                if (promotingId != null && promotingId.startsWith("Bot-")) {
+                    triggerBot = true;
                 }
             }
-            if (triggerBot) {
-                botDecisionService.evaluateAndPlay(matchId);
-            }
+        }
+        if (triggerBot) {
+            botDecisionService.evaluateAndPlay(matchId);
         }
     }
 
@@ -779,107 +817,130 @@ public class MatchService {
                 if (session.getState() == MatchSessionState.FINISHED) {
                     return;
                 }
-                session.finish();
-                session.incrementVersion();
-                // Determine the winner (the other player)
-                String winnerUsername = null;
-                if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {
-                    winnerUsername = session.getPlayerIdA().equals(forfeitingPlayerId)
-                            ? session.getPlayerIdB()
-                            : session.getPlayerIdA();
-                }
-                if (winnerUsername != null) {
-                    session.setWinnerId(winnerUsername);
-                }
-                session.setVictoryReason("ABANDON");
-
-                final int turnNumber = getCurrentTurnNumber(session);
-                persistence.save(new GameStateSnapshot(matchId, turnNumber, session.getPlayerIds()));
-                persistence.saveMatch(session);
-
-                if (winnerUsername != null) {
-                    persistence.declareWinner(matchId, winnerUsername);
-                }
-
-                persistence.logAction(matchId, turnNumber, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
-
-
-                // Process penalties on match finish
-                boolean completedLegitimately;
-                
-                final int turnsA = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(0) : 0;
-                final int turnsB = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(1) : 0;
-
-                // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
-                for (final String participantId : session.getPlayerIds()) {
-                    final boolean won = !participantId.equals(forfeitingPlayerId);
-                    
-                    if (participantId.equals(forfeitingPlayerId)) {
-                        // The penalized user who forfeited does NOT get a decrement
-                        completedLegitimately = false;
-                    } else {
-                        // The user who did not forfeit gets a decrement ONLY if both players had at least 15 turns
-                        completedLegitimately = (turnsA >= 15 && turnsB >= 15);
-                    }
-                    
-                    final boolean finalCompletedLegitimately = completedLegitimately;
-
-                    userRepository.findFirstByUsername(participantId).ifPresent(user -> {
-                        // To prevent farming, the forfeiting player gets NO rewards.
-                        if (won) {
-                            final int calculatedDamage;
-                            final int calculatedKos;
-                            if (session.hasPlayerRuntimes()) {
-                                final int participantIndex = session.indexOf(participantId);
-                                final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
-                                calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
-                                calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
-                            } else {
-                                calculatedDamage = 0;
-                                calculatedKos = 0;
-                            }
-                            
-                            profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, calculatedKos);
-                            profileService.trackDamageDealt(participantId, calculatedDamage);
-                            if (participantId.equals(session.getPlayerIdA())) {
-                                session.setXpGainedA(50);
-                                session.setCoinsGainedA(50);
-                            } else {
-                                session.setXpGainedB(50);
-                                session.setCoinsGainedB(50);
-                            }
-                        } else {
-                            if (participantId.equals(session.getPlayerIdA())) {
-                                session.setXpGainedA(0);
-                                session.setCoinsGainedA(0);
-                            } else {
-                                session.setXpGainedB(0);
-                                session.setCoinsGainedB(0);
-                            }
-                        }
-                    });
-
-                    penaltyService.registerMatchFinished(participantId, finalCompletedLegitimately);
-                }
-
-                // Apply ranked abandonment penalties
-                if (session.isRanked()) {
-                    // Standard forfeit MMR loss (winner gets MMR, forfeiting player loses MMR)
-                    if (winnerUsername != null) {
-                        matchRewardService.updateMmr(session, winnerUsername, forfeitingPlayerId);
-                    }
-                    // Apply 15 minute ranked ban for abandoning
-                    penaltyService.applyRankedBan(forfeitingPlayerId, 15);
-                }
-
-                // Handle campaign progress
-                matchRewardService.handleCampaignCompletion(session);
+                final String winnerUsername = finishAbandonedSession(session, forfeitingPlayerId);
+                persistAbandon(session, matchId, forfeitingPlayerId, winnerUsername);
+                applyAbandonPenaltiesAndRewards(session, forfeitingPlayerId, winnerUsername);
             } finally {
                 lock.unlock();
             }
             broadcastState(matchId, session);
             registry.remove(matchId);
         });
+    }
+
+    /**
+     * Transitions the session to FINISHED and determines the winner (the other player),
+     * marking the victory reason as ABANDON.
+     *
+     * @return the winning player's username, or {@code null} if playerIdA/playerIdB aren't
+     *         both set (legacy/incomplete session)
+     */
+    private String finishAbandonedSession(final MatchSession session, final String forfeitingPlayerId) {
+        session.finish();
+        session.incrementVersion();
+        // Determine the winner (the other player)
+        String winnerUsername = null;
+        if (session.getPlayerIdA() != null && session.getPlayerIdB() != null) {
+            winnerUsername = session.getPlayerIdA().equals(forfeitingPlayerId)
+                    ? session.getPlayerIdB()
+                    : session.getPlayerIdA();
+        }
+        if (winnerUsername != null) {
+            session.setWinnerId(winnerUsername);
+        }
+        session.setVictoryReason("ABANDON");
+        return winnerUsername;
+    }
+
+    private void persistAbandon(final MatchSession session, final String matchId,
+                                 final String forfeitingPlayerId, final String winnerUsername) {
+        final int turnNumber = getCurrentTurnNumber(session);
+        persistence.save(new GameStateSnapshot(matchId, turnNumber, session.getPlayerIds()));
+        persistence.saveMatch(session);
+
+        if (winnerUsername != null) {
+            persistence.declareWinner(matchId, winnerUsername);
+        }
+
+        persistence.logAction(matchId, turnNumber, forfeitingPlayerId, "ABANDON", "Player abandoned the match");
+    }
+
+    /**
+     * Applies per-participant XP/coin rewards (the forfeiter gets none, to prevent farming),
+     * penalty bookkeeping, ranked MMR/ban penalties, and campaign progress after an abandon.
+     */
+    private void applyAbandonPenaltiesAndRewards(final MatchSession session, final String forfeitingPlayerId,
+                                                  final String winnerUsername) {
+        // Process penalties on match finish
+        boolean completedLegitimately;
+
+        final int turnsA = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(0) : 0;
+        final int turnsB = session.getTurnManager() != null ? session.getTurnManager().getTurnCount(1) : 0;
+
+        // For each player, evaluate if it is a legitimate match completion to decrement mute and award XP
+        for (final String participantId : session.getPlayerIds()) {
+            final boolean won = !participantId.equals(forfeitingPlayerId);
+
+            if (participantId.equals(forfeitingPlayerId)) {
+                // The penalized user who forfeited does NOT get a decrement
+                completedLegitimately = false;
+            } else {
+                // The user who did not forfeit gets a decrement ONLY if both players had at least 15 turns
+                completedLegitimately = (turnsA >= 15 && turnsB >= 15);
+            }
+
+            final boolean finalCompletedLegitimately = completedLegitimately;
+
+            userRepository.findFirstByUsername(participantId).ifPresent(user -> {
+                // To prevent farming, the forfeiting player gets NO rewards.
+                if (won) {
+                    final int calculatedDamage;
+                    final int calculatedKos;
+                    if (session.hasPlayerRuntimes()) {
+                        final int participantIndex = session.indexOf(participantId);
+                        final ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker tracker = session.getPlayerRuntime(participantIndex).getStatisticsTracker();
+                        calculatedDamage = tracker.getPokemonDamageDealt().values().stream().mapToInt(Integer::intValue).sum();
+                        calculatedKos = tracker.getPokemonKOsMade().values().stream().mapToInt(Integer::intValue).sum();
+                    } else {
+                        calculatedDamage = 0;
+                        calculatedKos = 0;
+                    }
+
+                    profileService.awardXpAndCheckAchievements(user.getId(), won, false, false, calculatedKos);
+                    profileService.trackDamageDealt(participantId, calculatedDamage);
+                    if (participantId.equals(session.getPlayerIdA())) {
+                        session.setXpGainedA(50);
+                        session.setCoinsGainedA(50);
+                    } else {
+                        session.setXpGainedB(50);
+                        session.setCoinsGainedB(50);
+                    }
+                } else {
+                    if (participantId.equals(session.getPlayerIdA())) {
+                        session.setXpGainedA(0);
+                        session.setCoinsGainedA(0);
+                    } else {
+                        session.setXpGainedB(0);
+                        session.setCoinsGainedB(0);
+                    }
+                }
+            });
+
+            penaltyService.registerMatchFinished(participantId, finalCompletedLegitimately);
+        }
+
+        // Apply ranked abandonment penalties
+        if (session.isRanked()) {
+            // Standard forfeit MMR loss (winner gets MMR, forfeiting player loses MMR)
+            if (winnerUsername != null) {
+                matchRewardService.updateMmr(session, winnerUsername, forfeitingPlayerId);
+            }
+            // Apply 15 minute ranked ban for abandoning
+            penaltyService.applyRankedBan(forfeitingPlayerId, 15);
+        }
+
+        // Handle campaign progress
+        matchRewardService.handleCampaignCompletion(session);
     }
 
     private void broadcastState(final String matchId, final MatchSession session) {
