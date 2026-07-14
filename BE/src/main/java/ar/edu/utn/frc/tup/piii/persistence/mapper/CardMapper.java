@@ -25,12 +25,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
  * Maps a {@link CardEntity} (JPA/persistence) to the appropriate engine domain Card subtype.
  * Lives in the persistence layer — may reference JPA entities; engine classes must not depend on this.
  */
+@Slf4j
 @Component
 public final class CardMapper {
 
@@ -792,8 +794,7 @@ public final class CardMapper {
             }
             return objectMapper.convertValue(raw, new TypeReference<List<Map<String, Object>>>() { });
         } catch (final Exception e) {
-            System.err.println("MAPPING ERROR: class=" + (raw != null ? raw.getClass() : "null") + " raw=" + raw + " error=" + e.getMessage());
-            e.printStackTrace();
+            log.warn("Failed to map raw value to List<Map<String,Object>>: class={} raw={}", raw.getClass(), raw, e);
             return Collections.emptyList();
         }
     }
