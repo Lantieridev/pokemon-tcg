@@ -15,56 +15,62 @@ import java.util.stream.Collectors;
 @Service
 public class DeckTemplateService {
 
+    private static final String SUPERTYPE_POKEMON = "Pokémon";
+    private static final String SUPERTYPE_TRAINER = "Trainer";
+    private static final String SUBTYPE_BASIC = "Basic";
+    private static final String SUBTYPE_ITEM = "Item";
+    private static final String SUBTYPE_SUPPORTER = "Supporter";
+
     private final Map<Long, DeckResponseDTO> templates;
 
     public DeckTemplateService() {
         // Mazo Fuego XY1
         final List<DeckCardResponseDTO> fireCards = List.of(
-                new DeckCardResponseDTO("xy1-14", "Charmander", "Pokémon", "Basic", 4),
-                new DeckCardResponseDTO("xy1-15", "Charmeleon", "Pokémon", "Stage 1", 3),
-                new DeckCardResponseDTO("xy1-16", "Charizard", "Pokémon", "Stage 2", 2),
-                new DeckCardResponseDTO("xy1-120", "Max Revive", "Trainer", "Item", 2),
-                new DeckCardResponseDTO("xy1-121", "Muscle Band", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-122", "Professor's Letter", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-124", "Red Card", "Trainer", "Item", 2),
-                new DeckCardResponseDTO("xy1-125", "Roller Skates", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-126", "Shadow Circle", "Trainer", "Stadium", 2),
-                new DeckCardResponseDTO("xy1-127", "Shauna", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-128", "Super Potion", "Trainer", "Item", 2),
-                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", "Trainer", "Supporter", 3),
+                new DeckCardResponseDTO("xy1-14", "Charmander", SUPERTYPE_POKEMON, SUBTYPE_BASIC, 4),
+                new DeckCardResponseDTO("xy1-15", "Charmeleon", SUPERTYPE_POKEMON, "Stage 1", 3),
+                new DeckCardResponseDTO("xy1-16", "Charizard", SUPERTYPE_POKEMON, "Stage 2", 2),
+                new DeckCardResponseDTO("xy1-120", "Max Revive", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 2),
+                new DeckCardResponseDTO("xy1-121", "Muscle Band", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-122", "Professor's Letter", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-124", "Red Card", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 2),
+                new DeckCardResponseDTO("xy1-125", "Roller Skates", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-126", "Shadow Circle", SUPERTYPE_TRAINER, "Stadium", 2),
+                new DeckCardResponseDTO("xy1-127", "Shauna", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-128", "Super Potion", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 2),
+                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 3),
                 new DeckCardResponseDTO("xy1-133", "Fire Energy", "Energy", "Basic Energy", 20)
         );
 
         // Mazo Agua XY1
         final List<DeckCardResponseDTO> waterCards = List.of(
-                new DeckCardResponseDTO("xy1-35", "Froakie", "Pokémon", "Basic", 4),
-                new DeckCardResponseDTO("xy1-36", "Frogadier", "Pokémon", "Stage 1", 3),
-                new DeckCardResponseDTO("xy1-37", "Greninja", "Pokémon", "Stage 2", 2),
-                new DeckCardResponseDTO("xy1-38", "Lapras", "Pokémon", "Basic", 3),
-                new DeckCardResponseDTO("xy1-118", "Evosoda", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-122", "Professor's Letter", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-125", "Roller Skates", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-127", "Shauna", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-128", "Super Potion", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", "Trainer", "Supporter", 4),
+                new DeckCardResponseDTO("xy1-35", "Froakie", SUPERTYPE_POKEMON, SUBTYPE_BASIC, 4),
+                new DeckCardResponseDTO("xy1-36", "Frogadier", SUPERTYPE_POKEMON, "Stage 1", 3),
+                new DeckCardResponseDTO("xy1-37", "Greninja", SUPERTYPE_POKEMON, "Stage 2", 2),
+                new DeckCardResponseDTO("xy1-38", "Lapras", SUPERTYPE_POKEMON, SUBTYPE_BASIC, 3),
+                new DeckCardResponseDTO("xy1-118", "Evosoda", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-122", "Professor's Letter", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-125", "Roller Skates", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-127", "Shauna", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-128", "Super Potion", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
                 new DeckCardResponseDTO("xy1-134", "Water Energy", "Energy", "Basic Energy", 20)
         );
 
         // Mazo Planta XY1
         final List<DeckCardResponseDTO> grassCards = List.of(
-                new DeckCardResponseDTO("xy1-1", "Weedle", "Pokémon", "Basic", 4),
-                new DeckCardResponseDTO("xy1-2", "Kakuna", "Pokémon", "Stage 1", 3),
-                new DeckCardResponseDTO("xy1-3", "Beedrill", "Pokémon", "Stage 2", 2),
-                new DeckCardResponseDTO("xy1-11", "Pinsir", "Pokémon", "Basic", 3),
-                new DeckCardResponseDTO("xy1-118", "Evosoda", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-122", "Professor's Letter", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-125", "Roller Skates", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-127", "Shauna", "Trainer", "Supporter", 4),
-                new DeckCardResponseDTO("xy1-128", "Super Potion", "Trainer", "Item", 4),
-                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", "Trainer", "Supporter", 4),
+                new DeckCardResponseDTO("xy1-1", "Weedle", SUPERTYPE_POKEMON, SUBTYPE_BASIC, 4),
+                new DeckCardResponseDTO("xy1-2", "Kakuna", SUPERTYPE_POKEMON, "Stage 1", 3),
+                new DeckCardResponseDTO("xy1-3", "Beedrill", SUPERTYPE_POKEMON, "Stage 2", 2),
+                new DeckCardResponseDTO("xy1-11", "Pinsir", SUPERTYPE_POKEMON, SUBTYPE_BASIC, 3),
+                new DeckCardResponseDTO("xy1-118", "Evosoda", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-122", "Professor's Letter", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-123", "Professor Sycamore", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-125", "Roller Skates", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-127", "Shauna", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
+                new DeckCardResponseDTO("xy1-128", "Super Potion", SUPERTYPE_TRAINER, SUBTYPE_ITEM, 4),
+                new DeckCardResponseDTO("xy1-129", "Team Flare Grunt", SUPERTYPE_TRAINER, SUBTYPE_SUPPORTER, 4),
                 new DeckCardResponseDTO("xy1-132", "Grass Energy", "Energy", "Basic Energy", 20)
         );
 
