@@ -22,6 +22,8 @@ import java.util.Objects;
  */
 public final class PlayerRuntime {
 
+    private static final String POKEMON_NOT_NULL_MSG = "pokemon must not be null";
+
     private final Deck deck;
     private final Hand hand;
     private final Bench bench;
@@ -116,8 +118,11 @@ public final class PlayerRuntime {
             java.lang.reflect.Field field = StatusEffectManager.class.getDeclaredField("playerRuntime");
             field.setAccessible(true);
             field.set(statusEffectManager, this);
-        } catch (Exception e) {
-            // ignore
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // This is a pure POJO with zero logging-framework dependency, so this can't be
+            // logged. It can only fail if StatusEffectManager's "playerRuntime" field is
+            // renamed or removed, which would also break every other reflective use of it -
+            // a compile-time-safe refactor would catch that long before this runs.
         }
     }
 
@@ -237,7 +242,7 @@ public final class PlayerRuntime {
      * @param pokemon the Pokémon that entered play (never null)
      */
     public void recordPokemonEntered(final BattlePokemonState pokemon) {
-        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        Objects.requireNonNull(pokemon, POKEMON_NOT_NULL_MSG);
         turnsInPlay.put(pokemon, 0);
     }
 
@@ -270,7 +275,7 @@ public final class PlayerRuntime {
      * @return turns in play (&gt;= 0)
      */
     public int getTurnsInPlay(final BattlePokemonState pokemon) {
-        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        Objects.requireNonNull(pokemon, POKEMON_NOT_NULL_MSG);
         return turnsInPlay.getOrDefault(pokemon, 0);
     }
 
@@ -286,7 +291,7 @@ public final class PlayerRuntime {
      * @return true if tracked
      */
     public boolean hasPokemonInPlay(final BattlePokemonState pokemon) {
-        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        Objects.requireNonNull(pokemon, POKEMON_NOT_NULL_MSG);
         return turnsInPlay.containsKey(pokemon);
     }
 
@@ -296,7 +301,7 @@ public final class PlayerRuntime {
      * @param pokemon the Pokémon to remove (never null)
      */
     public void removePokemonFromPlay(final BattlePokemonState pokemon) {
-        Objects.requireNonNull(pokemon, "pokemon must not be null");
+        Objects.requireNonNull(pokemon, POKEMON_NOT_NULL_MSG);
         turnsInPlay.remove(pokemon);
     }
 
