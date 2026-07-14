@@ -12,6 +12,7 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserCardStatRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserEnergyStatRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,7 @@ public class AsyncPersistenceListener {
             final MatchStatisticsTracker tracker1 = session.getPlayerRuntime(0).getStatisticsTracker();
             try {
                 entity.setPlayer1StatsJson(objectMapper.writeValueAsString(tracker1));
-            } catch (Exception e) {
+            } catch (JsonProcessingException e) {
                 log.error("Failed to serialize player 1 statistics", e);
             }
             // Update global statistics for player 1
@@ -83,7 +84,7 @@ public class AsyncPersistenceListener {
             final MatchStatisticsTracker tracker2 = session.getPlayerRuntime(1).getStatisticsTracker();
             try {
                 entity.setPlayer2StatsJson(objectMapper.writeValueAsString(tracker2));
-            } catch (Exception e) {
+            } catch (JsonProcessingException e) {
                 log.error("Failed to serialize player 2 statistics", e);
             }
             // Update global statistics for player 2
@@ -182,7 +183,10 @@ public class AsyncPersistenceListener {
         try {
             return Long.parseLong(id);
         } catch (NumberFormatException e) {
-            return (long) Math.abs(id.hashCode());
+            // Math.abs(int) overflows back to Integer.MIN_VALUE for that one input, still
+            // negative. Widening to long before abs() avoids the overflow (long can represent
+            // -Integer.MIN_VALUE) while leaving every other hashCode's mapping unchanged.
+            return Math.abs((long) id.hashCode());
         }
     }
 
