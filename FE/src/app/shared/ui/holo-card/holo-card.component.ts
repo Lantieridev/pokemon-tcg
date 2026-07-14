@@ -1,5 +1,5 @@
 import { Component, Input, signal, ElementRef, ViewChild } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-sig-card',
@@ -36,7 +36,7 @@ export class SigCardComponent {
 @Component({
   selector: 'app-holo-card',
   standalone: true,
-  imports: [CommonModule, SigCardComponent, NgOptimizedImage],
+  imports: [SigCardComponent, NgOptimizedImage],
   template: `
     <div class="holo"
          [class.holo--float]="idleFloat"
@@ -149,7 +149,7 @@ export class HoloCardComponent {
 @Component({
   selector: 'app-float-card',
   standalone: true,
-  imports: [CommonModule, SigCardComponent, NgOptimizedImage],
+  imports: [SigCardComponent, NgOptimizedImage],
   template: `
     <div style="position: relative; z-index: 1;" 
          [style.width.px]="w" 

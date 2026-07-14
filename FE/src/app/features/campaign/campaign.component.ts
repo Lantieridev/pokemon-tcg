@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom, forkJoin } from 'rxjs';
 
@@ -51,7 +51,7 @@ function validateDeck(deck: DeckSummaryDTO): ValidatedDeck {
 @Component({
   selector: 'app-campaign',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './campaign.component.html',
   styleUrl: './campaign.component.css',
 })

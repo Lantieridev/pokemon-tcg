@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { PublicProfileDTO } from '../../../core/models/friends.models';
 import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
@@ -8,7 +8,7 @@ import { StatComponent, IconComponent, TrainerChipComponent } from '../../ui/ui-
 @Component({
   selector: 'app-public-profile-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatComponent, IconComponent],
+  imports: [FormsModule, StatComponent, IconComponent],
   templateUrl: './public-profile-modal.component.html',
   styleUrls: ['./public-profile-modal.component.css']
 })

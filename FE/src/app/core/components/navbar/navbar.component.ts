@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, OnDestroy, signal, 
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, map, takeUntil } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService, UserProfileResponseDTO } from '../../services/profile.service';
@@ -19,7 +19,7 @@ import { Subject } from 'rxjs';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoComponent, TrainerChipComponent, BallIconComponent, CoinIconComponent, FriendsSidebarComponent, PublicProfileModalComponent, ChatModalComponent],
+  imports: [RouterModule, LogoComponent, TrainerChipComponent, BallIconComponent, CoinIconComponent, FriendsSidebarComponent, PublicProfileModalComponent, ChatModalComponent],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush

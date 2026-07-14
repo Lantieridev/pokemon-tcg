@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { IconComponent, CoinIconComponent } from '../../shared/ui/ui-kit.components';
 import { StoreService, StoreItemDTO } from '../../core/services/store.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -12,7 +12,7 @@ import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 @Component({
   selector: 'app-store',
   standalone: true,
-  imports: [CommonModule, CoinIconComponent, HoloCardComponent],
+  imports: [CoinIconComponent, HoloCardComponent],
   templateUrl: './store.component.html',
   styleUrl: './store.component.css'
 })

@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { EnergyTypeComponent, IconComponent } from '../../../shared/ui/ui-kit.components';
 import { Router } from '@angular/router';
@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-deck-rail',
   standalone: true,
-  imports: [CommonModule, RouterModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
+  imports: [RouterModule, EnergyTypeComponent, IconComponent, NgOptimizedImage],
   template: `
     <div class="deck-dock fu" style="animation-delay: .3s;">
       <div style="flex: 0 0 auto;">

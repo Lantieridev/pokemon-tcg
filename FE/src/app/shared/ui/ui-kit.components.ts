@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter, signal, HostListener, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-glyph-icon',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <svg [attr.width]="s" [attr.height]="s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       @switch (n) {
@@ -49,7 +49,7 @@ export class LogoComponent { }
 @Component({
   selector: 'app-trainer-chip',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   template: `
     <div style="position: relative;">
       <div class="chip" (click)="toggle()" style="cursor: pointer; user-select: none;"
@@ -292,7 +292,7 @@ export class CoinIconComponent {
 @Component({
   selector: 'app-battle-cta',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [IconComponent],
   template: `
     @if (_searching()) {
       <div class="cta cta--searching">

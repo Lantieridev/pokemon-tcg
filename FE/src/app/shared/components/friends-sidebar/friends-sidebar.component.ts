@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, Output, EventEmitter, input, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { FriendsApiService } from '../../../core/services/friends-api.service';
 import { FriendsWsService } from '../../../core/services/friends-ws.service';
@@ -9,7 +9,7 @@ import { ToastService } from '../../../core/services/toast.service';
 @Component({
   selector: 'app-friends-sidebar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './friends-sidebar.component.html',
   styleUrls: ['./friends-sidebar.component.css']
 })

@@ -8,13 +8,13 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { PokemonTcgService } from '../../../core/services/pokemon-tcg.service';
 
 @Component({
   selector: 'app-card-selection-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Full-screen overlay -->

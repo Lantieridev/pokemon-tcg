@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RankingService, RankingDto } from '../../core/services/ranking.service';
 import { AmbientComponent, SparksComponent, IconComponent } from '../../shared/ui/ui-kit.components';
 
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [CommonModule, AmbientComponent, SparksComponent],
+  imports: [AmbientComponent, SparksComponent],
   templateUrl: './ranking.component.html',
   styleUrl: './ranking.component.css'
 })

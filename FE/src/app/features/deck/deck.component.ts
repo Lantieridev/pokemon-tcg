@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PokemonTcgService } from '../../core/services/pokemon-tcg.service';
 import { DeckStore } from '../../core/store/deck.store';
@@ -23,7 +23,7 @@ interface Filters {
 @Component({
   selector: 'app-deck',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AmbientComponent, IconComponent, NgOptimizedImage, HoloCardComponent],
+  imports: [FormsModule, RouterModule, AmbientComponent, IconComponent, NgOptimizedImage, HoloCardComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="scene v-default" style="position: fixed; inset: 0; z-index: 9999; overflow: hidden; display: flex; flex-direction: column;">

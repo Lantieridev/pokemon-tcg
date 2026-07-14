@@ -9,7 +9,7 @@ import {
   effect,
   ChangeDetectorRef,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import {
   LogoComponent,
@@ -42,7 +42,6 @@ type PrivateMode = 'create' | 'join';
   selector: 'app-lobby',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     RankCrestComponent,
@@ -53,8 +52,8 @@ type PrivateMode = 'create' | 'join';
     HoloCardComponent,
     FloatCardComponent,
     DeckRailComponent,
-    BattleCtaComponent,
-  ],
+    BattleCtaComponent
+],
   encapsulation: ViewEncapsulation.None,
   styles: [`
     /* ── Lobby Match Panel ─────────────────────────────────────────────── */
