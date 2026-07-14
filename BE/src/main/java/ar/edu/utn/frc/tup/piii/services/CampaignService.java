@@ -31,7 +31,7 @@ public class CampaignService {
     private static final int DECK_SIZE = 60;
     private static final String ENERGY_GRASS = "xy1-132";
     private static final String ENERGY_LIGHTNING = "xy1-135";
-    private static final String ENERGY_FIRE = "xy1-131";
+    private static final String ENERGY_FIRE = "xy1-133";
     private static final String PROFESSORS_LETTER = "xy1-123";
 
     // Configuración estática de los gimnasios
