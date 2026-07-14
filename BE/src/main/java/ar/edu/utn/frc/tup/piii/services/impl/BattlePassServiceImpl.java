@@ -9,14 +9,17 @@ import ar.edu.utn.frc.tup.piii.persistence.repository.BattlePassLevelRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserBattlePassRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.BattlePassService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class BattlePassServiceImpl implements BattlePassService {
 
@@ -148,7 +151,7 @@ public class BattlePassServiceImpl implements BattlePassService {
 
     private void grantReward(UserEntity user, String type, Integer amount, String value) {
         if (type == null) return;
-        switch (type.toUpperCase()) {
+        switch (type.toUpperCase(Locale.ROOT)) {
             case "COINS" -> {
                 int coins = user.getPokecoins() != null ? user.getPokecoins() : 0;
                 user.setPokecoins(coins + (amount != null ? amount : 0));
@@ -160,7 +163,7 @@ public class BattlePassServiceImpl implements BattlePassService {
                 
                 String packKey = "pack_comun";
                 if (value != null && !value.trim().isEmpty()) {
-                    String norm = java.text.Normalizer.normalize(value.toLowerCase(), java.text.Normalizer.Form.NFD);
+                    String norm = java.text.Normalizer.normalize(value.toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD);
                     norm = norm.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
                     norm = norm.replaceAll("\\s+", "_");
                     norm = norm.replaceAll("[^a-z0-9_]", "");
@@ -174,6 +177,7 @@ public class BattlePassServiceImpl implements BattlePassService {
             case "AVATAR" -> {
                 if (value != null) user.getUnlockedAvatars().add(value);
             }
+            default -> log.warn("Unrecognized battle pass reward type '{}' for user {}", type, user.getUsername());
         }
     }
 
