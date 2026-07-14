@@ -28,16 +28,22 @@ public class CampaignService {
     private final CardResolutionService cardResolutionService;
     private final DeckService deckService;
 
+    private static final int DECK_SIZE = 60;
+    private static final String ENERGY_GRASS = "xy1-132";
+    private static final String ENERGY_LIGHTNING = "xy1-135";
+    private static final String ENERGY_FIRE = "xy1-131";
+    private static final String PROFESSORS_LETTER = "xy1-123";
+
     // Configuración estática de los gimnasios
     public static final List<CampaignNodeInfo> NODES = List.of(
-        new CampaignNodeInfo(1, "Gimnasio Plateada - Brock", "Bot-Brock", "xy1-132", Map.of("xy1-12", 4, "xy1-13", 4, "xy1-123", 4, "xy1-125", 4, "xy1-132", 44), 50, 100), // Mazo Planta/Roca simple
-        new CampaignNodeInfo(2, "Gimnasio Celeste - Misty", "Bot-Misty", "xy1-132", Map.of("xy1-31", 4, "xy1-33", 4, "xy1-35", 4, "xy1-123", 4, "xy1-132", 44), 100, 150), // Mazo Agua
-        new CampaignNodeInfo(3, "Gimnasio Carmín - Lt. Surge", "Bot-LtSurge", "xy1-135", Map.of("xy1-42", 4, "xy1-43", 4, "xy1-123", 4, "xy1-125", 4, "xy1-135", 44), 150, 200), // Mazo Rayo
-        new CampaignNodeInfo(4, "Gimnasio Azuliza - Erika", "Bot-Erika", "xy1-132", Map.of("xy1-12", 4, "xy1-14", 2, "xy1-123", 4, "xy1-128", 4, "xy1-132", 46), 200, 250), // Mazo Planta
-        new CampaignNodeInfo(5, "Gimnasio Fucsia - Koga", "Bot-Koga", "xy1-131", Map.of("xy1-22", 4, "xy1-20", 4, "xy1-121", 4, "xy1-123", 4, "xy1-131", 44), 250, 300), // Mazo Fuego/Toxina
-        new CampaignNodeInfo(6, "Gimnasio Azafrán - Sabrina", "Bot-Sabrina", "xy1-135", Map.of("xy1-42", 4, "xy1-123", 4, "xy1-127", 4, "xy1-135", 48), 300, 350), // Mazo Rayo/Psíquico
-        new CampaignNodeInfo(7, "Gimnasio Canela - Blaine", "Bot-Blaine", "xy1-131", Map.of("xy1-20", 4, "xy1-22", 2, "xy1-123", 4, "xy1-127", 4, "xy1-131", 46), 350, 400), // Mazo Fuego
-        new CampaignNodeInfo(8, "Gimnasio Verde - Giovanni", "Bot-Giovanni", "xy1-131", Map.of("xy1-20", 4, "xy1-31", 2, "xy1-42", 4, "xy1-123", 4, "xy1-131", 46), 500, 500) // Mazo Multitipo
+        new CampaignNodeInfo(1, "Gimnasio Plateada - Brock", "Bot-Brock", ENERGY_GRASS, Map.of("xy1-12", 4, "xy1-13", 4, PROFESSORS_LETTER, 4, "xy1-125", 4, ENERGY_GRASS, 44), 50, 100), // Mazo Planta/Roca simple
+        new CampaignNodeInfo(2, "Gimnasio Celeste - Misty", "Bot-Misty", ENERGY_GRASS, Map.of("xy1-31", 4, "xy1-33", 4, "xy1-35", 4, PROFESSORS_LETTER, 4, ENERGY_GRASS, 44), 100, 150), // Mazo Agua
+        new CampaignNodeInfo(3, "Gimnasio Carmín - Lt. Surge", "Bot-LtSurge", ENERGY_LIGHTNING, Map.of("xy1-42", 4, "xy1-43", 4, PROFESSORS_LETTER, 4, "xy1-125", 4, ENERGY_LIGHTNING, 44), 150, 200), // Mazo Rayo
+        new CampaignNodeInfo(4, "Gimnasio Azuliza - Erika", "Bot-Erika", ENERGY_GRASS, Map.of("xy1-12", 4, "xy1-14", 2, PROFESSORS_LETTER, 4, "xy1-128", 4, ENERGY_GRASS, 46), 200, 250), // Mazo Planta
+        new CampaignNodeInfo(5, "Gimnasio Fucsia - Koga", "Bot-Koga", ENERGY_FIRE, Map.of("xy1-22", 4, "xy1-20", 4, "xy1-121", 4, PROFESSORS_LETTER, 4, ENERGY_FIRE, 44), 250, 300), // Mazo Fuego/Toxina
+        new CampaignNodeInfo(6, "Gimnasio Azafrán - Sabrina", "Bot-Sabrina", ENERGY_LIGHTNING, Map.of("xy1-42", 4, PROFESSORS_LETTER, 4, "xy1-127", 4, ENERGY_LIGHTNING, 48), 300, 350), // Mazo Rayo/Psíquico
+        new CampaignNodeInfo(7, "Gimnasio Canela - Blaine", "Bot-Blaine", ENERGY_FIRE, Map.of("xy1-20", 4, "xy1-22", 2, PROFESSORS_LETTER, 4, "xy1-127", 4, ENERGY_FIRE, 46), 350, 400), // Mazo Fuego
+        new CampaignNodeInfo(8, "Gimnasio Verde - Giovanni", "Bot-Giovanni", ENERGY_FIRE, Map.of("xy1-20", 4, "xy1-31", 2, "xy1-42", 4, PROFESSORS_LETTER, 4, ENERGY_FIRE, 46), 500, 500) // Mazo Multitipo
     );
 
     public record CampaignNodeInfo(
@@ -148,15 +154,15 @@ public class CampaignService {
         }
 
         // Rellenar defensivamente con energía básica si faltan cartas para completar 60
-        if (deck.size() < 60) {
-            int missing = 60 - deck.size();
+        if (deck.size() < DECK_SIZE) {
+            int missing = DECK_SIZE - deck.size();
             addCardsToDeck(deck, node.fallbackEnergyId(), missing);
         }
 
         // Si por alguna razón sigue sin completar (ej: fallan las cartas en BD), rellenamos con lo que sea que haya
-        if (deck.size() < 60) {
-            int missing = 60 - deck.size();
-            addCardsToDeck(deck, "xy1-131", missing); // Relleno genérico de fuego
+        if (deck.size() < DECK_SIZE) {
+            int missing = DECK_SIZE - deck.size();
+            addCardsToDeck(deck, ENERGY_FIRE, missing); // Relleno genérico de fuego
         }
 
         return deck;
