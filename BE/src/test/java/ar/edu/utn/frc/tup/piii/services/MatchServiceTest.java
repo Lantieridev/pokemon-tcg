@@ -28,11 +28,16 @@ import ar.edu.utn.frc.tup.piii.services.ChatService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -181,6 +186,49 @@ class MatchServiceTest {
                 any(ar.edu.utn.frc.tup.piii.engine.model.Action.class),
                 any(ar.edu.utn.frc.tup.piii.engine.manager.TurnManager.class));
         order.verify(persistence).save(any(GameStateSnapshot.class));
+    }
+
+    @Test
+    void shouldHoldSessionLockForEntireProcessActionCriticalSection() throws InterruptedException {
+        // ADR-5's lock contract has never been exercised under real concurrency before this
+        // test — every other test in this class only checks mock call ORDER on a single
+        // thread, which proves nothing about whether the lock actually excludes a second
+        // caller. This test proves it directly: while a worker thread is inside
+        // processAction (blocked mid-apply by the latch below), a second attempt to acquire
+        // the SAME session lock from this test thread must fail immediately, and must
+        // succeed only after the worker returns.
+        final ActionRequestDTO dto = new ActionRequestDTO(
+                ActionType.RETREAT, null, null, null, null, null);
+        when(facade.toEngineAction(any(), any(Integer.class), any())).thenReturn(
+                new ar.edu.utn.frc.tup.piii.engine.model.RetreatAction(board.getActivePokemon(0)));
+        when(ruleValidator.validate(any(), any(Integer.class))).thenReturn(new ValidationResult.Valid());
+
+        final CountDownLatch insideCriticalSection = new CountDownLatch(1);
+        final CountDownLatch releaseWorker = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            insideCriticalSection.countDown();
+            releaseWorker.await(2, TimeUnit.SECONDS);
+            return null;
+        }).when(facade).apply(any(), any(), any());
+
+        final Thread worker = new Thread(() -> matchService.processAction(MATCH_ID, PLAYER_A_ID, dto));
+        worker.start();
+        assertTrue(insideCriticalSection.await(2, TimeUnit.SECONDS),
+                "worker thread never reached the critical section");
+
+        final boolean acquiredWhileWorkerHoldsIt = session.getLock().tryLock();
+        if (acquiredWhileWorkerHoldsIt) {
+            session.getLock().unlock();
+        }
+        assertFalse(acquiredWhileWorkerHoldsIt,
+                "session lock was available while processAction should still be holding it");
+
+        releaseWorker.countDown();
+        worker.join(2000);
+
+        assertTrue(session.getLock().tryLock(500, TimeUnit.MILLISECONDS),
+                "session lock was not released after processAction returned");
+        session.getLock().unlock();
     }
 
     @Test

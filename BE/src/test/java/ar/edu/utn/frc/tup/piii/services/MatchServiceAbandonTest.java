@@ -23,17 +23,21 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -237,5 +241,55 @@ class MatchServiceAbandonTest {
         assertEquals(15, winner.getBattlePoints()); // 5 already earned + 10 for this ranked win
         verify(userRepository).save(winner);
         verify(penaltyService).applyRankedBan(PLAYER_A_ID, 15);
+    }
+
+    @Test
+    void shouldHoldSessionLockForEntireAbandonMatchCriticalSection() throws InterruptedException {
+        // Same gap as processAction: nothing exercised abandonMatch's lock under real
+        // concurrency before this test. persistence.saveMatch() is called unconditionally,
+        // early, inside the lock - a convenient hook to block a worker thread mid-critical-
+        // section and prove a second lock acquisition attempt fails while it's held.
+        final CountDownLatch insideCriticalSection = new CountDownLatch(1);
+        final CountDownLatch releaseWorker = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            insideCriticalSection.countDown();
+            releaseWorker.await(2, TimeUnit.SECONDS);
+            return null;
+        }).when(persistence).saveMatch(any());
+
+        final Thread worker = new Thread(() -> matchService.surrenderMatch(MATCH_ID, PLAYER_A_ID));
+        worker.start();
+        assertTrue(insideCriticalSection.await(2, TimeUnit.SECONDS),
+                "worker thread never reached the critical section");
+
+        final boolean acquiredWhileWorkerHoldsIt = session.getLock().tryLock();
+        if (acquiredWhileWorkerHoldsIt) {
+            session.getLock().unlock();
+        }
+        assertFalse(acquiredWhileWorkerHoldsIt,
+                "session lock was available while abandonMatch should still be holding it");
+
+        releaseWorker.countDown();
+        worker.join(2000);
+
+        assertTrue(session.getLock().tryLock(500, TimeUnit.MILLISECONDS),
+                "session lock was not released after abandonMatch returned");
+        session.getLock().unlock();
+    }
+
+    @Test
+    void shouldNotReprocessAnAlreadyFinishedMatchOnAbandon() {
+        // abandonMatch's FINISHED-state guard has never been exercised. Without it (or if a
+        // split accidentally dropped it), calling surrenderMatch twice - or a timeout racing
+        // with a manual surrender - would re-run reward/penalty accounting and re-broadcast
+        // a second "match finished" event for a match that's already over.
+        session.finish();
+        session.setWinnerId(PLAYER_B_ID);
+
+        matchService.surrenderMatch(MATCH_ID, PLAYER_A_ID);
+
+        verify(persistence, never()).saveMatch(any());
+        verify(penaltyService, never()).registerMatchFinished(anyString(), org.mockito.ArgumentMatchers.anyBoolean());
+        verify(registry, never()).remove(MATCH_ID);
     }
 }
