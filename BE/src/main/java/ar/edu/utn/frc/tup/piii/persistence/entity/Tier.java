@@ -11,6 +11,15 @@ public enum Tier {
     MASTER("Master", 7),
     GRANDMASTER("Grandmaster", 8);
 
+    private static final int MIN_RANKED_MATCHES = 10;
+    private static final int IRON_MAX_MMR = 1200;
+    private static final int BRONZE_MAX_MMR = 1400;
+    private static final int SILVER_MAX_MMR = 1600;
+    private static final int GOLD_MAX_MMR = 1800;
+    private static final int PLATINUM_MAX_MMR = 2000;
+    private static final int DIAMOND_MAX_MMR = 2200;
+    private static final int MASTER_MAX_MMR = 2400;
+
     private final String name;
     private final int rank;
 
@@ -32,28 +41,28 @@ public enum Tier {
     }
 
     public static Tier fromMmrAndMatches(final Integer mmr, final Integer matchesPlayed) {
-        if (mmr == null || matchesPlayed == null || matchesPlayed < 10) {
+        if (mmr == null || matchesPlayed == null || matchesPlayed < MIN_RANKED_MATCHES) {
             return UNRANKED;
         }
-        if (mmr < 1200) {
+        if (mmr < IRON_MAX_MMR) {
             return IRON;
         }
-        if (mmr < 1400) {
+        if (mmr < BRONZE_MAX_MMR) {
             return BRONZE;
         }
-        if (mmr < 1600) {
+        if (mmr < SILVER_MAX_MMR) {
             return SILVER;
         }
-        if (mmr < 1800) {
+        if (mmr < GOLD_MAX_MMR) {
             return GOLD;
         }
-        if (mmr < 2000) {
+        if (mmr < PLATINUM_MAX_MMR) {
             return PLATINUM;
         }
-        if (mmr < 2200) {
+        if (mmr < DIAMOND_MAX_MMR) {
             return DIAMOND;
         }
-        if (mmr < 2400) {
+        if (mmr < MASTER_MAX_MMR) {
             return MASTER;
         }
         return GRANDMASTER;
