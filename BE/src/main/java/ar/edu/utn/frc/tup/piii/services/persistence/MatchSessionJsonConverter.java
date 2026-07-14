@@ -97,7 +97,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                         cleanData = OBJECT_MAPPER.readValue(cleanData, String.class).trim();
                         continue;
                     } catch (IOException e) {
-                        log.debug("Could not unwrap double-encoded MatchSession JSON string, using it as-is: {}", e.getMessage());
+                        log.warn("Could not unwrap double-encoded MatchSession JSON string, using it as-is: {}", e.getMessage());
                         break;
                     }
                 }
@@ -311,7 +311,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                                 turnsInPlay.put(bench.get(index), val);
                             }
                         } catch (NumberFormatException e) {
-                            log.debug("Ignoring turnsInPlay key with invalid bench index: {}", key);
+                            log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
                         }
                     }
                 }
@@ -450,7 +450,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                                 turnsInPlay.put(benched.get(index), val);
                             }
                         } catch (NumberFormatException e) {
-                            log.debug("Ignoring turnsInPlay key with invalid bench index: {}", key);
+                            log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
                         }
                     }
                 }
