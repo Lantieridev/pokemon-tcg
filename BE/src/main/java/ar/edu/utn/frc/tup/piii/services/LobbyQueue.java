@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.services;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,6 +20,7 @@ public final class LobbyQueue {
 
     private static final String ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int ROOM_CODE_LENGTH = 6;
+    private static final int RANKED_MMR_TOLERANCE = 100;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /** FIFO queue of players waiting for a public casual match. */
@@ -99,11 +101,9 @@ public final class LobbyQueue {
     public Optional<QueueEntry> pollOpponent(final String requestingPlayerId) {
         // Iterate to find the first entry that belongs to a different player
         for (final QueueEntry entry : publicQueue) {
-            if (!entry.playerId().equals(requestingPlayerId)) {
-                // Remove it atomically; if another thread already removed it, skip
-                if (publicQueue.remove(entry)) {
-                    return Optional.of(entry);
-                }
+            // Remove it atomically; if another thread already removed it, skip
+            if (!entry.playerId().equals(requestingPlayerId) && publicQueue.remove(entry)) {
+                return Optional.of(entry);
             }
         }
         return Optional.empty();
@@ -114,12 +114,10 @@ public final class LobbyQueue {
      */
     public Optional<RankedQueueEntry> pollRankedOpponent(final String requestingPlayerId, final int requestingMmr) {
         for (final RankedQueueEntry entry : rankedQueue) {
-            if (!entry.playerId().equals(requestingPlayerId)) {
-                if (Math.abs(entry.mmr() - requestingMmr) <= 100) {
-                    if (rankedQueue.remove(entry)) {
-                        return Optional.of(entry);
-                    }
-                }
+            if (!entry.playerId().equals(requestingPlayerId)
+                    && Math.abs(entry.mmr() - requestingMmr) <= RANKED_MMR_TOLERANCE
+                    && rankedQueue.remove(entry)) {
+                return Optional.of(entry);
             }
         }
         return Optional.empty();
@@ -174,7 +172,7 @@ public final class LobbyQueue {
      * @return an Optional containing the room entry, or empty if not found
      */
     public Optional<RoomEntry> consumeRoom(final String roomCode) {
-        final RoomEntry entry = privateRooms.remove(roomCode.toUpperCase());
+        final RoomEntry entry = privateRooms.remove(roomCode.toUpperCase(Locale.ROOT));
         return Optional.ofNullable(entry);
     }
 
