@@ -17,6 +17,7 @@ import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage;
 import ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest;
 import ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class BotDecisionService {
+
+    private static final int MAX_BENCH_SIZE = 5;
+    private static final long MOVE_VISIBILITY_DELAY_MS = 1500;
 
     private final MatchSessionRegistry registry;
     private final MatchService matchService;
@@ -40,12 +45,7 @@ public class BotDecisionService {
 
     @Async
     public void evaluateAndPlay(String matchId) {
-        try {
-            // Artificial delay to make bot moves visible
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        pauseForVisibility();
 
         Optional<MatchSession> sessionOpt = registry.find(matchId);
         if (sessionOpt.isEmpty()) {
@@ -57,60 +57,75 @@ public class BotDecisionService {
             return; // Game over
         }
 
-        int botIndex = -1;
-        for (int i = 0; i < session.getPlayerIds().size(); i++) {
-            if (session.getPlayerIds().get(i).startsWith("Bot-")) {
-                botIndex = i;
-                break;
-            }
-        }
-
+        int botIndex = findBotIndex(session);
         if (botIndex == -1) {
             return; // No bot in this session
         }
-
         String botId = session.getPlayerIds().get(botIndex);
-        final int finalBotIndex = botIndex;
 
         // 1. Mandatory Promotion (XY1 Rulebook §2)
         if (session.isAwaitingPromotion()) {
-            if (session.getPromotingPlayerIndex() == finalBotIndex) {
-                ActionRequestDTO promotion = tryPromoteActive(session, finalBotIndex).orElse(null);
-                if (promotion != null) {
-                    sendAction(matchId, botId, promotion);
-                }
-            }
+            handlePendingPromotion(session, botIndex, matchId, botId);
             return; // Wait until promotion is resolved
         }
 
         // 2. Pending Selection Request (e.g. from Trainers like Professor's Letter)
         if (session.getPendingSelectionRequest() != null) {
-            if (session.getTurnManager().activePlayerIndex() == finalBotIndex) {
-                ActionRequestDTO selection = trySelectCards(session, finalBotIndex).orElse(
-                    new ActionRequestDTO(ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList())
-                );
-                sendAction(matchId, botId, selection);
-            }
+            handlePendingSelection(session, botIndex, matchId, botId);
             return; // Wait until selection is resolved
         }
 
-        if (session.getTurnManager().activePlayerIndex() != finalBotIndex) {
+        if (session.getTurnManager().activePlayerIndex() != botIndex) {
             return; // Not bot's turn
         }
 
-        // Action Priority Sequence
-        Optional<ActionRequestDTO> nextAction = tryEvolve(session, finalBotIndex)
-                .or(() -> tryPlayTrainer(session, finalBotIndex))
-                .or(() -> tryPlaceBench(session, finalBotIndex))
-                .or(() -> tryAttachEnergy(session, finalBotIndex))
-                .or(() -> tryRetreat(session, finalBotIndex))
-                .or(() -> tryAttack(session, finalBotIndex));
+        playNextAction(session, botIndex, matchId, botId);
+    }
 
-        if (nextAction.isPresent()) {
-            sendAction(matchId, botId, nextAction.get());
-        } else {
-            sendAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
+    private void pauseForVisibility() {
+        try {
+            Thread.sleep(MOVE_VISIBILITY_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+    }
+
+    private int findBotIndex(MatchSession session) {
+        for (int i = 0; i < session.getPlayerIds().size(); i++) {
+            if (session.getPlayerIds().get(i).startsWith("Bot-")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void handlePendingPromotion(MatchSession session, int botIndex, String matchId, String botId) {
+        if (session.getPromotingPlayerIndex() != botIndex) {
+            return;
+        }
+        tryPromoteActive(session, botIndex).ifPresent(promotion -> sendAction(matchId, botId, promotion));
+    }
+
+    private void handlePendingSelection(MatchSession session, int botIndex, String matchId, String botId) {
+        if (session.getTurnManager().activePlayerIndex() != botIndex) {
+            return;
+        }
+        ActionRequestDTO selection = trySelectCards(session, botIndex).orElse(
+                new ActionRequestDTO(ActionType.SELECT_CARDS, null, null, null, null, null, null, java.util.Collections.emptyList(), null, java.util.Collections.emptyList())
+        );
+        sendAction(matchId, botId, selection);
+    }
+
+    private void playNextAction(MatchSession session, int botIndex, String matchId, String botId) {
+        // Action Priority Sequence
+        Optional<ActionRequestDTO> nextAction = tryEvolve(session, botIndex)
+                .or(() -> tryPlayTrainer(session, botIndex))
+                .or(() -> tryPlaceBench(session, botIndex))
+                .or(() -> tryAttachEnergy(session, botIndex))
+                .or(() -> tryRetreat(session, botIndex))
+                .or(() -> tryAttack(session, botIndex));
+
+        sendAction(matchId, botId, nextAction.orElse(new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null)));
     }
 
     private Optional<ActionRequestDTO> tryPromoteActive(MatchSession session, int botIndex) {
@@ -216,7 +231,7 @@ public class BotDecisionService {
 
     private Optional<ActionRequestDTO> tryPlaceBench(MatchSession session, int botIndex) {
         PlayerRuntime botRuntime = session.getPlayerRuntime(botIndex);
-        if (botRuntime.getBench().size() < 5) {
+        if (botRuntime.getBench().size() < MAX_BENCH_SIZE) {
             List<ActionRequestDTO> candidates = new ArrayList<>();
             for (Card card : botRuntime.getHand().getCards()) {
                 if (card instanceof PokemonCard pc && pc.isBasicPokemon()) {
@@ -279,6 +294,12 @@ public class BotDecisionService {
         return Optional.empty();
     }
 
+    // PMD AvoidCatchingGenericException: toEngineAction()/validate() can throw any of several
+    // unrelated RuntimeException subtypes (missing target, illegal state, illegal argument)
+    // depending on which candidate action is malformed - this method's whole job is "try each
+    // candidate, treat any failure as 'not valid, try the next one'", so catching narrower types
+    // would just miss failure modes without changing behavior. Deliberate, not an oversight.
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private Optional<ActionRequestDTO> findValidAction(MatchSession session, int botIndex, List<ActionRequestDTO> candidates) {
         for (ActionRequestDTO dto : candidates) {
             try {
@@ -287,22 +308,25 @@ public class BotDecisionService {
                 if (result instanceof ValidationResult.Valid) {
                     return Optional.of(dto);
                 }
-            } catch (Exception ignored) {
-                // Exception from toEngineAction if missing targets, etc.
+            } catch (RuntimeException ignored) {
+                // Exception from toEngineAction if missing targets, etc. - try the next candidate.
             }
         }
         return Optional.empty();
     }
 
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private void sendAction(String matchId, String botId, ActionRequestDTO action) {
         try {
             matchService.processAction(matchId, botId, action);
-        } catch (Exception e) {
-            System.err.println("[Bot] Failed action " + action.type() + ": " + e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("[Bot] Failed action {}: {}", action.type(), e.getMessage());
             if (action.type() != ActionType.END_TURN) {
                 try {
                     matchService.processAction(matchId, botId, new ActionRequestDTO(ActionType.END_TURN, null, null, null, null, null));
-                } catch (Exception ignored) {}
+                } catch (RuntimeException fallbackException) {
+                    log.warn("[Bot] Failed fallback END_TURN for match {}: {}", matchId, fallbackException.getMessage());
+                }
             }
         }
     }
