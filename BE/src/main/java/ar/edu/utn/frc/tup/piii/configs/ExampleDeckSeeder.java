@@ -5,14 +5,18 @@ import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class ExampleDeckSeeder implements CommandLineRunner {
+
+    private static final int MIN_DUPLICATES_TO_CLEAN_UP = 1;
 
     private final UserRepository userRepository;
     private final DeckService deckService;
@@ -24,6 +28,11 @@ public class ExampleDeckSeeder implements CommandLineRunner {
         this.deckRepository = deckRepository;
     }
 
+    // PMD AvoidCatchingGenericException: deckService.create() can reject any of the four
+    // starter decks for unrelated reasons (validation, card lookup, duplicate name races)
+    // and this is best-effort startup seeding - one user's failure must log and move on
+    // to the next user, not abort the whole seeding run.
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     @Override
     public void run(String... args) throws Exception {
         List<UserEntity> users = userRepository.findAll();
@@ -35,7 +44,7 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                     .collect(java.util.stream.Collectors.groupingBy(DeckEntity::getName));
             for (java.util.Map.Entry<String, List<DeckEntity>> entry : groupedDecks.entrySet()) {
                 List<DeckEntity> decksWithName = entry.getValue();
-                if (decksWithName.size() > 1) {
+                if (decksWithName.size() > MIN_DUPLICATES_TO_CLEAN_UP) {
                     for (int i = 1; i < decksWithName.size(); i++) {
                         deckRepository.delete(decksWithName.get(i));
                     }
@@ -43,10 +52,10 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                 }
             }
 
-            boolean hasWater = existing.stream().anyMatch(d -> d.getName().equals("Mazo Agua Dev"));
-            boolean hasFire = existing.stream().anyMatch(d -> d.getName().equals("Mazo Fuego Dev"));
-            boolean hasCharizard = existing.stream().anyMatch(d -> d.getName().equals("Mazo Charizard EX Flashfire"));
-            boolean hasFireGrass = existing.stream().anyMatch(d -> d.getName().equals("Mazo Fuego & Planta Flashfire"));
+            boolean hasWater = existing.stream().anyMatch(d -> "Mazo Agua Dev".equals(d.getName()));
+            boolean hasFire = existing.stream().anyMatch(d -> "Mazo Fuego Dev".equals(d.getName()));
+            boolean hasCharizard = existing.stream().anyMatch(d -> "Mazo Charizard EX Flashfire".equals(d.getName()));
+            boolean hasFireGrass = existing.stream().anyMatch(d -> "Mazo Fuego & Planta Flashfire".equals(d.getName()));
 
             try {
                 if (!hasWater) {
@@ -141,9 +150,9 @@ public class ExampleDeckSeeder implements CommandLineRunner {
                     );
                     deckService.create(fireGrassDeck, user.getUsername());
                 }
-                System.out.println(">>> SEEDED DECKS FOR USER: " + user.getUsername() + " <<<");
-            } catch (Exception e) {
-                System.err.println("Failed to seed decks for user " + user.getUsername() + ": " + e.getMessage());
+                log.info(">>> SEEDED DECKS FOR USER: {} <<<", user.getUsername());
+            } catch (RuntimeException e) {
+                log.warn("Failed to seed decks for user {}: {}", user.getUsername(), e.getMessage());
             }
         }
     }
