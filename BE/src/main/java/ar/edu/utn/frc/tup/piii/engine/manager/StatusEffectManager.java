@@ -39,7 +39,7 @@ public class StatusEffectManager {
             StatusEffectType.PRECISION_BAJA
     );
 
-    private final Map<StatusEffectType, StatusEffect> activeEffects = new HashMap<>();
+    private final Map<StatusEffectType, StatusEffect> effectsByType = new HashMap<>();
     private CoinFlipper coinFlipper;
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;
@@ -58,7 +58,6 @@ public class StatusEffectManager {
     private boolean strongGustUsedLastTurn;
     private boolean strongGustUsedLastTurnSetThisTurn;
     private int poisonDamageCounters = 1;
-    private boolean isPrecisionBajaSetThisTurn = false;
 
     /**
      * Constructs a StatusEffectManager with the given CoinFlipper.
@@ -120,9 +119,9 @@ public class StatusEffectManager {
         }
         StatusEffect newEffect = buildEffect(type);
         if (newEffect.isRotationSlot()) {
-            activeEffects.entrySet().removeIf(e -> e.getValue().isRotationSlot());
+            effectsByType.entrySet().removeIf(e -> e.getValue().isRotationSlot());
         }
-        activeEffects.put(type, newEffect);
+        effectsByType.put(type, newEffect);
     }
 
     /**
@@ -141,14 +140,14 @@ public class StatusEffectManager {
      * @param type the type of status effect to remove
      */
     public void remove(final StatusEffectType type) {
-        activeEffects.remove(type);
+        effectsByType.remove(type);
     }
 
     /**
      * Removes all active status effects.
      */
     public void clearAll() {
-        activeEffects.clear();
+        effectsByType.clear();
         this.disabledAttackName = null;
         this.damagePreventedNextTurn = false;
         this.damagePreventedIf60OrLessNextTurn = false;
@@ -174,7 +173,7 @@ public class StatusEffectManager {
      * @return {@code true} if active
      */
     public boolean has(final StatusEffectType type) {
-        return activeEffects.containsKey(type);
+        return effectsByType.containsKey(type);
     }
 
     /**
@@ -183,7 +182,7 @@ public class StatusEffectManager {
      * @return immutable set of active StatusEffectType values
      */
     public Set<StatusEffectType> activeEffects() {
-        return Set.copyOf(activeEffects.keySet());
+        return Set.copyOf(effectsByType.keySet());
     }
 
     /**
@@ -192,7 +191,7 @@ public class StatusEffectManager {
      * @return {@code true} if no active effect blocks attacks
      */
     public boolean canAttack() {
-        return activeEffects.values().stream().noneMatch(StatusEffect::blocksAttack);
+        return effectsByType.values().stream().noneMatch(StatusEffect::blocksAttack);
     }
 
     /**
@@ -204,7 +203,7 @@ public class StatusEffectManager {
         if (retreatBlockedNextTurn) {
             return false;
         }
-        return activeEffects.values().stream().noneMatch(StatusEffect::blocksRetreat);
+        return effectsByType.values().stream().noneMatch(StatusEffect::blocksRetreat);
     }
 
     /**
@@ -256,7 +255,7 @@ public class StatusEffectManager {
     public void processBetweenTurns(final ActivePokemonState pokemon, final boolean isOwnerTurnEnding) {
         List<StatusEffectType> toRemove = new ArrayList<>();
         for (StatusEffectType type : BETWEEN_TURNS_ORDER) {
-            StatusEffect effect = activeEffects.get(type);
+            StatusEffect effect = effectsByType.get(type);
             if (effect != null) {
                 if ((type == StatusEffectType.PARALIZADO || type == StatusEffectType.PRECISION_BAJA) && !isOwnerTurnEnding) {
                     continue;
@@ -267,7 +266,7 @@ public class StatusEffectManager {
                 }
             }
         }
-        toRemove.forEach(activeEffects::remove);
+        toRemove.forEach(effectsByType::remove);
     }
 
 
