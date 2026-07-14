@@ -588,17 +588,6 @@ public final class CardMapper {
             }
         }
 
-        if (lower.contains("discard") && lower.contains("opponent's hand") && lower.contains("until") && lower.contains("card")) {
-            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("until.*\\s+(\\d+)\\s+card").matcher(lower);
-            if (m.find()) {
-                return "discard_opponent_hand_to_limit:" + m.group(1);
-            }
-            return "discard_opponent_hand_to_limit:4";
-        }
-
-        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("trainer") && lower.contains("discard")) {
-            return "discard_trainer_from_opponent_hand";
-        }
         return null;
     }
 
@@ -621,8 +610,24 @@ public final class CardMapper {
             return "move_opponent_counters";
         }
 
+        // Ordering matches the pre-extraction if-chain: this discard check ran between
+        // "move counters" and "basic from discard" below, interleaved with the counter/bench
+        // checks rather than grouped with the other discard checks in inferDiscardEffect().
+        if (lower.contains("discard") && lower.contains("opponent's hand") && lower.contains("until") && lower.contains("card")) {
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("until.*\\s+(\\d+)\\s+card").matcher(lower);
+            if (m.find()) {
+                return "discard_opponent_hand_to_limit:" + m.group(1);
+            }
+            return "discard_opponent_hand_to_limit:4";
+        }
+
         if (lower.contains("basic pok") && lower.contains("opponent's discard") && lower.contains("bench")) {
             return "place_opponent_basic_from_discard";
+        }
+
+        // Same as above: this ran between "basic from discard" and "shuffle" originally.
+        if (lower.contains("reveals") && lower.contains("hand") && lower.contains("trainer") && lower.contains("discard")) {
+            return "discard_trainer_from_opponent_hand";
         }
 
         if (lower.contains("shuffle") && lower.contains("pok") && lower.contains("discard pile into your deck")) {
