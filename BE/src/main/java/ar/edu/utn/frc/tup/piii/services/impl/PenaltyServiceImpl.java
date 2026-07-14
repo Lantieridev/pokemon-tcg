@@ -40,6 +40,10 @@ public class PenaltyServiceImpl implements PenaltyService {
     private static final long LONG_BAN_DAYS = 7;
     private static final int FIRST_MUTE_MATCHES = 1;
     private static final int ESCALATED_MUTE_MATCHES = 3;
+    // Distinct from FIRST_MUTE_MATCHES above: that's the *duration* of a first-offense
+    // mute, this is the *decrement threshold* ("still more than the last match left?").
+    // They coincide at 1 today, but changing one must not silently change the other.
+    private static final int LAST_REMAINING_MUTED_MATCH = 1;
 
     private final ChatReportRepository chatReportRepository;
     private final UserPenaltyRepository userPenaltyRepository;
@@ -332,7 +336,7 @@ public class PenaltyServiceImpl implements PenaltyService {
                 continue;
             }
             final int remaining = penalty.getMatchesRemaining() != null ? penalty.getMatchesRemaining() : 0;
-            if (remaining > FIRST_MUTE_MATCHES) {
+            if (remaining > LAST_REMAINING_MUTED_MATCH) {
                 penalty.setMatchesRemaining(remaining - 1);
                 userPenaltyRepository.save(penalty);
             } else {
