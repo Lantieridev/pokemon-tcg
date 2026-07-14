@@ -1,7 +1,5 @@
 # SDD Módulo 1: Game Engine (Core Logic)
 
-**Responsables:** [Asignar 1 o 2 desarrolladores]
-
 Este es el corazón del juego. El requerimiento más estricto de la consigna es que **el backend es la única fuente de la verdad**. El Game Engine debe validar todas las reglas del juego y ser agnóstico del transporte (WebSockets o Controladores HTTP) y de la persistencia.
 
 ## Objetivo

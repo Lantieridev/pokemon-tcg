@@ -1,7 +1,5 @@
 # SDD Módulo 2: Session & WebSockets
 
-**Responsables:** [Asignar 1 desarrollador]
-
 Este módulo se encarga de la conectividad en tiempo real de la partida, conectando los comandos emitidos por el FrontEnd con las validaciones del Game Engine (Módulo 1).
 
 ## Objetivo

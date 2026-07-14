@@ -1,7 +1,5 @@
 # SDD Módulo 3: Deck Builder & API Integration
 
-**Responsables:** [Asignar 1 desarrollador]
-
 Este módulo provee la integración con la API externa requerida (pokemontcg.io) y valida la creación de mazos para los usuarios, asegurando que se cumplan las reglas de torneo antes de iniciar una partida.
 
 ## Objetivo

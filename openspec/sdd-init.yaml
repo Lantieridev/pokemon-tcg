@@ -9,8 +9,9 @@ stack:
   testing: JUnit 5 + Mockito (via spring-boot-starter-test)
   frontend: Angular 21+
   language: Java
-  db: H2 (runtime), JPA/Hibernate
-  migrations: Flyway or Liquibase
+  db: PostgreSQL (runtime/prod), H2 (test profile), JPA/Hibernate
+  migrations: Flyway
+  security: Spring Security + JWT (jjwt)
   extras:
     - Lombok 1.18.30
     - ModelMapper 3.1.1
@@ -20,33 +21,34 @@ stack:
 
 strict_tdd: true
 test_command: mvn test
+# JaCoCo gate is actually 3-tier (see BE/pom.xml): 90% line + 85% branch scoped to engine/**,
+# plus a 75% instruction floor project-wide. This is the strictest tier, not the whole gate.
 coverage_target: 90%
 
 architecture:
   engine_isolation: true
   fail_fast: true
   patterns:
-    - Strategy
-    - State
-    - Chain of Responsibility
-    - Template Method
-    - Command
+    - Strategy    # AbilityEffect implementations (BigJumpStrategy, DriveOffStrategy, etc.)
+    - State       # TurnPhase sealed interface (DrawPhase/MainPhase/AttackPhase/...)
+    - Chain of Responsibility  # engine/pipeline/ — AttackPipelineStep, 9 concrete steps
+    - Observer    # TurnManager.registerListener/PhaseListener/PhaseEvent
   layers:
     - domain/model
     - service/engine
     - ui/console
   engine_components:
-    - TurnManager       # State Pattern (DRAW, MAIN, ATTACK, BETWEEN_TURNS)
+    - TurnManager       # State Pattern (DRAW, MAIN, ATTACK, BETWEEN_TURNS) + Observer (PhaseListener)
     - RuleValidator     # isValidAction(Action, GameState)
-    - DamageCalculator  # Chain of Responsibility — 7 steps
+    - AttackPipeline    # Chain of Responsibility — 9 steps (ValidationStep..PostDamageEffectsStep)
+    - DamageCalculator  # stateless, fixed 6-step arithmetic formula (not a chain of handlers)
     - StatusEffectManager  # mutually exclusive: Dormido/Confundido/Paralizado; coexist: Quemado+Envenenado
     - VictoryConditionChecker  # prize cards, no bench, empty deck
 
 conventions:
   commits: Conventional Commits (feat/fix/test/docs/refactor/style/chore)
-  branching: Feature Branch Workflow
-  branch_prefixes: [feature/BE-*, fix/BE-*, docs/*, test/*]
-  pr_policy: minimum 1 reviewer (ideally 2), no self-merge, target develop not main
+  repo_ownership: solo (personal portfolio repo — no team review process; see CONTRIBUTING.md)
+  branching: direct commits to main, or short-lived feature branches for larger changes
   naming:
     classes: PascalCase
     methods: camelCase

@@ -1,7 +1,5 @@
 # SDD Módulo 4: Persistencia y Acceso a Datos
 
-**Responsables:** [Asignar 1 desarrollador]
-
 Para mantener la inmutabilidad y la capacidad de auditoría/reconexión descritas en RF-05, el almacenamiento en base de datos debe diseñarse cuidadosamente. 
 
 ## Objetivo

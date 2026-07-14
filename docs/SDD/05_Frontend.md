@@ -1,7 +1,5 @@
 # SDD Módulo 5: Frontend (Angular 21+)
 
-**Responsables:** [Asignar 1 o 2 desarrolladores]
-
 Este módulo provee la interfaz gráfica interactiva, incluyendo el creador de mazos, el lobby de partidas, y el tablero del juego en tiempo real (Game Board).
 
 ## Objetivo
