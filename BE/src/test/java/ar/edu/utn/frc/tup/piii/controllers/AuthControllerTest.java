@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.dtos.auth.AuthLoginRequestDTO;
 import ar.edu.utn.frc.tup.piii.dtos.auth.AuthRegisterRequestDTO;
+import ar.edu.utn.frc.tup.piii.persistence.repository.DeckRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.Filter;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.notNullValue;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 public class AuthControllerTest {
 
     @Autowired
@@ -35,6 +38,9 @@ public class AuthControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DeckRepository deckRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -62,6 +68,13 @@ public class AuthControllerTest {
         matchRepository.deleteAll();
         userCardStatRepository.deleteAll();
         userEnergyStatRepository.deleteAll();
+        userRepository.findAll().forEach(u -> {
+            if (u.getShowcasedDeck() != null) {
+                u.setShowcasedDeck(null);
+                userRepository.save(u);
+            }
+        });
+        deckRepository.deleteAll();
         userRepository.deleteAll();
     }
 
