@@ -25,6 +25,9 @@ import java.util.Objects;
  * <p>Created via the inner {@link Builder}. Effect text defaults to the empty string
  * (no secondary effect) when not specified.</p>
  */
+@SuppressWarnings("PMD.DataClass")
+// Immutable value object passed through the attack pipeline steps; deliberately just holds
+// state (built via Builder) for the steps to read/mutate via its narrow modifier methods.
 public final class AttackContext {
 
     // --- Immutable inputs ---
@@ -57,19 +60,19 @@ public final class AttackContext {
     private AttackContext(final Builder b) {
         this.attacker = b.attacker;
         this.defender = b.defender;
-        this.defenderBench = List.copyOf(b.defenderBench);
+        this.defenderBench = List.copyOf(b.defenderBenchVal);
         this.attack = b.attack;
-        this.effectText = b.effectText;
+        this.effectText = b.effectTextVal;
         this.attackerStatusManager = b.attackerStatusManager;
         this.defenderStatusManager = b.defenderStatusManager;
         this.knockoutHandler = b.knockoutHandler;
         this.coinFlipper = b.coinFlipper;
-        this.stadiumProvider = b.stadiumProvider;
-        this.attackerStats = b.attackerStats;
-        this.defenderStats = b.defenderStats;
-        this.attackerRuntime = b.attackerRuntime;
-        this.defenderRuntime = b.defenderRuntime;
-        this.matchSession = b.matchSession;
+        this.stadiumProvider = b.stadiumProviderVal;
+        this.attackerStats = b.attackerStatsVal;
+        this.defenderStats = b.defenderStatsVal;
+        this.attackerRuntime = b.attackerRuntimeVal;
+        this.defenderRuntime = b.defenderRuntimeVal;
+        this.matchSession = b.matchSessionVal;
     }
 
     // --- Immutable getters ---
@@ -235,14 +238,14 @@ public final class AttackContext {
         private final StatusEffectManager defenderStatusManager;
         private final KnockoutHandler knockoutHandler;
         private final CoinFlipper coinFlipper;
-        private String effectText = "";
-        private List<BattlePokemonState> defenderBench = List.of();
-        private StadiumStateProvider stadiumProvider = () -> null;
-        private MatchStatisticsTracker attackerStats = new MatchStatisticsTracker();
-        private MatchStatisticsTracker defenderStats = new MatchStatisticsTracker();
-        private PlayerRuntime attackerRuntime;
-        private PlayerRuntime defenderRuntime;
-        private MatchSession matchSession;
+        private String effectTextVal = "";
+        private List<BattlePokemonState> defenderBenchVal = List.of();
+        private StadiumStateProvider stadiumProviderVal = () -> null;
+        private MatchStatisticsTracker attackerStatsVal = new MatchStatisticsTracker();
+        private MatchStatisticsTracker defenderStatsVal = new MatchStatisticsTracker();
+        private PlayerRuntime attackerRuntimeVal;
+        private PlayerRuntime defenderRuntimeVal;
+        private MatchSession matchSessionVal;
 
         /**
          * @param attacker              the attacking Pokémon (never null)
@@ -280,7 +283,7 @@ public final class AttackContext {
          * @return this builder
          */
         public Builder effectText(final String effectText) {
-            this.effectText = effectText != null ? effectText : "";
+            this.effectTextVal = effectText != null ? effectText : "";
             return this;
         }
 
@@ -292,7 +295,7 @@ public final class AttackContext {
          * @return this builder
          */
         public Builder defenderBench(final List<BattlePokemonState> bench) {
-            this.defenderBench = bench != null ? bench : List.of();
+            this.defenderBenchVal = bench != null ? bench : List.of();
             return this;
         }
 
@@ -304,36 +307,36 @@ public final class AttackContext {
          * @return this builder
          */
         public Builder stadiumProvider(final StadiumStateProvider provider) {
-            this.stadiumProvider = provider != null ? provider : () -> null;
+            this.stadiumProviderVal = provider != null ? provider : () -> null;
             return this;
         }
 
         public Builder attackerStats(final MatchStatisticsTracker stats) {
             if (stats != null) {
-                this.attackerStats = stats;
+                this.attackerStatsVal = stats;
             }
             return this;
         }
 
         public Builder defenderStats(final MatchStatisticsTracker stats) {
             if (stats != null) {
-                this.defenderStats = stats;
+                this.defenderStatsVal = stats;
             }
             return this;
         }
 
         public Builder attackerRuntime(final PlayerRuntime attackerRuntime) {
-            this.attackerRuntime = attackerRuntime;
+            this.attackerRuntimeVal = attackerRuntime;
             return this;
         }
 
         public Builder defenderRuntime(final PlayerRuntime defenderRuntime) {
-            this.defenderRuntime = defenderRuntime;
+            this.defenderRuntimeVal = defenderRuntime;
             return this;
         }
 
         public Builder matchSession(final MatchSession matchSession) {
-            this.matchSession = matchSession;
+            this.matchSessionVal = matchSession;
             return this;
         }
 
