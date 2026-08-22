@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.services.persistence;
 
+import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchStatisticsTracker;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
@@ -21,9 +22,18 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
+/**
+ * Event listener that asynchronously persists match state, log entries, and player statistics.
+ */
 @Component
+// Suppress CouplingBetweenObjects: event listener orchestrating persistence across domain entities and repositories
+@SuppressWarnings("PMD.CouplingBetweenObjects")
 public class AsyncPersistenceListener {
 
     private static final Logger log = LoggerFactory.getLogger(AsyncPersistenceListener.class);
@@ -126,56 +136,73 @@ public class AsyncPersistenceListener {
         if (user == null || tracker == null) {
             return;
         }
+        updateUserCardStats(user, tracker);
+        updateUserEnergyStats(user, tracker);
+    }
 
-        // 1. Update Card Stats
-        java.util.Set<String> cardIds = new java.util.HashSet<>();
+    private void updateUserCardStats(final UserEntity user, final MatchStatisticsTracker tracker) {
+        final Set<String> cardIds = collectCardIds(tracker);
+        for (final String cardId : cardIds) {
+            if (cardId != null) {
+                updateSingleCardStat(user, cardId, tracker);
+            }
+        }
+    }
+
+    private Set<String> collectCardIds(final MatchStatisticsTracker tracker) {
+        final Set<String> cardIds = new HashSet<>();
         cardIds.addAll(tracker.getPokemonPlayedCounts().keySet());
         cardIds.addAll(tracker.getPokemonDamageDealt().keySet());
         cardIds.addAll(tracker.getPokemonDamageReceived().keySet());
         cardIds.addAll(tracker.getPokemonKOsMade().keySet());
         cardIds.addAll(tracker.getPokemonKOsSuffered().keySet());
+        return cardIds;
+    }
 
-        for (String cardId : cardIds) {
-            if (cardId == null) continue;
-            java.util.List<UserCardStatEntity> stats = userCardStatRepository.findByUserIdAndCardId(user.getId(), cardId);
-            UserCardStatEntity stat = stats.isEmpty() ? null : stats.get(0);
-            if (stat == null) {
-                stat = UserCardStatEntity.builder()
-                        .user(user)
-                        .cardId(cardId)
-                        .timesPlayed(0)
-                        .damageDealt(0)
-                        .damageReceived(0)
-                        .kosMade(0)
-                        .kosSuffered(0)
-                        .build();
-            }
-            stat.setTimesPlayed(stat.getTimesPlayed() + tracker.getPokemonPlayedCounts().getOrDefault(cardId, 0));
-            stat.setDamageDealt(stat.getDamageDealt() + tracker.getPokemonDamageDealt().getOrDefault(cardId, 0));
-            stat.setDamageReceived(stat.getDamageReceived() + tracker.getPokemonDamageReceived().getOrDefault(cardId, 0));
-            stat.setKosMade(stat.getKosMade() + tracker.getPokemonKOsMade().getOrDefault(cardId, 0));
-            stat.setKosSuffered(stat.getKosSuffered() + tracker.getPokemonKOsSuffered().getOrDefault(cardId, 0));
-            userCardStatRepository.save(stat);
+    private void updateSingleCardStat(final UserEntity user, final String cardId, final MatchStatisticsTracker tracker) {
+        final List<UserCardStatEntity> stats = userCardStatRepository.findByUserIdAndCardId(user.getId(), cardId);
+        UserCardStatEntity stat = stats.isEmpty() ? null : stats.get(0);
+        if (stat == null) {
+            stat = UserCardStatEntity.builder()
+                    .user(user)
+                    .cardId(cardId)
+                    .timesPlayed(0)
+                    .damageDealt(0)
+                    .damageReceived(0)
+                    .kosMade(0)
+                    .kosSuffered(0)
+                    .build();
         }
+        stat.setTimesPlayed(stat.getTimesPlayed() + tracker.getPokemonPlayedCounts().getOrDefault(cardId, 0));
+        stat.setDamageDealt(stat.getDamageDealt() + tracker.getPokemonDamageDealt().getOrDefault(cardId, 0));
+        stat.setDamageReceived(stat.getDamageReceived() + tracker.getPokemonDamageReceived().getOrDefault(cardId, 0));
+        stat.setKosMade(stat.getKosMade() + tracker.getPokemonKOsMade().getOrDefault(cardId, 0));
+        stat.setKosSuffered(stat.getKosSuffered() + tracker.getPokemonKOsSuffered().getOrDefault(cardId, 0));
+        userCardStatRepository.save(stat);
+    }
 
-        // 2. Update Energy Stats
-        for (java.util.Map.Entry<ar.edu.utn.frc.tup.piii.engine.model.PokemonType, Integer> entry : tracker.getEnergyAttachedCounts().entrySet()) {
-            ar.edu.utn.frc.tup.piii.engine.model.PokemonType type = entry.getKey();
-            int count = entry.getValue();
-            if (type == null || count <= 0) continue;
-            String typeName = type.name();
-            java.util.List<UserEnergyStatEntity> stats = userEnergyStatRepository.findByUserIdAndEnergyType(user.getId(), typeName);
-            UserEnergyStatEntity stat = stats.isEmpty() ? null : stats.get(0);
-            if (stat == null) {
-                stat = UserEnergyStatEntity.builder()
-                        .user(user)
-                        .energyType(typeName)
-                        .timesPlayed(0)
-                        .build();
+    private void updateUserEnergyStats(final UserEntity user, final MatchStatisticsTracker tracker) {
+        for (final Map.Entry<PokemonType, Integer> entry : tracker.getEnergyAttachedCounts().entrySet()) {
+            final PokemonType type = entry.getKey();
+            final int count = entry.getValue();
+            if (type != null && count > 0) {
+                updateSingleEnergyStat(user, type.name(), count);
             }
-            stat.setTimesPlayed(stat.getTimesPlayed() + count);
-            userEnergyStatRepository.save(stat);
         }
+    }
+
+    private void updateSingleEnergyStat(final UserEntity user, final String typeName, final int count) {
+        final List<UserEnergyStatEntity> stats = userEnergyStatRepository.findByUserIdAndEnergyType(user.getId(), typeName);
+        UserEnergyStatEntity stat = stats.isEmpty() ? null : stats.get(0);
+        if (stat == null) {
+            stat = UserEnergyStatEntity.builder()
+                    .user(user)
+                    .energyType(typeName)
+                    .timesPlayed(0)
+                    .build();
+        }
+        stat.setTimesPlayed(stat.getTimesPlayed() + count);
+        userEnergyStatRepository.save(stat);
     }
 
     private Long parseOrHashId(final String id) {
@@ -183,9 +210,6 @@ public class AsyncPersistenceListener {
         try {
             return Long.parseLong(id);
         } catch (NumberFormatException e) {
-            // Math.abs(int) overflows back to Integer.MIN_VALUE for that one input, still
-            // negative. Widening to long before abs() avoids the overflow (long can represent
-            // -Integer.MIN_VALUE) while leaving every other hashCode's mapping unchanged.
             return Math.abs((long) id.hashCode());
         }
     }

@@ -7,6 +7,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class FirstTurnAttackException extends InvalidTurnPhaseException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Constructs a FirstTurnAttackException with the specified detail message.
      *

@@ -30,6 +30,8 @@ public class UserBattlePassEntity implements Persistable<Long> {
 
     @Transient
     @Builder.Default
+    // PMD False Positive: isNew field name matches isNew() method required by Spring Data Persistable<Long> interface
+    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName")
     private boolean isNew = false;
 
     @Override

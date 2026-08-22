@@ -6,6 +6,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class BenchFullException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public BenchFullException() {
         super("Bench is full: maximum of 5 Pokémon allowed");
     }

@@ -24,15 +24,13 @@ public final class PassiveAbilityRegistry {
      */
     public static int modifyIncomingDamage(final int baseDamage, final AttackContext ctx) {
         int damage = baseDamage;
-        if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.FUR_COAT)) {
-            if (damage > 0) {
-                damage = 20;
-            }
+        if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.FUR_COAT) && damage > 0) {
+            damage = 20;
         }
-        if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.INTIMIDATING_MANE)) {
-            if (ctx.getAttacker() != null && ctx.getAttacker().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
-                damage = 0;
-            }
+        if (ctx.getDefender() != null && hasAbility(ctx.getDefender(), AbilityEffectId.INTIMIDATING_MANE)
+                && ctx.getAttacker() != null
+                && ctx.getAttacker().getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+            damage = 0;
         }
         return damage;
     }
@@ -49,17 +47,12 @@ public final class PassiveAbilityRegistry {
         if (runtime == null) {
             return false;
         }
-        if (runtime.hasAbility(AbilityEffectId.SWEET_VEIL)) {
-            final BattlePokemonState active = runtime.getActivePokemon();
-            if (active != null) {
-                final boolean hasFairyEnergy = active.getAttachedEnergyCards().stream()
-                        .anyMatch(ec -> ec.getEnergyType() == PokemonType.FAIRY || ec.isProvidesAllTypes());
-                if (hasFairyEnergy) {
-                    return true;
-                }
-            }
+        if (!runtime.hasAbility(AbilityEffectId.SWEET_VEIL)) {
+            return false;
         }
-        return false;
+        final BattlePokemonState active = runtime.getActivePokemon();
+        return active != null && active.getAttachedEnergyCards().stream()
+                .anyMatch(ec -> ec.getEnergyType() == PokemonType.FAIRY || ec.isProvidesAllTypes());
     }
 
     private static boolean hasAbility(final BattlePokemonState pokemon, final AbilityEffectId abilityId) {

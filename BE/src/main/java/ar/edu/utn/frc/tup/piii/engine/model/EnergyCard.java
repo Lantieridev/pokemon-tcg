@@ -8,6 +8,7 @@ import java.util.Objects;
  * <p>Special energies may provide multiple energy units ({@link #getEnergyCount()})
  * or count as every type ({@link #isProvidesAllTypes()}).</p>
  */
+@SuppressWarnings("PMD.DataClass") // Immutable domain model representation of an Energy card
 public final class EnergyCard implements Card {
 
     private final String cardId;

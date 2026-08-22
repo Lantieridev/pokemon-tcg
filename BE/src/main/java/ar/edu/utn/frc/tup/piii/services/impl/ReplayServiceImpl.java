@@ -3,7 +3,6 @@ package ar.edu.utn.frc.tup.piii.services.impl;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayEventDTO;
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
 import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
-import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchRepository;
@@ -35,8 +34,9 @@ public class ReplayServiceImpl implements ReplayService {
             throw new IllegalArgumentException("Match ID cannot be null");
         }
 
-        final MatchEntity match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new NoSuchElementException("Match not found with id: " + matchId));
+        if (!matchRepository.existsById(matchId)) {
+            throw new NoSuchElementException("Match not found with id: " + matchId);
+        }
 
         final List<MatchLogEntity> logEntities = matchLogRepository.findByMatchIdOrderByCreatedAtAsc(matchId);
 

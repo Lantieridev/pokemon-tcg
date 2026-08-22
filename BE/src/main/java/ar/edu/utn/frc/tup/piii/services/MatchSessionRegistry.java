@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.services;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class MatchSessionRegistry {
 
-    private final ConcurrentHashMap<String, MatchSession> sessions = new ConcurrentHashMap<>();
+    private final Map<String, MatchSession> sessions = new ConcurrentHashMap<>();
 
     /**
      * Registers a new match session.
