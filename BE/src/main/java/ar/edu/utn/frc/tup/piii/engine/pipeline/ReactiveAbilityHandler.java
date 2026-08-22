@@ -43,11 +43,10 @@ public final class ReactiveAbilityHandler {
      */
     public static void onKnockout(final AttackContext ctx, final BattlePokemonState deceased) {
         final BattlePokemonState attacker = ctx.getAttacker();
-        if (deceased != null && attacker != null && hasAbility(deceased, AbilityEffectId.DESTINY_BURST)) {
-            // Flip a coin. If heads, put 5 damage counters (50 damage) on the attacker.
-            if (ctx.getCoinFlipper() != null && ctx.getCoinFlipper().flip()) {
-                attacker.addDamageCounters(5);
-            }
+        // Flip a coin. If heads, put 5 damage counters (50 damage) on the attacker.
+        if (deceased != null && attacker != null && hasAbility(deceased, AbilityEffectId.DESTINY_BURST)
+                && ctx.getCoinFlipper() != null && ctx.getCoinFlipper().flip()) {
+            attacker.addDamageCounters(5);
         }
     }
 

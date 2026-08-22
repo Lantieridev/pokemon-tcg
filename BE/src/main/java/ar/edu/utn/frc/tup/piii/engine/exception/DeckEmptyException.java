@@ -6,6 +6,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class DeckEmptyException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public DeckEmptyException(final String message) {
         super(message);
     }

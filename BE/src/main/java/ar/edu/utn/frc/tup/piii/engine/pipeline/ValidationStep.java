@@ -39,13 +39,7 @@ public final class ValidationStep implements AttackPipelineStep {
     private boolean hasRequiredEnergy(final List<PokemonType> required, final BattlePokemonState attacker) {
         final List<EnergyCard> energyCards = attacker.getAttachedEnergyCards();
         final List<PokemonType> pool = new java.util.ArrayList<>(attacker.getAttachedEnergies());
-        final List<Boolean> wildcard = new java.util.ArrayList<>();
-        
-        for (final EnergyCard ec : energyCards) {
-            for (int i = 0; i < ec.getEnergyCount(); i++) {
-                wildcard.add(ec.isProvidesAllTypes());
-            }
-        }
+        final List<Boolean> wildcard = buildWildcardFlags(energyCards);
 
         int colorlessRequired = 0;
         for (final PokemonType req : required) {
@@ -53,29 +47,44 @@ public final class ValidationStep implements AttackPipelineStep {
                 colorlessRequired++;
                 continue;
             }
-            boolean satisfied = false;
-            for (int i = 0; i < pool.size(); i++) {
-                if (!wildcard.get(i) && pool.get(i) == req) {
-                    pool.remove(i);
-                    wildcard.remove(i);
-                    satisfied = true;
-                    break;
-                }
-            }
-            if (!satisfied) {
-                for (int i = 0; i < pool.size(); i++) {
-                    if (wildcard.get(i)) {
-                        pool.remove(i);
-                        wildcard.remove(i);
-                        satisfied = true;
-                        break;
-                    }
-                }
-            }
-            if (!satisfied) {
+            if (!consumeMatchingEnergy(pool, wildcard, req)) {
                 return false;
             }
         }
         return pool.size() >= colorlessRequired;
+    }
+
+    private List<Boolean> buildWildcardFlags(final List<EnergyCard> energyCards) {
+        final List<Boolean> wildcard = new java.util.ArrayList<>();
+        for (final EnergyCard ec : energyCards) {
+            for (int i = 0; i < ec.getEnergyCount(); i++) {
+                wildcard.add(ec.isProvidesAllTypes());
+            }
+        }
+        return wildcard;
+    }
+
+    /**
+     * Tries to satisfy a colored energy requirement, preferring an exact-type match before
+     * falling back to a wildcard (Colorless-providing) energy. Mutates {@code pool}/{@code wildcard}
+     * by removing the consumed energy on success.
+     */
+    private boolean consumeMatchingEnergy(final List<PokemonType> pool, final List<Boolean> wildcard,
+            final PokemonType req) {
+        return removeFirstMatch(pool, wildcard, req, false) || removeFirstMatch(pool, wildcard, req, true);
+    }
+
+    private boolean removeFirstMatch(final List<PokemonType> pool, final List<Boolean> wildcard,
+            final PokemonType req, final boolean matchWildcard) {
+        for (int i = 0; i < pool.size(); i++) {
+            final boolean isWildcard = wildcard.get(i);
+            final boolean matches = matchWildcard ? isWildcard : (!isWildcard && pool.get(i) == req);
+            if (matches) {
+                pool.remove(i);
+                wildcard.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 }

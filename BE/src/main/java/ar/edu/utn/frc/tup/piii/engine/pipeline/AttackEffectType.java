@@ -4,6 +4,9 @@ package ar.edu.utn.frc.tup.piii.engine.pipeline;
  * Enumerates every secondary effect an attack may produce after damage resolution (§3 rulebook).
  * Used by {@link AttackEffectResolver} to dispatch the correct handler without switch/instanceof.
  */
+@SuppressWarnings("PMD.ExcessivePublicCount")
+// Enum listing every secondary attack effect defined by the rulebook (§3) — the constant count
+// is domain-inherent, not a design smell to fix by splitting the enum.
 public enum AttackEffectType {
     NONE,
     APPLY_POISON,
