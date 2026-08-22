@@ -34,6 +34,15 @@ public class JpaGameStatePersistence implements GameStatePersistence {
     }
 
     @Override
+    public void logAction(final LogActionEvent event) {
+        if (event != null) {
+            eventPublisher.publishEvent(event);
+        }
+    }
+
+    @Override
+    // Suppress UseObjectForClearerAPI to maintain interface compatibility for callers outside persistence package.
+    @SuppressWarnings("PMD.UseObjectForClearerAPI")
     public void logAction(final String matchId, final int turnNumber, final String playerId, final String actionType, final String result) {
         eventPublisher.publishEvent(new LogActionEvent(matchId, turnNumber, playerId, actionType, result));
     }
@@ -45,4 +54,3 @@ public class JpaGameStatePersistence implements GameStatePersistence {
         // This method is now a no-op to maintain backward compatibility.
     }
 }
-

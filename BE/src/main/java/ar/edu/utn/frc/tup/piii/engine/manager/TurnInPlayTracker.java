@@ -37,6 +37,9 @@ public final class TurnInPlayTracker implements PhaseListener {
      * @param event the phase event fired by TurnManager
      */
     @Override
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.TurnEnded e -> {

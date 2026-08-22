@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -24,6 +26,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    // JWT parsing can throw any of several unchecked exception types (expired, malformed,
+    // unsupported, bad signature, etc.) — all mean the same thing here: skip authentication and
+    // let the request proceed unauthenticated.
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
@@ -31,38 +37,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
+        final String jwt = authHeader.substring(7);
         try {
-            username = jwtUtil.getUsernameFromToken(jwt);
-            
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                
-                if (jwtUtil.validateToken(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-                    
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
-            }
+            authenticateFromToken(jwt, request);
         } catch (Exception e) {
-            System.err.println("Error procesando token JWT: " + e.getMessage());
+            // JWT parsing can throw any of several unchecked exception types (expired,
+            // malformed, unsupported, bad signature, etc.) — all mean the same thing here:
+            // skip authentication and let the request proceed unauthenticated.
+            log.warn("Error procesando token JWT: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateFromToken(final String jwt, final HttpServletRequest request) {
+        final String username = jwtUtil.getUsernameFromToken(jwt);
+        if (username == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+
+        final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+        if (!jwtUtil.validateToken(jwt, userDetails)) {
+            return;
+        }
+
+        final UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+        );
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 }

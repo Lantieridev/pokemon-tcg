@@ -29,7 +29,7 @@ public final class DeckBuilderValidator {
             validateTotalSize(entries);
             validateHasBasicPokemon(entries);
         }
-        validateMaxCopiesPerName(entries, username, deckName);
+        validateMaxCopiesPerName(entries);
         validateAceSpec(entries);
     }
 
@@ -57,7 +57,7 @@ public final class DeckBuilderValidator {
         }
     }
 
-    private void validateMaxCopiesPerName(final List<DeckEntry> entries, final String username, final String deckName) {
+    private void validateMaxCopiesPerName(final List<DeckEntry> entries) {
         final Map<String, Integer> countByName = entries.stream()
                 .filter(e -> !e.isBasicEnergy())
                 .collect(Collectors.toMap(

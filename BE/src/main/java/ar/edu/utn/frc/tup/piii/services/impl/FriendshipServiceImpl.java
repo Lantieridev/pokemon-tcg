@@ -87,7 +87,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     public void acceptFriendRequest(String username, Long friendshipId) {
         FriendshipEntity friendship = getFriendshipForUser(username, friendshipId);
-        if (!friendship.getStatus().equals("PENDING")) {
+        if (!"PENDING".equals(friendship.getStatus())) {
             throw new IllegalArgumentException("Request is not pending");
         }
         if (!friendship.getUser2().getUsername().equals(username)) {
@@ -100,7 +100,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     public void rejectFriendRequest(String username, Long friendshipId) {
         FriendshipEntity friendship = getFriendshipForUser(username, friendshipId);
-        if (!friendship.getStatus().equals("PENDING")) {
+        if (!"PENDING".equals(friendship.getStatus())) {
             throw new IllegalArgumentException("Request is not pending");
         }
         if (!friendship.getUser2().getUsername().equals(username)) {

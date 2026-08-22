@@ -12,6 +12,7 @@ import java.util.Objects;
  * Holds runtime state for a single player in a match.
  * Pure POJO — no Spring imports.
  */
+@SuppressWarnings("PMD.DataClass") // Domain model class representing player runtime state snapshot
 public final class PlayerState {
 
     private final BattlePokemonState activePokemon;

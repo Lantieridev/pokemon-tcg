@@ -5,6 +5,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class InvalidTurnPhaseException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Constructs an InvalidTurnPhaseException with the specified detail message.
      *

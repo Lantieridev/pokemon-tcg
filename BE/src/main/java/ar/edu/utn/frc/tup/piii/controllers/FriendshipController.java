@@ -29,9 +29,9 @@ public class FriendshipController {
     public ResponseEntity<?> sendFriendRequest(Principal principal, @RequestBody FriendshipRequestDTO request) {
         try {
             friendshipService.sendFriendRequest(principal.getName(), request.getTargetUsername());
-            return ResponseEntity.ok(Map.of("message", "Friend request sent successfully"));
+            return messageResponse("Friend request sent successfully");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return errorResponse(e);
         }
     }
 
@@ -49,9 +49,9 @@ public class FriendshipController {
     public ResponseEntity<?> acceptFriendRequest(Principal principal, @PathVariable Long id) {
         try {
             friendshipService.acceptFriendRequest(principal.getName(), id);
-            return ResponseEntity.ok(Map.of("message", "Friend request accepted"));
+            return messageResponse("Friend request accepted");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return errorResponse(e);
         }
     }
 
@@ -59,9 +59,9 @@ public class FriendshipController {
     public ResponseEntity<?> rejectFriendRequest(Principal principal, @PathVariable Long id) {
         try {
             friendshipService.rejectFriendRequest(principal.getName(), id);
-            return ResponseEntity.ok(Map.of("message", "Friend request rejected"));
+            return messageResponse("Friend request rejected");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return errorResponse(e);
         }
     }
 
@@ -69,9 +69,17 @@ public class FriendshipController {
     public ResponseEntity<?> removeFriend(Principal principal, @PathVariable Long id) {
         try {
             friendshipService.removeFriend(principal.getName(), id);
-            return ResponseEntity.ok(Map.of("message", "Friend removed successfully"));
+            return messageResponse("Friend removed successfully");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return errorResponse(e);
         }
+    }
+
+    private ResponseEntity<Map<String, String>> messageResponse(final String message) {
+        return ResponseEntity.ok(Map.of("message", message));
+    }
+
+    private ResponseEntity<Map<String, String>> errorResponse(final IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
     }
 }

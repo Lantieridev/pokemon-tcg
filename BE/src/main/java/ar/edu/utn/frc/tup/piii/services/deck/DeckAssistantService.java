@@ -25,6 +25,11 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.CyclomaticComplexity"})
+// Deck-building assistant: card-pool filtering, evolution-line construction, type/energy
+// balancing, and auto-fill are all steps of one recommendation algorithm and stay small (see
+// addStage2Lines/addStage1Lines/addLeftoverBasics extraction above) — splitting further would
+// scatter one cohesive algorithm across unrelated classes.
 public class DeckAssistantService {
 
     private static final int DECK_SIZE = 60;
@@ -329,7 +334,16 @@ public class DeckAssistantService {
         List<PokemonCard> usedBasic = new ArrayList<>();
         List<List<PokemonCard>> lines = new ArrayList<>();
 
-        // 1. Build Stage 2 lines: Basic -> Stage 1 -> Stage 2
+        addStage2Lines(stage2Cards, stage1Cards, basicCards, usedStage1, usedBasic, lines);
+        addStage1Lines(stage1Cards, basicCards, usedStage1, usedBasic, lines);
+        addLeftoverBasics(basicCards, usedBasic, lines);
+
+        return lines;
+    }
+
+    // Basic -> Stage 1 -> Stage 2
+    private void addStage2Lines(List<PokemonCard> stage2Cards, List<PokemonCard> stage1Cards, List<PokemonCard> basicCards,
+            List<PokemonCard> usedStage1, List<PokemonCard> usedBasic, List<List<PokemonCard>> lines) {
         for (PokemonCard stage2 : stage2Cards) {
             PokemonCard stage1 = findByName(stage1Cards, stage2.getEvolvesFrom());
             PokemonCard basic = stage1 != null ? findByName(basicCards, stage1.getEvolvesFrom()) : null;
@@ -339,8 +353,11 @@ public class DeckAssistantService {
                 usedBasic.add(basic);
             }
         }
+    }
 
-        // 2. Build Stage 1 lines: Basic -> Stage 1
+    // Basic -> Stage 1 (skipping Stage 1 cards already consumed by a Stage 2 line)
+    private void addStage1Lines(List<PokemonCard> stage1Cards, List<PokemonCard> basicCards,
+            List<PokemonCard> usedStage1, List<PokemonCard> usedBasic, List<List<PokemonCard>> lines) {
         for (PokemonCard stage1 : stage1Cards) {
             if (usedStage1.contains(stage1)) {
                 continue;
@@ -351,15 +368,14 @@ public class DeckAssistantService {
                 usedBasic.add(basic);
             }
         }
+    }
 
-        // 3. Leftover basic cards
+    private void addLeftoverBasics(List<PokemonCard> basicCards, List<PokemonCard> usedBasic, List<List<PokemonCard>> lines) {
         for (PokemonCard basic : basicCards) {
             if (!usedBasic.contains(basic)) {
                 lines.add(List.of(basic));
             }
         }
-
-        return lines;
     }
 
     private PokemonCard findByName(List<PokemonCard> candidates, String name) {

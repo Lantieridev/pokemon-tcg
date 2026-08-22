@@ -4,7 +4,9 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -24,13 +26,13 @@ public final class LobbyQueue {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     /** FIFO queue of players waiting for a public casual match. */
-    private final ConcurrentLinkedQueue<QueueEntry> publicQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<QueueEntry> publicQueue = new ConcurrentLinkedQueue<>();
 
     /** FIFO queue of players waiting for a ranked match. */
-    private final ConcurrentLinkedQueue<RankedQueueEntry> rankedQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<RankedQueueEntry> rankedQueue = new ConcurrentLinkedQueue<>();
 
     /** Active private rooms: roomCode → room data. */
-    private final ConcurrentHashMap<String, RoomEntry> privateRooms = new ConcurrentHashMap<>();
+    private final Map<String, RoomEntry> privateRooms = new ConcurrentHashMap<>();
 
     // ── Inner records ─────────────────────────────────────────────────────────
 

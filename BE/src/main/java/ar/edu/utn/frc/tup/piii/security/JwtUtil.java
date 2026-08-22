@@ -45,6 +45,9 @@ public class JwtUtil {
                 .compact();
     }
 
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    // JJWT parsing throws several distinct unchecked exception types (expired, malformed,
+    // unsupported, bad signature, etc.); all mean "not valid" for this boolean check.
     public boolean isValidToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);

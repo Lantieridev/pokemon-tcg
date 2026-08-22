@@ -9,6 +9,7 @@ import java.util.Objects;
  * what the card does when played. The effect is invoked by the game engine after
  * the card has been removed from the player's hand and placed in the discard pile.</p>
  */
+@SuppressWarnings("PMD.DataClass") // Immutable domain model representation of a Trainer card
 public final class TrainerCard implements Card {
 
     private final String cardId;
@@ -24,11 +25,11 @@ public final class TrainerCard implements Card {
         this.cardId = builder.cardId;
         this.name = builder.name;
         this.trainerType = builder.trainerType;
-        this.aceSpec = builder.aceSpec;
-        this.effectText = builder.effectText;
-        this.effectId = builder.effectId;
-        this.effect = builder.effect;
-        this.toolEffectId = builder.toolEffectId;
+        this.aceSpec = builder.aceSpecVal;
+        this.effectText = builder.effectTextVal;
+        this.effectId = builder.effectIdVal;
+        this.effect = builder.effectVal;
+        this.toolEffectId = builder.toolEffectIdVal;
     }
 
     @Override
@@ -87,11 +88,11 @@ public final class TrainerCard implements Card {
         private final String cardId;
         private final String name;
         private final TrainerType trainerType;
-        private boolean aceSpec = false;
-        private String effectText;
-        private TrainerEffectId effectId = TrainerEffectId.NONE;
-        private TrainerEffect effect;
-        private PokemonToolEffectId toolEffectId = PokemonToolEffectId.NONE;
+        private boolean aceSpecVal = false;
+        private String effectTextVal;
+        private TrainerEffectId effectIdVal = TrainerEffectId.NONE;
+        private TrainerEffect effectVal;
+        private PokemonToolEffectId toolEffectIdVal = PokemonToolEffectId.NONE;
 
         public Builder(final String cardId, final String name, final TrainerType trainerType) {
             this.cardId = Objects.requireNonNull(cardId, "cardId must not be null");
@@ -100,17 +101,17 @@ public final class TrainerCard implements Card {
         }
 
         public Builder aceSpec(final boolean isAceSpec) {
-            this.aceSpec = isAceSpec;
+            this.aceSpecVal = isAceSpec;
             return this;
         }
 
-        public Builder effectText(final String effectText) {
-            this.effectText = effectText;
+        public Builder effectText(final String text) {
+            this.effectTextVal = text;
             return this;
         }
 
-        public Builder effectId(final TrainerEffectId effectId) {
-            this.effectId = effectId != null ? effectId : TrainerEffectId.NONE;
+        public Builder effectId(final TrainerEffectId id) {
+            this.effectIdVal = id != null ? id : TrainerEffectId.NONE;
             return this;
         }
 
@@ -121,7 +122,7 @@ public final class TrainerCard implements Card {
          * @return this builder
          */
         public Builder effect(final TrainerEffect trainerEffect) {
-            this.effect = trainerEffect;
+            this.effectVal = trainerEffect;
             return this;
         }
 
@@ -132,7 +133,7 @@ public final class TrainerCard implements Card {
          * @return this builder
          */
         public Builder toolEffectId(final PokemonToolEffectId id) {
-            this.toolEffectId = id != null ? id : PokemonToolEffectId.NONE;
+            this.toolEffectIdVal = id != null ? id : PokemonToolEffectId.NONE;
             return this;
         }
 

@@ -14,6 +14,9 @@ import java.util.List;
  * @param self              full view of the receiving player's state
  * @param opponent          restricted view of the opponent (no card IDs exposed)
  */
+    @SuppressWarnings("PMD.ExcessiveParameterList")
+    // Full WebSocket game-state snapshot; the flat field list is the wire contract, not a design
+    // smell to fix.
     public record GameStateResponseDTO(
         String matchId,
         long version,

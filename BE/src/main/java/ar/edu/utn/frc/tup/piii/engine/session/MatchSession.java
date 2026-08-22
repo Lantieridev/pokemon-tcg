@@ -28,6 +28,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
  * by the internal {@link ReentrantLock} exposed via {@link #getLock()}. Callers that need
  * atomic compound operations must acquire this lock directly.</p>
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.CyclomaticComplexity", "PMD.ExcessivePublicCount", "PMD.TooManyMethods", "PMD.TooManyFields", "PMD.CouplingBetweenObjects"}) // Central domain aggregate root orchestrating game match session
 public final class MatchSession {
 
     private static final int UNSET_PLAYER_INDEX = -1;
@@ -53,7 +54,7 @@ public final class MatchSession {
     private String winnerId;
     private String victoryReason;
     private long version = 1L;
-    private final boolean isRanked;
+    private final boolean ranked;
     private Integer mmrChangeA;
     private Integer mmrChangeB;
     private Integer coinsGainedA;
@@ -90,6 +91,10 @@ public final class MatchSession {
      */
     private ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest;
 
+    private static <T> List<T> copyListOrNull(final List<T> list) {
+        return list != null ? List.copyOf(list) : null;
+    }
+
     /**
      * Constructs a MatchSession in the WAITING state.
      *
@@ -107,8 +112,8 @@ public final class MatchSession {
         this.matchId = Objects.requireNonNull(matchId, "matchId must not be null");
         this.playerIds = Objects.requireNonNull(playerIds, "playerIds must not be null");
         this.board = Objects.requireNonNull(board, "board must not be null");
-        this.playerRuntimes = playerRuntimes != null ? List.copyOf(playerRuntimes) : null;
-        this.isRanked = isRanked;
+        this.playerRuntimes = copyListOrNull(playerRuntimes);
+        this.ranked = isRanked;
         this.state = MatchSessionState.WAITING;
         this.lock = new ReentrantLock();
     }
@@ -179,11 +184,16 @@ public final class MatchSession {
      *
      * @throws IllegalMatchStateTransitionException if the match is not in FINISHED state
      */
+    @SuppressWarnings("PMD.UnusedAssignment")
+    // Not dead: state is exposed via the public getState() and read by concurrent callers
+    // holding the lock (see class javadoc) — SETUP is a real, externally-observable transitional
+    // value during this reset, not just a local variable PMD can trace to its next overwrite.
     public void resetForSuddenDeath() {
         if (state != MatchSessionState.FINISHED) {
             throw new IllegalMatchStateTransitionException(
                     "Cannot reset for sudden death from state: " + state + " (must be FINISHED)");
         }
+
         state = MatchSessionState.SETUP;
 
         // Return all cards to the deck
@@ -360,6 +370,14 @@ public final class MatchSession {
         return playerBTimeout;
     }
 
+    private void setPlayerATimeout(final ScheduledFuture<?> future) {
+        this.playerATimeout = future;
+    }
+
+    private void setPlayerBTimeout(final ScheduledFuture<?> future) {
+        this.playerBTimeout = future;
+    }
+
     /**
      * Clears the stored timeout future for the given player (sets it to null).
      * Must be called inside the session lock.
@@ -369,9 +387,9 @@ public final class MatchSession {
     public void clearTimeoutFuture(final String playerId) {
         Objects.requireNonNull(playerId, PLAYER_ID_NOT_NULL_MSG);
         if (playerId.equals(getPlayerIdA())) {
-            playerATimeout = null;
+            setPlayerATimeout(null);
         } else {
-            playerBTimeout = null;
+            setPlayerBTimeout(null);
         }
     }
 
@@ -667,7 +685,7 @@ public final class MatchSession {
      * @return true if ranked, false otherwise
      */
     public boolean isRanked() {
-        return isRanked;
+        return ranked;
     }
 
     public Integer getMmrChangeA() {

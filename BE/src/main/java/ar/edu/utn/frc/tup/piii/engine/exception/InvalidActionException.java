@@ -5,6 +5,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class InvalidActionException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Constructs an InvalidActionException with the given reason.
      *

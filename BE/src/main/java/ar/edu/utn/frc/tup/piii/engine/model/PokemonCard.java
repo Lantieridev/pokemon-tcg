@@ -8,6 +8,7 @@ import java.util.Objects;
  * Holds all static card properties. Does NOT track mutable battle state
  * (damage counters, attached energies) — that belongs to BattlePokemonState.
  */
+@SuppressWarnings("PMD.DataClass") // Immutable domain model representation of a Pokémon card
 public final class PokemonCard implements Card {
 
     private final String cardId;
@@ -28,14 +29,14 @@ public final class PokemonCard implements Card {
         this.name = builder.name;
         this.hp = builder.hp;
         this.pokemonType = builder.pokemonType;
-        this.weaknessType = builder.weaknessType;
-        this.resistanceType = builder.resistanceType;
-        this.retreatCost = builder.retreatCost;
-        this.ex = builder.ex;
-        this.evolutionStage = builder.evolutionStage;
-        this.evolvesFrom = builder.evolvesFrom;
-        this.abilities = List.copyOf(builder.abilities);
-        this.attacks = List.copyOf(builder.attacks);
+        this.weaknessType = builder.weaknessTypeVal;
+        this.resistanceType = builder.resistanceTypeVal;
+        this.retreatCost = builder.retreatCostVal;
+        this.ex = builder.exVal;
+        this.evolutionStage = builder.evolutionStageVal;
+        this.evolvesFrom = builder.evolvesFromVal;
+        this.abilities = List.copyOf(builder.abilitiesVal);
+        this.attacks = List.copyOf(builder.attacksVal);
     }
 
     @Override
@@ -89,7 +90,6 @@ public final class PokemonCard implements Card {
     }
 
     /** Returns the species name this card evolves from, or null for Basic Pokémon. */
-    /** Returns the species name this card evolves from, or null for Basic Pokémon. */
     public String getEvolvesFrom() {
         return evolvesFrom;
     }
@@ -107,14 +107,14 @@ public final class PokemonCard implements Card {
         private final String name;
         private final int hp;
         private final PokemonType pokemonType;
-        private PokemonType weaknessType;
-        private PokemonType resistanceType;
-        private int retreatCost;
-        private boolean ex;
-        private EvolutionStage evolutionStage = EvolutionStage.BASIC;
-        private String evolvesFrom;
-        private List<Ability> abilities = List.of();
-        private List<Attack> attacks = List.of();
+        private PokemonType weaknessTypeVal;
+        private PokemonType resistanceTypeVal;
+        private int retreatCostVal;
+        private boolean exVal;
+        private EvolutionStage evolutionStageVal = EvolutionStage.BASIC;
+        private String evolvesFromVal;
+        private List<Ability> abilitiesVal = List.of();
+        private List<Attack> attacksVal = List.of();
 
         public Builder(final String cardId,
                        final String name,
@@ -127,42 +127,42 @@ public final class PokemonCard implements Card {
         }
 
         public Builder weaknessType(final PokemonType type) {
-            this.weaknessType = type;
+            this.weaknessTypeVal = type;
             return this;
         }
 
         public Builder resistanceType(final PokemonType type) {
-            this.resistanceType = type;
+            this.resistanceTypeVal = type;
             return this;
         }
 
         public Builder retreatCost(final int cost) {
-            this.retreatCost = cost;
+            this.retreatCostVal = cost;
             return this;
         }
 
         public Builder ex(final boolean isEx) {
-            this.ex = isEx;
+            this.exVal = isEx;
             return this;
         }
 
         public Builder evolutionStage(final EvolutionStage stage) {
-            this.evolutionStage = stage;
+            this.evolutionStageVal = stage;
             return this;
         }
 
         public Builder evolvesFrom(final String species) {
-            this.evolvesFrom = species;
+            this.evolvesFromVal = species;
             return this;
         }
 
         public Builder abilities(final List<Ability> abilityList) {
-            this.abilities = Objects.requireNonNull(abilityList, "abilities must not be null");
+            this.abilitiesVal = Objects.requireNonNull(abilityList, "abilities must not be null");
             return this;
         }
 
         public Builder attacks(final List<Attack> attackList) {
-            this.attacks = Objects.requireNonNull(attackList, "attacks must not be null");
+            this.attacksVal = Objects.requireNonNull(attackList, "attacks must not be null");
             return this;
         }
 

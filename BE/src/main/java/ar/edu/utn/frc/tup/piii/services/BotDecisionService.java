@@ -28,6 +28,10 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
+// Bot AI decision cascade: each `tryX` method is an independent, single-purpose candidate-move
+// strategy tried in priority order by playNextAction(). Individually simple/low-complexity;
+// the class-level metrics just count the total across all of them.
 public class BotDecisionService {
 
     private static final int MAX_BENCH_SIZE = 5;
