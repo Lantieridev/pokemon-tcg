@@ -30,6 +30,7 @@ import ar.edu.utn.frc.tup.piii.services.deck.DeckService;
 public final class LobbyService {
 
     private static final String LOBBY_TOPIC = "/topic/lobby/";
+    private static final String PLAYER_ID_NULL_MESSAGE = "playerId must not be null";
 
     private final LobbyQueue lobbyQueue;
     private final MatchCreationService matchCreationService;
@@ -87,7 +88,7 @@ public final class LobbyService {
      * @throws IllegalArgumentException if {@code deckId} is invalid
      */
     public LobbyResponseDTO joinQueue(final String playerId, final Long deckId, final Boolean isRanked) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NULL_MESSAGE);
         Objects.requireNonNull(deckId, "deckId must not be null");
         deckService.getById(deckId, playerId);
 
@@ -150,7 +151,7 @@ public final class LobbyService {
      * @return {@code true} if the player was removed, {@code false} if they weren't queued
      */
     public boolean leaveQueue(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NULL_MESSAGE);
         return lobbyQueue.removeFromQueue(playerId);
     }
 
@@ -160,7 +161,7 @@ public final class LobbyService {
      * @param playerId the player's username (never null)
      */
     public boolean isInQueue(final String playerId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NULL_MESSAGE);
         return lobbyQueue.isInQueue(playerId);
     }
 
@@ -175,7 +176,7 @@ public final class LobbyService {
      * @return a WAITING response containing the room code
      */
     public LobbyResponseDTO createRoom(final String playerId, final Long deckId) {
-        Objects.requireNonNull(playerId, "playerId must not be null");
+        Objects.requireNonNull(playerId, PLAYER_ID_NULL_MESSAGE);
         Objects.requireNonNull(deckId, "deckId must not be null");
         deckService.getById(deckId, playerId);
 

@@ -29,6 +29,10 @@ import java.util.Map;
  * Strategy pattern already used for reactive/passive abilities in
  * {@code engine.pipeline.abilities}.</p>
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
+// Strategy-map dispatcher: 28 independent per-effect handlers registered in one lookup table.
+// Per-method complexity is low (highest cyclomatic complexity across all handlers is 9); the
+// aggregate class-level metrics only reflect the number of unrelated handlers, not entangled logic.
 public final class SelectionEffectResolver {
 
     /**
@@ -116,19 +120,21 @@ public final class SelectionEffectResolver {
             final BattlePokemonState target = resolveLivePokemon(session, request.target());
             final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
             if (!found.isEmpty()) {
-                Card selectedCard = found.get(0);
-                if (selectedCard instanceof PokemonCard pc && pc.getEvolvesFrom() != null && pc.getEvolvesFrom().equals(target.getName())) {
-                    target.evolveInto(pc);
-                    if (pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
-                        session.setMegaEvolvedThisTurn(true);
-                    }
-                } else {
-                    throw new IllegalArgumentException("Selected card is not a valid evolution for the target");
-                }
+                applyEvosodaEvolution(target, found.get(0), session);
             }
         }
         runtime.getDeck().shuffle();
         return true;
+    }
+
+    private void applyEvosodaEvolution(final BattlePokemonState target, final Card selectedCard, final MatchSession session) {
+        if (!(selectedCard instanceof PokemonCard pc) || pc.getEvolvesFrom() == null || !pc.getEvolvesFrom().equals(target.getName())) {
+            throw new IllegalArgumentException("Selected card is not a valid evolution for the target");
+        }
+        target.evolveInto(pc);
+        if (pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.MEGA) {
+            session.setMegaEvolvedThisTurn(true);
+        }
     }
 
     private boolean selectBounce(final SelectionContext ctx) {
@@ -383,65 +389,90 @@ public final class SelectionEffectResolver {
         return true;
     }
 
+    private static final int ULTRA_BALL_DISCARD_COUNT = 2;
+
     private boolean selectUltraBall(final SelectionContext ctx) {
-        final List<String> selectedIds = ctx.selectedIds();
-        final MatchSession session = ctx.session();
-        final PlayerRuntime runtime = ctx.runtime();
         final ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest request = ctx.request();
         if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND) {
-            if (selectedIds.size() != 2) {
-                throw new IllegalArgumentException("Ultra Ball requires discarding exactly 2 cards");
-            }
-            for (String id : selectedIds) {
-                final Card discarded = runtime.getHand().removeCard(id);
-                if (discarded != null) {
-                    runtime.getDiscardPile().add(discarded);
-                }
-            }
-            // Transition to deck search
-            session.setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(TrainerEffectId.ULTRA_BALL, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
-            return false; // Do NOT resume the main phase yet
-        } else if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
-            if (!selectedIds.isEmpty()) {
-                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
-                if (!found.isEmpty()) {
-                    final Card card = found.get(0);
-                    if (!(card instanceof PokemonCard)) {
-                        throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
-                    }
-                    runtime.getHand().addCard(card);
-                }
-            }
-            runtime.getDeck().shuffle();
+            return selectUltraBallDiscardStep(ctx);
+        }
+        if (request.source() == ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK) {
+            selectUltraBallDeckStep(ctx);
         }
         return true;
+    }
+
+    /** Step 1: discard exactly 2 hand cards, then transition to the deck-search step. */
+    private boolean selectUltraBallDiscardStep(final SelectionContext ctx) {
+        final List<String> selectedIds = ctx.selectedIds();
+        final PlayerRuntime runtime = ctx.runtime();
+        if (selectedIds.size() != ULTRA_BALL_DISCARD_COUNT) {
+            throw new IllegalArgumentException("Ultra Ball requires discarding exactly 2 cards");
+        }
+        for (final String id : selectedIds) {
+            final Card discarded = runtime.getHand().removeCard(id);
+            if (discarded != null) {
+                runtime.getDiscardPile().add(discarded);
+            }
+        }
+        ctx.session().setPendingSelectionRequest(new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                TrainerEffectId.ULTRA_BALL, null, 1, ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DECK));
+        return false; // Do NOT resume the main phase yet
+    }
+
+    /** Step 2: search the deck for the chosen Pokémon card. */
+    private void selectUltraBallDeckStep(final SelectionContext ctx) {
+        final List<String> selectedIds = ctx.selectedIds();
+        final PlayerRuntime runtime = ctx.runtime();
+        if (!selectedIds.isEmpty()) {
+            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+            if (!found.isEmpty()) {
+                final Card card = found.get(0);
+                if (!(card instanceof PokemonCard)) {
+                    throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
+                }
+                runtime.getHand().addCard(card);
+            }
+        }
+        runtime.getDeck().shuffle();
     }
 
     private boolean selectClairvoyantEye(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final List<Card> topCards = runtime.getDeck().drawMultiple(selectedIds.size());
-            final List<Card> reordered = new ArrayList<>();
-            for (String id : selectedIds) {
-                Card foundCard = null;
-                for (Card c : topCards) {
-                    if (c.getCardId().equals(id)) {
-                        foundCard = c;
-                        break;
-                    }
-                }
-                if (foundCard != null) {
-                    topCards.remove(foundCard);
-                    reordered.add(foundCard);
-                }
-            }
-            reordered.addAll(topCards);
-            for (int i = reordered.size() - 1; i >= 0; i--) {
-                runtime.getDeck().addToTop(reordered.get(i));
-            }
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        final List<Card> topCards = runtime.getDeck().drawMultiple(selectedIds.size());
+        final List<Card> reordered = reorderByIdOrder(topCards, selectedIds);
+        for (int i = reordered.size() - 1; i >= 0; i--) {
+            runtime.getDeck().addToTop(reordered.get(i));
         }
         return true;
+    }
+
+    /** Moves the cards matching {@code idsInOrder} to the front (in that order); any leftovers keep their original order at the end. */
+    private List<Card> reorderByIdOrder(final List<Card> cards, final List<String> idsInOrder) {
+        final List<Card> remaining = new ArrayList<>(cards);
+        final List<Card> reordered = new ArrayList<>();
+        for (final String id : idsInOrder) {
+            final Card found = findCardById(remaining, id);
+            if (found != null) {
+                remaining.remove(found);
+                reordered.add(found);
+            }
+        }
+        reordered.addAll(remaining);
+        return reordered;
+    }
+
+    private Card findCardById(final List<Card> cards, final String id) {
+        for (final Card c : cards) {
+            if (c.getCardId().equals(id)) {
+                return c;
+            }
+        }
+        return null;
     }
 
     private boolean selectFlashClaw(final SelectionContext ctx) {
@@ -534,6 +565,9 @@ public final class SelectionEffectResolver {
         return true;
     }
 
+    @SuppressWarnings("PMD.CompareObjectsWithEquals")
+    // Reference identity, not value equality: distinguishes "target is the active slot" from
+    // "target is a bench slot" — two distinct Pokemon can share the same species/name.
     private boolean selectDualBullet(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final MatchSession session = ctx.session();
@@ -596,26 +630,17 @@ public final class SelectionEffectResolver {
         return true;
     }
 
+    private static final String BENCH_DAMAGE_ONE_PREFIX = "bench_damage_one:";
+    private static final int BENCH_DAMAGE_ONE_DEFAULT_AMOUNT = 20;
+
     private boolean selectBenchDamageOne(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final MatchSession session = ctx.session();
         final PlayerRuntime runtime = ctx.runtime();
         final PlayerRuntime opponent = session.getPlayerRuntime(1 - session.getActivePlayerIndex());
-        int damageAmount = 20; // Default fallback
-        if (runtime.getActivePokemon() != null) {
-            for (ar.edu.utn.frc.tup.piii.engine.model.Attack attack : runtime.getActivePokemon().getAttacks()) {
-                String eff = attack.effectText();
-                if (eff != null && eff.startsWith("bench_damage_one:")) {
-                    try {
-                        damageAmount = Integer.parseInt(eff.substring("bench_damage_one:".length()));
-                    } catch (NumberFormatException ignored) {
-                        // keep default fallback
-                    }
-                }
-            }
-        }
-        final int counters = damageAmount / 10;
-        for (BattlePokemonState benched : opponent.getBench().getAll()) {
+
+        final int counters = resolveBenchDamageOneAmount(runtime) / 10;
+        for (final BattlePokemonState benched : opponent.getBench().getAll()) {
             if (selectedIds.contains(benched.getCardId())) {
                 benched.addDamageCounters(counters);
                 if (benched.getDamageCounters() * 10 >= benched.getMaxHp()) {
@@ -624,6 +649,34 @@ public final class SelectionEffectResolver {
             }
         }
         return true;
+    }
+
+    /**
+     * Reads the damage amount off the attacker's own attack effect text, e.g.
+     * {@code "bench_damage_one:30"}. Matches original behavior exactly: if more than one attack
+     * matches the prefix, the LAST one in attack order wins (the loop doesn't stop at the first
+     * match) — preserved here even though it's an unusual shape, to not change real behavior.
+     */
+    private int resolveBenchDamageOneAmount(final PlayerRuntime runtime) {
+        if (runtime.getActivePokemon() == null) {
+            return BENCH_DAMAGE_ONE_DEFAULT_AMOUNT;
+        }
+        int amount = BENCH_DAMAGE_ONE_DEFAULT_AMOUNT;
+        for (final ar.edu.utn.frc.tup.piii.engine.model.Attack attack : runtime.getActivePokemon().getAttacks()) {
+            final String eff = attack.effectText();
+            if (eff != null && eff.startsWith(BENCH_DAMAGE_ONE_PREFIX)) {
+                amount = parseBenchDamageAmount(eff, amount);
+            }
+        }
+        return amount;
+    }
+
+    private int parseBenchDamageAmount(final String effectText, final int fallback) {
+        try {
+            return Integer.parseInt(effectText.substring(BENCH_DAMAGE_ONE_PREFIX.length()));
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
     }
 
     private boolean selectCursedDrop(final SelectionContext ctx) {
@@ -642,6 +695,9 @@ public final class SelectionEffectResolver {
         return true;
     }
 
+    @SuppressWarnings("PMD.CompareObjectsWithEquals")
+    // Reference identity, not value equality: rejects the same slot as its own transfer target,
+    // which two distinct Pokemon of the same species could not be distinguished from by .equals().
     private boolean selectEarInfluence(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final MatchSession session = ctx.session();
@@ -811,19 +867,29 @@ public final class SelectionEffectResolver {
         }
         if (slotId.startsWith("active:")) {
             return player.getActivePokemon();
-        } else if (slotId.startsWith("bench_")) {
-            final int index = Integer.parseInt(slotId.split(":")[0].substring(6));
-            if (index >= 0 && index < player.getBench().getAll().size()) {
-                return player.getBench().getAll().get(index);
-            }
-        } else {
-            if (player.getActivePokemon() != null && player.getActivePokemon().getCardId().equals(slotId)) {
-                return player.getActivePokemon();
-            }
-            for (var benched : player.getBench().getAll()) {
-                if (benched != null && benched.getCardId().equals(slotId)) {
-                    return benched;
-                }
+        }
+        if (slotId.startsWith("bench_")) {
+            return resolveBenchSlotByIndex(player, slotId);
+        }
+        return resolveByCardId(player, slotId);
+    }
+
+    private BattlePokemonState resolveBenchSlotByIndex(final PlayerRuntime player, final String slotId) {
+        final int index = Integer.parseInt(slotId.split(":")[0].substring(6));
+        if (index >= 0 && index < player.getBench().getAll().size()) {
+            return player.getBench().getAll().get(index);
+        }
+        return null;
+    }
+
+    /** Fallback: {@code slotId} is a raw card ID rather than a "active:"/"bench_N:" slot label. */
+    private BattlePokemonState resolveByCardId(final PlayerRuntime player, final String cardId) {
+        if (player.getActivePokemon() != null && player.getActivePokemon().getCardId().equals(cardId)) {
+            return player.getActivePokemon();
+        }
+        for (final var benched : player.getBench().getAll()) {
+            if (benched != null && benched.getCardId().equals(cardId)) {
+                return benched;
             }
         }
         return null;

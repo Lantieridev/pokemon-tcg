@@ -93,54 +93,70 @@ public class MatchRewardService {
     public void updateMmr(final MatchSession session, final String winnerId, final String loserId) {
         final UserEntity winner = userRepository.findFirstByUsername(winnerId).orElse(null);
         final UserEntity loser = userRepository.findFirstByUsername(loserId).orElse(null);
+        if (winner == null || loser == null) {
+            return;
+        }
 
-        if (winner != null && loser != null) {
-            final int winnerMmr = winner.getMmr() != null ? winner.getMmr() : 1000;
-            final int loserMmr = loser.getMmr() != null ? loser.getMmr() : 1000;
+        final MmrUpdateResult result = applyMmrChanges(winner, loser);
+        userRepository.save(winner);
+        userRepository.save(loser);
+        recordMmrChangeOnSession(session, winnerId, result);
+    }
 
-            final int winnerRankedMatches = winner.getRankedMatchesPlayed() != null ? winner.getRankedMatchesPlayed() : 0;
-            final int loserRankedMatches = loser.getRankedMatchesPlayed() != null ? loser.getRankedMatchesPlayed() : 0;
+    /**
+     * Snapshot of an MMR update's outcome, used to record the change on the match session
+     * once we know which player (A or B) was the winner.
+     */
+    private record MmrUpdateResult(int winnerMmrBefore, int loserMmrBefore, int newWinnerMmr, int newLoserMmr,
+            boolean winnerRankedUp, boolean loserRankedUp, Tier winnerTierAfter, Tier loserTierAfter) {
+    }
 
-            final Tier winnerTierBefore = Tier.fromMmrAndMatches(winnerMmr, winnerRankedMatches);
-            final Tier loserTierBefore = Tier.fromMmrAndMatches(loserMmr, loserRankedMatches);
+    private MmrUpdateResult applyMmrChanges(final UserEntity winner, final UserEntity loser) {
+        final int winnerMmr = winner.getMmr() != null ? winner.getMmr() : 1000;
+        final int loserMmr = loser.getMmr() != null ? loser.getMmr() : 1000;
+        final int winnerRankedMatches = winner.getRankedMatchesPlayed() != null ? winner.getRankedMatchesPlayed() : 0;
+        final int loserRankedMatches = loser.getRankedMatchesPlayed() != null ? loser.getRankedMatchesPlayed() : 0;
 
-            final int newWinnerMmr = mmrCalculationService.calculateNewMmr(winnerMmr, loserMmr, true, winnerRankedMatches);
-            final int newLoserMmr = mmrCalculationService.calculateNewMmr(loserMmr, winnerMmr, false, loserRankedMatches);
+        final Tier winnerTierBefore = Tier.fromMmrAndMatches(winnerMmr, winnerRankedMatches);
+        final Tier loserTierBefore = Tier.fromMmrAndMatches(loserMmr, loserRankedMatches);
 
-            winner.setMmr(newWinnerMmr);
-            winner.setRankedMatchesPlayed(winnerRankedMatches + 1);
-            winner.setBattlePoints((winner.getBattlePoints() != null ? winner.getBattlePoints() : 0) + RANKED_WIN_BATTLE_POINTS);
-            loser.setMmr(newLoserMmr);
-            loser.setRankedMatchesPlayed(loserRankedMatches + 1);
+        final int newWinnerMmr = mmrCalculationService.calculateNewMmr(winnerMmr, loserMmr, true, winnerRankedMatches);
+        final int newLoserMmr = mmrCalculationService.calculateNewMmr(loserMmr, winnerMmr, false, loserRankedMatches);
 
-            userRepository.save(winner);
-            userRepository.save(loser);
+        winner.setMmr(newWinnerMmr);
+        winner.setRankedMatchesPlayed(winnerRankedMatches + 1);
+        winner.setBattlePoints((winner.getBattlePoints() != null ? winner.getBattlePoints() : 0) + RANKED_WIN_BATTLE_POINTS);
+        loser.setMmr(newLoserMmr);
+        loser.setRankedMatchesPlayed(loserRankedMatches + 1);
 
-            final Tier winnerTierAfter = Tier.fromMmrAndMatches(newWinnerMmr, winnerRankedMatches + 1);
-            final Tier loserTierAfter = Tier.fromMmrAndMatches(newLoserMmr, loserRankedMatches + 1);
+        final Tier winnerTierAfter = Tier.fromMmrAndMatches(newWinnerMmr, winnerRankedMatches + 1);
+        final Tier loserTierAfter = Tier.fromMmrAndMatches(newLoserMmr, loserRankedMatches + 1);
 
-            final boolean winnerRankedUp = winnerTierAfter.isHigherThan(winnerTierBefore);
-            final boolean loserRankedUp = loserTierAfter.isHigherThan(loserTierBefore);
+        return new MmrUpdateResult(winnerMmr, loserMmr, newWinnerMmr, newLoserMmr,
+                winnerTierAfter.isHigherThan(winnerTierBefore), loserTierAfter.isHigherThan(loserTierBefore),
+                winnerTierAfter, loserTierAfter);
+    }
 
-            if (winnerId.equals(session.getPlayerIdA())) {
-                session.setMmrChangeA(newWinnerMmr - winnerMmr);
-                session.setMmrChangeB(newLoserMmr - loserMmr);
-                session.setCurrentMmrA(newWinnerMmr);
-                session.setCurrentMmrB(newLoserMmr);
-                session.setCurrentTierA(winnerTierAfter.getName());
-                session.setCurrentTierB(loserTierAfter.getName());
-                session.setRankUpTriggeredA(winnerRankedUp);
-                session.setRankUpTriggeredB(loserRankedUp);
-            } else {
-                session.setMmrChangeB(newWinnerMmr - winnerMmr);
-                session.setMmrChangeA(newLoserMmr - loserMmr);
-                session.setCurrentMmrB(newWinnerMmr);
-                session.setCurrentMmrA(newLoserMmr);
-                session.setCurrentTierB(winnerTierAfter.getName());
-                session.setCurrentTierA(loserTierAfter.getName());
-                session.setRankUpTriggeredB(winnerRankedUp);
-                session.setRankUpTriggeredA(loserRankedUp);
-            }
+    private void recordMmrChangeOnSession(final MatchSession session, final String winnerId,
+            final MmrUpdateResult r) {
+        if (winnerId.equals(session.getPlayerIdA())) {
+            session.setMmrChangeA(r.newWinnerMmr() - r.winnerMmrBefore());
+            session.setMmrChangeB(r.newLoserMmr() - r.loserMmrBefore());
+            session.setCurrentMmrA(r.newWinnerMmr());
+            session.setCurrentMmrB(r.newLoserMmr());
+            session.setCurrentTierA(r.winnerTierAfter().getName());
+            session.setCurrentTierB(r.loserTierAfter().getName());
+            session.setRankUpTriggeredA(r.winnerRankedUp());
+            session.setRankUpTriggeredB(r.loserRankedUp());
+        } else {
+            session.setMmrChangeB(r.newWinnerMmr() - r.winnerMmrBefore());
+            session.setMmrChangeA(r.newLoserMmr() - r.loserMmrBefore());
+            session.setCurrentMmrB(r.newWinnerMmr());
+            session.setCurrentMmrA(r.newLoserMmr());
+            session.setCurrentTierB(r.winnerTierAfter().getName());
+            session.setCurrentTierA(r.loserTierAfter().getName());
+            session.setRankUpTriggeredB(r.winnerRankedUp());
+            session.setRankUpTriggeredA(r.loserRankedUp());
         }
     }
 
