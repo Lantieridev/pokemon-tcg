@@ -22,6 +22,17 @@ public interface GameStatePersistence {
     default void saveMatch(ar.edu.utn.frc.tup.piii.engine.session.MatchSession session) {}
 
     /**
+     * Appends an action log entry using a container object.
+     *
+     * @param event log action event details
+     */
+    default void logAction(LogActionEvent event) {
+        if (event != null) {
+            logAction(event.matchId(), event.turnNumber(), event.playerId(), event.actionType(), event.result());
+        }
+    }
+
+    /**
      * Appends an action log entry.
      *
      * @param matchId the match identifier
@@ -30,7 +41,10 @@ public interface GameStatePersistence {
      * @param actionType the action type identifier
      * @param result the outcome description
      */
-    default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {}
+    @SuppressWarnings("PMD.UseObjectForClearerAPI")
+    default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {
+        logAction(new LogActionEvent(matchId, turnNumber, playerId, actionType, result));
+    }
 
     /**
      * Declares the winner of a match.
@@ -42,4 +56,3 @@ public interface GameStatePersistence {
     @Deprecated
     default void declareWinner(String matchId, String winnerUsername) {}
 }
-
