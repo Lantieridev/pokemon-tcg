@@ -195,7 +195,7 @@ public final class MatchCreationService {
                 board, board, board, board, victoryHandler);
 
         final KnockoutResolutionHandler koResolution =
-                new KnockoutResolutionHandler(runtimes, turnManager, vcc);
+                new KnockoutResolutionHandler(runtimes, vcc);
 
         final KnockoutManager koManager =
                 new KnockoutManager(board, board, koResolution);

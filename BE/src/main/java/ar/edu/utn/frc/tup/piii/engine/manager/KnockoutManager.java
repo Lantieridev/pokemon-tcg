@@ -62,6 +62,9 @@ public final class KnockoutManager implements PhaseListener {
      * @param event the event fired by the TurnManager
      */
     @Override
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.PhaseExited e -> handlePhaseExited(e);
@@ -76,6 +79,9 @@ public final class KnockoutManager implements PhaseListener {
      *
      * @param event the PhaseExited event
      */
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
         switch (event.phase()) {
             case AttackPhase a -> checkBothPlayers();

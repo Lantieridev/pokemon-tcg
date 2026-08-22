@@ -46,6 +46,9 @@ public final class DrawPhaseExecutor implements PhaseListener {
     }
 
     @Override
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.PhaseEntered p -> handlePhaseEntered(p);
@@ -55,6 +58,9 @@ public final class DrawPhaseExecutor implements PhaseListener {
         }
     }
 
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     private void handlePhaseEntered(final PhaseEvent.PhaseEntered event) {
         switch (event.phase()) {
             case DrawPhase d         -> executeDraw(event.playerIndex());

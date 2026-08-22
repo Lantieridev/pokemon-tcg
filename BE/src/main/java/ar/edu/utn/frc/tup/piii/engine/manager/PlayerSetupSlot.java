@@ -15,6 +15,9 @@ import java.util.Objects;
  * Aggregates all per-player mutable state needed during the Setup Phase.
  * Passed into {@link SetupManager#execute} and mutated in-place.
  */
+@SuppressWarnings("PMD.DataClass")
+// Intentional mutable aggregate passed into SetupManager#execute and mutated in-place across the
+// Setup Phase (see PlayerSetupSlot's own javadoc); not a leftover accessor-only class.
 public final class PlayerSetupSlot {
 
     private final Deck deck;
