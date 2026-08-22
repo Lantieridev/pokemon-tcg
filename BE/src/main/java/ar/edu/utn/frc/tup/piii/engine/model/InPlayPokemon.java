@@ -12,6 +12,7 @@ import java.util.Objects;
  *
  * <p>This is the sole concrete implementation of {@link BattlePokemonState} in the engine.</p>
  */
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"}) // Rich domain entity representing active/benched Pokémon battle state
 public final class InPlayPokemon implements BattlePokemonState {
 
     private static final int DAMAGE_PER_COUNTER = 10;
@@ -116,10 +117,8 @@ public final class InPlayPokemon implements BattlePokemonState {
     @Override
     public int getMaxHp() {
         int hp = card.getHp();
-        if (owner != null && card.getPokemonType() == PokemonType.GRASS) {
-            if (owner.hasAbility(AbilityEffectId.FLOWER_VEIL)) {
-                hp += 20;
-            }
+        if (owner != null && card.getPokemonType() == PokemonType.GRASS && owner.hasAbility(AbilityEffectId.FLOWER_VEIL)) {
+            hp += 20;
         }
         return hp;
     }
@@ -327,13 +326,17 @@ public final class InPlayPokemon implements BattlePokemonState {
         return java.util.Optional.ofNullable(attachedTool);
     }
 
+    private void setAttachedTool(final TrainerCard tool) {
+        this.attachedTool = tool;
+    }
+
     /**
      * Detaches the currently attached Pokémon Tool (called after it has been moved
      * to the discard pile by the KO handler).
      */
     @Override
     public void detachTool() {
-        this.attachedTool = null;
+        setAttachedTool(null);
     }
 
     private String uuid = java.util.UUID.randomUUID().toString();

@@ -11,6 +11,7 @@ import java.util.List;
  * <p>Null return values for {@link #getWeaknessType()} and {@link #getResistanceType()}
  * signal the absence of a weakness or resistance — no sentinel enum value is used.</p>
  */
+@SuppressWarnings("PMD.TooManyMethods") // Core domain model interface defining active/benched Pokémon battle contract
 public interface BattlePokemonState extends ActivePokemonState {
 
     default PlayerRuntime getOwner() {
