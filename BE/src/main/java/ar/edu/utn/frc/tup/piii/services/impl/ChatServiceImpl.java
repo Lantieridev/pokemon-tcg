@@ -30,6 +30,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ChatServiceImpl implements ChatService {
 
     private static final int MAX_CACHE_SIZE = 50;
+    private static final int SPAM_MESSAGE_THRESHOLD = 10;
+    private static final long SPAM_WINDOW_SECONDS = 30;
 
     // In-memory cache to hold the last 50 chat messages per match ID.
     private final Map<String, Queue<ChatMessageResponse>> chatCache = new ConcurrentHashMap<>();
@@ -102,38 +104,8 @@ public class ChatServiceImpl implements ChatService {
         final List<ChatMessageResponse> history = getMessages(matchId);
         final String reportedUsername = reported.getUsername();
 
-        boolean isValidated = false;
-
-        // 1. Detect profanity in reported user's messages
-        for (final ChatMessageResponse msg : history) {
-            if (reportedUsername.equals(msg.getSender())) {
-                final String original = msg.getMessage();
-                final String filtered = profanityFilterService.filter(original);
-                if (original != null && !original.equals(filtered)) {
-                    isValidated = true;
-                    break;
-                }
-            }
-        }
-
-        // 2. Detect spam / flooding (10+ messages in 30 seconds)
-        if (!isValidated) {
-            final List<ChatMessageResponse> reportedMsgs = history.stream()
-                    .filter(msg -> reportedUsername.equals(msg.getSender()))
-                    .toList();
-
-            for (int i = 0; i <= reportedMsgs.size() - 10; i++) {
-                final LocalDateTime start = reportedMsgs.get(i).getTimestamp();
-                final LocalDateTime end = reportedMsgs.get(i + 9).getTimestamp();
-                if (start != null && end != null) {
-                    final long seconds = java.time.Duration.between(start, end).getSeconds();
-                    if (seconds <= 30) {
-                        isValidated = true;
-                        break;
-                    }
-                }
-            }
-        }
+        final boolean isValidated = containsProfanity(history, reportedUsername)
+                || isSpamFlooding(history, reportedUsername);
 
         final ChatReportEntity reportEntity = ChatReportEntity.builder()
                 .match(match)
@@ -149,5 +121,40 @@ public class ChatServiceImpl implements ChatService {
         if (isValidated) {
             penaltyService.checkAndApplyPenalty(reportedUsername);
         }
+    }
+
+    // Detect profanity in reported user's messages
+    private boolean containsProfanity(final List<ChatMessageResponse> history, final String reportedUsername) {
+        for (final ChatMessageResponse msg : history) {
+            if (!reportedUsername.equals(msg.getSender())) {
+                continue;
+            }
+            final String original = msg.getMessage();
+            final String filtered = profanityFilterService.filter(original);
+            if (original != null && !original.equals(filtered)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Detect spam / flooding: SPAM_MESSAGE_THRESHOLD+ messages within SPAM_WINDOW_SECONDS
+    private boolean isSpamFlooding(final List<ChatMessageResponse> history, final String reportedUsername) {
+        final List<ChatMessageResponse> reportedMsgs = history.stream()
+                .filter(msg -> reportedUsername.equals(msg.getSender()))
+                .toList();
+
+        for (int i = 0; i <= reportedMsgs.size() - SPAM_MESSAGE_THRESHOLD; i++) {
+            final LocalDateTime start = reportedMsgs.get(i).getTimestamp();
+            final LocalDateTime end = reportedMsgs.get(i + SPAM_MESSAGE_THRESHOLD - 1).getTimestamp();
+            if (start == null || end == null) {
+                continue;
+            }
+            final long seconds = java.time.Duration.between(start, end).getSeconds();
+            if (seconds <= SPAM_WINDOW_SECONDS) {
+                return true;
+            }
+        }
+        return false;
     }
 }

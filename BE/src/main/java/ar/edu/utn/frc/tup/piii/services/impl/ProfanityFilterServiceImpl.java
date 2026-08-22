@@ -15,6 +15,9 @@ import java.util.regex.Pattern;
 @Service
 public class ProfanityFilterServiceImpl implements ProfanityFilterService {
 
+    private static final String WORD_BOUNDARY_PREFIX = "(?i)\\b";
+    private static final String WORD_BOUNDARY_SUFFIX = "\\b";
+
     // Comprehensive blacklist: Spanish insults, English gaming terms, leetspeak variants
     private static final List<String> BLACKLIST = List.of(
             // Insultos básicos en español
@@ -96,13 +99,13 @@ public class ProfanityFilterServiceImpl implements ProfanityFilterService {
         for (final String word : BLACKLIST) {
             // Match on the original and normalized versions
             final String normalizedWord = normalize(word);
-            final String regex = "(?i)\\b" + Pattern.quote(normalizedWord) + "\\b";
+            final String regex = WORD_BOUNDARY_PREFIX + Pattern.quote(normalizedWord) + WORD_BOUNDARY_SUFFIX;
             final String replacement = "*".repeat(word.length());
             filtered = normalize(filtered).replaceAll(regex, replacement);
         }
         // Re-filter on original text for exact matches
         for (final String word : BLACKLIST) {
-            final String regex = "(?i)\\b" + Pattern.quote(word) + "\\b";
+            final String regex = WORD_BOUNDARY_PREFIX + Pattern.quote(word) + WORD_BOUNDARY_SUFFIX;
             final String replacement = "*".repeat(word.length());
             filtered = filtered.replaceAll(regex, replacement);
         }
@@ -119,14 +122,13 @@ public class ProfanityFilterServiceImpl implements ProfanityFilterService {
         for (final String word : BLACKLIST) {
             final String normalizedWord = normalize(word);
             // Check in normalized version (handles leetspeak + accents)
-            final String regexNorm = "(?i)\\b" + Pattern.quote(normalizedWord) + "\\b";
+            final String regexNorm = WORD_BOUNDARY_PREFIX + Pattern.quote(normalizedWord) + WORD_BOUNDARY_SUFFIX;
             // Check in original (handles exact matches)
-            final String regexOrig = "(?i)\\b" + Pattern.quote(word) + "\\b";
-            if (Pattern.compile(regexNorm).matcher(normalizedMsg).find()
-                    || Pattern.compile(regexOrig).matcher(message).find()) {
-                if (!detected.contains(word)) {
-                    detected.add(word);
-                }
+            final String regexOrig = WORD_BOUNDARY_PREFIX + Pattern.quote(word) + WORD_BOUNDARY_SUFFIX;
+            final boolean isMatch = Pattern.compile(regexNorm).matcher(normalizedMsg).find()
+                    || Pattern.compile(regexOrig).matcher(message).find();
+            if (isMatch && !detected.contains(word)) {
+                detected.add(word);
             }
         }
         return detected;
