@@ -14,6 +14,8 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SuppressWarnings("PMD.TooManyFields")
+// Full profile response DTO — the flat field list is the wire contract, not a design smell.
 public class UserProfileResponseDTO {
 
     private String username;

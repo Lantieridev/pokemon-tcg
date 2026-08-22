@@ -30,6 +30,8 @@ import java.util.Objects;
 @RequestMapping("/api/lobby")
 public final class LobbyController {
 
+    private static final String USER_MUST_BE_AUTHENTICATED = "User must be authenticated";
+
     private final LobbyService lobbyService;
 
     /**
@@ -59,7 +61,7 @@ public final class LobbyController {
     @ResponseStatus(HttpStatus.OK)
     public LobbyResponseDTO joinQueue(final Principal principal,
                                       @RequestBody final LobbyJoinRequestDTO request) {
-        Objects.requireNonNull(principal, "User must be authenticated");
+        Objects.requireNonNull(principal, USER_MUST_BE_AUTHENTICATED);
         return lobbyService.joinQueue(principal.getName(), request.deckId(), request.isRanked());
     }
 
@@ -73,7 +75,7 @@ public final class LobbyController {
     @DeleteMapping("/queue")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leaveQueue(final Principal principal) {
-        Objects.requireNonNull(principal, "User must be authenticated");
+        Objects.requireNonNull(principal, USER_MUST_BE_AUTHENTICATED);
         lobbyService.leaveQueue(principal.getName());
     }
 
@@ -85,7 +87,7 @@ public final class LobbyController {
      */
     @GetMapping("/queue/status")
     public Map<String, Boolean> queueStatus(final Principal principal) {
-        Objects.requireNonNull(principal, "User must be authenticated");
+        Objects.requireNonNull(principal, USER_MUST_BE_AUTHENTICATED);
         return Map.of("inQueue", lobbyService.isInQueue(principal.getName()));
     }
 
@@ -103,7 +105,7 @@ public final class LobbyController {
     @ResponseStatus(HttpStatus.CREATED)
     public LobbyResponseDTO createRoom(final Principal principal,
                                        @RequestBody final LobbyJoinRequestDTO request) {
-        Objects.requireNonNull(principal, "User must be authenticated");
+        Objects.requireNonNull(principal, USER_MUST_BE_AUTHENTICATED);
         return lobbyService.createRoom(principal.getName(), request.deckId());
     }
 
@@ -123,7 +125,7 @@ public final class LobbyController {
     public LobbyResponseDTO joinRoom(@PathVariable final String roomCode,
                                      final Principal principal,
                                      @RequestBody final LobbyJoinRequestDTO request) {
-        Objects.requireNonNull(principal, "User must be authenticated");
+        Objects.requireNonNull(principal, USER_MUST_BE_AUTHENTICATED);
         return lobbyService.joinRoom(roomCode, principal.getName(), request.deckId());
     }
 }

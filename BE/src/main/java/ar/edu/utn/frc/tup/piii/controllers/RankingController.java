@@ -16,6 +16,8 @@ import java.util.Objects;
 @RequestMapping("/api/rankings")
 public class RankingController {
 
+    private static final int MIN_PAGE_SIZE = 1;
+
     private final RankingService rankingService;
 
     public RankingController(final RankingService rankingService) {
@@ -29,7 +31,7 @@ public class RankingController {
         if (page < 0) {
             throw new IllegalArgumentException("Page index must not be less than zero.");
         }
-        if (size < 1) {
+        if (size < MIN_PAGE_SIZE) {
             throw new IllegalArgumentException("Page size must be greater than zero.");
         }
         final int cappedSize = Math.min(size, 50);

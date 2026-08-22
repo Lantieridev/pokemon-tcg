@@ -1,5 +1,7 @@
 package ar.edu.utn.frc.tup.piii.dtos.auth;
 
+@SuppressWarnings("PMD.DataClass")
+// Plain request DTO — this shape is the point, not a design smell.
 public class AuthLoginRequestDTO {
     private String username;
     private String password;

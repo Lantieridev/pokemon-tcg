@@ -1,5 +1,9 @@
 package ar.edu.utn.frc.tup.piii.dtos.auth;
 
+@SuppressWarnings({"PMD.DataClass", "PMD.AvoidFieldNameMatchingMethodName"})
+// Plain response DTO with a hand-rolled builder; the builder's fields intentionally share names
+// with their fluent setter methods (token()/username()/userId()) — standard builder-pattern
+// naming, not a collision risk.
 public class AuthResponseDTO {
     private String token;
     private String username;

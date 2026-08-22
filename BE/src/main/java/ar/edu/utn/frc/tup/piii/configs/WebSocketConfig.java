@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.security.JwtUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -17,6 +18,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.security.Principal;
 import java.util.Objects;
 
 /**
@@ -56,41 +58,48 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (accessor == null) {
                     return message;
                 }
-
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    final String authHeader = accessor.getFirstNativeHeader("Authorization");
-                    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                        throw new org.springframework.messaging.MessagingException("Missing or malformed Authorization header");
-                    }
-                    final String token = authHeader.substring(7);
-                    if (!jwtUtil.isValidToken(token)) {
-                        throw new org.springframework.messaging.MessagingException("Invalid JWT");
-                    }
-                    final String username = jwtUtil.getUsernameFromToken(token);
-                    final UserDetails user = userDetailsService.loadUserByUsername(username);
-                    final UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                    accessor.setUser(authentication);
+                    authenticateConnect(accessor);
                 }
-
                 if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-                    final java.security.Principal principal = accessor.getUser();
-                    if (principal == null) {
-                        throw new org.springframework.messaging.MessagingException("Subscription requires authentication");
-                    }
-                    final String dest = accessor.getDestination();
-                    if (dest != null && dest.contains("/player/")) {
-                        // endsWith (not contains): the username is always the last path segment
-                        // (".../player/{username}"), so a substring match would let "alice" subscribe
-                        // to "alice2024"'s channel just because her name is a textual prefix of it.
-                        final String playerPath = "/player/" + principal.getName();
-                        if (!dest.endsWith(playerPath)) {
-                            throw new org.springframework.messaging.MessagingException("Cannot subscribe to another player's channel");
-                        }
-                    }
+                    authorizeSubscribe(accessor);
                 }
                 return message;
             }
         });
+    }
+
+    private void authenticateConnect(final StompHeaderAccessor accessor) {
+        final String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new MessagingException("Missing or malformed Authorization header");
+        }
+        final String token = authHeader.substring(7);
+        if (!jwtUtil.isValidToken(token)) {
+            throw new MessagingException("Invalid JWT");
+        }
+        final String username = jwtUtil.getUsernameFromToken(token);
+        final UserDetails user = userDetailsService.loadUserByUsername(username);
+        final UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+        accessor.setUser(authentication);
+    }
+
+    private void authorizeSubscribe(final StompHeaderAccessor accessor) {
+        final Principal principal = accessor.getUser();
+        if (principal == null) {
+            throw new MessagingException("Subscription requires authentication");
+        }
+        final String dest = accessor.getDestination();
+        if (dest == null || !dest.contains("/player/")) {
+            return;
+        }
+        // endsWith (not contains): the username is always the last path segment
+        // (".../player/{username}"), so a substring match would let "alice" subscribe
+        // to "alice2024"'s channel just because her name is a textual prefix of it.
+        final String playerPath = "/player/" + principal.getName();
+        if (!dest.endsWith(playerPath)) {
+            throw new MessagingException("Cannot subscribe to another player's channel");
+        }
     }
 }
