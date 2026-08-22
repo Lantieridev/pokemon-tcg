@@ -1,10 +1,9 @@
 package ar.edu.utn.frc.tup.piii.services.persistence;
 
+import ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper;
 import ar.edu.utn.frc.tup.piii.engine.manager.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.model.*;
 import ar.edu.utn.frc.tup.piii.engine.session.*;
-import ar.edu.utn.frc.tup.piii.engine.infra.RandomCoinFlipper;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -17,11 +16,46 @@ import jakarta.persistence.Converter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Converter(autoApply = false)
+// Suppress CouplingBetweenObjects & ExcessiveImports: custom converter managing JSON serialization graph for MatchSession domain model
+@SuppressWarnings({"PMD.CouplingBetweenObjects", "PMD.ExcessiveImports"})
 public class MatchSessionJsonConverter implements AttributeConverter<MatchSession, String> {
+
+    private static final String CARD_ID_KEY = "cardId";
+    private static final String NAME_KEY = "name";
+    private static final String ACTIVE_POKEMON_KEY = "activePokemon";
+    private static final String BENCH_KEY = "bench";
+    private static final String HAND_KEY = "hand";
+    private static final String TURNS_IN_PLAY_KEY = "turnsInPlay";
+    private static final String ACTIVE_KEY = "active";
+    private static final String BENCH_PREFIX = "bench_";
+    private static final String ACTIVE_STADIUM_KEY = "activeStadium";
+    private static final String PLAYERS_KEY = "players";
+    private static final String PRIZE_PILE_KEY = "prizePile";
+    private static final String CARDS_KEY = "cards";
+    private static final String MATCH_ID_KEY = "matchId";
+    private static final String STATE_KEY = "state";
+    private static final String ACTIVE_PLAYER_INDEX_KEY = "activePlayerIndex";
+    private static final String VERSION_KEY = "version";
+    private static final String WINNER_ID_KEY = "winnerId";
+    private static final String VICTORY_REASON_KEY = "victoryReason";
+    private static final String PENDING_SELECTION_REQUEST_KEY = "pendingSelectionRequest";
+    private static final String PLAYER_RUNTIMES_KEY = "playerRuntimes";
+    private static final String UUID_KEY = "uuid";
+    private static final String ATTACHED_ENERGIES_KEY = "attachedEnergies";
+    private static final String ATTACHED_ENERGY_CARDS_KEY = "attachedEnergyCards";
+    private static final String ATTACHED_TOOL_KEY = "attachedTool";
+    private static final String BASIC_KEY = "basic";
+    private static final String ENERGY_COUNT_KEY = "energyCount";
+    private static final String PROVIDES_ALL_TYPES_KEY = "providesAllTypes";
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -84,29 +118,40 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         }
         try {
             String cleanData = dbData.trim();
-            while (true) {
-                if (cleanData.startsWith("[") && cleanData.endsWith("]")) {
-                    JsonNode arrayNode = OBJECT_MAPPER.readTree(cleanData);
-                    if (arrayNode.isArray() && arrayNode.size() == 1) {
-                        cleanData = arrayNode.get(0).asText().trim();
-                        continue;
-                    }
+            boolean changed = true;
+            while (changed) {
+                String unwrapped = unwrapJsonWrapping(cleanData);
+                if (unwrapped.equals(cleanData)) {
+                    changed = false;
+                } else {
+                    cleanData = unwrapped;
                 }
-                if (cleanData.startsWith("\"") && cleanData.endsWith("\"")) {
-                    try {
-                        cleanData = OBJECT_MAPPER.readValue(cleanData, String.class).trim();
-                        continue;
-                    } catch (IOException e) {
-                        log.warn("Could not unwrap double-encoded MatchSession JSON string, using it as-is: {}", e.getMessage());
-                        break;
-                    }
-                }
-                break;
             }
             return OBJECT_MAPPER.readValue(cleanData, MatchSession.class);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to deserialize JSON string to MatchSession", e);
         }
+    }
+
+    private String unwrapJsonWrapping(String data) {
+        if (data.startsWith("[") && data.endsWith("]")) {
+            try {
+                JsonNode arrayNode = OBJECT_MAPPER.readTree(data);
+                if (arrayNode.isArray() && arrayNode.size() == 1) {
+                    return arrayNode.get(0).asText().trim();
+                }
+            } catch (IOException e) {
+                return data;
+            }
+        }
+        if (data.startsWith("\"") && data.endsWith("\"")) {
+            try {
+                return OBJECT_MAPPER.readValue(data, String.class).trim();
+            } catch (IOException e) {
+                log.warn("Could not unwrap double-encoded MatchSession JSON string, using it as-is: {}", e.getMessage());
+            }
+        }
+        return data;
     }
 
     // -------------------------------------------------------------------------
@@ -151,18 +196,28 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public PokemonCard deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
-            String cardId = node.get("cardId").asText();
-            String name = node.get("name").asText();
+            String cardId = node.get(CARD_ID_KEY).asText();
+            String name = node.get(NAME_KEY).asText();
             int hp = node.get("hp").asInt();
             PokemonType pokemonType = PokemonType.valueOf(node.get("pokemonType").asText());
 
             PokemonCard.Builder builder = new PokemonCard.Builder(cardId, name, hp, pokemonType);
+            parseTypes(node, builder);
+            parseAttributes(node, builder);
+            parseAttacks(p, node, builder);
+            return builder.build();
+        }
+
+        private void parseTypes(JsonNode node, PokemonCard.Builder builder) {
             if (node.has("weaknessType") && !node.get("weaknessType").isNull()) {
                 builder.weaknessType(PokemonType.valueOf(node.get("weaknessType").asText()));
             }
             if (node.has("resistanceType") && !node.get("resistanceType").isNull()) {
                 builder.resistanceType(PokemonType.valueOf(node.get("resistanceType").asText()));
             }
+        }
+
+        private void parseAttributes(JsonNode node, PokemonCard.Builder builder) {
             if (node.has("retreatCost")) {
                 builder.retreatCost(node.get("retreatCost").asInt());
             }
@@ -175,6 +230,9 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node.has("evolvesFrom") && !node.get("evolvesFrom").isNull()) {
                 builder.evolvesFrom(node.get("evolvesFrom").asText());
             }
+        }
+
+        private void parseAttacks(JsonParser p, JsonNode node, PokemonCard.Builder builder) throws IOException {
             if (node.has("attacks")) {
                 List<Attack> attacks = new ArrayList<>();
                 for (JsonNode attNode : node.get("attacks")) {
@@ -182,7 +240,6 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 }
                 builder.attacks(attacks);
             }
-            return builder.build();
         }
     }
 
@@ -190,8 +247,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public TrainerCard deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
-            String cardId = node.get("cardId").asText();
-            String name = node.get("name").asText();
+            String cardId = node.get(CARD_ID_KEY).asText();
+            String name = node.get(NAME_KEY).asText();
             TrainerType trainerType = TrainerType.valueOf(node.get("trainerType").asText());
 
             TrainerCard.Builder builder = new TrainerCard.Builder(cardId, name, trainerType);
@@ -202,10 +259,10 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 builder.effectText(node.get("effectText").asText());
             }
             if (node.has("effectId") && !node.get("effectId").isNull()) {
-                builder.effectId(ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.valueOf(node.get("effectId").asText()));
+                builder.effectId(TrainerEffectId.valueOf(node.get("effectId").asText()));
             }
             if (node.has("toolEffectId") && !node.get("toolEffectId").isNull()) {
-                builder.toolEffectId(ar.edu.utn.frc.tup.piii.engine.model.PokemonToolEffectId.valueOf(node.get("toolEffectId").asText()));
+                builder.toolEffectId(PokemonToolEffectId.valueOf(node.get("toolEffectId").asText()));
             }
             return builder.build();
         }
@@ -216,12 +273,12 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(PlayerState value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             if (value.getActivePokemon() != null) {
-                gen.writeObjectField("activePokemon", value.getActivePokemon());
+                gen.writeObjectField(ACTIVE_POKEMON_KEY, value.getActivePokemon());
             } else {
-                gen.writeNullField("activePokemon");
+                gen.writeNullField(ACTIVE_POKEMON_KEY);
             }
 
-            gen.writeArrayFieldStart("bench");
+            gen.writeArrayFieldStart(BENCH_KEY);
             for (BattlePokemonState pk : value.getBench()) {
                 if (pk != null) {
                     gen.writeObject(pk);
@@ -231,17 +288,17 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             }
             gen.writeEndArray();
 
-            gen.writeObjectField("hand", value.getHand());
+            gen.writeObjectField(HAND_KEY, value.getHand());
             gen.writeObjectField("activeAttacks", value.getActiveAttacks());
             gen.writeNumberField("deckSize", value.getDeckSize());
             gen.writeNumberField("prizeCount", value.getPrizeCount());
 
             // turnsInPlay using location markers
-            gen.writeObjectFieldStart("turnsInPlay");
+            gen.writeObjectFieldStart(TURNS_IN_PLAY_KEY);
             if (value.getActivePokemon() != null) {
                 int activeTurns = value.getTurnsInPlay(value.getActivePokemon());
                 if (activeTurns > 0) {
-                    gen.writeNumberField("active", activeTurns);
+                    gen.writeNumberField(ACTIVE_KEY, activeTurns);
                 }
             }
             List<BattlePokemonState> bench = value.getBench();
@@ -249,7 +306,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
                 BattlePokemonState pk = bench.get(i);
                 int benchTurns = value.getTurnsInPlay(pk);
                 if (benchTurns > 0) {
-                    gen.writeNumberField("bench_" + i, benchTurns);
+                    gen.writeNumberField(BENCH_PREFIX + i, benchTurns);
                 }
             }
             gen.writeEndObject();
@@ -263,61 +320,87 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public PlayerState deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
 
-            BattlePokemonState activePokemon = null;
-            if (node.has("activePokemon") && !node.get("activePokemon").isNull()) {
-                activePokemon = p.getCodec().treeToValue(node.get("activePokemon"), BattlePokemonState.class);
-            }
+            BattlePokemonState activePokemon = readActivePokemon(p, node);
+            List<BattlePokemonState> bench = readBench(p, node);
+            List<String> hand = readHand(node);
+            List<Attack> activeAttacks = readActiveAttacks(p, node);
 
+            int deckSize = node.get("deckSize").asInt();
+            int prizeCount = node.get("prizeCount").asInt();
+
+            Map<BattlePokemonState, Integer> turnsInPlay = readTurnsInPlay(node, activePokemon, bench);
+
+            return new PlayerState(activePokemon, bench, hand, activeAttacks, deckSize, prizeCount, turnsInPlay);
+        }
+
+        private BattlePokemonState readActivePokemon(JsonParser p, JsonNode node) throws IOException {
+            if (node.has(ACTIVE_POKEMON_KEY) && !node.get(ACTIVE_POKEMON_KEY).isNull()) {
+                return p.getCodec().treeToValue(node.get(ACTIVE_POKEMON_KEY), BattlePokemonState.class);
+            }
+            return null;
+        }
+
+        private List<BattlePokemonState> readBench(JsonParser p, JsonNode node) throws IOException {
             List<BattlePokemonState> bench = new ArrayList<>();
-            if (node.has("bench")) {
-                for (JsonNode bNode : node.get("bench")) {
+            if (node.has(BENCH_KEY)) {
+                for (JsonNode bNode : node.get(BENCH_KEY)) {
                     bench.add(p.getCodec().treeToValue(bNode, BattlePokemonState.class));
                 }
             }
+            return bench;
+        }
 
+        private List<String> readHand(JsonNode node) {
             List<String> hand = new ArrayList<>();
-            if (node.has("hand")) {
-                for (JsonNode hNode : node.get("hand")) {
+            if (node.has(HAND_KEY)) {
+                for (JsonNode hNode : node.get(HAND_KEY)) {
                     hand.add(hNode.asText());
                 }
             }
+            return hand;
+        }
 
+        private List<Attack> readActiveAttacks(JsonParser p, JsonNode node) throws IOException {
             List<Attack> activeAttacks = new ArrayList<>();
             if (node.has("activeAttacks")) {
                 for (JsonNode aNode : node.get("activeAttacks")) {
                     activeAttacks.add(p.getCodec().treeToValue(aNode, Attack.class));
                 }
             }
+            return activeAttacks;
+        }
 
-            int deckSize = node.get("deckSize").asInt();
-            int prizeCount = node.get("prizeCount").asInt();
-
-            Map<BattlePokemonState, Integer> turnsInPlay = new java.util.HashMap<>();
-            if (node.has("turnsInPlay")) {
-                JsonNode turnsNode = node.get("turnsInPlay");
-                Iterator<Map.Entry<String, JsonNode>> fields = turnsNode.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> field = fields.next();
-                    String key = field.getKey();
-                    int val = field.getValue().asInt();
-                    if ("active".equals(key)) {
-                        if (activePokemon != null) {
-                            turnsInPlay.put(activePokemon, val);
-                        }
-                    } else if (key.startsWith("bench_")) {
-                        try {
-                            int index = Integer.parseInt(key.substring(6));
-                            if (index >= 0 && index < bench.size()) {
-                                turnsInPlay.put(bench.get(index), val);
-                            }
-                        } catch (NumberFormatException e) {
-                            log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
-                        }
+        private Map<BattlePokemonState, Integer> readTurnsInPlay(JsonNode node, BattlePokemonState activePokemon, List<BattlePokemonState> bench) {
+            Map<BattlePokemonState, Integer> turnsInPlay = new HashMap<>();
+            if (!node.has(TURNS_IN_PLAY_KEY)) {
+                return turnsInPlay;
+            }
+            JsonNode turnsNode = node.get(TURNS_IN_PLAY_KEY);
+            Iterator<Map.Entry<String, JsonNode>> fields = turnsNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                String key = field.getKey();
+                int val = field.getValue().asInt();
+                if (ACTIVE_KEY.equals(key)) {
+                    if (activePokemon != null) {
+                        turnsInPlay.put(activePokemon, val);
                     }
+                } else if (key.startsWith(BENCH_PREFIX)) {
+                    parseBenchTurns(key, val, bench, turnsInPlay);
                 }
             }
+            return turnsInPlay;
+        }
 
-            return new PlayerState(activePokemon, bench, hand, activeAttacks, deckSize, prizeCount, turnsInPlay);
+        private void parseBenchTurns(String key, int val, List<BattlePokemonState> bench, Map<BattlePokemonState, Integer> turnsInPlay) {
+            try {
+                int index = Integer.parseInt(key.substring(BENCH_PREFIX.length()));
+                if (index >= 0 && index < bench.size()) {
+                    turnsInPlay.put(bench.get(index), val);
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
+            }
         }
     }
 
@@ -326,19 +409,13 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(MatchBoard value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             if (value.getActiveStadium() != null) {
-                gen.writeObjectField("activeStadium", value.getActiveStadium());
+                gen.writeObjectField(ACTIVE_STADIUM_KEY, value.getActiveStadium());
             } else {
-                gen.writeNullField("activeStadium");
+                gen.writeNullField(ACTIVE_STADIUM_KEY);
             }
             gen.writeNumberField("activeStadiumOwnerIndex", value.getActiveStadiumOwnerIndex());
-            try {
-                java.lang.reflect.Field field = MatchBoard.class.getDeclaredField("players");
-                field.setAccessible(true);
-                List<PlayerState> players = (List<PlayerState>) field.get(value);
-                gen.writeObjectField("players", players);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new IOException("Failed to serialize MatchBoard.players", e);
-            }
+            List<PlayerState> players = List.of(value.getPlayerState(0), value.getPlayerState(1));
+            gen.writeObjectField(PLAYERS_KEY, players);
             gen.writeEndObject();
         }
     }
@@ -348,14 +425,14 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public MatchBoard deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
             List<PlayerState> players = new ArrayList<>();
-            if (node.has("players")) {
-                for (JsonNode pNode : node.get("players")) {
+            if (node.has(PLAYERS_KEY)) {
+                for (JsonNode pNode : node.get(PLAYERS_KEY)) {
                     players.add(p.getCodec().treeToValue(pNode, PlayerState.class));
                 }
             }
             MatchBoard board = new MatchBoard(players);
-            if (node.has("activeStadium") && !node.get("activeStadium").isNull()) {
-                board.replaceStadium(p.getCodec().treeToValue(node.get("activeStadium"), TrainerCard.class));
+            if (node.has(ACTIVE_STADIUM_KEY) && !node.get(ACTIVE_STADIUM_KEY).isNull()) {
+                board.replaceStadium(p.getCodec().treeToValue(node.get(ACTIVE_STADIUM_KEY), TrainerCard.class));
             }
             if (node.has("activeStadiumOwnerIndex")) {
                 board.setActiveStadiumOwnerIndex(node.get("activeStadiumOwnerIndex").asInt());
@@ -369,17 +446,17 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(PlayerRuntime value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeObjectField("deck", value.getDeck());
-            gen.writeObjectField("hand", value.getHand());
-            gen.writeObjectField("bench", value.getBench());
+            gen.writeObjectField(HAND_KEY, value.getHand());
+            gen.writeObjectField(BENCH_KEY, value.getBench());
             gen.writeObjectField("discardPile", value.getDiscardPile());
             gen.writeObjectField("statusEffectManager", value.getStatusEffectManager());
             if (value.getActivePokemon() != null) {
-                gen.writeObjectField("activePokemon", value.getActivePokemon());
+                gen.writeObjectField(ACTIVE_POKEMON_KEY, value.getActivePokemon());
             } else {
-                gen.writeNullField("activePokemon");
+                gen.writeNullField(ACTIVE_POKEMON_KEY);
             }
             // Serialize prizePile
-            gen.writeArrayFieldStart("prizePile");
+            gen.writeArrayFieldStart(PRIZE_PILE_KEY);
             for (Card card : value.getPrizePile()) {
                 if (card != null) {
                     gen.writeObject(card);
@@ -390,17 +467,17 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             gen.writeEndArray();
 
             // Serialize turnsInPlay using location markers
-            gen.writeObjectFieldStart("turnsInPlay");
+            gen.writeObjectFieldStart(TURNS_IN_PLAY_KEY);
             if (value.getActivePokemon() != null) {
                 int activeTurns = value.getTurnsInPlay(value.getActivePokemon());
-                gen.writeNumberField("active", activeTurns);
+                gen.writeNumberField(ACTIVE_KEY, activeTurns);
             }
             List<BattlePokemonState> bench = value.getBench().getAll();
             for (int i = 0; i < bench.size(); i++) {
                 BattlePokemonState pk = bench.get(i);
                 if (pk != null) {
                     int benchTurns = value.getTurnsInPlay(pk);
-                    gen.writeNumberField("bench_" + i, benchTurns);
+                    gen.writeNumberField(BENCH_PREFIX + i, benchTurns);
                 }
             }
             gen.writeEndObject();
@@ -417,46 +494,16 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public PlayerRuntime deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
             Deck deck = p.getCodec().treeToValue(node.get("deck"), Deck.class);
-            Hand hand = p.getCodec().treeToValue(node.get("hand"), Hand.class);
-            Bench bench = p.getCodec().treeToValue(node.get("bench"), Bench.class);
+            Hand hand = p.getCodec().treeToValue(node.get(HAND_KEY), Hand.class);
+            Bench bench = p.getCodec().treeToValue(node.get(BENCH_KEY), Bench.class);
             DiscardPile discardPile = p.getCodec().treeToValue(node.get("discardPile"), DiscardPile.class);
             StatusEffectManager statusEffectManager = p.getCodec().treeToValue(node.get("statusEffectManager"), StatusEffectManager.class);
-            BattlePokemonState activePokemon = p.getCodec().treeToValue(node.get("activePokemon"), BattlePokemonState.class);
+            BattlePokemonState activePokemon = p.getCodec().treeToValue(node.get(ACTIVE_POKEMON_KEY), BattlePokemonState.class);
 
-            List<Card> prizePile = new ArrayList<>();
-            if (node.has("prizePile") && !node.get("prizePile").isNull()) {
-                for (JsonNode pNode : node.get("prizePile")) {
-                    prizePile.add(p.getCodec().treeToValue(pNode, Card.class));
-                }
-            }
+            List<Card> prizePile = readPrizePile(p, node);
+            Map<BattlePokemonState, Integer> turnsInPlay = readTurnsInPlay(node, activePokemon, bench);
 
-            Map<BattlePokemonState, Integer> turnsInPlay = new java.util.HashMap<>();
-            if (node.has("turnsInPlay") && !node.get("turnsInPlay").isNull()) {
-                JsonNode turnsNode = node.get("turnsInPlay");
-                Iterator<Map.Entry<String, JsonNode>> fields = turnsNode.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> field = fields.next();
-                    String key = field.getKey();
-                    int val = field.getValue().asInt();
-                    if ("active".equals(key)) {
-                        if (activePokemon != null) {
-                            turnsInPlay.put(activePokemon, val);
-                        }
-                    } else if (key.startsWith("bench_")) {
-                        try {
-                            int index = Integer.parseInt(key.substring(6));
-                            List<BattlePokemonState> benched = bench.getAll();
-                            if (index >= 0 && index < benched.size()) {
-                                turnsInPlay.put(benched.get(index), val);
-                            }
-                        } catch (NumberFormatException e) {
-                            log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
-                        }
-                    }
-                }
-            }
-
-            boolean knockedOutLastTurn = node.has("knockedOutLastTurn") ? node.get("knockedOutLastTurn").asBoolean() : false;
+            boolean knockedOutLastTurn = node.has("knockedOutLastTurn") && node.get("knockedOutLastTurn").asBoolean();
             int startingPrizeCount = node.has("startingPrizeCount") ? node.get("startingPrizeCount").asInt() : 6;
 
             PlayerRuntime playerRuntime = new PlayerRuntime(deck, hand, bench, discardPile, statusEffectManager, activePokemon, prizePile, turnsInPlay);
@@ -464,8 +511,51 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             playerRuntime.setStartingPrizeCount(startingPrizeCount);
             return playerRuntime;
         }
-    }
 
+        private List<Card> readPrizePile(JsonParser p, JsonNode node) throws IOException {
+            List<Card> prizePile = new ArrayList<>();
+            if (node.has(PRIZE_PILE_KEY) && !node.get(PRIZE_PILE_KEY).isNull()) {
+                for (JsonNode pNode : node.get(PRIZE_PILE_KEY)) {
+                    prizePile.add(p.getCodec().treeToValue(pNode, Card.class));
+                }
+            }
+            return prizePile;
+        }
+
+        private Map<BattlePokemonState, Integer> readTurnsInPlay(JsonNode node, BattlePokemonState activePokemon, Bench bench) {
+            Map<BattlePokemonState, Integer> turnsInPlay = new HashMap<>();
+            if (!node.has(TURNS_IN_PLAY_KEY) || node.get(TURNS_IN_PLAY_KEY).isNull()) {
+                return turnsInPlay;
+            }
+            JsonNode turnsNode = node.get(TURNS_IN_PLAY_KEY);
+            Iterator<Map.Entry<String, JsonNode>> fields = turnsNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                String key = field.getKey();
+                int val = field.getValue().asInt();
+                if (ACTIVE_KEY.equals(key)) {
+                    if (activePokemon != null) {
+                        turnsInPlay.put(activePokemon, val);
+                    }
+                } else if (key.startsWith(BENCH_PREFIX)) {
+                    parseBenchTurns(key, val, bench, turnsInPlay);
+                }
+            }
+            return turnsInPlay;
+        }
+
+        private void parseBenchTurns(String key, int val, Bench bench, Map<BattlePokemonState, Integer> turnsInPlay) {
+            try {
+                int index = Integer.parseInt(key.substring(BENCH_PREFIX.length()));
+                List<BattlePokemonState> benched = bench.getAll();
+                if (index >= 0 && index < benched.size()) {
+                    turnsInPlay.put(benched.get(index), val);
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Ignoring turnsInPlay key with invalid bench index: {}", key);
+            }
+        }
+    }
 
     public static class StatusEffectManagerSerializer extends JsonSerializer<StatusEffectManager> {
         @Override
@@ -493,24 +583,17 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
     public static class DeckSerializer extends JsonSerializer<Deck> {
         @Override
         public void serialize(Deck value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            try {
-                java.lang.reflect.Field field = Deck.class.getDeclaredField("cards");
-                field.setAccessible(true);
-                List<Card> cards = (List<Card>) field.get(value);
-                gen.writeStartObject();
-                gen.writeArrayFieldStart("cards");
-                for (Card card : cards) {
-                    if (card != null) {
-                        gen.writeObject(card);
-                    } else {
-                        gen.writeNull();
-                    }
+            gen.writeStartObject();
+            gen.writeArrayFieldStart(CARDS_KEY);
+            for (Card card : value.getCards()) {
+                if (card != null) {
+                    gen.writeObject(card);
+                } else {
+                    gen.writeNull();
                 }
-                gen.writeEndArray();
-                gen.writeEndObject();
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new IOException("Failed to serialize Deck", e);
             }
+            gen.writeEndArray();
+            gen.writeEndObject();
         }
     }
 
@@ -519,8 +602,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public Deck deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
             List<Card> cards = new ArrayList<>();
-            if (node.has("cards")) {
-                for (JsonNode cNode : node.get("cards")) {
+            if (node.has(CARDS_KEY)) {
+                for (JsonNode cNode : node.get(CARDS_KEY)) {
                     cards.add(p.getCodec().treeToValue(cNode, Card.class));
                 }
             }
@@ -532,7 +615,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public void serialize(Hand value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
-            gen.writeArrayFieldStart("cards");
+            gen.writeArrayFieldStart(CARDS_KEY);
             for (Card card : value.getCards()) {
                 if (card != null) {
                     gen.writeObject(card);
@@ -550,8 +633,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public Hand deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
             Hand hand = new Hand();
-            if (node.has("cards")) {
-                for (JsonNode cNode : node.get("cards")) {
+            if (node.has(CARDS_KEY)) {
+                for (JsonNode cNode : node.get(CARDS_KEY)) {
                     hand.addCard(p.getCodec().treeToValue(cNode, Card.class));
                 }
             }
@@ -594,7 +677,7 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public void serialize(DiscardPile value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
-            gen.writeArrayFieldStart("cards");
+            gen.writeArrayFieldStart(CARDS_KEY);
             for (Card card : value.getCards()) {
                 if (card != null) {
                     gen.writeObject(card);
@@ -612,8 +695,8 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public DiscardPile deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.getCodec().readTree(p);
             DiscardPile discardPile = new DiscardPile();
-            if (node.has("cards")) {
-                for (JsonNode cNode : node.get("cards")) {
+            if (node.has(CARDS_KEY)) {
+                for (JsonNode cNode : node.get(CARDS_KEY)) {
                     discardPile.add(p.getCodec().treeToValue(cNode, Card.class));
                 }
             }
@@ -625,36 +708,32 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         @Override
         public void serialize(MatchSession value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
-            gen.writeStringField("matchId", value.getMatchId());
+            gen.writeStringField(MATCH_ID_KEY, value.getMatchId());
             gen.writeObjectField("playerIds", value.getPlayerIds());
             gen.writeObjectField("board", value.getBoard());
-            gen.writeStringField("state", value.getState().name());
-            gen.writeNumberField("activePlayerIndex", value.getActivePlayerIndex());
-            gen.writeNumberField("version", value.getVersion());
+            gen.writeStringField(STATE_KEY, value.getState().name());
+            gen.writeNumberField(ACTIVE_PLAYER_INDEX_KEY, value.getActivePlayerIndex());
+            gen.writeNumberField(VERSION_KEY, value.getVersion());
             if (value.getWinnerId() != null) {
-                gen.writeStringField("winnerId", value.getWinnerId());
+                gen.writeStringField(WINNER_ID_KEY, value.getWinnerId());
             } else {
-                gen.writeNullField("winnerId");
+                gen.writeNullField(WINNER_ID_KEY);
             }
             if (value.getVictoryReason() != null) {
-                gen.writeStringField("victoryReason", value.getVictoryReason());
+                gen.writeStringField(VICTORY_REASON_KEY, value.getVictoryReason());
             } else {
-                gen.writeNullField("victoryReason");
+                gen.writeNullField(VICTORY_REASON_KEY);
             }
             if (value.getPendingSelectionRequest() != null) {
-                gen.writeObjectField("pendingSelectionRequest", value.getPendingSelectionRequest());
+                gen.writeObjectField(PENDING_SELECTION_REQUEST_KEY, value.getPendingSelectionRequest());
             } else {
-                gen.writeNullField("pendingSelectionRequest");
+                gen.writeNullField(PENDING_SELECTION_REQUEST_KEY);
             }
 
-            try {
-                java.lang.reflect.Field runtimesField = MatchSession.class.getDeclaredField("playerRuntimes");
-                runtimesField.setAccessible(true);
-                List<PlayerRuntime> runtimes = (List<PlayerRuntime>) runtimesField.get(value);
-                gen.writeObjectField("playerRuntimes", runtimes);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new IOException("Failed to serialize MatchSession.playerRuntimes", e);
-            }
+            List<PlayerRuntime> runtimes = value.hasPlayerRuntimes()
+                    ? List.of(value.getPlayerRuntime(0), value.getPlayerRuntime(1))
+                    : null;
+            gen.writeObjectField(PLAYER_RUNTIMES_KEY, runtimes);
 
             gen.writeEndObject();
         }
@@ -667,81 +746,101 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node == null || node.isNull()) {
                 return null;
             }
-            String matchId = node.has("matchId") && !node.get("matchId").isNull() ? node.get("matchId").asText() : null;
-
-            List<String> playerIds = new ArrayList<>();
-            if (node.has("playerIds")) {
-                for (JsonNode idNode : node.get("playerIds")) {
-                    playerIds.add(idNode.asText());
-                }
-            }
-
+            String matchId = readStringProp(node, MATCH_ID_KEY, null);
+            List<String> playerIds = readPlayerIds(node);
             MatchBoard board = p.getCodec().treeToValue(node.get("board"), MatchBoard.class);
+            List<PlayerRuntime> playerRuntimes = readPlayerRuntimes(p, node);
 
-            List<PlayerRuntime> playerRuntimes = null;
-            if (node.has("playerRuntimes") && !node.get("playerRuntimes").isNull()) {
-                playerRuntimes = new ArrayList<>();
-                for (JsonNode rNode : node.get("playerRuntimes")) {
-                    playerRuntimes.add(p.getCodec().treeToValue(rNode, PlayerRuntime.class));
-                }
-            }
-
-            MatchSessionState state = node.has("state") && !node.get("state").isNull()
-                    ? MatchSessionState.valueOf(node.get("state").asText())
-                    : MatchSessionState.WAITING;
-            int activePlayerIndex = node.has("activePlayerIndex") && !node.get("activePlayerIndex").isNull()
-                    ? node.get("activePlayerIndex").asInt()
-                    : -1;
-            String winnerId = node.has("winnerId") && !node.get("winnerId").isNull()
-                    ? node.get("winnerId").asText()
-                    : null;
-            String victoryReason = node.has("victoryReason") && !node.get("victoryReason").isNull()
-                    ? node.get("victoryReason").asText()
-                    : null;
-            long version = node.has("version") && !node.get("version").isNull()
-                    ? node.get("version").asLong()
-                    : 1L;
-            ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest pendingSelectionRequest = node.has("pendingSelectionRequest") && !node.get("pendingSelectionRequest").isNull()
-                    ? p.getCodec().treeToValue(node.get("pendingSelectionRequest"), ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest.class)
-                    : null;
+            MatchSessionState state = readState(node);
+            int activePlayerIndex = readIntProp(node, ACTIVE_PLAYER_INDEX_KEY, -1);
+            String winnerId = readStringProp(node, WINNER_ID_KEY, null);
+            String victoryReason = readStringProp(node, VICTORY_REASON_KEY, null);
+            long version = readLongProp(node, VERSION_KEY, 1L);
+            PendingSelectionRequest pendingSelectionRequest = readPendingSelectionRequest(p, node);
 
             if (board != null && playerRuntimes != null) {
                 board.bindRuntimes(playerRuntimes);
             }
             MatchSession session = new MatchSession(matchId, playerIds, board, playerRuntimes);
 
-            try {
-                java.lang.reflect.Field stateField = MatchSession.class.getDeclaredField("state");
-                stateField.setAccessible(true);
-                stateField.set(session, state);
-
-                java.lang.reflect.Field activePlayerField = MatchSession.class.getDeclaredField("activePlayerIndex");
-                activePlayerField.setAccessible(true);
-                activePlayerField.set(session, activePlayerIndex);
-
-                java.lang.reflect.Field winnerIdField = MatchSession.class.getDeclaredField("winnerId");
-                winnerIdField.setAccessible(true);
-                winnerIdField.set(session, winnerId);
-
-                java.lang.reflect.Field victoryReasonField = MatchSession.class.getDeclaredField("victoryReason");
-                victoryReasonField.setAccessible(true);
-                victoryReasonField.set(session, victoryReason);
-
-                java.lang.reflect.Field versionField = MatchSession.class.getDeclaredField("version");
-                versionField.setAccessible(true);
-                versionField.set(session, version);
-
-                java.lang.reflect.Field pendingReqField = MatchSession.class.getDeclaredField("pendingSelectionRequest");
-                pendingReqField.setAccessible(true);
-                pendingReqField.set(session, pendingSelectionRequest);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new IOException("Failed to restore MatchSession state fields", e);
-            }
+            restoreSessionState(session, state, activePlayerIndex, winnerId, victoryReason, version, pendingSelectionRequest);
 
             // Re-inject the default CoinFlipper
             session.setCoinFlipper(new RandomCoinFlipper());
 
             return session;
+        }
+
+        private String readStringProp(JsonNode node, String name, String defaultValue) {
+            return node.has(name) && !node.get(name).isNull() ? node.get(name).asText() : defaultValue;
+        }
+
+        private int readIntProp(JsonNode node, String name, int defaultValue) {
+            return node.has(name) && !node.get(name).isNull() ? node.get(name).asInt() : defaultValue;
+        }
+
+        private long readLongProp(JsonNode node, String name, long defaultValue) {
+            return node.has(name) && !node.get(name).isNull() ? node.get(name).asLong() : defaultValue;
+        }
+
+        private MatchSessionState readState(JsonNode node) {
+            return node.has(STATE_KEY) && !node.get(STATE_KEY).isNull()
+                    ? MatchSessionState.valueOf(node.get(STATE_KEY).asText())
+                    : MatchSessionState.WAITING;
+        }
+
+        private PendingSelectionRequest readPendingSelectionRequest(JsonParser p, JsonNode node) throws IOException {
+            return node.has(PENDING_SELECTION_REQUEST_KEY) && !node.get(PENDING_SELECTION_REQUEST_KEY).isNull()
+                    ? p.getCodec().treeToValue(node.get(PENDING_SELECTION_REQUEST_KEY), PendingSelectionRequest.class)
+                    : null;
+        }
+
+        private List<String> readPlayerIds(JsonNode node) {
+            List<String> playerIds = new ArrayList<>();
+            if (node.has("playerIds")) {
+                for (JsonNode idNode : node.get("playerIds")) {
+                    playerIds.add(idNode.asText());
+                }
+            }
+            return playerIds;
+        }
+
+        // Suppress ReturnEmptyCollectionRatherThanNull: null indicates legacy format without player runtimes
+        @SuppressWarnings("PMD.ReturnEmptyCollectionRatherThanNull")
+        private List<PlayerRuntime> readPlayerRuntimes(JsonParser p, JsonNode node) throws IOException {
+            if (node.has(PLAYER_RUNTIMES_KEY) && !node.get(PLAYER_RUNTIMES_KEY).isNull()) {
+                List<PlayerRuntime> playerRuntimes = new ArrayList<>();
+                for (JsonNode rNode : node.get(PLAYER_RUNTIMES_KEY)) {
+                    playerRuntimes.add(p.getCodec().treeToValue(rNode, PlayerRuntime.class));
+                }
+                return playerRuntimes;
+            }
+            return null;
+        }
+
+        private void restoreSessionState(MatchSession session, MatchSessionState state, int activePlayerIndex,
+                                         String winnerId, String victoryReason, long version,
+                                         PendingSelectionRequest pendingSelectionRequest) {
+            if (state == MatchSessionState.SETUP) {
+                session.setup();
+            } else if (state == MatchSessionState.ACTIVE) {
+                session.setup();
+                session.start();
+            } else if (state == MatchSessionState.FINISHED) {
+                session.setup();
+                session.start();
+                session.finish();
+            }
+
+            session.setActivePlayerIndex(activePlayerIndex);
+            session.setWinnerId(winnerId);
+            session.setVictoryReason(victoryReason);
+
+            for (long v = session.getVersion(); v < version; v++) {
+                session.incrementVersion();
+            }
+
+            session.setPendingSelectionRequest(pendingSelectionRequest);
         }
     }
 
@@ -750,15 +849,15 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serialize(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("@type", "inPlay");
-            gen.writeStringField("uuid", value.getUuid());
+            gen.writeStringField(UUID_KEY, value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
-            gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
-            gen.writeObjectField("attachedEnergyCards", value.getAttachedEnergyCards());
+            gen.writeObjectField(ATTACHED_ENERGIES_KEY, value.getAttachedEnergies());
+            gen.writeObjectField(ATTACHED_ENERGY_CARDS_KEY, value.getAttachedEnergyCards());
             if (value.getAttachedTool().isPresent()) {
-                gen.writeObjectField("attachedTool", value.getAttachedTool().get());
+                gen.writeObjectField(ATTACHED_TOOL_KEY, value.getAttachedTool().get());
             } else {
-                gen.writeNullField("attachedTool");
+                gen.writeNullField(ATTACHED_TOOL_KEY);
             }
             gen.writeEndObject();
         }
@@ -767,15 +866,15 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
         public void serializeWithType(InPlayPokemon value, JsonGenerator gen, SerializerProvider serializers, com.fasterxml.jackson.databind.jsontype.TypeSerializer typeSer) throws IOException {
             com.fasterxml.jackson.core.type.WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen,
                     typeSer.typeId(value, com.fasterxml.jackson.core.JsonToken.START_OBJECT));
-            gen.writeStringField("uuid", value.getUuid());
+            gen.writeStringField(UUID_KEY, value.getUuid());
             gen.writeObjectField("card", value.getCard());
             gen.writeNumberField("damageCounters", value.getDamageCounters());
-            gen.writeObjectField("attachedEnergies", value.getAttachedEnergies());
-            gen.writeObjectField("attachedEnergyCards", value.getAttachedEnergyCards());
+            gen.writeObjectField(ATTACHED_ENERGIES_KEY, value.getAttachedEnergies());
+            gen.writeObjectField(ATTACHED_ENERGY_CARDS_KEY, value.getAttachedEnergyCards());
             if (value.getAttachedTool().isPresent()) {
-                gen.writeObjectField("attachedTool", value.getAttachedTool().get());
+                gen.writeObjectField(ATTACHED_TOOL_KEY, value.getAttachedTool().get());
             } else {
-                gen.writeNullField("attachedTool");
+                gen.writeNullField(ATTACHED_TOOL_KEY);
             }
             typeSer.writeTypeSuffix(gen, typeIdDef);
         }
@@ -787,40 +886,54 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             JsonNode node = p.getCodec().readTree(p);
             PokemonCard card = p.getCodec().treeToValue(node.get("card"), PokemonCard.class);
             int damageCounters = node.get("damageCounters").asInt();
+            List<PokemonType> attachedEnergies = parseAttachedEnergies(node);
+            List<EnergyCard> attachedEnergyCards = parseAttachedEnergyCards(node, attachedEnergies);
+
+            TrainerCard tool = null;
+            if (node.has(ATTACHED_TOOL_KEY) && !node.get(ATTACHED_TOOL_KEY).isNull()) {
+                tool = p.getCodec().treeToValue(node.get(ATTACHED_TOOL_KEY), TrainerCard.class);
+            }
+            String uuidVal = node.has(UUID_KEY) ? node.get(UUID_KEY).asText() : UUID.randomUUID().toString();
+            final InPlayPokemon ip = new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
+            ip.setUuid(uuidVal);
+            return ip;
+        }
+
+        private List<PokemonType> parseAttachedEnergies(JsonNode node) {
             List<PokemonType> attachedEnergies = new ArrayList<>();
-            if (node.has("attachedEnergies")) {
-                for (JsonNode eNode : node.get("attachedEnergies")) {
+            if (node.has(ATTACHED_ENERGIES_KEY)) {
+                for (JsonNode eNode : node.get(ATTACHED_ENERGIES_KEY)) {
                     attachedEnergies.add(PokemonType.valueOf(eNode.asText()));
                 }
             }
+            return attachedEnergies;
+        }
+
+        private List<EnergyCard> parseAttachedEnergyCards(JsonNode node, List<PokemonType> attachedEnergies) {
             List<EnergyCard> attachedEnergyCards = new ArrayList<>();
-            if (node.has("attachedEnergyCards") && !node.get("attachedEnergyCards").isNull()) {
-                for (JsonNode eNode : node.get("attachedEnergyCards")) {
-                    if (eNode.isTextual()) {
-                        attachedEnergyCards.add(new EnergyCard("dummy-" + UUID.randomUUID(), eNode.asText() + " Energy", PokemonType.valueOf(eNode.asText()), true));
-                    } else {
-                        String cardId = eNode.has("cardId") ? eNode.get("cardId").asText() : "dummy-" + UUID.randomUUID();
-                        String name = eNode.has("name") ? eNode.get("name").asText() : "Energy";
-                        PokemonType energyType = eNode.has("energyType") ? PokemonType.valueOf(eNode.get("energyType").asText()) : PokemonType.COLORLESS;
-                        boolean basic = !eNode.has("basic") || eNode.get("basic").asBoolean();
-                        int energyCount = eNode.has("energyCount") ? eNode.get("energyCount").asInt(1) : 1;
-                        boolean providesAllTypes = eNode.has("providesAllTypes") && eNode.get("providesAllTypes").asBoolean();
-                        attachedEnergyCards.add(new EnergyCard(cardId, name, energyType, basic, energyCount, providesAllTypes));
-                    }
+            if (node.has(ATTACHED_ENERGY_CARDS_KEY) && !node.get(ATTACHED_ENERGY_CARDS_KEY).isNull()) {
+                for (JsonNode eNode : node.get(ATTACHED_ENERGY_CARDS_KEY)) {
+                    attachedEnergyCards.add(parseSingleEnergyCard(eNode));
                 }
             } else {
                 for (PokemonType type : attachedEnergies) {
                     attachedEnergyCards.add(new EnergyCard("dummy-" + UUID.randomUUID(), type.name() + " Energy", type, true));
                 }
             }
-            TrainerCard tool = null;
-            if (node.has("attachedTool") && !node.get("attachedTool").isNull()) {
-                tool = p.getCodec().treeToValue(node.get("attachedTool"), TrainerCard.class);
+            return attachedEnergyCards;
+        }
+
+        private EnergyCard parseSingleEnergyCard(JsonNode eNode) {
+            if (eNode.isTextual()) {
+                return new EnergyCard("dummy-" + UUID.randomUUID(), eNode.asText() + " Energy", PokemonType.valueOf(eNode.asText()), true);
             }
-            String uuidVal = node.has("uuid") ? node.get("uuid").asText() : UUID.randomUUID().toString();
-            final InPlayPokemon ip = new InPlayPokemon(card, damageCounters, attachedEnergies, attachedEnergyCards, tool);
-            ip.setUuid(uuidVal);
-            return ip;
+            String cardId = eNode.has(CARD_ID_KEY) ? eNode.get(CARD_ID_KEY).asText() : "dummy-" + UUID.randomUUID();
+            String name = eNode.has(NAME_KEY) ? eNode.get(NAME_KEY).asText() : "Energy";
+            PokemonType energyType = eNode.has("energyType") ? PokemonType.valueOf(eNode.get("energyType").asText()) : PokemonType.COLORLESS;
+            boolean basic = !eNode.has(BASIC_KEY) || eNode.get(BASIC_KEY).asBoolean();
+            int energyCount = eNode.has(ENERGY_COUNT_KEY) ? eNode.get(ENERGY_COUNT_KEY).asInt(1) : 1;
+            boolean providesAllTypes = eNode.has(PROVIDES_ALL_TYPES_KEY) && eNode.get(PROVIDES_ALL_TYPES_KEY).asBoolean();
+            return new EnergyCard(cardId, name, energyType, basic, energyCount, providesAllTypes);
         }
     }
 
@@ -831,12 +944,12 @@ public class MatchSessionJsonConverter implements AttributeConverter<MatchSessio
             if (node == null || node.isNull()) {
                 return null;
             }
-            String cardId = node.get("cardId").asText();
-            String name = node.get("name").asText();
+            String cardId = node.get(CARD_ID_KEY).asText();
+            String name = node.get(NAME_KEY).asText();
             PokemonType energyType = PokemonType.valueOf(node.get("energyType").asText());
-            boolean basic = node.has("basic") && node.get("basic").asBoolean();
-            int energyCount = node.has("energyCount") ? node.get("energyCount").asInt(1) : 1;
-            boolean providesAllTypes = node.has("providesAllTypes") && node.get("providesAllTypes").asBoolean();
+            boolean basic = node.has(BASIC_KEY) && node.get(BASIC_KEY).asBoolean();
+            int energyCount = node.has(ENERGY_COUNT_KEY) ? node.get(ENERGY_COUNT_KEY).asInt(1) : 1;
+            boolean providesAllTypes = node.has(PROVIDES_ALL_TYPES_KEY) && node.get(PROVIDES_ALL_TYPES_KEY).asBoolean();
             return new EnergyCard(cardId, name, energyType, basic, energyCount, providesAllTypes);
         }
     }
