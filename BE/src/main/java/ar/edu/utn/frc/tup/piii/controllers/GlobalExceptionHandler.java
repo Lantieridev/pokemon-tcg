@@ -2,6 +2,8 @@ package ar.edu.utn.frc.tup.piii.controllers;
 
 import ar.edu.utn.frc.tup.piii.engine.exception.InvalidActionException;
 import ar.edu.utn.frc.tup.piii.services.deck.InvalidDeckException;
+import ar.edu.utn.frc.tup.piii.store.domain.exception.StoreException;
+import ar.edu.utn.frc.tup.piii.store.domain.exception.StoreUserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -46,6 +48,16 @@ public final class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDenied(final AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(StoreUserNotFoundException.class)
+    public ResponseEntity<String> handleStoreUserNotFound(final StoreUserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(StoreException.class)
+    public ResponseEntity<String> handleStoreDomainError(final StoreException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
