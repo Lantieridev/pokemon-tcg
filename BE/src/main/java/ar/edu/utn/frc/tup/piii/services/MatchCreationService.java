@@ -45,6 +45,10 @@ import java.util.UUID;
  * registered until all components are fully initialised.</p>
  */
 @Service
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects"})
+// Orchestrator that wires together every engine/service component needed to stand up a match
+// (setup manager, board builder, engine core, bot service, session registry); the coupling is
+// inherent to the orchestration role, not a design flaw.
 public final class MatchCreationService {
 
     private static final String MATCH_TOPIC_BASE = "/topic/match/";
