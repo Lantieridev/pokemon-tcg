@@ -19,7 +19,7 @@
         <java.version>21</java.version>
         <checkstyle-maven-plugin.version>3.3.0</checkstyle-maven-plugin.version>
         <springdoc-openapi.version>2.2.0</springdoc-openapi.version>
-        <modelmapper.version>3.1.1</modelmapper.version>
+        <modelmapper.version>3.2.6</modelmapper.version>
         <maven-pmd-plugin.version>3.22.0</maven-pmd-plugin.version>
         <pmdVersion>7.0.0</pmdVersion>
     </properties>
