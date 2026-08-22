@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface DeckRepository extends JpaRepository<DeckEntity, Long> {
 
+    @Override
     @EntityGraph(attributePaths = {"cards", "cards.card"})
     Optional<DeckEntity> findById(Long id);
 

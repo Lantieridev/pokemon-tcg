@@ -41,9 +41,24 @@ public enum Tier {
     }
 
     public static Tier fromMmrAndMatches(final Integer mmr, final Integer matchesPlayed) {
-        if (mmr == null || matchesPlayed == null || matchesPlayed < MIN_RANKED_MATCHES) {
+        if (isUnranked(mmr, matchesPlayed)) {
             return UNRANKED;
         }
+        return fromMmr(mmr);
+    }
+
+    private static boolean isUnranked(final Integer mmr, final Integer matchesPlayed) {
+        return mmr == null || matchesPlayed == null || matchesPlayed < MIN_RANKED_MATCHES;
+    }
+
+    private static Tier fromMmr(final int mmr) {
+        if (mmr < GOLD_MAX_MMR) {
+            return fromLowerMmr(mmr);
+        }
+        return fromHigherMmr(mmr);
+    }
+
+    private static Tier fromLowerMmr(final int mmr) {
         if (mmr < IRON_MAX_MMR) {
             return IRON;
         }
@@ -53,9 +68,10 @@ public enum Tier {
         if (mmr < SILVER_MAX_MMR) {
             return SILVER;
         }
-        if (mmr < GOLD_MAX_MMR) {
-            return GOLD;
-        }
+        return GOLD;
+    }
+
+    private static Tier fromHigherMmr(final int mmr) {
         if (mmr < PLATINUM_MAX_MMR) {
             return PLATINUM;
         }

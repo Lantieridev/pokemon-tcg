@@ -20,6 +20,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CardEntity {
 
+    private static final String JSONB_COLUMN_TYPE = "jsonb";
+
     @Id
     private String id;
 
@@ -32,27 +34,27 @@ public class CardEntity {
     private String evolvesFrom;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object abilities;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object rules;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object attacks;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object weaknesses;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object resistances;
 
     @Convert(converter = JsonbConverter.class)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = JSONB_COLUMN_TYPE)
     private Object retreatCost;
 
     @Column(name = "set_id")
