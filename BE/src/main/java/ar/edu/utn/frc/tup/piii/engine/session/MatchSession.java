@@ -190,6 +190,8 @@ public final class MatchSession {
                     "Cannot reset for sudden death from state: " + state + " (must be FINISHED)");
         }
 
+        state = MatchSessionState.SETUP;
+
         // Return all cards to the deck
         for (int i = 0; i < 2; i++) {
             final PlayerRuntime pr = getPlayerRuntime(i);
