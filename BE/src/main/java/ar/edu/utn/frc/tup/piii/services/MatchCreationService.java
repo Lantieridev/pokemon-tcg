@@ -25,22 +25,12 @@ import ar.edu.utn.frc.tup.piii.engine.session.MatchBoard;
 import ar.edu.utn.frc.tup.piii.engine.session.MatchSession;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime;
 import ar.edu.utn.frc.tup.piii.engine.session.PlayerState;
-import ar.edu.utn.frc.tup.piii.services.ChatService;
 import ar.edu.utn.frc.tup.piii.dtos.ChatMessageResponse;
 import ar.edu.utn.frc.tup.piii.dtos.GameStateResponseDTO;
-import ar.edu.utn.frc.tup.piii.services.PlayerPerspectiveMapper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -104,105 +94,113 @@ public final class MatchCreationService {
         Objects.requireNonNull(deckBCards, "deckBCards must not be null");
 
         final String matchId = UUID.randomUUID().toString();
-
-        // --- Build mutable components for each player ---
-        final Deck deck0 = new Deck(new ArrayList<>(deckACards));
-        final Deck deck1 = new Deck(new ArrayList<>(deckBCards));
-        final Hand hand0 = new Hand();
-        final Hand hand1 = new Hand();
-        final Bench bench0 = new Bench();
-        final Bench bench1 = new Bench();
-        final DiscardPile dp0 = new DiscardPile();
-        final DiscardPile dp1 = new DiscardPile();
+        final PlayerComponents p0 = new PlayerComponents(deckACards);
+        final PlayerComponents p1 = new PlayerComponents(deckBCards);
         final CoinFlipper coinFlipper = new RandomCoinFlipper();
-        final StatusEffectManager sem0 = new StatusEffectManager(coinFlipper);
-        final StatusEffectManager sem1 = new StatusEffectManager(coinFlipper);
+        p0.sem = new StatusEffectManager(coinFlipper);
+        p1.sem = new StatusEffectManager(coinFlipper);
 
-        // --- Setup Phase ---
-        final PlayerSetupSlot slot0 = new PlayerSetupSlot(deck0, hand0, bench0);
-        final PlayerSetupSlot slot1 = new PlayerSetupSlot(deck1, hand1, bench1);
-        final SetupManager setupManager = new SetupManager(coinFlipper);
-        final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
+        final PlayerSetupSlot slot0 = new PlayerSetupSlot(p0.deck, p0.hand, p0.bench);
+        final PlayerSetupSlot slot1 = new PlayerSetupSlot(p1.deck, p1.hand, p1.bench);
+        final SetupResult setupResult = runSetupPhase(matchId, playerAId, playerBId, slot0, slot1, coinFlipper);
         final int firstPlayerIndex = setupResult.firstPlayerIndex();
-        // Broadcast initial coin flip who goes first
-        final String firstPlayerName = firstPlayerIndex == 0 ? playerAId : playerBId;
-        chatService.addMessage(matchId, ChatMessageResponse.builder()
-                .sender("SISTEMA")
-                .message("Lanzamiento de moneda: " + firstPlayerName + " ganó el coin flip y empieza la partida.")
-                .timestamp(LocalDateTime.now())
-                .build());
 
-        // Broadcast mulligans to chat history so they appear on screen as alerts
-        final int mullP0 = setupResult.mulligansP0().size();
-        final int mullP1 = setupResult.mulligansP1().size();
-        if (mullP0 > 0) {
-            chatService.addMessage(matchId, ChatMessageResponse.builder()
-                    .sender("SISTEMA")
-                    .message(playerAId + " declaró " + mullP0 + " Mulligan(s) por no tener Pokémon Básicos en su mano.")
-                    .timestamp(LocalDateTime.now())
-                    .build());
-        }
-        if (mullP1 > 0) {
-            chatService.addMessage(matchId, ChatMessageResponse.builder()
-                    .sender("SISTEMA")
-                    .message(playerBId + " declaró " + mullP1 + " Mulligan(s) por no tener Pokémon Básicos en su mano.")
-                    .timestamp(LocalDateTime.now())
-                    .build());
-        }
+        final List<PlayerRuntime> runtimes = buildRuntimes(p0, p1, slot0, slot1);
+        final MatchBoard board = buildBoard(p0, p1, slot0, slot1, runtimes);
 
-        // --- Build PlayerRuntimes with prize piles from setup ---
-        final PlayerRuntime runtime0 = new PlayerRuntime(
-                deck0, hand0, bench0, dp0, sem0,
-                null, slot0.getPrizes());
-        final PlayerRuntime runtime1 = new PlayerRuntime(
-                deck1, hand1, bench1, dp1, sem1,
-                null, slot1.getPrizes());
-        final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
-        
-        sem0.setPlayerRuntime(runtime0);
-        sem1.setPlayerRuntime(runtime1);
-
-        // --- Register initial Pokémon in turnsInPlay (active + bench, turnsInPlay = 0) ---
-        // Nothing to register since the board is empty
-
-        // --- Build MatchBoard (immutable snapshot fields only) ---
-        final PlayerState ps0 = new PlayerState(
-                null, bench0.getAll(),
-                hand0.getCards().stream().map(Card::getCardId).toList(),
-                List.of(),
-                deck0.size(), slot0.getPrizes().size(), Map.of());
-        final PlayerState ps1 = new PlayerState(
-                null, bench1.getAll(),
-                hand1.getCards().stream().map(Card::getCardId).toList(),
-                List.of(),
-                deck1.size(), slot1.getPrizes().size(), Map.of());
-        final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
-        board.bindRuntimes(runtimes);
-
-        // --- Create MatchSession (needed for VictoryHandler broadcast) ---
         final MatchSession session = new MatchSession(
                 matchId, List.of(playerAId, playerBId), board, runtimes, isRanked);
         session.setCoinFlipper(coinFlipper);
 
-        // --- Wire TurnManager and all PhaseListeners ---
+        final TurnManager turnManager = wireEngine(matchId, session, board, runtimes, firstPlayerIndex,
+                List.of(p0.sem, p1.sem));
+
+        registry.register(session);
+        turnManager.startTurn(firstPlayerIndex);
+        triggerBotTurnIfNeeded(session, firstPlayerIndex, matchId);
+
+        return matchId;
+    }
+
+    /** Mutable per-player scratch state threaded through {@link #createMatch} phases. */
+    private static final class PlayerComponents {
+        private final Deck deck;
+        private final Hand hand = new Hand();
+        private final Bench bench = new Bench();
+        private final DiscardPile discardPile = new DiscardPile();
+        private StatusEffectManager sem;
+
+        PlayerComponents(final List<Card> deckCards) {
+            this.deck = new Deck(new ArrayList<>(deckCards));
+        }
+    }
+
+    private SetupResult runSetupPhase(final String matchId, final String playerAId, final String playerBId,
+            final PlayerSetupSlot slot0, final PlayerSetupSlot slot1, final CoinFlipper coinFlipper) {
+        final SetupManager setupManager = new SetupManager(coinFlipper);
+        final SetupResult setupResult = setupManager.executeWithoutPlacement(slot0, slot1);
+
+        final String firstPlayerName = setupResult.firstPlayerIndex() == 0 ? playerAId : playerBId;
+        broadcastSystemMessage(matchId, "Lanzamiento de moneda: " + firstPlayerName
+                + " ganó el coin flip y empieza la partida.");
+        broadcastMulliganIfAny(matchId, playerAId, setupResult.mulligansP0().size());
+        broadcastMulliganIfAny(matchId, playerBId, setupResult.mulligansP1().size());
+        return setupResult;
+    }
+
+    private void broadcastMulliganIfAny(final String matchId, final String playerId, final int mulliganCount) {
+        if (mulliganCount > 0) {
+            broadcastSystemMessage(matchId, playerId + " declaró " + mulliganCount
+                    + " Mulligan(s) por no tener Pokémon Básicos en su mano.");
+        }
+    }
+
+    private void broadcastSystemMessage(final String matchId, final String message) {
+        chatService.addMessage(matchId, ChatMessageResponse.builder()
+                .sender("SISTEMA")
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .build());
+    }
+
+    private List<PlayerRuntime> buildRuntimes(final PlayerComponents p0, final PlayerComponents p1,
+            final PlayerSetupSlot slot0, final PlayerSetupSlot slot1) {
+        final PlayerRuntime runtime0 = new PlayerRuntime(
+                p0.deck, p0.hand, p0.bench, p0.discardPile, p0.sem, null, slot0.getPrizes());
+        final PlayerRuntime runtime1 = new PlayerRuntime(
+                p1.deck, p1.hand, p1.bench, p1.discardPile, p1.sem, null, slot1.getPrizes());
+        final List<PlayerRuntime> runtimes = List.of(runtime0, runtime1);
+        p0.sem.setPlayerRuntime(runtime0);
+        p1.sem.setPlayerRuntime(runtime1);
+        return runtimes;
+    }
+
+    private MatchBoard buildBoard(final PlayerComponents p0, final PlayerComponents p1,
+            final PlayerSetupSlot slot0, final PlayerSetupSlot slot1, final List<PlayerRuntime> runtimes) {
+        final PlayerState ps0 = new PlayerState(
+                null, p0.bench.getAll(),
+                p0.hand.getCards().stream().map(Card::getCardId).toList(),
+                List.of(), p0.deck.size(), slot0.getPrizes().size(), Map.of());
+        final PlayerState ps1 = new PlayerState(
+                null, p1.bench.getAll(),
+                p1.hand.getCards().stream().map(Card::getCardId).toList(),
+                List.of(), p1.deck.size(), slot1.getPrizes().size(), Map.of());
+        final MatchBoard board = new MatchBoard(List.of(ps0, ps1));
+        board.bindRuntimes(runtimes);
+        return board;
+    }
+
+    private TurnManager wireEngine(final String matchId, final MatchSession session, final MatchBoard board,
+            final List<PlayerRuntime> runtimes, final int firstPlayerIndex,
+            final List<StatusEffectManager> statusManagers) {
         final TurnManager turnManager = new TurnManager();
         turnManager.setStartingPlayer(firstPlayerIndex);
 
-        final VictoryHandler victoryHandler =
-                result -> handleVictory(matchId, session, result);
-
-        final VictoryConditionChecker vcc = new VictoryConditionChecker(
-                board, board, board, board, victoryHandler);
-
-        final KnockoutResolutionHandler koResolution =
-                new KnockoutResolutionHandler(runtimes, turnManager, vcc);
-
-        final KnockoutManager koManager =
-                new KnockoutManager(board, board, koResolution);
-
-        final DrawPhaseExecutor drawExec =
-                new DrawPhaseExecutor(runtimes, turnManager, victoryHandler);
-
+        final VictoryHandler victoryHandler = result -> handleVictory(matchId, session, result);
+        final VictoryConditionChecker vcc = new VictoryConditionChecker(board, board, board, board, victoryHandler);
+        final KnockoutResolutionHandler koResolution = new KnockoutResolutionHandler(runtimes, turnManager, vcc);
+        final KnockoutManager koManager = new KnockoutManager(board, board, koResolution);
+        final DrawPhaseExecutor drawExec = new DrawPhaseExecutor(runtimes, turnManager, victoryHandler);
         final TurnInPlayTracker turnInPlayTracker = new TurnInPlayTracker(runtimes);
 
         turnManager.registerListener(drawExec);
@@ -210,42 +208,31 @@ public final class MatchCreationService {
         turnManager.registerListener(vcc);
         turnManager.registerListener(turnInPlayTracker);
 
-        // --- Wire RuleValidator ---
-        final RuleValidator ruleValidator = new RuleValidator(
-                turnManager,
-                List.of(sem0, sem1),
-                board,
-                board,
-                board,
-                board);
+        final RuleValidator ruleValidator = new RuleValidator(turnManager, statusManagers, board, board, board, board);
 
-        // --- Attach engine to session ---
         session.setKnockoutHandler(koResolution);
         session.setTurnManager(turnManager);
         session.setRuleValidator(ruleValidator);
         session.setVictoryConditionChecker(vcc);
         session.setup();
         session.start();
+        return turnManager;
+    }
 
-        // --- Register and kick off first turn ---
-        registry.register(session);
-        turnManager.startTurn(firstPlayerIndex);
-
-        // Check for bot turn and trigger decision service
+    private void triggerBotTurnIfNeeded(final MatchSession session, final int firstPlayerIndex, final String matchId) {
         final String activePlayerId = session.getPlayerIds().get(firstPlayerIndex);
-        if (activePlayerId != null && activePlayerId.startsWith("Bot-")) {
-            new Thread(() -> {
-                try {
-                    // Esperar 6 segundos para que el frontend termine la animación de la moneda
-                    Thread.sleep(6000);
-                    botDecisionService.evaluateAndPlay(matchId);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }).start();
+        if (activePlayerId == null || !activePlayerId.startsWith("Bot-")) {
+            return;
         }
-
-        return matchId;
+        new Thread(() -> {
+            try {
+                // Esperar 6 segundos para que el frontend termine la animación de la moneda
+                Thread.sleep(6000);
+                botDecisionService.evaluateAndPlay(matchId);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
 
     /**
