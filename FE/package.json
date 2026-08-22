@@ -40,7 +40,7 @@
   "devDependencies": {
     "@angular/build": "^21.2.19",
     "@angular/cli": "^21.2.19",
-    "@angular/compiler-cli": "^21.2.18",
+    "@angular/compiler-cli": "^22.1.2",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.5.0",
     "cypress": "^15.18.0",
