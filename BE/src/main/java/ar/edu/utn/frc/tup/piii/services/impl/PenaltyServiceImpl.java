@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Transactional
+@SuppressWarnings({"PMD.CyclomaticComplexity", "PMD.TooManyMethods"})
+// Wide-surface penalty API (ban/mute/ranked-ban/notifications/reports) with per-method
+// complexity confirmed low (highest 7); the aggregate reflects method count, not tangled logic.
 public class PenaltyServiceImpl implements PenaltyService {
 
     private static final String PENALTY_BAN = "BAN";
@@ -160,10 +163,7 @@ public class PenaltyServiceImpl implements PenaltyService {
     @Override
     @Transactional(readOnly = true)
     public boolean isPermanentlyBanned(final String username) {
-        if (username == null) {
-            return false;
-        }
-        return activeNonPendingPenalties(username).stream()
+        return username != null && activeNonPendingPenalties(username).stream()
                 .anyMatch(p -> PENALTY_PERMA.equalsIgnoreCase(p.getPenaltyType()));
     }
 
@@ -189,10 +189,7 @@ public class PenaltyServiceImpl implements PenaltyService {
     @Override
     @Transactional(readOnly = true)
     public boolean shouldShowRecidivismWarning(final String username) {
-        if (username == null) {
-            return false;
-        }
-        return userRepository.findFirstByUsername(username)
+        return username != null && userRepository.findFirstByUsername(username)
                 .map(UserEntity::getShowRecidivismWarning)
                 .orElse(false);
     }

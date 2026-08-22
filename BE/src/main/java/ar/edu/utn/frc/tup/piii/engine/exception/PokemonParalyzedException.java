@@ -6,6 +6,8 @@ package ar.edu.utn.frc.tup.piii.engine.exception;
  */
 public class PokemonParalyzedException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     /**
      * Constructs a PokemonParalyzedException with the specified detail message.
      *

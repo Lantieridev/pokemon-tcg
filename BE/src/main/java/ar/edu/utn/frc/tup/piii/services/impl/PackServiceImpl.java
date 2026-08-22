@@ -19,6 +19,11 @@ import java.util.Map;
 import java.util.Random;
 
 @Service
+@SuppressWarnings({"PMD.GodClass", "PMD.TooManyMethods"})
+// Pack-opening domain service: inventory checks, rarity-pool categorization, guaranteed/random
+// slot pulls, and showcase-drop tracking are all steps of one opening flow and stay small
+// (see bucketCardByRarity/applyEmptyPoolFallbacks extraction above) — splitting further would
+// scatter one cohesive algorithm across unrelated classes.
 public class PackServiceImpl implements PackService {
 
     private static final String LEGACY_PACK_TYPE = "pack_base";
@@ -180,18 +185,30 @@ public class PackServiceImpl implements PackService {
         List<CardEntity> legendaryCards = new ArrayList<>();
 
         for (CardEntity card : allCards) {
-            if (isLegendary(card)) {
-                legendaryCards.add(card);
-            } else if (isEpic(card)) {
-                epicCards.add(card);
-            } else if (isRare(card)) {
-                rareCards.add(card);
-            } else {
-                commonCards.add(card);
-            }
+            bucketCardByRarity(card, commonCards, rareCards, epicCards, legendaryCards);
         }
 
-        // Fallbacks in case some lists are empty
+        applyEmptyPoolFallbacks(allCards, commonCards, rareCards, epicCards, legendaryCards);
+
+        return new CardPools(commonCards, rareCards, epicCards, legendaryCards);
+    }
+
+    private void bucketCardByRarity(final CardEntity card, final List<CardEntity> commonCards,
+            final List<CardEntity> rareCards, final List<CardEntity> epicCards, final List<CardEntity> legendaryCards) {
+        if (isLegendary(card)) {
+            legendaryCards.add(card);
+        } else if (isEpic(card)) {
+            epicCards.add(card);
+        } else if (isRare(card)) {
+            rareCards.add(card);
+        } else {
+            commonCards.add(card);
+        }
+    }
+
+    // Fallbacks in case some lists are empty
+    private void applyEmptyPoolFallbacks(final List<CardEntity> allCards, final List<CardEntity> commonCards,
+            final List<CardEntity> rareCards, final List<CardEntity> epicCards, final List<CardEntity> legendaryCards) {
         if (legendaryCards.isEmpty()) {
             legendaryCards.addAll(allCards);
         }
@@ -204,8 +221,6 @@ public class PackServiceImpl implements PackService {
         if (commonCards.isEmpty()) {
             commonCards.addAll(allCards);
         }
-
-        return new CardPools(commonCards, rareCards, epicCards, legendaryCards);
     }
 
     // First (guaranteed) card of the pack: rarity floor scales with tier.

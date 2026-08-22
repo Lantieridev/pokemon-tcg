@@ -36,6 +36,8 @@ public class DeckCardEntity {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DeckCardId implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private Long deckId;
         private String cardId;
     }

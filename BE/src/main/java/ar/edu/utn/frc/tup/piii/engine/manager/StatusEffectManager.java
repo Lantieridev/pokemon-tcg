@@ -27,6 +27,10 @@ import java.util.Set;
  * Enforces rotation-slot exclusivity, processes between-turns effects,
  * and gates attack/retreat actions. FR-011 through FR-017.
  */
+@SuppressWarnings({"PMD.ExcessivePublicCount", "PMD.TooManyMethods", "PMD.TooManyFields"})
+// One manager gating attack/retreat/rotation-exclusivity for 5 distinct status effect types
+// (Poisoned/Burned/Asleep/Paralyzed/PrecisionBaja), each needing its own per-turn tracking flags
+// and query methods — the wide surface is the domain, not accidental sprawl.
 public class StatusEffectManager {
 
     private static final int CONFUSION_SELF_DAMAGE_COUNTERS = 3;
@@ -146,6 +150,8 @@ public class StatusEffectManager {
     /**
      * Removes all active status effects.
      */
+    @SuppressWarnings("PMD.NullAssignment")
+    // Bulk reset of every status-effect flag/name back to its "no effect active" sentinel.
     public void clearAll() {
         effectsByType.clear();
         this.disabledAttackName = null;
@@ -200,10 +206,7 @@ public class StatusEffectManager {
      * @return {@code true} if no active effect blocks retreating
      */
     public boolean canRetreat() {
-        if (retreatBlockedNextTurn) {
-            return false;
-        }
-        return effectsByType.values().stream().noneMatch(StatusEffect::blocksRetreat);
+        return !retreatBlockedNextTurn && effectsByType.values().stream().noneMatch(StatusEffect::blocksRetreat);
     }
 
     /**

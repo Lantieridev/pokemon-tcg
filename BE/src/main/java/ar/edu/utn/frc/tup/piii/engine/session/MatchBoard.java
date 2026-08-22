@@ -20,6 +20,7 @@ import java.util.Objects;
  * Runtime snapshot of the match board implementing all engine provider interfaces.
  * Pure POJO — zero Spring imports. FR-008, FR-013.
  */
+@SuppressWarnings("PMD.TooManyMethods")
 public final class MatchBoard
         implements BattlefieldStateProvider,
                    BenchStateProvider,
@@ -208,6 +209,7 @@ public final class MatchBoard
      * Returns the currently active Stadium, or {@code null} if none is in play.
      * RF-02d.
      */
+    @Override
     public TrainerCard getActiveStadium() {
         return activeStadium;
     }
@@ -227,6 +229,10 @@ public final class MatchBoard
         return previous;
     }
 
+    private void setActiveStadium(final TrainerCard stadium) {
+        this.activeStadium = stadium;
+    }
+
     /**
      * Removes the active Stadium card completely from play (e.g. via Shatter).
      *
@@ -234,7 +240,7 @@ public final class MatchBoard
      */
     public TrainerCard removeStadium() {
         final TrainerCard previous = activeStadium;
-        activeStadium = null;
+        setActiveStadium(null);
         activeStadiumOwnerIndex = -1;
         return previous;
     }

@@ -48,21 +48,26 @@ public class StoreServiceImpl implements StoreService {
             throw new IllegalArgumentException("No tienes suficientes pokecoins para comprar este artículo");
         }
 
-        // Check if user already owns it (for titles and avatars)
-        if (item.getItemType() == ar.edu.utn.frc.tup.piii.persistence.entity.StoreItemType.TITLE) {
-            if (user.getUnlockedTitles().contains(item.getName())) {
-                throw new IllegalArgumentException("Ya posees este título");
-            }
-        } else if (item.getItemType() == ar.edu.utn.frc.tup.piii.persistence.entity.StoreItemType.AVATAR) {
-            if (user.getUnlockedAvatars().contains(item.getName()) || item.getImageUrl().equals(user.getAvatarIcon())) {
-                throw new IllegalArgumentException("Ya posees este avatar");
-            }
-        }
+        rejectIfAlreadyOwned(user, item);
 
-        // Deduct coins
         user.setPokecoins(balance - item.getPrice());
+        grantItem(user, item);
 
-        // Grant item
+        userRepository.save(user);
+    }
+
+    // Check if user already owns it (for titles and avatars)
+    private void rejectIfAlreadyOwned(UserEntity user, StoreItemEntity item) {
+        if (item.getItemType() == ar.edu.utn.frc.tup.piii.persistence.entity.StoreItemType.TITLE
+                && user.getUnlockedTitles().contains(item.getName())) {
+            throw new IllegalArgumentException("Ya posees este título");
+        } else if (item.getItemType() == ar.edu.utn.frc.tup.piii.persistence.entity.StoreItemType.AVATAR
+                && (user.getUnlockedAvatars().contains(item.getName()) || item.getImageUrl().equals(user.getAvatarIcon()))) {
+            throw new IllegalArgumentException("Ya posees este avatar");
+        }
+    }
+
+    private void grantItem(UserEntity user, StoreItemEntity item) {
         switch (item.getItemType()) {
             case TITLE -> user.getUnlockedTitles().add(item.getName());
             case AVATAR -> user.getUnlockedAvatars().add(item.getName());
@@ -71,11 +76,13 @@ public class StoreServiceImpl implements StoreService {
                 String packType = item.getImageUrl() != null ? item.getImageUrl() : "pack_base";
                 user.getPacksInventory().put(packType, user.getPacksInventory().getOrDefault(packType, 0) + 1);
             }
+            default -> throw new IllegalStateException("Unhandled store item type: " + item.getItemType());
         }
-
-        userRepository.save(user);
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    // False positive: used via method reference (this::mapToDTO) in getAvailableItems — PMD 7.0.0
+    // does not resolve method-reference usages for this rule.
     private StoreItemDTO mapToDTO(StoreItemEntity entity) {
         return StoreItemDTO.builder()
                 .id(entity.getId())

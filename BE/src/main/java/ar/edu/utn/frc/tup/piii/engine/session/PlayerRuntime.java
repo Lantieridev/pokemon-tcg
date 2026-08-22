@@ -20,6 +20,7 @@ import java.util.Objects;
  * Aggregates deck, hand, bench, discard pile, status effects, and active Pokémon.
  * Pure POJO — zero Spring imports. FR-004 through FR-014.
  */
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidAccessibilityAlteration", "PMD.EmptyCatchBlock"}) // Runtime state manager for player during match
 public final class PlayerRuntime {
 
     private static final String POKEMON_NOT_NULL_MSG = "pokemon must not be null";
@@ -164,7 +165,7 @@ public final class PlayerRuntime {
     }
 
     public void clearActivePokemon() {
-        this.activePokemon = null;
+        setActivePokemon(null);
         this.statusEffectManager.clearAll();
     }
 

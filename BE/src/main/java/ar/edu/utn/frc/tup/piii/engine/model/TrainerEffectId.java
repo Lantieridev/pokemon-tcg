@@ -23,6 +23,7 @@ package ar.edu.utn.frc.tup.piii.engine.model;
  * </ul>
  * </p>
  */
+@SuppressWarnings("PMD.ExcessivePublicCount") // Enum containing Trainer effect identifiers; high constant count is domain-inherent
 public enum TrainerEffectId {
     DRAW_CARDS_2,
     DRAW_CARDS_3,

@@ -2,7 +2,6 @@ package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.ReplayResponseDTO;
 import ar.edu.utn.frc.tup.piii.dtos.UserMatchHistoryDTO;
-import ar.edu.utn.frc.tup.piii.persistence.entity.MatchEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.MatchLogEntity;
 import ar.edu.utn.frc.tup.piii.persistence.entity.UserEntity;
 import ar.edu.utn.frc.tup.piii.persistence.repository.MatchLogRepository;
@@ -41,8 +40,6 @@ class ReplayServiceImplTest {
     @Test
     void shouldReturnReplaySuccessfully() {
         final Long matchId = 1L;
-        final MatchEntity match = new MatchEntity();
-        match.setId(matchId);
 
         final UserEntity player = new UserEntity();
         player.setUsername("player1");
@@ -63,7 +60,7 @@ class ReplayServiceImplTest {
                 .createdAt(LocalDateTime.now().plusSeconds(1))
                 .build();
 
-        when(matchRepository.findById(matchId)).thenReturn(Optional.of(match));
+        when(matchRepository.existsById(matchId)).thenReturn(true);
         when(matchLogRepository.findByMatchIdOrderByCreatedAtAsc(matchId)).thenReturn(List.of(log1, log2));
 
         final ReplayResponseDTO replay = replayService.getReplay(matchId);
@@ -82,7 +79,7 @@ class ReplayServiceImplTest {
     @Test
     void shouldThrowExceptionWhenMatchNotFound() {
         final Long matchId = 999L;
-        when(matchRepository.findById(matchId)).thenReturn(Optional.empty());
+        when(matchRepository.existsById(matchId)).thenReturn(false);
 
         assertThrows(NoSuchElementException.class, () -> replayService.getReplay(matchId));
     }

@@ -295,7 +295,7 @@ class MatchServiceTest {
         final ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler downstream = mock(ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler.class);
         final ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler koResolution =
                 new ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler(
-                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), turnManager, downstream);
+                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), downstream);
         session.setKnockoutHandler(koResolution);
 
         // 2. Set active Pokémon of Player 0 at 90/100 HP, and poison it
@@ -343,7 +343,7 @@ class MatchServiceTest {
         final ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler downstream = mock(ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler.class);
         final ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler koResolution =
                 new ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler(
-                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), turnManager, downstream);
+                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), downstream);
         session.setKnockoutHandler(koResolution);
 
         // 2. Set active Pokémon of Player 0 at 90/100 HP, and poison it
@@ -403,7 +403,7 @@ class MatchServiceTest {
         final ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler downstream = mock(ar.edu.utn.frc.tup.piii.engine.listener.KnockoutHandler.class);
         final ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler koResolution =
                 new ar.edu.utn.frc.tup.piii.engine.manager.KnockoutResolutionHandler(
-                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), turnManager, downstream);
+                        List.of(session.getPlayerRuntime(0), session.getPlayerRuntime(1)), downstream);
         session.setKnockoutHandler(koResolution);
 
         // 2. Set active Pokémon of Player 0 and Player 1 to 90/100 HP, and poison them

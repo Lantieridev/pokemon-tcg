@@ -31,7 +31,11 @@ import jakarta.persistence.MapKeyColumn;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// PMD False Positive: UserEntity is a JPA @Entity mapping the full users table schema with all user state/stats columns
+@SuppressWarnings("PMD.TooManyFields")
 public class UserEntity {
+
+    private static final String USER_ID_COLUMN = "user_id";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +54,7 @@ public class UserEntity {
     private Integer packs = 0;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_packs", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_packs", joinColumns = @JoinColumn(name = USER_ID_COLUMN))
     @MapKeyColumn(name = "pack_type")
     @Column(name = "quantity")
     @Builder.Default
@@ -112,19 +116,19 @@ public class UserEntity {
     private Integer totalDamageDealt = 0;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_unlocked_titles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_unlocked_titles", joinColumns = @JoinColumn(name = USER_ID_COLUMN))
     @Column(name = "title_name")
     @Builder.Default
     private Set<String> unlockedTitles = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_unlocked_avatars", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_unlocked_avatars", joinColumns = @JoinColumn(name = USER_ID_COLUMN))
     @Column(name = "avatar_name")
     @Builder.Default
     private Set<String> unlockedAvatars = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_cleared_story_nodes", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "user_cleared_story_nodes", joinColumns = @JoinColumn(name = USER_ID_COLUMN))
     @Column(name = "node_id")
     @Builder.Default
     private Set<Integer> clearedStoryNodes = new HashSet<>();

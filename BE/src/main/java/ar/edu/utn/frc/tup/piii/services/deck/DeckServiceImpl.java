@@ -28,6 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("PMD.TooManyMethods")
+// Full deck CRUD + showcase-deck + template + summary-mapping surface for DeckService; each
+// method is small and independent (see toSummaryDTO above).
 public class DeckServiceImpl implements DeckService {
 
     private final DeckRepository deckRepository;
@@ -217,6 +220,9 @@ public class DeckServiceImpl implements DeckService {
         return List.of();
     }
 
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    // False positive: used via method reference (this::toSummaryDTO) — PMD 7.0.0 does not
+    // resolve method-reference usages for this rule.
     private DeckSummaryDTO toSummaryDTO(final DeckEntity deck) {
         final int total = deck.getCards().stream()
                 .mapToInt(DeckCardEntity::getQuantity)
