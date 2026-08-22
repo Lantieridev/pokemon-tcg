@@ -74,21 +74,14 @@ class KnockoutResolutionHandlerTest {
     @Test
     void shouldThrowWhenPlayerRuntimesIsNull() {
         assertThrows(NullPointerException.class,
-                () -> new KnockoutResolutionHandler(null, turnManager, (k, p) -> { }));
-    }
-
-    @Test
-    void shouldThrowWhenTurnManagerIsNull() {
-        assertThrows(NullPointerException.class,
-                () -> new KnockoutResolutionHandler(
-                        List.of(attacker, defender), null, (k, p) -> { }));
+                () -> new KnockoutResolutionHandler(null, (k, p) -> { }));
     }
 
     @Test
     void shouldThrowWhenDownstreamIsNull() {
         assertThrows(NullPointerException.class,
                 () -> new KnockoutResolutionHandler(
-                        List.of(attacker, defender), turnManager, null));
+                        List.of(attacker, defender), null));
     }
 
     @Test
@@ -101,7 +94,7 @@ class KnockoutResolutionHandlerTest {
         defender.setActivePokemon(knocked);
 
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, (k, p) -> { });
+                List.of(attacker, defender), (k, p) -> { });
 
         handler.onKnockout(knocked, ONE_PRIZE);
 
@@ -118,7 +111,7 @@ class KnockoutResolutionHandlerTest {
         defender.setActivePokemon(knocked);
 
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, (k, p) -> { });
+                List.of(attacker, defender), (k, p) -> { });
 
         final int handSizeBefore = attacker.getHand().size();
         handler.onKnockout(knocked, ONE_PRIZE);
@@ -136,7 +129,7 @@ class KnockoutResolutionHandlerTest {
         defender.setActivePokemon(knocked);
 
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, (k, p) -> { });
+                List.of(attacker, defender), (k, p) -> { });
 
         final int handSizeBefore = attacker.getHand().size();
         handler.onKnockout(knocked, TWO_PRIZES);
@@ -157,7 +150,7 @@ class KnockoutResolutionHandlerTest {
         final KnockoutHandler downstream = (k, p) -> downstreamCalled.set(true);
 
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, downstream);
+                List.of(attacker, defender), downstream);
 
         handler.onKnockout(knocked, ONE_PRIZE);
 
@@ -185,7 +178,7 @@ class KnockoutResolutionHandlerTest {
         final AtomicBoolean downstreamCalled = new AtomicBoolean(false);
         final KnockoutHandler downstream = (k, p) -> downstreamCalled.set(true);
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, downstream);
+                List.of(attacker, defender), downstream);
 
         final int handSizeBefore = attacker.getHand().size();
         handler.onKnockout(knockedFromEvent, ONE_PRIZE);
@@ -208,7 +201,7 @@ class KnockoutResolutionHandlerTest {
         assertEquals(1, defender.getBench().size());
 
         final KnockoutResolutionHandler handler = new KnockoutResolutionHandler(
-                List.of(attacker, defender), turnManager, (k, p) -> { });
+                List.of(attacker, defender), (k, p) -> { });
 
         handler.onKnockout(benched, ONE_PRIZE);
 

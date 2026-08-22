@@ -21,6 +21,11 @@ import java.util.List;
  * then into BetweenTurnsPhase → next player's DrawPhase. Each transition fires PhaseEvents
  * to all registered PhaseListeners. FR-002 through FR-014.
  */
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidFieldNameMatchingMethodName"})
+// State machine with one small, single-purpose method per transition (see the "Turn transitions"
+// section below) — splitting further would fragment one cohesive lifecycle across classes.
+// currentPhase()/activePlayerIndex() are idiomatic Java accessors for the like-named fields, not
+// a naming collision risk.
 public final class TurnManager {
 
     private static final int UNSTARTED_PLAYER_INDEX = -1;
@@ -80,6 +85,8 @@ public final class TurnManager {
      * as not yet having completed their first turn. Must be called before
      * {@link #startTurn(int)} when restarting a match from FINISHED state.
      */
+    @SuppressWarnings("PMD.NullAssignment")
+    // Explicit state reset back to "no turn in progress" — the documented sentinel for this field.
     public void reset() {
         this.currentPhase = null;
         this.activePlayerIndex = UNSTARTED_PLAYER_INDEX;
@@ -233,6 +240,8 @@ public final class TurnManager {
      *
      * @throws InvalidPhaseTransitionException if not currently in ActionResolutionPhase
      */
+    @SuppressWarnings("PMD.NullAssignment")
+    // Clears the "return to" pointer once consumed, so a stale phase can't be resumed twice.
     public void resumeMainPhase() {
         if (currentPhase == null) {
             throw new InvalidPhaseTransitionException(NO_TURN_IN_PROGRESS_MSG);

@@ -202,7 +202,7 @@ public final class MatchCreationService {
 
         final VictoryHandler victoryHandler = result -> handleVictory(matchId, session, result);
         final VictoryConditionChecker vcc = new VictoryConditionChecker(board, board, board, board, victoryHandler);
-        final KnockoutResolutionHandler koResolution = new KnockoutResolutionHandler(runtimes, turnManager, vcc);
+        final KnockoutResolutionHandler koResolution = new KnockoutResolutionHandler(runtimes, vcc);
         final KnockoutManager koManager = new KnockoutManager(board, board, koResolution);
         final DrawPhaseExecutor drawExec = new DrawPhaseExecutor(runtimes, turnManager, victoryHandler);
         final TurnInPlayTracker turnInPlayTracker = new TurnInPlayTracker(runtimes);

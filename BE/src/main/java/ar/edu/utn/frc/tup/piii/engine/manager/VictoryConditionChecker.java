@@ -32,6 +32,11 @@ import java.util.Objects;
  *
  * <p>A one-shot latch prevents duplicate {@link VictoryHandler} invocations. FR-016.</p>
  */
+@SuppressWarnings("PMD.TooManyMethods")
+// evaluateVictory's decision logic is decomposed into small single-purpose helpers
+// (updatePlacementTracking/computeBenchOutFlags/countConditions/resolveVictory/fireVictoryFor)
+// specifically to keep each one's own complexity low; that decomposition is why the method count
+// is high, not entangled responsibilities.
 public final class VictoryConditionChecker implements KnockoutHandler, PhaseListener {
 
     /** Total number of players in a two-player game. */
@@ -127,83 +132,79 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      * Compares the number of conditions met by each player to declare a sole winner
      * or trigger a Sudden Death tiebreaker.
      */
+    private record BenchOutFlags(boolean p0WinsBench, boolean p1WinsBench) {
+    }
+
     public void evaluateVictory() {
         if (victoryFired || activePlayerIndex == UNSTARTED_PLAYER_INDEX) {
             return;
         }
+        updatePlacementTracking();
 
+        final boolean p0WinsPrize = prizeProvider.getRemainingPrizes(0) == 0;
+        final boolean p1WinsPrize = prizeProvider.getRemainingPrizes(1) == 0;
+        final BenchOutFlags benchOut = computeBenchOutFlags();
+
+        final int conditions0 = countConditions(p0WinsPrize, benchOut.p0WinsBench());
+        final int conditions1 = countConditions(p1WinsPrize, benchOut.p1WinsBench());
+
+        resolveVictory(p0WinsPrize, p1WinsPrize, conditions0, conditions1);
+    }
+
+    private void updatePlacementTracking() {
         if (battlefieldProvider.getActivePokemon(0) != null) {
             player0PlacedActive = true;
         }
         if (battlefieldProvider.getActivePokemon(1) != null) {
             player1PlacedActive = true;
         }
+    }
 
-        // 1. Prize conditions
-        final boolean p0WinsPrize = prizeProvider.getRemainingPrizes(0) == 0;
-        final boolean p1WinsPrize = prizeProvider.getRemainingPrizes(1) == 0;
-
-        // 2. Bench-out conditions (only if initial placement is complete)
-        boolean p0WinsBench = false;
-        boolean p1WinsBench = false;
-        if (player0PlacedActive && player1PlacedActive) {
-            final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
-            final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
-
-            final boolean p0BenchEmpty = benchProvider.getBenchSize(0) == 0;
-            final boolean p1BenchEmpty = benchProvider.getBenchSize(1) == 0;
-
-            p0WinsBench = p1ActiveNull && p1BenchEmpty; // Player 0 wins because Player 1 is benched out
-            p1WinsBench = p0ActiveNull && p0BenchEmpty; // Player 1 wins because Player 0 is benched out
+    // Only evaluated once initial placement is complete for both players
+    private BenchOutFlags computeBenchOutFlags() {
+        if (!player0PlacedActive || !player1PlacedActive) {
+            return new BenchOutFlags(false, false);
         }
+        final boolean p0ActiveNull = battlefieldProvider.getActivePokemon(0) == null;
+        final boolean p1ActiveNull = battlefieldProvider.getActivePokemon(1) == null;
+        final boolean p0BenchEmpty = benchProvider.getBenchSize(0) == 0;
+        final boolean p1BenchEmpty = benchProvider.getBenchSize(1) == 0;
 
-        // Count conditions met
-        int conditions0 = 0;
-        if (p0WinsPrize) {
-            conditions0++;
-        }
-        if (p0WinsBench) {
-            conditions0++;
-        }
+        final boolean p0WinsBench = p1ActiveNull && p1BenchEmpty; // Player 0 wins: Player 1 is benched out
+        final boolean p1WinsBench = p0ActiveNull && p0BenchEmpty; // Player 1 wins: Player 0 is benched out
+        return new BenchOutFlags(p0WinsBench, p1WinsBench);
+    }
 
-        int conditions1 = 0;
-        if (p1WinsPrize) {
-            conditions1++;
+    private int countConditions(final boolean winsPrize, final boolean winsBench) {
+        int count = 0;
+        if (winsPrize) {
+            count++;
         }
-        if (p1WinsBench) {
-            conditions1++;
+        if (winsBench) {
+            count++;
         }
+        return count;
+    }
 
-        if (conditions0 > 0 && conditions1 > 0) {
-            if (conditions0 == conditions1) {
-                fireVictory(new VictoryResult.SuddenDeath());
-            } else if (conditions0 > conditions1) {
-                // Player 0 met more conditions
-                if (p0WinsPrize) {
-                    fireVictory(new VictoryResult.PrizeVictory(0));
-                } else {
-                    fireVictory(new VictoryResult.BenchOutVictory(0));
-                }
-            } else {
-                // Player 1 met more conditions
-                if (p1WinsPrize) {
-                    fireVictory(new VictoryResult.PrizeVictory(1));
-                } else {
-                    fireVictory(new VictoryResult.BenchOutVictory(1));
-                }
-            }
-        } else if (conditions0 > 0) {
-            if (p0WinsPrize) {
-                fireVictory(new VictoryResult.PrizeVictory(0));
-            } else {
-                fireVictory(new VictoryResult.BenchOutVictory(0));
-            }
-        } else if (conditions1 > 0) {
-            if (p1WinsPrize) {
-                fireVictory(new VictoryResult.PrizeVictory(1));
-            } else {
-                fireVictory(new VictoryResult.BenchOutVictory(1));
-            }
+    private void resolveVictory(final boolean p0WinsPrize, final boolean p1WinsPrize,
+            final int conditions0, final int conditions1) {
+        if (conditions0 == 0 && conditions1 == 0) {
+            return;
+        }
+        if (conditions0 == conditions1) {
+            fireVictory(new VictoryResult.SuddenDeath());
+        } else if (conditions0 > conditions1) {
+            fireVictoryFor(0, p0WinsPrize);
+        } else {
+            fireVictoryFor(1, p1WinsPrize);
+        }
+    }
+
+    private void fireVictoryFor(final int playerIndex, final boolean wonByPrize) {
+        if (wonByPrize) {
+            fireVictory(new VictoryResult.PrizeVictory(playerIndex));
+        } else {
+            fireVictory(new VictoryResult.BenchOutVictory(playerIndex));
         }
     }
 
@@ -240,6 +241,9 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      * @param event the event fired by TurnManager
      */
     @Override
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.TurnStarted s  -> activePlayerIndex = s.playerIndex();
@@ -254,6 +258,9 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      *
      * @param event the PhaseEntered event
      */
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     private void handlePhaseEntered(final PhaseEvent.PhaseEntered event) {
         switch (event.phase()) {
             case DrawPhase d        -> checkDeckOut(event.playerIndex());
@@ -269,6 +276,9 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      *
      * @param event the PhaseExited event
      */
+    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
+    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
+    // no real per-case logic.
     private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
         switch (event.phase()) {
             case AttackPhase a -> checkFieldVictory();

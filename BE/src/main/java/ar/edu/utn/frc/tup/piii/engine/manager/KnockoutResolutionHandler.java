@@ -17,25 +17,21 @@ import java.util.Objects;
  *       {@link VictoryConditionChecker}) to check end-game conditions.</li>
  * </ol>
  *
- * <p>Uses the {@link TurnManager} to determine the current attacker index at the moment
- * the knockout fires, avoiding any mutable attacker-index field. Pure POJO — zero Spring imports.</p>
+ * <p>The attacker is derived from which side owns the knocked-out Pokémon (the other side), so no
+ * turn-index lookup is needed. Pure POJO — zero Spring imports.</p>
  */
 public final class KnockoutResolutionHandler implements KnockoutHandler {
 
     private final List<PlayerRuntime> playerRuntimes;
-    private final TurnManager turnManager;
     private final KnockoutHandler downstream;
 
     /**
      * @param playerRuntimes live runtime state for both players (never null, size must be 2)
-     * @param turnManager    provides the currently active player index (never null)
      * @param downstream     handler to invoke after prize transfer (typically VictoryConditionChecker)
      */
     public KnockoutResolutionHandler(final List<PlayerRuntime> playerRuntimes,
-                                      final TurnManager turnManager,
                                       final KnockoutHandler downstream) {
         this.playerRuntimes = Objects.requireNonNull(playerRuntimes, "playerRuntimes must not be null");
-        this.turnManager = Objects.requireNonNull(turnManager, "turnManager must not be null");
         this.downstream = Objects.requireNonNull(downstream, "downstream must not be null");
     }
 
@@ -46,25 +42,49 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
      * @param knocked      the Pokémon that was knocked out
      * @param prizesToTake number of prize cards the attacker should take
      */
+    @Override
     public void onKnockout(final BattlePokemonState knocked, final int prizesToTake) {
-        // Find which player owns `knocked`
-        int ownerIndex = -1;
-        if (Objects.equals(knocked, playerRuntimes.get(0).getActivePokemon()) || playerRuntimes.get(0).getBench().getAll().contains(knocked)) {
-            ownerIndex = 0;
-        } else if (Objects.equals(knocked, playerRuntimes.get(1).getActivePokemon()) || playerRuntimes.get(1).getBench().getAll().contains(knocked)) {
-            ownerIndex = 1;
-        }
-
+        final int ownerIndex = findOwnerIndex(knocked);
         if (ownerIndex == -1) {
             return; // Safety guard: Pokémon not found on either side
         }
-        
+
         final int opponentIndex = 1 - ownerIndex;
         final PlayerRuntime owner = playerRuntimes.get(ownerIndex);
         owner.setKnockedOutLastTurn(true);
         final PlayerRuntime opponentPlayer = playerRuntimes.get(opponentIndex);
 
-        // Discard all cards associated with the knocked Pokémon
+        discardKnockedCards(owner, knocked);
+        removeFromField(owner, knocked);
+
+        // Award prizes to the opponent (taken from their prize pile into hand)
+        opponentPlayer.takePrizes(prizesToTake);
+
+        recordKnockoutStats(owner, opponentPlayer, knocked);
+
+        // Remove from turnsInPlay tracking — this Pokémon is no longer in play
+        owner.removePokemonFromPlay(knocked);
+
+        // Notify downstream handler (VictoryConditionChecker)
+        downstream.onKnockout(knocked, prizesToTake);
+    }
+
+    private int findOwnerIndex(final BattlePokemonState knocked) {
+        if (isOwnedBy(playerRuntimes.get(0), knocked)) {
+            return 0;
+        }
+        if (isOwnedBy(playerRuntimes.get(1), knocked)) {
+            return 1;
+        }
+        return -1;
+    }
+
+    private boolean isOwnedBy(final PlayerRuntime runtime, final BattlePokemonState knocked) {
+        return Objects.equals(knocked, runtime.getActivePokemon()) || runtime.getBench().getAll().contains(knocked);
+    }
+
+    // Discard all cards associated with the knocked Pokémon
+    private void discardKnockedCards(final PlayerRuntime owner, final BattlePokemonState knocked) {
         owner.getDiscardPile().add(knocked.getBaseCard());
         knocked.getUnderlyingCards().forEach(owner.getDiscardPile()::add);
         knocked.getAttachedEnergyCards().forEach(owner.getDiscardPile()::add);
@@ -72,8 +92,9 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
             owner.getDiscardPile().add(tool);
             knocked.detachTool();
         });
+    }
 
-        // Remove from field: active slot or bench
+    private void removeFromField(final PlayerRuntime owner, final BattlePokemonState knocked) {
         if (knocked.equals(owner.getActivePokemon())) {
             // Active slot is left empty — the player must promote a benched Pokémon
             // via a subsequent replacement action from the client
@@ -81,23 +102,15 @@ public final class KnockoutResolutionHandler implements KnockoutHandler {
         } else {
             removeFromBench(owner, knocked);
         }
+    }
 
-        // Award prizes to the opponent (taken from their prize pile into hand)
-        opponentPlayer.takePrizes(prizesToTake);
-
-        // Record KO in statistics trackers
-        if (owner.getStatisticsTracker() != null && knocked != null) {
+    private void recordKnockoutStats(final PlayerRuntime owner, final PlayerRuntime opponentPlayer, final BattlePokemonState knocked) {
+        if (owner.getStatisticsTracker() != null) {
             owner.getStatisticsTracker().incrementKOsSuffered(knocked.getCardId());
         }
         if (opponentPlayer.getStatisticsTracker() != null && opponentPlayer.getActivePokemon() != null) {
             opponentPlayer.getStatisticsTracker().incrementKOsMade(opponentPlayer.getActivePokemon().getCardId());
         }
-
-        // Remove from turnsInPlay tracking — this Pokémon is no longer in play
-        owner.removePokemonFromPlay(knocked);
-
-        // Notify downstream handler (VictoryConditionChecker)
-        downstream.onKnockout(knocked, prizesToTake);
     }
 
     /**
