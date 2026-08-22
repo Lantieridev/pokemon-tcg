@@ -42,9 +42,10 @@ public interface GameStatePersistence {
      * @param result the outcome description
      */
     @SuppressWarnings("PMD.UseObjectForClearerAPI")
-    default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {
-        logAction(new LogActionEvent(matchId, turnNumber, playerId, actionType, result));
-    }
+    // Deliberately kept as a leaf no-op default (not delegating to logAction(LogActionEvent)):
+    // implementations that override only this legacy overload must still get a working default
+    // for the other one, and vice versa, without the two defaults calling each other.
+    default void logAction(String matchId, int turnNumber, String playerId, String actionType, String result) {}
 
     /**
      * Declares the winner of a match.
