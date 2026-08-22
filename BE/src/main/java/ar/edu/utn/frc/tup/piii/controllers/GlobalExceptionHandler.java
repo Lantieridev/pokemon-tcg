@@ -18,6 +18,8 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public final class GlobalExceptionHandler {
 
+    private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<String> handleNotFound(final NoSuchElementException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
@@ -25,7 +27,7 @@ public final class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleBadRequest(final IllegalArgumentException ex) {
-        if ("Usuario no encontrado".equals(ex.getMessage())) {
+        if (USUARIO_NO_ENCONTRADO.equals(ex.getMessage())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());

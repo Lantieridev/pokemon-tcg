@@ -28,6 +28,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
+    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
+    // HttpSecurity.build() declares throws Exception in Spring Security's own API; this signature
+    // is dictated by the framework, not a design choice.
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -51,6 +54,9 @@ public class SecurityConfig {
     }
 
     @Bean
+    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
+    // AuthenticationConfiguration.getAuthenticationManager() declares throws Exception in Spring
+    // Security's own API; this signature is dictated by the framework, not a design choice.
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
