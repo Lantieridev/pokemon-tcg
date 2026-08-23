@@ -140,69 +140,73 @@ public final class SelectionEffectResolver {
     private boolean selectBounce(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final String selectedCardId = selectedIds.get(0);
-            int benchIndex = -1;
-            if (selectedCardId.startsWith("bench_")) {
-                benchIndex = Integer.parseInt(selectedCardId.split(":")[0].substring(6));
-            } else {
-                for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
-                    if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
-                        benchIndex = i;
-                        break;
-                    }
-                }
-            }
-            if (benchIndex != -1 && benchIndex < runtime.getBench().getAll().size()) {
-                final BattlePokemonState newActive = runtime.getBench().promote(benchIndex);
-                final BattlePokemonState oldActive = runtime.getActivePokemon();
-                runtime.setActivePokemon(newActive);
-                runtime.getBench().place(oldActive);
-                runtime.getStatusEffectManager().clearAll();
-                runtime.recordPokemonEntered(oldActive);
-            }
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        final int benchIndex = resolveBounceBenchIndex(runtime, selectedIds.get(0));
+        if (benchIndex != -1 && benchIndex < runtime.getBench().getAll().size()) {
+            final BattlePokemonState newActive = runtime.getBench().promote(benchIndex);
+            final BattlePokemonState oldActive = runtime.getActivePokemon();
+            runtime.setActivePokemon(newActive);
+            runtime.getBench().place(oldActive);
+            runtime.getStatusEffectManager().clearAll();
+            runtime.recordPokemonEntered(oldActive);
         }
         return true;
+    }
+
+    private int resolveBounceBenchIndex(final PlayerRuntime runtime, final String selectedCardId) {
+        if (selectedCardId.startsWith("bench_")) {
+            return Integer.parseInt(selectedCardId.split(":")[0].substring(6));
+        }
+        for (int i = 0; i < runtime.getBench().getAll().size(); i++) {
+            if (runtime.getBench().getAll().get(i).getCardId().equals(selectedCardId)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private boolean selectGreatBall(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));
-            Card selected = null;
-            for (Card c : top7) {
-                if (c.getCardId().equals(selectedIds.get(0))) {
-                    selected = c;
-                }
-            }
-            if (selected != null) {
-                if (!(selected instanceof PokemonCard)) {
-                    throw new IllegalArgumentException("Great Ball can only select a Pokemon card");
-                }
-                top7.remove(selected);
-                runtime.getHand().addCard(selected);
-            }
-            runtime.getDeck().addCards(top7);
+        if (selectedIds.isEmpty()) {
             runtime.getDeck().shuffle();
-        } else {
-            runtime.getDeck().shuffle();
+            return true;
         }
+        final List<Card> top7 = runtime.getDeck().drawMultiple(Math.min(7, runtime.getDeck().size()));
+        Card selected = null;
+        for (Card c : top7) {
+            if (c.getCardId().equals(selectedIds.get(0))) {
+                selected = c;
+            }
+        }
+        if (selected != null) {
+            if (!(selected instanceof PokemonCard)) {
+                throw new IllegalArgumentException("Great Ball can only select a Pokemon card");
+            }
+            top7.remove(selected);
+            runtime.getHand().addCard(selected);
+        }
+        runtime.getDeck().addCards(top7);
+        runtime.getDeck().shuffle();
         return true;
     }
 
     private boolean selectProfessorsLetter(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
-                if (!found.isEmpty()) {
-                    if (!(found.get(0) instanceof EnergyCard ec) || !ec.isBasic()) {
-                        throw new IllegalArgumentException("Professor's Letter can only select basic energy cards");
-                    }
-                    runtime.getHand().addCard(found.get(0));
+        if (selectedIds.isEmpty()) {
+            runtime.getDeck().shuffle();
+            return true;
+        }
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+            if (!found.isEmpty()) {
+                if (!(found.get(0) instanceof EnergyCard ec) || !ec.isBasic()) {
+                    throw new IllegalArgumentException("Professor's Letter can only select basic energy cards");
                 }
+                runtime.getHand().addCard(found.get(0));
             }
         }
         runtime.getDeck().shuffle();
@@ -212,21 +216,22 @@ public final class SelectionEffectResolver {
     private boolean selectMaxRevive(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            Card found = null;
-            for (Card c : runtime.getDiscardPile().getCards()) {
-                if (c.getCardId().equals(selectedIds.get(0))) {
-                    found = c;
-                    break;
-                }
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        Card found = null;
+        for (Card c : runtime.getDiscardPile().getCards()) {
+            if (c.getCardId().equals(selectedIds.get(0))) {
+                found = c;
+                break;
             }
-            if (found != null) {
-                if (!(found instanceof PokemonCard pc) || pc.getEvolutionStage() != ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
-                    throw new IllegalArgumentException("Max Revive can only select a Basic Pokemon card");
-                }
-                runtime.getDiscardPile().remove(found);
-                runtime.getDeck().addToTop(found);
+        }
+        if (found != null) {
+            if (!(found instanceof PokemonCard pc) || pc.getEvolutionStage() != ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                throw new IllegalArgumentException("Max Revive can only select a Basic Pokemon card");
             }
+            runtime.getDiscardPile().remove(found);
+            runtime.getDeck().addToTop(found);
         }
         return true;
     }
@@ -234,25 +239,26 @@ public final class SelectionEffectResolver {
     private boolean selectSacredAsh(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final List<Card> toReturn = new ArrayList<>();
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDiscardPile().getCards().stream()
-                        .filter(c -> c.getCardId().equals(id))
-                        .toList();
-                if (!found.isEmpty()) {
-                    final Card card = found.get(0);
-                    if (!(card instanceof PokemonCard)) {
-                        throw new IllegalArgumentException("Sacred Ash can only select Pokemon cards");
-                    }
-                    runtime.getDiscardPile().remove(card);
-                    toReturn.add(card);
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        final List<Card> toReturn = new ArrayList<>();
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                    .filter(c -> c.getCardId().equals(id))
+                    .toList();
+            if (!found.isEmpty()) {
+                final Card card = found.get(0);
+                if (!(card instanceof PokemonCard)) {
+                    throw new IllegalArgumentException("Sacred Ash can only select Pokemon cards");
                 }
+                runtime.getDiscardPile().remove(card);
+                toReturn.add(card);
             }
-            if (!toReturn.isEmpty()) {
-                runtime.getDeck().addCards(toReturn);
-                runtime.getDeck().shuffle();
-            }
+        }
+        if (!toReturn.isEmpty()) {
+            runtime.getDeck().addCards(toReturn);
+            runtime.getDeck().shuffle();
         }
         return true;
     }
@@ -260,16 +266,18 @@ public final class SelectionEffectResolver {
     private boolean selectPokemonFanClub(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
-                if (!found.isEmpty()) {
-                    final Card card = found.get(0);
-                    if (!(card instanceof PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC)) {
-                        throw new IllegalArgumentException("Pokemon Fan Club can only select Basic Pokemon cards");
-                    }
-                    runtime.getHand().addCard(card);
+        if (selectedIds.isEmpty()) {
+            runtime.getDeck().shuffle();
+            return true;
+        }
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+            if (!found.isEmpty()) {
+                final Card card = found.get(0);
+                if (!(card instanceof PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC)) {
+                    throw new IllegalArgumentException("Pokemon Fan Club can only select Basic Pokemon cards");
                 }
+                runtime.getHand().addCard(card);
             }
         }
         runtime.getDeck().shuffle();
@@ -279,24 +287,27 @@ public final class SelectionEffectResolver {
     private boolean selectQuiverDance(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        boolean attached = false;
-        if (!selectedIds.isEmpty()) {
-            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
-            if (!found.isEmpty()) {
-                final Card card = found.get(0);
-                if (!(card instanceof EnergyCard ec && ec.isBasic())) {
-                    throw new IllegalArgumentException("Quiver Dance can only select a Basic Energy card");
-                }
-                if (runtime.getActivePokemon() != null) {
-                    runtime.getActivePokemon().attachEnergy((EnergyCard) card);
-                    attached = true;
-                }
-            }
-        }
+        final boolean attached = !selectedIds.isEmpty() && attachQuiverDanceEnergy(runtime, selectedIds.get(0));
         runtime.getDeck().shuffle();
         if (attached && runtime.getActivePokemon() != null) {
             runtime.getActivePokemon().heal(40);
         }
+        return true;
+    }
+
+    private boolean attachQuiverDanceEnergy(final PlayerRuntime runtime, final String selectedId) {
+        final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedId), 1);
+        if (found.isEmpty()) {
+            return false;
+        }
+        final Card card = found.get(0);
+        if (!(card instanceof EnergyCard ec && ec.isBasic())) {
+            throw new IllegalArgumentException("Quiver Dance can only select a Basic Energy card");
+        }
+        if (runtime.getActivePokemon() == null) {
+            return false;
+        }
+        runtime.getActivePokemon().attachEnergy((EnergyCard) card);
         return true;
     }
 
@@ -339,25 +350,26 @@ public final class SelectionEffectResolver {
     private boolean selectPalPad(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final List<Card> toReturn = new ArrayList<>();
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDiscardPile().getCards().stream()
-                        .filter(c -> c.getCardId().equals(id))
-                        .toList();
-                if (!found.isEmpty()) {
-                    final Card card = found.get(0);
-                    if (!(card instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)) {
-                        throw new IllegalArgumentException("Pal Pad can only select Supporter cards");
-                    }
-                    runtime.getDiscardPile().remove(card);
-                    toReturn.add(card);
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        final List<Card> toReturn = new ArrayList<>();
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                    .filter(c -> c.getCardId().equals(id))
+                    .toList();
+            if (!found.isEmpty()) {
+                final Card card = found.get(0);
+                if (!(card instanceof TrainerCard tc && tc.getTrainerType() == TrainerType.SUPPORTER)) {
+                    throw new IllegalArgumentException("Pal Pad can only select Supporter cards");
                 }
+                runtime.getDiscardPile().remove(card);
+                toReturn.add(card);
             }
-            if (!toReturn.isEmpty()) {
-                runtime.getDeck().addCards(toReturn);
-                runtime.getDeck().shuffle();
-            }
+        }
+        if (!toReturn.isEmpty()) {
+            runtime.getDeck().addCards(toReturn);
+            runtime.getDeck().shuffle();
         }
         return true;
     }
@@ -367,23 +379,24 @@ public final class SelectionEffectResolver {
         final MatchSession session = ctx.session();
         final PlayerRuntime runtime = ctx.runtime();
         final ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest request = ctx.request();
-        if (!selectedIds.isEmpty()) {
-            final BattlePokemonState target = resolveLivePokemon(session, request.target());
-            if (target == null) {
-                throw new IllegalStateException("Blacksmith requires a target Pokemon");
-            }
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDiscardPile().getCards().stream()
-                        .filter(c -> c.getCardId().equals(id))
-                        .toList();
-                if (!found.isEmpty()) {
-                    final Card card = found.get(0);
-                    if (!(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
-                        throw new IllegalArgumentException("Blacksmith can only select Fire Energy cards");
-                    }
-                    runtime.getDiscardPile().remove(card);
-                    target.attachEnergy((EnergyCard) card);
+        if (selectedIds.isEmpty()) {
+            return true;
+        }
+        final BattlePokemonState target = resolveLivePokemon(session, request.target());
+        if (target == null) {
+            throw new IllegalStateException("Blacksmith requires a target Pokemon");
+        }
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDiscardPile().getCards().stream()
+                    .filter(c -> c.getCardId().equals(id))
+                    .toList();
+            if (!found.isEmpty()) {
+                final Card card = found.get(0);
+                if (!(card instanceof EnergyCard ec && ec.getEnergyType() == PokemonType.FIRE)) {
+                    throw new IllegalArgumentException("Blacksmith can only select Fire Energy cards");
                 }
+                runtime.getDiscardPile().remove(card);
+                target.attachEnergy((EnergyCard) card);
             }
         }
         return true;
@@ -424,15 +437,17 @@ public final class SelectionEffectResolver {
     private void selectUltraBallDeckStep(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
-            if (!found.isEmpty()) {
-                final Card card = found.get(0);
-                if (!(card instanceof PokemonCard)) {
-                    throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
-                }
-                runtime.getHand().addCard(card);
+        if (selectedIds.isEmpty()) {
+            runtime.getDeck().shuffle();
+            return;
+        }
+        final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(selectedIds.get(0)), 1);
+        if (!found.isEmpty()) {
+            final Card card = found.get(0);
+            if (!(card instanceof PokemonCard)) {
+                throw new IllegalArgumentException("Ultra Ball can only select a Pokemon card");
             }
+            runtime.getHand().addCard(card);
         }
         runtime.getDeck().shuffle();
     }
@@ -822,15 +837,17 @@ public final class SelectionEffectResolver {
     private boolean selectParabolicCharge(final SelectionContext ctx) {
         final List<String> selectedIds = ctx.selectedIds();
         final PlayerRuntime runtime = ctx.runtime();
-        if (!selectedIds.isEmpty()) {
-            for (String id : selectedIds) {
-                final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
-                if (!found.isEmpty()) {
-                    if (!(found.get(0) instanceof EnergyCard ec)) {
-                        throw new IllegalArgumentException("Parabolic Charge can only select energy cards");
-                    }
-                    runtime.getHand().addCard(ec);
+        if (selectedIds.isEmpty()) {
+            runtime.getDeck().shuffle();
+            return true;
+        }
+        for (String id : selectedIds) {
+            final List<Card> found = runtime.getDeck().searchAndRemove(c -> c.getCardId().equals(id), 1);
+            if (!found.isEmpty()) {
+                if (!(found.get(0) instanceof EnergyCard ec)) {
+                    throw new IllegalArgumentException("Parabolic Charge can only select energy cards");
                 }
+                runtime.getHand().addCard(ec);
             }
         }
         runtime.getDeck().shuffle();

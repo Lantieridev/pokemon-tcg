@@ -58,10 +58,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (accessor == null) {
                     return message;
                 }
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                if (StompCommand.CONNECT == accessor.getCommand()) {
                     authenticateConnect(accessor);
                 }
-                if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                if (StompCommand.SUBSCRIBE == accessor.getCommand()) {
                     authorizeSubscribe(accessor);
                 }
                 return message;

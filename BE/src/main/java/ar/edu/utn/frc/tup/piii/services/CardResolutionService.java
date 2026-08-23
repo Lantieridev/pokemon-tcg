@@ -15,6 +15,7 @@ import java.util.List;
  *
  * <p>Pure port interface — zero Spring annotations here.</p>
  */
+@FunctionalInterface
 public interface CardResolutionService {
 
     /**

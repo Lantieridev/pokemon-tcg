@@ -7,6 +7,7 @@ import java.util.Optional;
 /**
  * Provides read-only access to a player's hand for rule validation purposes.
  */
+@FunctionalInterface
 public interface HandStateProvider {
 
     /**

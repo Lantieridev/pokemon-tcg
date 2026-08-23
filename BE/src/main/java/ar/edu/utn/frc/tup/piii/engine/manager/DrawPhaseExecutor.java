@@ -46,28 +46,22 @@ public final class DrawPhaseExecutor implements PhaseListener {
     }
 
     @Override
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.PhaseEntered p -> handlePhaseEntered(p);
-            case PhaseEvent.TurnStarted s  -> { /* no-op */ }
-            case PhaseEvent.PhaseExited e  -> { /* no-op */ }
-            case PhaseEvent.TurnEnded e    -> { /* no-op */ }
+            case PhaseEvent.TurnStarted ignored  -> { /* no-op */ }
+            case PhaseEvent.PhaseExited ignored  -> { /* no-op */ }
+            case PhaseEvent.TurnEnded ignored    -> { /* no-op */ }
         }
     }
 
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     private void handlePhaseEntered(final PhaseEvent.PhaseEntered event) {
         switch (event.phase()) {
-            case DrawPhase d         -> executeDraw(event.playerIndex());
-            case MainPhase m         -> { /* no-op */ }
-            case AttackPhase a       -> { /* no-op */ }
-            case BetweenTurnsPhase b -> { /* no-op */ }
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
+            case DrawPhase ignored         -> executeDraw(event.playerIndex());
+            case MainPhase ignored         -> { /* no-op */ }
+            case AttackPhase ignored       -> { /* no-op */ }
+            case BetweenTurnsPhase ignored -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase ignored -> { /* no-op */ }
         }
     }
 

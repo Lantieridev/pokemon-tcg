@@ -25,8 +25,6 @@ import java.util.UUID;
 
 @Slf4j
 @Converter(autoApply = false)
-// Suppress CouplingBetweenObjects & ExcessiveImports: custom converter managing JSON serialization graph for MatchSession domain model
-@SuppressWarnings({"PMD.CouplingBetweenObjects", "PMD.ExcessiveImports"})
 public class MatchSessionJsonConverter implements AttributeConverter<MatchSession, String> {
 
     private static final String CARD_ID_KEY = "cardId";

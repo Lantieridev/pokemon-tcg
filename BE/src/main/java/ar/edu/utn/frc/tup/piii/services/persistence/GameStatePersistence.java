@@ -4,6 +4,7 @@ package ar.edu.utn.frc.tup.piii.services.persistence;
  * Port for persisting game state after each successful action.
  * Implementations may write to a database, a message bus, or a no-op sink.
  */
+@FunctionalInterface
 public interface GameStatePersistence {
 
     /**
@@ -41,7 +42,6 @@ public interface GameStatePersistence {
      * @param actionType the action type identifier
      * @param result the outcome description
      */
-    @SuppressWarnings("PMD.UseObjectForClearerAPI")
     // Deliberately kept as a leaf no-op default (not delegating to logAction(LogActionEvent)):
     // implementations that override only this legacy overload must still get a working default
     // for the other one, and vice versa, without the two defaults calling each other.

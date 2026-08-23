@@ -209,9 +209,6 @@ public class BattlePassServiceImpl implements BattlePassService {
         return "pack_" + norm;
     }
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
-    // False positive: used via method reference (this::mapToDTO) in getStatus — PMD 7.0.0
-    // does not resolve method-reference usages for this rule.
     private BattlePassLevelDTO mapToDTO(BattlePassLevelEntity entity) {
         return BattlePassLevelDTO.builder()
                 .level(entity.getLevel())

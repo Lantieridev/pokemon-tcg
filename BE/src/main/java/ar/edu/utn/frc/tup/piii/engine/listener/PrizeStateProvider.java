@@ -5,6 +5,7 @@ package ar.edu.utn.frc.tup.piii.engine.listener;
  * A return value of {@code 0} from {@link #getRemainingPrizes} means the player has won by prizes.
  * FR-008.
  */
+@FunctionalInterface
 public interface PrizeStateProvider {
 
     /**

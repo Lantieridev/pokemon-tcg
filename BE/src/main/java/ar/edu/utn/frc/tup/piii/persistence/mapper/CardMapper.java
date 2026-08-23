@@ -468,16 +468,22 @@ public final class CardMapper {
     }
 
     private String inferTailsCoinFlipEffect(final String lower) {
-        if (lower.contains("until you get tails")) {
-            if (lower.contains(DISCARD) && lower.contains(ENERGY) && (lower.contains(OPPONENT) || lower.contains("defending") || lower.contains("active"))) {
-                return "coin_flips_until_tails_discard_opponent_energy";
-            }
-            if (lower.contains("more damage")) {
-                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
-                if (m.find()) {
-                    return "coin_flips_until_tails_extra:" + m.group(1);
-                }
-            }
+        if (!lower.contains("until you get tails")) {
+            return null;
+        }
+        if (lower.contains(DISCARD) && lower.contains(ENERGY) && (lower.contains(OPPONENT) || lower.contains("defending") || lower.contains("active"))) {
+            return "coin_flips_until_tails_discard_opponent_energy";
+        }
+        return inferTailsExtraDamageEffect(lower);
+    }
+
+    private String inferTailsExtraDamageEffect(final String lower) {
+        if (!lower.contains("more damage")) {
+            return null;
+        }
+        final java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s+more\\s+damage").matcher(lower);
+        if (m.find()) {
+            return "coin_flips_until_tails_extra:" + m.group(1);
         }
         return null;
     }
@@ -560,13 +566,7 @@ public final class CardMapper {
 
     private String inferSleepAndStatusEffect(final String lower) {
         if (lower.contains("this pokémon is now asleep") || lower.contains("this pokemon is now asleep")) {
-            if (lower.contains("heal")) {
-                final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
-                if (m.find()) {
-                    return "heal_and_sleep:" + m.group(1);
-                }
-            }
-            return "sleep_self";
+            return inferSleepHealEffect(lower);
         }
 
         final String statusEffect = inferDefendingStatusConditionEffect(lower);
@@ -578,6 +578,16 @@ public final class CardMapper {
             return "disable_attack";
         }
         return null;
+    }
+
+    private String inferSleepHealEffect(final String lower) {
+        if (lower.contains("heal")) {
+            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
+            if (m.find()) {
+                return "heal_and_sleep:" + m.group(1);
+            }
+        }
+        return "sleep_self";
     }
 
     private static final Map<String, String> STATUS_CONDITION_MAP = Map.of(
@@ -601,37 +611,26 @@ public final class CardMapper {
     }
 
     private String inferDamagePreventionEffect(final String lower) {
-        if (lower.contains("prevent all damage done to this pok")
-                || lower.contains("prevent all effects of attacks, including damage, done to this pok")
-                || lower.contains("prevent that attack's damage done to this pok")) {
-            if (lower.contains("60 or less")) {
-                if (lower.contains(FLIP_A_COIN)) {
-                    return "coin_flip_prevent_damage_60_or_less";
-                }
-                return "prevent_damage_60_or_less";
-            }
-            if (lower.contains(FLIP_A_COIN)) {
-                return "coin_flip_prevent_damage";
-            }
-            return "prevent_damage";
+        if (!isPreventDamagePhrase(lower)) {
+            return null;
         }
-        return null;
+        if (lower.contains("60 or less")) {
+            return lower.contains(FLIP_A_COIN) ? "coin_flip_prevent_damage_60_or_less" : "prevent_damage_60_or_less";
+        }
+        return lower.contains(FLIP_A_COIN) ? "coin_flip_prevent_damage" : "prevent_damage";
+    }
+
+    private boolean isPreventDamagePhrase(final String lower) {
+        return lower.contains("prevent all damage done to this pok")
+                || lower.contains("prevent all effects of attacks, including damage, done to this pok")
+                || lower.contains("prevent that attack's damage done to this pok");
     }
 
     private String inferHealAndSelfDamageEffect(final String lower) {
         if (lower.contains("heal")) {
-            final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
-            if (m.find()) {
-                final String amt = m.group(1);
-                if (lower.contains("1 of your benched pok")) {
-                    return "heal_bench:" + amt;
-                } else if (lower.contains("1 of your pok")) {
-                    return "heal_any:" + amt;
-                } else if (lower.contains("each of your pok")) {
-                    return "heal_all:" + amt;
-                } else {
-                    return "heal:" + amt;
-                }
+            final String healResult = inferHealTargetEffect(lower);
+            if (healResult != null) {
+                return healResult;
             }
         }
 
@@ -642,6 +641,23 @@ public final class CardMapper {
             }
         }
         return null;
+    }
+
+    private String inferHealTargetEffect(final String lower) {
+        final java.util.regex.Matcher m = java.util.regex.Pattern.compile("heal\\s+(\\d+)").matcher(lower);
+        if (!m.find()) {
+            return null;
+        }
+        final String amt = m.group(1);
+        if (lower.contains("1 of your benched pok")) {
+            return "heal_bench:" + amt;
+        } else if (lower.contains("1 of your pok")) {
+            return "heal_any:" + amt;
+        } else if (lower.contains("each of your pok")) {
+            return "heal_all:" + amt;
+        } else {
+            return "heal:" + amt;
+        }
     }
 
     private String inferDiscardEffect(final String lower) {

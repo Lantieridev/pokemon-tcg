@@ -6,6 +6,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
  * Provides the current active Pokémon for each player on the battlefield.
  * Used by KnockoutManager to query player states during phase transition events. FR-013.
  */
+@FunctionalInterface
 public interface BattlefieldStateProvider {
 
     /**

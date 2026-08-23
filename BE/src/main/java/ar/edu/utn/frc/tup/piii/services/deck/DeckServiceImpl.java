@@ -220,9 +220,6 @@ public class DeckServiceImpl implements DeckService {
         return List.of();
     }
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
-    // False positive: used via method reference (this::toSummaryDTO) — PMD 7.0.0 does not
-    // resolve method-reference usages for this rule.
     private DeckSummaryDTO toSummaryDTO(final DeckEntity deck) {
         final int total = deck.getCards().stream()
                 .mapToInt(DeckCardEntity::getQuantity)

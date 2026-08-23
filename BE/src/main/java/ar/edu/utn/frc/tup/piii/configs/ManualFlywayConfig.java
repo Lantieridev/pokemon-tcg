@@ -4,6 +4,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @Configuration
@@ -13,7 +14,7 @@ public class ManualFlywayConfig {
         Objects.requireNonNull(dataSource, "dataSource must not be null");
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
-                .encoding("UTF-8")
+                .encoding(StandardCharsets.UTF_8.name())
                 .baselineOnMigrate(true)
                 .outOfOrder(true)
                 .locations("classpath:db/migration")

@@ -602,14 +602,11 @@ public class MatchService {
     }
 
     /** @return {@code true} if the caller should return immediately (matches every original inline "return;"). */
-    @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
-    // Action is a sealed interface — every permitted subtype is already covered, so the
-    // compiler itself enforces exhaustiveness; a 'default' branch would be dead code.
     private boolean dispatchPhaseTransition(final MatchSession session, final Action action,
             final TurnManager turnManager) {
         return switch (action) {
             case DeclareAttackAction ignored -> handleDeclareAttackPhase(session, action, turnManager);
-            case SelectCardsAction selectCards -> handleSelectCardsPhase(session, action, turnManager);
+            case SelectCardsAction ignored -> handleSelectCardsPhase(session, action, turnManager);
             case EndTurnAction ignored -> handleEndTurnPhase(session, turnManager);
             case PromoteActiveAction ignored -> handlePromoteActivePhase(session, action, turnManager);
             default -> handleDefaultPhase(session, action, turnManager);
