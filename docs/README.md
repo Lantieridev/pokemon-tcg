@@ -17,6 +17,7 @@ Hay dos documentos de arquitectura con nombres parecidos, cada uno con un propó
 - **[`adr/README.md`](adr/README.md)** — índice de las decisiones formales, incluye una que vive en `BE/docs/rankings_and_history/` sin haberse movido.
 - [`adr/0001-hexagonal-engine-isolation.md`](adr/0001-hexagonal-engine-isolation.md) — por qué el motor no depende de Spring/JPA/WebSockets.
 - [`adr/0002-server-authoritative-websocket-sync.md`](adr/0002-server-authoritative-websocket-sync.md) — por qué el cliente nunca calcula el resultado de una jugada.
+- [`adr/0004-store-domain-hexagonal-slice.md`](adr/0004-store-domain-hexagonal-slice.md) — por qué `store/` (y solo `store/`) es hexagonal mientras el resto del backend sigue package-by-layer.
 
 ## Planeamiento original del TPI (`SDD/`)
 

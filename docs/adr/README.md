@@ -7,6 +7,7 @@ Registro formal de decisiones de arquitectura del TPI. El proyecto ya tenía an�
 | [0001](./0001-hexagonal-engine-isolation.md) | Motor de juego aislado con Clean/Hexagonal Architecture | Aceptada |
 | [0002](./0002-server-authoritative-websocket-sync.md) | Sincronización server-authoritative vía STOMP/WebSockets | Aceptada |
 | [0003](../../BE/docs/rankings_and_history/diseno_persistencia_ganador.md) | Persistencia atómica del ganador en una única transacción | Aceptada (documento preexistente) |
+| [0004](./0004-store-domain-hexagonal-slice.md) | Dominio Store migrado a Clean/Hexagonal Architecture (slice de prueba de concepto, issue #12) | Aceptada |
 
 ## Cuándo agregar un ADR nuevo
 Cuando se tome una decisión de arquitectura que otro integrante del equipo podría cuestionar o revertir sin este contexto — no hace falta uno por cada PR. Seguir el mismo formato: Contexto → Decisión → Consecuencias.

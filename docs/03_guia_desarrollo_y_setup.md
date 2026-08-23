@@ -25,7 +25,7 @@ El backend es una aplicación Spring Boot.
 La base de datos (por defecto configurada a memoria/H2 en dev) se poblará automáticamente mediante Flyway con el set de cartas inicial (`V2__seed_xy1_cards.sql`).
 
 ### Ejecutar los Tests y CI
-Para correr toda la suite de tests (1.181 tests a la fecha) y verificar métricas de calidad (Jacoco Coverage y Checkstyle), ejecutar:
+Para correr toda la suite de tests (1.231 tests a la fecha) y verificar métricas de calidad (Jacoco Coverage y Checkstyle), ejecutar:
 ```bash
 ./mvnw clean verify
 ```
@@ -33,7 +33,7 @@ Para correr toda la suite de tests (1.181 tests a la fecha) y verificar métrica
 
 ## 3. Compilar y Ejecutar el Frontend
 
-El frontend está construido en Angular 21+.
+El frontend está construido en Angular 22+.
 
 ### Levantar el entorno
 1. Abrir una terminal en la carpeta `FE/`.

@@ -23,6 +23,21 @@ Retroactivo desde que el repo se independizó del TPI grupal (2026-07-11). Histo
 - `docs/REPO_GUIDELINES.md` — reglas de flujo de trabajo para el equipo de 5 del TPI original, ya no aplican.
 - Regla de identidad de Git académica en `docs/03_guia_desarrollo_y_setup.md` y en `application.properties` (contacto placeholder `tuemail@utn.frc.edu.ar`).
 
+## 2026-08-23
+
+### Added
+- Dominio Store (`/api/store/items`, `/api/store/buy`) migrado a Clean/Hexagonal Architecture como slice de prueba de concepto (`store/domain`, `store/application`, `store/adapter`) — primer paso de la migración propuesta en el issue #12. El resto del backend (incluido `engine/`) sigue con la estructura package-by-layer existente; ver [ADR 0004](docs/adr/0004-store-domain-hexagonal-slice.md) para el detalle y el plan de slices futuros.
+
+### Changed
+- PMD: campaña completa de 481 violaciones reales corregidas en 8 paquetes (`persistence`, `services.persistence`, `services`, `services.impl`, `engine.manager`, `engine.pipeline`, `deck`/`configs`/`security`/`dtos`) — extracción real de métodos y tablas Strategy-map, sin abusar de supresiones.
+- `pmdVersion` 7.0.0 → 7.26.0, con las 95 violaciones nuevas que introdujo el salto de versión corregidas (93 fixes reales, 2 supresiones justificadas por comentario — jjwt no tiene overload `java.time` para `issuedAt`/`expiration`).
+- jjwt 0.11.5 → 0.13.0 (`jjwt-api`/`jjwt-impl`/`jjwt-jackson`); `JwtUtil` migrado a la API real no deprecada (`Jwts.parser()`, `.verifyWith()`, `.parseSignedClaims()`, `.getPayload()`).
+- Angular 21.2 → 22.1.3 (+ `@angular/cli`/`@angular/build` 22.1.5, TypeScript 5.9 → 6.0.3, jasmine-core 5.9 → 6.3.0, zone.js 0.15 → 0.16.2) — bump coordinado que reemplaza 7 PRs de Dependabot bloqueados entre sí por conflictos de peer-dependencies. `undici` desaparece por completo del árbol de dependencias del FE.
+
+### Fixed
+- Justificación documentada de por qué la protección CSRF está deshabilitada, para la alerta de CodeQL correspondiente.
+- `brace-expansion` actualizado a 1.1.18 (parchea advisory de DoS).
+
 ## 2026-07-14
 
 ### Changed
