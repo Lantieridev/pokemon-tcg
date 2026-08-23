@@ -16,7 +16,7 @@ import ar.edu.utn.frc.tup.piii.engine.statuseffect.PrecisionBajaEffect;
 import ar.edu.utn.frc.tup.piii.engine.statuseffect.StatusEffect;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +43,7 @@ public class StatusEffectManager {
             StatusEffectType.PRECISION_BAJA
     );
 
-    private final Map<StatusEffectType, StatusEffect> effectsByType = new HashMap<>();
+    private final Map<StatusEffectType, StatusEffect> effectsByType = new EnumMap<>(StatusEffectType.class);
     private CoinFlipper coinFlipper;
     private ar.edu.utn.frc.tup.piii.engine.session.PlayerRuntime playerRuntime;
     private String disabledAttackName;

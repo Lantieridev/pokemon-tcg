@@ -50,12 +50,7 @@ public final class BigJumpStrategy implements AbilityEffect {
 
         if (source.equals(runtime.getActivePokemon())) {
             runtime.clearActivePokemon();
-            if (!runtime.getBench().isEmpty()) {
-                session.setAwaitingPromotion(playerIndex);
-                if (session.getTurnManager() != null) {
-                    session.getTurnManager().interruptMainPhase();
-                }
-            }
+            promoteIfBenchNotEmpty(session, runtime, playerIndex);
         } else {
             final int index = runtime.getBench().getAll().indexOf(source);
             if (index != -1) {
@@ -63,5 +58,15 @@ public final class BigJumpStrategy implements AbilityEffect {
             }
         }
         runtime.removePokemonFromPlay(source);
+    }
+
+    private void promoteIfBenchNotEmpty(MatchSession session, PlayerRuntime runtime, int playerIndex) {
+        if (runtime.getBench().isEmpty()) {
+            return;
+        }
+        session.setAwaitingPromotion(playerIndex);
+        if (session.getTurnManager() != null) {
+            session.getTurnManager().interruptMainPhase();
+        }
     }
 }

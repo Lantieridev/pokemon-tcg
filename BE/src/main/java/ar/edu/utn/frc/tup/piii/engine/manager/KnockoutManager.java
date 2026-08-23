@@ -62,15 +62,12 @@ public final class KnockoutManager implements PhaseListener {
      * @param event the event fired by the TurnManager
      */
     @Override
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.PhaseExited e -> handlePhaseExited(e);
-            case PhaseEvent.PhaseEntered e -> { /* no-op */ }
-            case PhaseEvent.TurnStarted e -> { /* no-op */ }
-            case PhaseEvent.TurnEnded e -> { /* no-op */ }
+            case PhaseEvent.PhaseEntered ignored -> { /* no-op */ }
+            case PhaseEvent.TurnStarted ignored -> { /* no-op */ }
+            case PhaseEvent.TurnEnded ignored -> { /* no-op */ }
         }
     }
 
@@ -79,16 +76,13 @@ public final class KnockoutManager implements PhaseListener {
      *
      * @param event the PhaseExited event
      */
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
         switch (event.phase()) {
-            case AttackPhase a -> checkBothPlayers();
-            case BetweenTurnsPhase b -> checkBothPlayers();
-            case DrawPhase d -> { /* no-op */ }
-            case MainPhase m -> { /* no-op */ }
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
+            case AttackPhase ignored -> checkBothPlayers();
+            case BetweenTurnsPhase ignored -> checkBothPlayers();
+            case DrawPhase ignored -> { /* no-op */ }
+            case MainPhase ignored -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase ignored -> { /* no-op */ }
         }
     }
 

@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.services;
 
 import ar.edu.utn.frc.tup.piii.dtos.PackOpeningResultDTO;
 
+@FunctionalInterface
 public interface PackService {
     /**
      * Opens a pack for the specified user.

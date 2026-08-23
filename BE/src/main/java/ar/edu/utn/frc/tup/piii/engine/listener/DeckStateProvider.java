@@ -5,6 +5,7 @@ package ar.edu.utn.frc.tup.piii.engine.listener;
  * A return value of {@code 0} from {@link #getDeckSize} means the player cannot draw (deck-out).
  * FR-008.
  */
+@FunctionalInterface
 public interface DeckStateProvider {
 
     /**

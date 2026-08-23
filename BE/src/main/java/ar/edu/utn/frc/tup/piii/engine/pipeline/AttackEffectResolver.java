@@ -347,33 +347,43 @@ public final class AttackEffectResolver {
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature
     private void handlePlaceOpponentBasicFromDiscard(final int amount, final AttackContext ctx) {
         final PlayerRuntime defender = ctx.getDefenderRuntime();
-                            if (defender != null && defender.getBench().getAll().size() < 5) {
-                                final List<ar.edu.utn.frc.tup.piii.engine.model.PokemonCard> basics = new java.util.ArrayList<>();
-                                for (Card card : defender.getDiscardPile().getCards()) {
-                                    if (card instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
-                                        basics.add(pc);
-                                    }
-                                }
-                                if (basics.size() > SINGLE_CANDIDATE) {
-                                    ctx.getMatchSession().setPendingSelectionRequest(
-                                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL,
-                                                    null,
-                                                    1,
-                                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE
-                                            )
-                                    );
-                                    if (ctx.getMatchSession().getTurnManager() != null) {
-                                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                                    }
-                                } else if (basics.size() == SINGLE_CANDIDATE) {
-                                    ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic = basics.get(0);
-                                    defender.getDiscardPile().remove(basic);
-                                    ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state = new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(basic);
-                                    state.setOwner(defender);
-                                    defender.getBench().place(state);
-                                }
-                            }
+        if (defender == null || defender.getBench().getAll().size() >= 5) {
+            return;
+        }
+        final List<ar.edu.utn.frc.tup.piii.engine.model.PokemonCard> basics = new java.util.ArrayList<>();
+        for (Card card : defender.getDiscardPile().getCards()) {
+            if (card instanceof ar.edu.utn.frc.tup.piii.engine.model.PokemonCard pc && pc.getEvolutionStage() == ar.edu.utn.frc.tup.piii.engine.model.EvolutionStage.BASIC) {
+                basics.add(pc);
+            }
+        }
+        if (basics.size() > SINGLE_CANDIDATE) {
+            requestOpponentBasicSelection(ctx);
+        } else if (basics.size() == SINGLE_CANDIDATE) {
+            placeBasicFromDiscard(defender, basics.get(0));
+        }
+    }
+
+    private void requestOpponentBasicSelection(final AttackContext ctx) {
+        ctx.getMatchSession().setPendingSelectionRequest(
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.REVIVAL,
+                        null,
+                        1,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.DISCARD_PILE
+                )
+        );
+        if (ctx.getMatchSession().getTurnManager() != null) {
+            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+        }
+    }
+
+    private void placeBasicFromDiscard(final PlayerRuntime defender,
+                                        final ar.edu.utn.frc.tup.piii.engine.model.PokemonCard basic) {
+        defender.getDiscardPile().remove(basic);
+        final ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon state =
+                new ar.edu.utn.frc.tup.piii.engine.model.InPlayPokemon(basic);
+        state.setOwner(defender);
+        defender.getBench().place(state);
     }
 
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature
@@ -550,53 +560,71 @@ public final class AttackEffectResolver {
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature
     private void handleForceSwitchOpponent(final int amount, final AttackContext ctx) {
         final PlayerRuntime defender = ctx.getDefenderRuntime();
-                            if (defender != null && !defender.getBench().getAll().isEmpty()) {
-                                if (defender.getBench().getAll().size() == SINGLE_CANDIDATE) {
-                                    final BattlePokemonState oldActive = defender.getActivePokemon();
-                                    final BattlePokemonState newActive = defender.getBench().promote(0);
-                                    defender.setActivePokemon(newActive);
-                                    defender.getBench().place(oldActive);
-                                    defender.getStatusEffectManager().clearAll();
-                                    defender.recordPokemonEntered(oldActive);
-                                } else {
-                                    ctx.getMatchSession().setPendingSelectionRequest(
-                                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN,
-                                                    null,
-                                                    1,
-                                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
-                                            )
-                                    );
-                                    if (ctx.getMatchSession().getTurnManager() != null) {
-                                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                                    }
-                                }
-                            }
+        if (defender == null || defender.getBench().getAll().isEmpty()) {
+            return;
+        }
+        if (defender.getBench().getAll().size() == SINGLE_CANDIDATE) {
+            promoteOnlyBenchedPokemon(defender);
+        } else {
+            requestForceSwitchSelection(ctx);
+        }
+    }
+
+    private void promoteOnlyBenchedPokemon(final PlayerRuntime defender) {
+        final BattlePokemonState oldActive = defender.getActivePokemon();
+        final BattlePokemonState newActive = defender.getBench().promote(0);
+        defender.setActivePokemon(newActive);
+        defender.getBench().place(oldActive);
+        defender.getStatusEffectManager().clearAll();
+        defender.recordPokemonEntered(oldActive);
+    }
+
+    private void requestForceSwitchSelection(final AttackContext ctx) {
+        ctx.getMatchSession().setPendingSelectionRequest(
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.PUSH_DOWN,
+                        null,
+                        1,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.BENCH
+                )
+        );
+        if (ctx.getMatchSession().getTurnManager() != null) {
+            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+        }
     }
 
     private void handleBenchDamageOne(final int amount, final AttackContext ctx) {
         final PlayerRuntime opponent = ctx.getDefenderRuntime();
-                            if (opponent != null) {
-                                List<BattlePokemonState> bench = opponent.getBench().getAll();
-                                if (bench.size() == SINGLE_CANDIDATE) {
-                                    bench.get(0).addDamageCounters(amount / DAMAGE_PER_COUNTER);
-                                    if (bench.get(0).getDamageCounters() * 10 >= bench.get(0).getMaxHp()) {
-                                        ctx.getMatchSession().getKnockoutHandler().onKnockout(bench.get(0), bench.get(0).isEx() ? 2 : 1);
-                                    }
-                                } else if (bench.size() > SINGLE_CANDIDATE) {
-                                    ctx.getMatchSession().setPendingSelectionRequest(
-                                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BENCH_DAMAGE_ONE,
-                                                    null,
-                                                    1,
-                                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
-                                            )
-                                    );
-                                    if (ctx.getMatchSession().getTurnManager() != null) {
-                                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                                    }
-                                }
-                            }
+        if (opponent == null) {
+            return;
+        }
+        final List<BattlePokemonState> bench = opponent.getBench().getAll();
+        if (bench.size() == SINGLE_CANDIDATE) {
+            applyBenchDamageToOnlyTarget(bench.get(0), amount, ctx);
+        } else if (bench.size() > SINGLE_CANDIDATE) {
+            requestBenchDamageSelection(ctx);
+        }
+    }
+
+    private void applyBenchDamageToOnlyTarget(final BattlePokemonState target, final int amount, final AttackContext ctx) {
+        target.addDamageCounters(amount / DAMAGE_PER_COUNTER);
+        if (target.getDamageCounters() * 10 >= target.getMaxHp()) {
+            ctx.getMatchSession().getKnockoutHandler().onKnockout(target, target.isEx() ? 2 : 1);
+        }
+    }
+
+    private void requestBenchDamageSelection(final AttackContext ctx) {
+        ctx.getMatchSession().setPendingSelectionRequest(
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.BENCH_DAMAGE_ONE,
+                        null,
+                        1,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.HAND
+                )
+        );
+        if (ctx.getMatchSession().getTurnManager() != null) {
+            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+        }
     }
 
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature
@@ -944,22 +972,24 @@ public final class AttackEffectResolver {
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature
     private void handleDualBullet(final int amount, final AttackContext ctx) {
         final PlayerRuntime opponent = ctx.getDefenderRuntime();
-                            if (opponent != null) {
-                                int targets = Math.min(2, (opponent.getActivePokemon() != null ? 1 : 0) + opponent.getBench().getAll().size());
-                                if (targets > 0) {
-                                    ctx.getMatchSession().setPendingSelectionRequest(
-                                            new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
-                                                    ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET,
-                                                    null,
-                                                    targets,
-                                                    ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD
-                                            )
-                                    );
-                                    if (ctx.getMatchSession().getTurnManager() != null) {
-                                        ctx.getMatchSession().getTurnManager().interruptMainPhase();
-                                    }
-                                }
-                            }
+        if (opponent == null) {
+            return;
+        }
+        final int targets = Math.min(2, (opponent.getActivePokemon() != null ? 1 : 0) + opponent.getBench().getAll().size());
+        if (targets <= 0) {
+            return;
+        }
+        ctx.getMatchSession().setPendingSelectionRequest(
+                new ar.edu.utn.frc.tup.piii.engine.model.PendingSelectionRequest(
+                        ar.edu.utn.frc.tup.piii.engine.model.TrainerEffectId.DUAL_BULLET,
+                        null,
+                        targets,
+                        ar.edu.utn.frc.tup.piii.engine.model.SelectionSource.OPPONENT_FIELD
+                )
+        );
+        if (ctx.getMatchSession().getTurnManager() != null) {
+            ctx.getMatchSession().getTurnManager().interruptMainPhase();
+        }
     }
 
     @SuppressWarnings(UNUSED_AMOUNT_PARAM) // amount unused by this effect; required by the BiConsumer<Integer, AttackContext> handler signature

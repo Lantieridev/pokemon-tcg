@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.dtos.RankingDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
+@FunctionalInterface
 public interface RankingService {
 
     /**

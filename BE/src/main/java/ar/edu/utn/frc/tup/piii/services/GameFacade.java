@@ -116,12 +116,6 @@ public final class GameFacade {
         checkSweetVeilForBothPlayers(session);
     }
 
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // Action is a sealed interface — every permitted subtype is already covered, so the
-    // compiler itself enforces exhaustiveness; a 'default' branch would be dead code.
-    // Each case is already a single delegating call to its own extracted method — there is no
-    // further logic here to pull out; splitting the switch itself would just move the same
-    // 10 labels elsewhere without reducing anything real.
     private void dispatchAction(final Action action, final MatchSession session, final PlayerRuntime runtime,
             final TurnManager turnManager, final int playerIndex) {
         switch (action) {
@@ -625,7 +619,7 @@ public final class GameFacade {
      * @param dto         the incoming action request (never null)
      * @return a concrete {@link Action} variant (never null)
      */
-    @SuppressWarnings({"PMD.CyclomaticComplexity", "PMD.NPathComplexity"})
+    @SuppressWarnings("PMD.CyclomaticComplexity")
     // Flat DTO-to-Action translation table, one arm per ActionType — each arm is already either
     // a single delegating call or a short 1-3 line construction (see buildXxxAction methods
     // below); the complexity here is the inherent branch count of a 10-way translation, not

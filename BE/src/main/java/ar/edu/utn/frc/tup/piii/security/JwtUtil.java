@@ -8,6 +8,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +23,7 @@ public class JwtUtil {
 
     public JwtUtil(@Value("${jwt.secret}") String secretKeyString,
                    @Value("${jwt.expiration}") long jwtTokenValidity) {
-        this.key = Keys.hmacShaKeyFor(secretKeyString.getBytes());
+        this.key = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
         this.jwtTokenValidity = jwtTokenValidity;
     }
 
@@ -34,6 +36,9 @@ public class JwtUtil {
         return (username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    @SuppressWarnings("PMD.ReplaceJavaUtilDate")
+    // jjwt 0.13.0's JwtBuilder#issuedAt/#expiration only accept java.util.Date; no
+    // java.time (Instant/LocalDateTime) overload exists in the public API.
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
@@ -71,7 +76,7 @@ public class JwtUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiration(token).toInstant().isBefore(Instant.now());
     }
 
     private Date extractExpiration(String token) {

@@ -184,10 +184,6 @@ public final class MatchSession {
      *
      * @throws IllegalMatchStateTransitionException if the match is not in FINISHED state
      */
-    @SuppressWarnings("PMD.UnusedAssignment")
-    // Not dead: state is exposed via the public getState() and read by concurrent callers
-    // holding the lock (see class javadoc) — SETUP is a real, externally-observable transitional
-    // value during this reset, not just a local variable PMD can trace to its next overwrite.
     public void resetForSuddenDeath() {
         if (state != MatchSessionState.FINISHED) {
             throw new IllegalMatchStateTransitionException(

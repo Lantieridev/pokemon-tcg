@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.engine.session;
 
 import ar.edu.utn.frc.tup.piii.engine.model.PokemonType;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class MatchStatisticsTracker {
     private final Map<String, Integer> pokemonDamageReceived = new HashMap<>();
     private final Map<String, Integer> pokemonKOsMade = new HashMap<>();
     private final Map<String, Integer> pokemonKOsSuffered = new HashMap<>();
-    private final Map<PokemonType, Integer> energyAttachedCounts = new HashMap<>();
+    private final Map<PokemonType, Integer> energyAttachedCounts = new EnumMap<>(PokemonType.class);
 
     public void incrementPokemonPlayed(String cardId) {
         pokemonPlayedCounts.put(cardId, pokemonPlayedCounts.getOrDefault(cardId, 0) + 1);

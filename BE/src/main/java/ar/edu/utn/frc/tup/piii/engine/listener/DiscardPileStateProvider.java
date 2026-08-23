@@ -7,6 +7,7 @@ import java.util.List;
  * Provides access to a player's discard pile cards.
  * Used for Trainer validations (e.g. Max Revive).
  */
+@FunctionalInterface
 public interface DiscardPileStateProvider {
 
     /**

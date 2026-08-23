@@ -48,7 +48,6 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
     private final PrizeStateProvider prizeProvider;
     private final DeckStateProvider deckProvider;
     private final BenchStateProvider benchProvider;
-    @SuppressWarnings("unused")
     private final BattlefieldStateProvider battlefieldProvider;
     private final VictoryHandler victoryHandler;
 
@@ -241,15 +240,12 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      * @param event the event fired by TurnManager
      */
     @Override
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // PhaseEvent is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     public void on(final PhaseEvent event) {
         switch (event) {
             case PhaseEvent.TurnStarted s  -> activePlayerIndex = s.playerIndex();
             case PhaseEvent.PhaseEntered p -> handlePhaseEntered(p);
             case PhaseEvent.PhaseExited e  -> handlePhaseExited(e);
-            case PhaseEvent.TurnEnded e    -> { /* no-op */ }
+            case PhaseEvent.TurnEnded ignored -> { /* no-op */ }
         }
     }
 
@@ -258,16 +254,13 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      *
      * @param event the PhaseEntered event
      */
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     private void handlePhaseEntered(final PhaseEvent.PhaseEntered event) {
         switch (event.phase()) {
-            case DrawPhase d        -> checkDeckOut(event.playerIndex());
-            case MainPhase m        -> { /* no-op */ }
-            case AttackPhase a      -> { /* no-op */ }
-            case BetweenTurnsPhase b -> { /* no-op */ }
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
+            case DrawPhase ignored        -> checkDeckOut(event.playerIndex());
+            case MainPhase ignored        -> { /* no-op */ }
+            case AttackPhase ignored      -> { /* no-op */ }
+            case BetweenTurnsPhase ignored -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase ignored -> { /* no-op */ }
         }
     }
 
@@ -276,16 +269,13 @@ public final class VictoryConditionChecker implements KnockoutHandler, PhaseList
      *
      * @param event the PhaseExited event
      */
-    @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-    // TurnPhase is sealed; a default branch would be dead code. One-statement-per-case dispatch,
-    // no real per-case logic.
     private void handlePhaseExited(final PhaseEvent.PhaseExited event) {
         switch (event.phase()) {
-            case AttackPhase a -> checkFieldVictory();
-            case BetweenTurnsPhase b -> checkFieldVictory();
-            case DrawPhase d -> { /* no-op */ }
-            case MainPhase m -> { /* no-op */ }
-            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase a -> { /* no-op */ }
+            case AttackPhase ignored -> checkFieldVictory();
+            case BetweenTurnsPhase ignored -> checkFieldVictory();
+            case DrawPhase ignored -> { /* no-op */ }
+            case MainPhase ignored -> { /* no-op */ }
+            case ar.edu.utn.frc.tup.piii.engine.model.ActionResolutionPhase ignored -> { /* no-op */ }
         }
     }
 

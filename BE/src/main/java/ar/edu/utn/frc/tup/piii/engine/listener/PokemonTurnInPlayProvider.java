@@ -8,6 +8,7 @@ import ar.edu.utn.frc.tup.piii.engine.model.BattlePokemonState;
  * A return value of {@code 1} or more means it survived at least one end-of-turn boundary.
  * FR-007.
  */
+@FunctionalInterface
 public interface PokemonTurnInPlayProvider {
 
     /**

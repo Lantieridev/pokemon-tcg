@@ -1,6 +1,7 @@
 package ar.edu.utn.frc.tup.piii.store.application.port.in;
 
 /** Inbound port: spend a user's pokecoins on a store item. */
+@FunctionalInterface
 public interface PurchaseStoreItemUseCase {
 
     /**
