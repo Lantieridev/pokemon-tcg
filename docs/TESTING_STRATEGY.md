@@ -4,7 +4,7 @@ Qué cubre cada capa de testing en este repo, y qué NO está cubierto todavía 
 
 ## Backend (`BE/`)
 
-- **Unit + integración (JUnit 5 + Mockito):** 1.181 tests a la fecha (`./mvnw test`). Cubre el engine (reglas, efectos, pipeline de ataque), servicios de aplicación (matchmaking, deck builder, logros, economía) y la capa de persistencia.
+- **Unit + integración (JUnit 5 + Mockito):** 1.231 tests a la fecha (`./mvnw test`). Cubre el engine (reglas, efectos, pipeline de ataque), servicios de aplicación (matchmaking, deck builder, logros, economía) y la capa de persistencia.
 - **Gate de cobertura (JaCoCo, en `BE/pom.xml`):** 3 niveles, no uno solo:
   - 90% línea + 85% rama, escopeado a `engine/**`.
   - 90% instrucción, escopeado a 3 clases específicas: `RuleValidator`, `DamageCalculator`, `StatusEffectManager`.

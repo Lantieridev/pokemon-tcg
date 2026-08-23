@@ -1,6 +1,6 @@
 ---
 name: pokemon-frontend-strict
-description: Skill base y obligatoria para el desarrollo del Frontend del Pokémon TCG usando Angular 21+, Signals y Smart/Dumb Components.
+description: Skill base y obligatoria para el desarrollo del Frontend del Pokémon TCG usando Angular 22+, Signals y Smart/Dumb Components.
 ---
 
 # Pokémon TCG - Frontend Guidelines
@@ -10,7 +10,7 @@ description: Skill base y obligatoria para el desarrollo del Frontend del Pokém
 - **Presentational Components (Dumb):** 100% aislados. SOLO reciben datos a través de `input()` y emiten eventos a través de `output()`. No inyectan servicios. Ej: `PlayerBenchComponent`, `ActivePokemonCardComponent`. 
 - **Regla:** Si un componente visual (Dumb) está llamando a un servicio REST o WebSocket, está mal diseñado y el PR debe ser rechazado.
 
-## 2. Gestión de Estado y Angular 21+
+## 2. Gestión de Estado y Angular 22+
 - Uso **obligatorio** de Signals. Prohibido el uso de RxJS para el estado local del componente (solo se permite RxJS para el manejo de los WebSockets o llamadas HTTP).
 - Usar `computed()` para valores derivados (ej. "cantidad de energía total unida al Pokémon").
 - **Control Flow Nativo:** Obligatorio usar `@if`, `@for`, `@switch`. Está terminantemente prohibido usar las directivas legacy `*ngIf` o `*ngFor`.

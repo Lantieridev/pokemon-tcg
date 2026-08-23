@@ -4,8 +4,8 @@
 Este archivo detalla la arquitectura para que herramientas LLM y agentes de desarrollo entiendan rápidamente dónde y cómo inyectar código nuevo sin romper patrones existentes. 
 
 ## 1. Stack Tecnológico Estricto
-- **Backend:** Java 21 (usa Pattern Matching, Records y Virtual Threads si aplica), Spring Boot 4.0.0, Spring Security + JWT.
-- **Frontend:** Angular 21+ (Signals nativos, control flow `@if/@for`, Standalone Components).
+- **Backend:** Java 21 (usa Pattern Matching, Records y Virtual Threads si aplica), Spring Boot 4.1.0, Spring Security + JWT (jjwt 0.13.0).
+- **Frontend:** Angular 22+ (Signals nativos, control flow `@if/@for`, Standalone Components).
 - **Persistencia:** PostgreSQL en prod, H2 en memoria para los tests locales. JPA/Hibernate manejando entidades, y Flyway para migraciones.
 
 ## 2. Inyección de Dependencias (DI) Circular Constraints
@@ -53,6 +53,7 @@ Todo el frontend usa un patrón estricto para evitar archivos `.ts` monstruosos.
 - **Dumb Components:** Todo lo demás (`CardComponent`, `PlayerHandComponent`, `PrizeStackComponent`). Usan `@Input()` y `@Output()`. NO saben de la existencia de la red ni del STOMP.
 
 ## 5. Convenciones de Código
+- **Estructura de paquetes:** el backend usa **package-by-layer** (`controllers/`, `services/`, `services/impl/`, `persistence/`) en todos los dominios **excepto `store/`**. `store/` (`/api/store/items`, `/api/store/buy`) fue migrado a Clean/Hexagonal (`store/domain`, `store/application`, `store/adapter`) como slice de prueba de concepto — primer paso de la migración propuesta en el issue #12, todavía no completa para el resto del backend. Ver [ADR 0004](./adr/0004-store-domain-hexagonal-slice.md) para el detalle y el plan de slices futuros. **No asumas que otro dominio ya es hexagonal solo porque `store/` lo es** — si vas a tocar `services/impl/XServiceImpl.java`, seguí el patrón plano existente salvo que se te pida explícitamente migrarlo.
 - **Backend:** si hay un `if/else` gigante para efectos de cartas, está mal diseñado — usar Strategy pattern (`Map<Enum/String, FunctionalInterface>`), mismo patrón ya aplicado en `GameFacade`/`RuleValidator`/`CardMapper`/`AttackEffectResolver`. El engine (`engine/`) nunca depende de Spring/JPA/WebSockets — ver [ADR 0001](./adr/0001-hexagonal-engine-isolation.md).
 - **Testing:** obligatorio para lógica de validación de reglas y efectos; ver la estrategia de testing real (qué capa cubre qué) en `docs/03_guia_desarrollo_y_setup.md`.
 - **Frontend:** Componentes Standalone exclusivamente. Usar Signals (`signal()`, `computed()`) y el control flow nativo (`@if`, `@for`) — no `*ngIf`/`*ngFor`. Interfaces estrictas para los payloads que vienen del backend.
