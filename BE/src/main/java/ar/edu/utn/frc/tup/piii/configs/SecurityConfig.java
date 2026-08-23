@@ -34,6 +34,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CSRF protection guards against a browser automatically attaching an ambient
+                // credential (a session cookie) to a forged cross-site request. This API is
+                // stateless (see sessionCreationPolicy below) and auth is a bearer token read
+                // from the Authorization header, which a cross-site form/script can't set on the
+                // victim's behalf -- there's no ambient credential for CSRF to exploit here.
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
